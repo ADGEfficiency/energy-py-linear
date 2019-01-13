@@ -1,0 +1,6 @@
+#  generic
+*.ipynb_checkpoints/
+*.swp
+
+#  project specific
+*.lp
