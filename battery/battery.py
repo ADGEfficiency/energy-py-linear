@@ -1,46 +1,48 @@
-from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
+import json
+
+from make_logger import make_logger
+
+logger = make_logger()
+
+class Battery(object):
+    """
+    Electric battery operating in price arbitrage
+
+    power      float [MW] same for charge & discharge
+    capacity   float [MWh]
+    efficiency float [%] round trip, applied to
+    timestep   str   5min, 1hr etc
+    """
+
+    def __init__(
+            self,
+            power,
+            capacity,
+            efficiency=0.9,
+            timestep='5min'
+
+    ):
+        self.power = float(power)
+        self.capacity = float(capacity)
+        self.efficiency = float(efficiency)
+
+        args = {"args":
+                {"power": self.power,
+                 "capacity": self.capacity,
+                 "efficiency": self.efficiency}}
+        logger.info(json.dumps(args))
+
+if __name__ == '__main__':
+
+    model = Battery(power=2, capacity=4)
+
+    def read_logs():
+        with open('battery.log') as f:
+            logs = f.read().splitlines()
+
+        return [json.loads(log) for log in logs]
+
+    logs = read_logs()
 
 
-prices = [20, 10, 30, 30]
-idx = range(0, len(prices))
 
-power = 5
-capacity = 5
-
-b_import = LpVariable.dicts(
-    'import', idx[:-1], lowBound=0, cat='Continuous'
-)
-
-b_export = LpVariable.dicts(
-    'export', idx[:-1], lowBound=0, cat='Continuous'
-)
-
-battery_charge = LpVariable.dicts(
-    'charge', idx, lowBound=0, cat='Continuous'
-)
-
-prob = LpProblem('cost minimization', LpMinimize)
-
-prob += lpSum(
-    [b_import[i] * prices[i] for i in idx[:-1]] + 
-    [b_export[i] * -prices[i] for i in idx[:-1]]
-)
-
-prob += battery_charge[0] == 1.0
-
-for i in idx[:-1]:
-    #  energy balance across two time periods
-    prob += battery_charge[i+1] == battery_charge[i] + b_import[i] - b_export[i]
-
-    #  constrain battery charge level
-    prob += battery_charge[i] <= capacity
-    prob += battery_charge[i] >= 0
-
-prob.solve()
-print(LpStatus[prob.status])
-
-def show_vars():
-    for v in prob.variables():
-        print('{} {}'.format(v.name, v.varValue))
-
-show_vars()

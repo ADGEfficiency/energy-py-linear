@@ -2,6 +2,8 @@
 *.ipynb_checkpoints/
 *.swp
 *todo.md
+*__pycache__
+*.log
 
 #  project specific
 *.lp
