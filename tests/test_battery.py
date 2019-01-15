@@ -40,5 +40,8 @@ prices = 10, 10, 10
 initial = 5
 -> 5 * 10 profit
 
+prices = [10, 50, 10, 50, 10]
+charge, discharge, charge, discharge
+
 """
 

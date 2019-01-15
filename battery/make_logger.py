@@ -7,7 +7,7 @@ def make_logger():
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
-    file_handler = logging.FileHandler('battery.log')
+    file_handler = logging.FileHandler('log.log')
     stream_handler = logging.StreamHandler()
 
     stream_formatter = logging.Formatter(
@@ -28,7 +28,7 @@ def make_logger():
 
 
 def read_logs():
-    with open('battery.log') as f:
+    with open('log.log') as f:
         logs = f.read().splitlines()
 
     return [json.loads(log) for log in logs]

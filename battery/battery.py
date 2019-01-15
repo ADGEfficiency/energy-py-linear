@@ -80,9 +80,18 @@ class Battery(object):
             forecasts=None,
             initial_charge=0
     ):
-        """ runs the linear program to optimize the battery """
+        """
+        runs the linear program to optimize the battery
+
+        prices         list [$/MWh]
+        forecasts      list [$/MWh]
+        initial_charge float [MWh]
+        """
         if forecasts is None:
             forecasts = prices
+
+        assert len(forecasts) == len(prices)
+        assert initial_charge <= self.capacity
 
         #  used to index timesteps
         idx = range(0, len(prices))
@@ -119,7 +128,18 @@ class Battery(object):
 
         logger.info(json.dumps(optimization_results))
 
-        #  natural place to split the function here
+        self.info = self.generate_outputs(prices, forecasts, idx)
+
+        return self.info
+
+    def generate_outputs(
+            self, prices, forecasts, idx
+    ):
+        """ creates a DataFrame summarizing the optimization run """
+
+        imports = self.vars['imports']
+        exports = self.vars['exports']
+        charges = self.vars['charges']
 
         info = pd.DataFrame().from_dict({
             'Import [MW]': [imports[i].varValue for i in idx[:-1]] + [np.nan],
@@ -132,23 +152,26 @@ class Battery(object):
         info.loc[:, 'Power [MW]'] = info.loc[:, 'Import [MW]'] - info.loc[:, 'Export [MW]']
 
         actual_costs = info.loc[:, 'Power [MW]'] * info.loc[:, 'Prices [$/MWh]'] / self.step
-        info.loc[:, 'Actual costs [$/{}]'.format(self.timestep)] = actual_costs
+        info.loc[:, 'Actual [$/{}]'.format(self.timestep)] = actual_costs
 
         forecast_costs = info.loc[:, 'Power [MW]'] * info.loc[:, 'Forecast [$/MWh]'] / self.step
-        info.loc[:, 'Forecast costs [$/{}]'.format(self.timestep)] = forecast_costs
+        info.loc[:, 'Forecast [$/{}]'.format(self.timestep)] = forecast_costs
 
-        return info.loc[:, [
+        info = info.loc[:, [
             'Import [MW]', 'Export [MW]', 'Power [MW]', 'Charge [MWh]',
             'Prices [$/MWh]', 'Forecast [$/MWh]',
-            'Actual costs [$/{}]'.format(self.timestep),
-            'Forecast costs [$/{}]'.format(self.timestep)]]
+            'Actual [$/{}]'.format(self.timestep),
+            'Forecast [$/{}]'.format(self.timestep)]]
+
+        with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+            print(info)
+
+        return info
 
 if __name__ == '__main__':
 
     model = Battery(power=2, capacity=4, timestep='30min')
 
-    prices = [20, 10, 30, 30]
+    prices = [10, 50, 10, 50, 10]
 
     info = model.optimize(prices)
-
-    print(info)
