@@ -12,12 +12,12 @@ energy-py-linear is a library for optimizing energy systems using mixed integer 
 
 >>> info = model.optimize(prices)
 
-   Import [MW]  Export [MW]  Power [MW]  Charge [MWh]  Prices [DOLLAR/MWh]
-0          2.0          0.0         2.0      0.000000                   10
-1          0.0          2.0        -2.0      0.066667                   50
-2          2.0          0.0         2.0      0.000000                   10
-3          0.0          2.0        -2.0      0.066667                   50
-4          NaN          NaN         NaN      0.000000                   10
+   Import [MW]  Export [MW]  Power [MW]  Charge [MWh]
+0          2.0          0.0         2.0      0.000000
+1          0.0          2.0        -2.0      0.066667
+2          2.0          0.0         2.0      0.000000
+3          0.0          2.0        -2.0      0.066667
+4          NaN          NaN         NaN      0.000000
 ```
 
 It is also possible to send in forecast prices along with actual prices, and to change the initial charge.  The model optimizes for the forecasts - this allows measurement of forecast quality by comparing actual with forecast costs.
