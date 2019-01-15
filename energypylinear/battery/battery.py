@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
 
-from make_logger import make_logger, read_logs
+from energypylinear import make_logger, read_logs
 
 logger = make_logger()
 
