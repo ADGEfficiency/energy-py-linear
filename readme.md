@@ -31,7 +31,7 @@ info = model.optimize(prices, forecast=forecasts, initial_charge=4)
 The main dependencies of this project are PuLP, pandas and numpy.
 
 ```bash
-$ git clone REPO
+$ git clone https://github.com/ADGEfficiency/energy-py-linear
 
 $ python setup.py install
 
@@ -40,4 +40,4 @@ $ pip install -r requirements.txt
 
 ## Linear programming
 
-Linear programming is a technique that gurantees finding the global optimum for a well formulated linear system.  For further reading I recommend [Introduction to Linear Programming with Python and PuLP](http://benalexkeen.com/linear-programming-with-python-and-pulp/) - especially [Part 6](http://benalexkeen.com/linear-programming-with-python-and-pulp-part-6/) which covers how to formulate more complex conditional constraints.
+Linear programming is a technique that guarantees finding the global optimum for a well formulated linear system.  For further reading I recommend [Introduction to Linear Programming with Python and PuLP](http://benalexkeen.com/linear-programming-with-python-and-pulp/) - especially [Part 6](http://benalexkeen.com/linear-programming-with-python-and-pulp-part-6/) which covers how to formulate more complex conditional constraints.
