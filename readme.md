@@ -23,7 +23,10 @@ energy-py-linear is a library for optimizing energy systems using mixed integer 
 It is also possible to send in forecast prices along with actual prices, and to change the initial charge.  The model optimizes for the forecasts - this allows measurement of forecast quality by comparing actual with forecast costs.
 
 ```python
-info = model.optimize(prices, forecast=forecasts, initial_charge=4)
+#  a forecast that is the inverse of the prices we used above
+>>> forecasts = [50, 10, 50, 10, 50]
+
+>>> info = model.optimize(prices, forecast=forecasts, initial_charge=4)
 ```
 
 ## Installation
