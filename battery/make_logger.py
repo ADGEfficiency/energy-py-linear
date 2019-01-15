@@ -1,4 +1,5 @@
 
+import json
 import logging
 
 
@@ -18,7 +19,17 @@ def make_logger():
     file_handler.setFormatter(file_formatter)
     stream_handler.setFormatter(stream_formatter)
 
+    file_handler.setLevel(logging.DEBUG)
+    stream_handler.setLevel(logging.INFO)
+
     logger.addHandler(file_handler)
     logger.addHandler(stream_handler)
     return logger
+
+
+def read_logs():
+    with open('battery.log') as f:
+        logs = f.read().splitlines()
+
+    return [json.loads(log) for log in logs]
 

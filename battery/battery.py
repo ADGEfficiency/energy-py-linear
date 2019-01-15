@@ -1,8 +1,24 @@
 import json
 
-from make_logger import make_logger
+import numpy as np
+import pandas as pd
+from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
+
+from make_logger import make_logger, read_logs
 
 logger = make_logger()
+
+#  factor used to convert MW to MWh
+#  MWh = MW / step
+#  5min=12, 30min=2, 60min=1 etc
+
+steps = {
+    '5min': 60/5,
+    '30min': 60/2,
+    '60min': 1,
+    '1hr': 1
+    }
+
 
 class Battery(object):
     """
@@ -11,7 +27,7 @@ class Battery(object):
     power      float [MW] same for charge & discharge
     capacity   float [MWh]
     efficiency float [%] round trip, applied to
-    timestep   str   5min, 1hr etc
+    step   str   5min, 1hr etc
     """
 
     def __init__(
@@ -25,24 +41,114 @@ class Battery(object):
         self.power = float(power)
         self.capacity = float(capacity)
         self.efficiency = float(efficiency)
+        self.timestep = timestep
+        self.step = steps[self.timestep]
 
-        args = {"args":
-                {"power": self.power,
-                 "capacity": self.capacity,
-                 "efficiency": self.efficiency}}
-        logger.info(json.dumps(args))
+        args = {
+            "name": "args",
+            "power": self.power,
+            "capacity": self.capacity,
+            "efficiency": self.efficiency,
+            "timestep": self.timestep,
+            "step": self.step
+        }
+
+        logger.debug(json.dumps(args))
+
+        self.prob = LpProblem('cost minimization', LpMinimize)
+
+    def setup_vars(self, idx):
+        """ creates a dictionary with the pulp variables """
+
+        return {
+            'imports': LpVariable.dicts(
+                'import', idx[:-1], lowBound=0, upBound=self.power, cat='Continuous'
+            ),
+
+            'exports': LpVariable.dicts(
+                'export', idx[:-1], lowBound=0, upBound=self.power, cat='Continuous'
+            ),
+
+            'charges': LpVariable.dicts(
+                'charge', idx, lowBound=0, cat='Continuous'
+            )
+        }
+
+    def optimize(
+            self,
+            prices,
+            forecasts=None,
+            initial_charge=0
+    ):
+        """ runs the linear program to optimize the battery """
+        if forecasts is None:
+            forecasts = prices
+
+        #  used to index timesteps
+        idx = range(0, len(prices))
+
+        self.vars = self.setup_vars(idx)
+
+        imports = self.vars['imports']
+        exports = self.vars['exports']
+        charges = self.vars['charges']
+
+        #  the objective function we are minimizing
+        self.prob += lpSum(
+            [imports[i] * forecasts[i] for i in idx[:-1]] +
+            [exports[i] * -forecasts[i] for i in idx[:-1]]
+        )
+
+        #  initial charge
+        self.prob += charges[0] == initial_charge
+
+        for i in idx[:-1]:
+            #  energy balance across two time periods
+            self.prob += charges[i+1] == charges[i] + (imports[i] - exports[i]) / self.step
+
+            #  constrain battery charge level
+            self.prob += charges[i] <= self.capacity
+            self.prob += charges[i] >= 0
+
+        self.prob.solve()
+
+        optimization_results = {
+            "name": "optimization_results",
+            "status": LpStatus[self.prob.status]
+        }
+
+        logger.info(json.dumps(optimization_results))
+
+        #  natural place to split the function here
+
+        info = pd.DataFrame().from_dict({
+            'Import [MW]': [imports[i].varValue for i in idx[:-1]] + [np.nan],
+            'Export [MW]': [exports[i].varValue for i in idx[:-1]] + [np.nan],
+            'Charge [MWh]': [charges[i].varValue for i in idx[:]],
+            'Prices [$/MWh]': prices,
+            'Forecast [$/MWh]': forecasts
+        })
+
+        info.loc[:, 'Power [MW]'] = info.loc[:, 'Import [MW]'] - info.loc[:, 'Export [MW]']
+
+        actual_costs = info.loc[:, 'Power [MW]'] * info.loc[:, 'Prices [$/MWh]'] / self.step
+        info.loc[:, 'Actual costs [$/{}]'.format(self.timestep)] = actual_costs
+
+        forecast_costs = info.loc[:, 'Power [MW]'] * info.loc[:, 'Forecast [$/MWh]'] / self.step
+        info.loc[:, 'Forecast costs [$/{}]'.format(self.timestep)] = forecast_costs
+
+        return info.loc[:, [
+            'Import [MW]', 'Export [MW]', 'Power [MW]', 'Charge [MWh]',
+            'Prices [$/MWh]', 'Forecast [$/MWh]',
+            'Actual costs [$/{}]'.format(self.timestep),
+            'Forecast costs [$/{}]'.format(self.timestep)]]
 
 if __name__ == '__main__':
 
-    model = Battery(power=2, capacity=4)
+    model = Battery(power=2, capacity=4, timestep='30min')
 
-    def read_logs():
-        with open('battery.log') as f:
-            logs = f.read().splitlines()
+    prices = [20, 10, 30, 30]
 
-        return [json.loads(log) for log in logs]
+    info = model.optimize(prices)
 
-    logs = read_logs()
-
-
-
+    print(info)
