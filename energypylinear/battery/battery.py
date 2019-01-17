@@ -1,3 +1,4 @@
+import logging
 import json
 
 import numpy as np
@@ -5,8 +6,6 @@ import pandas as pd
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
 
 from energypylinear import make_logger, read_logs
-
-logger = make_logger()
 
 #  factor used to convert MW to MWh
 #  MWh = MW / step
@@ -53,7 +52,7 @@ class Battery(object):
             "step": self.step
         }
 
-        logger.debug(json.dumps(args))
+        logger.info(json.dumps(args))
 
         self.prob = LpProblem('cost minimization', LpMinimize)
 
@@ -169,6 +168,7 @@ class Battery(object):
         return info
 
 if __name__ == '__main__':
+    logger = make_logger()
 
     model = Battery(power=2, capacity=4, timestep='30min')
 

@@ -29,4 +29,3 @@ def read_logs(log_file_path):
         logs = f.read().splitlines()
 
     return [json.loads(log) for log in logs]
-
