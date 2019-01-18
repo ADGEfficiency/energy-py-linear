@@ -7,13 +7,15 @@ from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
 
 from energypylinear import make_logger, read_logs
 
+logger = make_logger()
+
 #  factor used to convert MW to MWh
 #  MWh = MW / step
 #  5min=12, 30min=2, 60min=1 etc
 
 steps = {
     '5min': 60/5,
-    '30min': 60/2,
+    '30min': 60/30,
     '60min': 1,
     '1hr': 1
     }
@@ -110,6 +112,7 @@ class Battery(object):
         #  initial charge
         self.prob += charges[0] == initial_charge
 
+        #  TODO comment
         for i in idx[:-1]:
             #  energy balance across two time periods
             self.prob += charges[i+1] == charges[i] + (imports[i] - exports[i]) / self.step
@@ -168,10 +171,9 @@ class Battery(object):
         return info
 
 if __name__ == '__main__':
-    logger = make_logger()
 
-    model = Battery(power=2, capacity=4, timestep='30min')
+    model = Battery(power=2, capacity=4, timestep='1hr')
 
-    prices = [10, 50, 10, 50, 10]
+    prices = [10, 10, 10, 10, 10]
 
-    info = model.optimize(prices)
+    info = model.optimize(prices, initial_charge=2)

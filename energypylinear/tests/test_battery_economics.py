@@ -5,14 +5,21 @@ import energypylinear
 
 
 @pytest.mark.parametrize(
-    'power, capacity, initial_charge',
-    [(2, 4, 0), (4, 2, 2)]
+    'power, capacity, initial_charge, timestep',
+    [
+        (2, 4, 0, '1hr'),
+        (4, 2, 2, '1hr'),
+        (2, 4, 0, '30min'),
+        (4, 2, 2, '30min'),
+        (2, 4, 0, '5min'),
+        (4, 2, 2, '5min')
+    ]
 )
-def test_cost_calculation(power, capacity, initial_charge):
+def test_cost_calculation(power, capacity, initial_charge, timestep):
     prices = [10, 20, 30, -90, 50, 2000, -1]
 
     model = energypylinear.Battery(
-        power=power, capacity=capacity
+        power=power, capacity=capacity, timestep=timestep
     )
 
     info = model.optimize(
@@ -22,7 +29,7 @@ def test_cost_calculation(power, capacity, initial_charge):
     dispatch = info.loc[:, 'Power [MW]'].values
     timestep = model.timestep
     step = model.step
-    check_actual_costs = sum(dispatch[:-1] * prices[:-1])/step 
+    check_actual_costs = sum(dispatch[:-1] * prices[:-1]) / step 
 
     actual_costs = info.loc[:, 'Actual [$/{}]'.format(timestep)].values
 

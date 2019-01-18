@@ -13,7 +13,7 @@ import energypylinear
 )
 def test_battery_optimization(prices, initial_charge, expected_dispatch):
     power = 4
-    capacity = 4
+    capacity = 6
 
     model = energypylinear.Battery(
         power=power, capacity=capacity, timestep='1hr'
