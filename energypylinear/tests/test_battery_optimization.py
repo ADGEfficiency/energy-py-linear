@@ -16,14 +16,14 @@ def test_battery_optimization(prices, initial_charge, expected_dispatch):
     capacity = 6
 
     model = energypylinear.Battery(
-        power=power, capacity=capacity, timestep='1hr'
+        power=power, capacity=capacity, timestep='1hr', efficiency=1.0
     )
 
     info = model.optimize(
         prices=prices, initial_charge=initial_charge
     )
 
-    dispatch = info.loc[:, 'Power [MW]'].values
+    dispatch = info.loc[:, 'Net [MW]'].values
 
     np.testing.assert_equal(dispatch, expected_dispatch)
 

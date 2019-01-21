@@ -9,7 +9,7 @@ import energypylinear
     [(2, 4, 0), (4, 2, 2)]
 )
 def test_power_capacity_initial_charge(power, capacity, initial_charge):
-    prices = [10, 20, 30]
+    prices = [10, 20, 30, 40, 10, 50]
 
     model = energypylinear.Battery(
         power=power, capacity=capacity
@@ -20,7 +20,7 @@ def test_power_capacity_initial_charge(power, capacity, initial_charge):
     )
 
     #  check we don't charge or discharge more than battery rating
-    dispatch = info.loc[:, 'Power [MW]'].values
+    dispatch = info.loc[:, 'Gross [MW]'].values
     assert(max(dispatch) <= power)
     assert(min(dispatch) >= -power)
 
@@ -31,3 +31,21 @@ def test_power_capacity_initial_charge(power, capacity, initial_charge):
 
     #  check we set initial charge correctly
     assert(charges[0] == initial_charge)
+
+    #  check gross is always bigger than net
+    gross = np.abs(info.loc[:, 'Gross [MW]'].values)
+    net = np.abs(info.loc[:, 'Net [MW]'].values)
+
+    np.testing.assert_array_compare(
+        np.greater_equal, gross, net
+    )
+
+    #  check losses are smaller than export
+    gross = info.loc[:, 'Gross [MW]'].values
+    net = info.loc[:, 'Net [MW]'].values
+    export = info.loc[:, 'Export [MW]'].values
+    losses = info.loc[:, 'Losses [MW]'].values
+
+    np.testing.assert_array_compare(
+        np.greater_equal, export, losses
+    )

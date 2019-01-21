@@ -72,6 +72,10 @@ class Battery(object):
 
             'charges': LpVariable.dicts(
                 'charge', idx, lowBound=0, cat='Continuous'
+            ),
+
+            'losses': LpVariable.dicts(
+                'loss', idx, lowBound=0, cat='Continuous'
             )
         }
 
@@ -101,12 +105,14 @@ class Battery(object):
 
         imports = self.vars['imports']
         exports = self.vars['exports']
+        # gross_power = self.vars['gross_power']
         charges = self.vars['charges']
+        losses = self.vars['losses']
 
         #  the objective function we are minimizing
         self.prob += lpSum(
             [imports[i] * forecasts[i] for i in idx[:-1]] +
-            [exports[i] * -forecasts[i] for i in idx[:-1]]
+            [-exports[i] * forecasts[i] for i in idx[:-1]]
         )
 
         #  initial charge
@@ -115,11 +121,13 @@ class Battery(object):
         #  TODO comment
         for i in idx[:-1]:
             #  energy balance across two time periods
-            self.prob += charges[i+1] == charges[i] + (imports[i] - exports[i]) / self.step
+            self.prob += charges[i+1] == charges[i] + (imports[i] - exports[i] - losses[i]) / self.step
 
             #  constrain battery charge level
             self.prob += charges[i] <= self.capacity
             self.prob += charges[i] >= 0
+
+            self.prob += losses[i] == exports[i] * (1 - self.efficiency)
 
         self.prob.solve()
 
@@ -142,25 +150,28 @@ class Battery(object):
         imports = self.vars['imports']
         exports = self.vars['exports']
         charges = self.vars['charges']
+        losses = self.vars['losses']
 
         info = pd.DataFrame().from_dict({
             'Import [MW]': [imports[i].varValue for i in idx[:-1]] + [np.nan],
             'Export [MW]': [exports[i].varValue for i in idx[:-1]] + [np.nan],
+            'Losses [MW]': [losses[i].varValue for i in idx[:-1]] + [np.nan],
             'Charge [MWh]': [charges[i].varValue for i in idx[:]],
             'Prices [$/MWh]': prices,
             'Forecast [$/MWh]': forecasts
         })
 
-        info.loc[:, 'Power [MW]'] = info.loc[:, 'Import [MW]'] - info.loc[:, 'Export [MW]']
+        info.loc[:, 'Net [MW]'] = info.loc[:, 'Import [MW]'] - info.loc[:, 'Export [MW]'] + info.loc[:, 'Losses [MW]']
+        info.loc[:, 'Gross [MW]'] = info.loc[:, 'Import [MW]'] - info.loc[:, 'Export [MW]'] 
 
-        actual_costs = info.loc[:, 'Power [MW]'] * info.loc[:, 'Prices [$/MWh]'] / self.step
+        actual_costs = info.loc[:, 'Net [MW]'] * info.loc[:, 'Prices [$/MWh]'] / self.step
         info.loc[:, 'Actual [$/{}]'.format(self.timestep)] = actual_costs
 
-        forecast_costs = info.loc[:, 'Power [MW]'] * info.loc[:, 'Forecast [$/MWh]'] / self.step
+        forecast_costs = info.loc[:, 'Net [MW]'] * info.loc[:, 'Forecast [$/MWh]'] / self.step
         info.loc[:, 'Forecast [$/{}]'.format(self.timestep)] = forecast_costs
 
         info = info.loc[:, [
-            'Import [MW]', 'Export [MW]', 'Power [MW]', 'Charge [MWh]',
+            'Import [MW]', 'Export [MW]', 'Gross [MW]', 'Net [MW]', 'Losses [MW]', 'Charge [MWh]',
             'Prices [$/MWh]', 'Forecast [$/MWh]',
             'Actual [$/{}]'.format(self.timestep),
             'Forecast [$/{}]'.format(self.timestep)]]
@@ -174,6 +185,6 @@ if __name__ == '__main__':
 
     model = Battery(power=2, capacity=4, timestep='1hr')
 
-    prices = [10, 10, 10, 10, 10]
+    prices = [50, 10, 10, 50, 50, 10]
 
-    info = model.optimize(prices, initial_charge=2)
+    info = model.optimize(prices, initial_charge=1)

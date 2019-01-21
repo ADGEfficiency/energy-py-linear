@@ -26,7 +26,7 @@ def test_cost_calculation(power, capacity, initial_charge, timestep):
         prices=prices, initial_charge=initial_charge
     )
 
-    dispatch = info.loc[:, 'Power [MW]'].values
+    dispatch = info.loc[:, 'Net [MW]'].values
     timestep = model.timestep
     step = model.step
     check_actual_costs = sum(dispatch[:-1] * prices[:-1]) / step 
