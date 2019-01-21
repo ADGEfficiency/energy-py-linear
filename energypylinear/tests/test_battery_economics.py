@@ -19,7 +19,7 @@ def test_cost_calculation(power, capacity, initial_charge, timestep):
     prices = [10, 20, 30, -90, 50, 2000, -1]
 
     model = energypylinear.Battery(
-        power=power, capacity=capacity, timestep=timestep
+        power=power, capacity=capacity, timestep=timestep, efficiency=1.0
     )
 
     info = model.optimize(
