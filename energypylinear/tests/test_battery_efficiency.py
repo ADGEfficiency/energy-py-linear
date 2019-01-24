@@ -12,6 +12,7 @@ gross = net * (1 - effy) + net
 net = gross / 1.5
 """
 
+
 @pytest.mark.parametrize(
     'prices, initial_charge, efficiency, expected_dispatch',
     [
@@ -20,7 +21,7 @@ net = gross / 1.5
         ([10, 50, 10, 50, 10], 0, 0.5, [4.0, -1.3333334, 4.0, -1.3333334, None])
     ]
 )
-def test_battery_efficiency(prices, initial_charge, efficiency, expected_dispatch):
+def test_batt_efficiency(prices, initial_charge, efficiency, expected_dispatch):
     power = 4
     capacity = 4
 

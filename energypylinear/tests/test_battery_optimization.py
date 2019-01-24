@@ -3,6 +3,7 @@ import unittest
 
 import energypylinear
 
+
 @pytest.mark.parametrize(
     'prices, initial_charge, expected_dispatch',
     [

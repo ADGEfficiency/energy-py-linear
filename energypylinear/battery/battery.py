@@ -1,9 +1,8 @@
-import logging
 import json
 
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
 
-from energypylinear import make_logger, read_logs
+from energypylinear import make_logger
 
 logger = make_logger()
 
@@ -12,31 +11,23 @@ logger = make_logger()
 #  5min=12, 30min=2, 60min=1 etc
 
 steps = {
-    '5min': 60/5,
-    '30min': 60/30,
+    '5min': 60 / 5,
+    '30min': 60 / 30,
     '60min': 1,
     '1hr': 1
-    }
+}
 
 
 class Battery(object):
+    """Electric battery operating in price arbitrage.
+
+    power       float [MW] same for charge & discharge
+    capacity    float [MWh]
+    efficiency  float [%] round trip, applied to
+    step        str   5min, 1hr etc
     """
-    Electric battery operating in price arbitrage
 
-    power      float [MW] same for charge & discharge
-    capacity   float [MWh]
-    efficiency float [%] round trip, applied to
-    step   str   5min, 1hr etc
-    """
-
-    def __init__(
-            self,
-            power,
-            capacity,
-            efficiency=0.9,
-            timestep='5min'
-
-    ):
+    def __init__(self, power, capacity, efficiency=0.9, timestep='5min'):
         self.power = float(power)
         self.capacity = float(capacity)
         self.efficiency = float(efficiency)
@@ -57,15 +48,16 @@ class Battery(object):
         self.prob = LpProblem('cost minimization', LpMinimize)
 
     def setup_vars(self, idx):
-        """ creates a dictionary with the pulp variables """
-
+        """Create a dictionary with the pulp variables."""
         return {
             'imports': LpVariable.dicts(
-                'import', idx[:-1], lowBound=0, upBound=self.power, cat='Continuous'
+                'import', idx[:-1], lowBound=0,
+                upBound=self.power, cat='Continuous'
             ),
 
             'exports': LpVariable.dicts(
-                'export', idx[:-1], lowBound=0, upBound=self.power, cat='Continuous'
+                'export', idx[:-1], lowBound=0,
+                upBound=self.power, cat='Continuous'
             ),
 
             'charges': LpVariable.dicts(
@@ -77,14 +69,8 @@ class Battery(object):
             )
         }
 
-    def optimize(
-            self,
-            prices,
-            forecasts=None,
-            initial_charge=0
-    ):
-        """
-        runs the linear program to optimize the battery
+    def optimize(self, prices, forecasts=None, initial_charge=0):
+        """Run the linear program to optimize the battery.
 
         prices         list [$/MWh]
         forecasts      list [$/MWh]
@@ -116,10 +102,10 @@ class Battery(object):
         #  initial charge
         self.prob += charges[0] == initial_charge
 
-        #  TODO comment
+        #  TODO comment about why the last item in idx is ignored.
         for i in idx[:-1]:
             #  energy balance across two time periods
-            self.prob += charges[i+1] == charges[i] + (imports[i] - exports[i] - losses[i]) / self.step
+            self.prob += charges[i + 1] == charges[i] + (imports[i] - exports[i] - losses[i]) / self.step
 
             #  constrain battery charge level
             self.prob += charges[i] <= self.capacity
@@ -140,25 +126,28 @@ class Battery(object):
 
         return self.info
 
-
-    def get_value_or_nan(self, varValue):
+    def get_value_or_nan(self, var_value):
+        """Get the value or assign None."""
         try:
-            return varValue.value()
+            return var_value.value()
         except AttributeError:
             return None
 
-    def calc_net( self,imp, exp, loss):
+    def calc_net(self, imp, exp, loss):
+        """Calculate the Net, or None if inputs are None."""
         if None in [imp, exp, loss]:
             return None
         else:
             return imp - exp + loss
 
-    def calc_cost(self, net, price, step):
-        if net is None:
+    def calc_cost(self, energy, price, step):
+        """Calculate the cost, or None if energy is None."""
+        if energy is None:
             return None
-        return (net * price) / step
+        return (energy * price) / step
 
     def calc_gross(self, imp, exp):
+        """Calculate the Gross, or None if Import or Export are None."""
         try:
             return imp - exp
         except TypeError:
