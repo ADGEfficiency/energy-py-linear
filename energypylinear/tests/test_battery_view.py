@@ -1,4 +1,5 @@
 import pytest
+import pandas as pd
 import numpy as np
 
 import energypylinear
@@ -21,10 +22,11 @@ def test_view_output():
                        'Forecast [$/MWh]', 'Actual [$/5min]',
                        'Forecast [$/5min]']
 
+    results = pd.DataFrame(info, columns=info[0].keys())
     for header in expected_header:
-        assert(header in info.columns)
+        assert(header in results.columns)
 
-    result_rows = info.values.tolist()
+    result_rows = results.values.tolist()
     assert result_rows[0] == [2.0, 0.0, 2.0, 2.0, 0.0, 0.0, 10.0, 10.0, 1.6666666666666667, 1.6666666666666667]
     assert result_rows[1] == [2.0, 0.0, 2.0, 2.0, 0.0, 0.16666667, 20.0, 20.0, 3.3333333333333335, 3.3333333333333335]
     assert result_rows[2] == [0.0, 1.6363636, -1.6363636, -1.47272724, 0.16363636, 0.33333333, 30.0, 30.0, -3.6818180999999996, -3.6818180999999996]

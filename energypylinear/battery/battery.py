@@ -142,44 +142,61 @@ class Battery(object):
 
         return self.info
 
-    def generate_outputs(
-            self, prices, forecasts, idx
-    ):
-        """ creates a DataFrame summarizing the optimization run """
 
-        imports = self.vars['imports']
-        exports = self.vars['exports']
-        charges = self.vars['charges']
-        losses = self.vars['losses']
+    def get_value_or_nan(self, varValue):
+        try:
+            return varValue.value()
+        except AttributeError:
+            return None
 
-        info = pd.DataFrame().from_dict({
-            'Import [MW]': [imports[i].varValue for i in idx[:-1]] + [np.nan],
-            'Export [MW]': [exports[i].varValue for i in idx[:-1]] + [np.nan],
-            'Losses [MW]': [losses[i].varValue for i in idx[:-1]] + [np.nan],
-            'Charge [MWh]': [charges[i].varValue for i in idx[:]],
-            'Prices [$/MWh]': prices,
-            'Forecast [$/MWh]': forecasts
-        })
+    def calc_net( self,imp, exp, loss):
+        if None in [imp, exp, loss]:
+            return None
+        else:
+            return imp - exp + loss
 
-        info.loc[:, 'Net [MW]'] = info.loc[:, 'Import [MW]'] - info.loc[:, 'Export [MW]'] + info.loc[:, 'Losses [MW]']
-        info.loc[:, 'Gross [MW]'] = info.loc[:, 'Import [MW]'] - info.loc[:, 'Export [MW]'] 
+    def calc_cost(self, net, price, step):
+        if net is None:
+            return None
+        return (net * price) / step
 
-        actual_costs = info.loc[:, 'Net [MW]'] * info.loc[:, 'Prices [$/MWh]'] / self.step
-        info.loc[:, 'Actual [$/{}]'.format(self.timestep)] = actual_costs
+    def calc_gross(self, imp, exp):
+        try:
+            return imp - exp
+        except TypeError:
+            return None
 
-        forecast_costs = info.loc[:, 'Net [MW]'] * info.loc[:, 'Forecast [$/MWh]'] / self.step
-        info.loc[:, 'Forecast [$/{}]'.format(self.timestep)] = forecast_costs
+    def generate_outputs(self, prices, forecasts, idx_range):
+        """Create a dictionary of results and summaries."""
+        results = []
+        for row_id in idx_range:
+            imp = self.get_value_or_nan(self.vars['imports'].get(row_id))
+            exp = self.get_value_or_nan(self.vars['exports'].get(row_id))
+            loss = self.get_value_or_nan(self.vars['losses'].get(row_id))
+            chg = self.get_value_or_nan(self.vars['charges'].get(row_id))
+            price = prices[row_id]
+            forecast = forecasts[row_id]
 
-        info = info.loc[:, [
-            'Import [MW]', 'Export [MW]', 'Gross [MW]', 'Net [MW]', 'Losses [MW]', 'Charge [MWh]',
-            'Prices [$/MWh]', 'Forecast [$/MWh]',
-            'Actual [$/{}]'.format(self.timestep),
-            'Forecast [$/{}]'.format(self.timestep)]]
+            net = self.calc_net(imp, exp, loss)
+            actual_costs = self.calc_cost(net, price, self.step)
+            forecast_costs = self.calc_cost(net, forecast, self.step)
+            gross = self.calc_gross(imp, exp)
 
-        with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-            print(info)
+            result = {
+                'Import [MW]': imp,
+                'Export [MW]': exp,
+                'Gross [MW]': gross,
+                'Net [MW]': net,
+                'Losses [MW]': loss,
+                'Charge [MWh]': chg,
+                'Prices [$/MWh]': price,
+                'Forecast [$/MWh]': forecast,
+                'Actual [$/{}]'.format(self.timestep): actual_costs,
+                'Forecast [$/{}]'.format(self.timestep): forecast_costs
+            }
+            results.append(result)
 
-        return info
+        return results
 
 if __name__ == '__main__':
 
