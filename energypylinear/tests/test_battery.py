@@ -1,7 +1,10 @@
-import numpy as np
 import pytest
 
 import energypylinear
+
+
+def map_values(results, keyName):
+    return [res[keyName] for res in results if res[keyName] is not None]
 
 
 @pytest.mark.parametrize(
@@ -20,32 +23,26 @@ def test_power_capacity_initial_charge(power, capacity, initial_charge):
     )
 
     #  check we don't charge or discharge more than battery rating
-    dispatch = info.loc[:, 'Gross [MW]'].values
+    dispatch = map_values(info, 'Gross [MW]')
     assert(max(dispatch) <= power)
     assert(min(dispatch) >= -power)
 
     #  check we don't exceed battery capacity
-    charges = info.loc[:, 'Charge [MWh]'].values
+    charges = map_values(info, 'Charge [MWh]')
     assert(max(charges) <= capacity)
     assert(min(charges) >= 0)
 
     #  check we set initial charge correctly
     assert(charges[0] == initial_charge)
 
-    #  check gross is always bigger than net
-    gross = np.abs(info.loc[:, 'Gross [MW]'].values)
-    net = np.abs(info.loc[:, 'Net [MW]'].values)
+    # check gross is greater or eq to net
+    gross = [abs(x) for x in map_values(info, 'Gross [MW]')]
+    net = [abs(x) for x in map_values(info, 'Net [MW]')]
 
-    np.testing.assert_array_compare(
-        np.greater_equal, gross, net
-    )
+    assert all([g >= n for g, n in zip(gross, net)])
 
-    #  check losses are smaller than export
-    gross = info.loc[:, 'Gross [MW]'].values
-    net = info.loc[:, 'Net [MW]'].values
-    export = info.loc[:, 'Export [MW]'].values
-    losses = info.loc[:, 'Losses [MW]'].values
+    # check losses are smaller or eq to export
+    export = map_values(info, 'Export [MW]')
+    losses = map_values(info, 'Losses [MW]')
 
-    np.testing.assert_array_compare(
-        np.greater_equal, export, losses
-    )
+    assert all([l <= e for l, e in zip(losses, export)])

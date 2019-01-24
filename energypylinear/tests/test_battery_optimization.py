@@ -1,14 +1,14 @@
-import numpy as np
 import pytest
+import unittest
 
 import energypylinear
 
 @pytest.mark.parametrize(
     'prices, initial_charge, expected_dispatch',
     [
-        ([10, 10, 10], 0, [0, 0, np.nan]),
-        ([20, 10, 10], 1, [-1, 0, np.nan]),
-        ([10, 50, 10, 50, 10], 0, [4, -4, 4, -4, np.nan])
+        ([10, 10, 10], 0, [0, 0, None]),
+        ([20, 10, 10], 1, [-1, 0, None]),
+        ([10, 50, 10, 50, 10], 0, [4, -4, 4, -4, None])
     ]
 )
 def test_battery_optimization(prices, initial_charge, expected_dispatch):
@@ -23,7 +23,5 @@ def test_battery_optimization(prices, initial_charge, expected_dispatch):
         prices=prices, initial_charge=initial_charge
     )
 
-    dispatch = info.loc[:, 'Net [MW]'].values
-
-    np.testing.assert_equal(dispatch, expected_dispatch)
-
+    dispatch = [res['Net [MW]'] for res in info]
+    unittest.TestCase().assertCountEqual(dispatch, expected_dispatch)

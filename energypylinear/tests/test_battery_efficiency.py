@@ -1,4 +1,4 @@
-import numpy as np
+import unittest
 import pytest
 
 import energypylinear
@@ -15,9 +15,9 @@ net = gross / 1.5
 @pytest.mark.parametrize(
     'prices, initial_charge, efficiency, expected_dispatch',
     [
-        ([10, 10, 10], 0, 0.5, [0, 0, np.nan]),
-        ([20, 10, 10], 1, 0.5, [1/1.5-1, 0, np.nan]),
-        ([10, 50, 10, 50, 10], 0, 0.5, [4, 4/1.5-4, 4, 4/1.5-4, np.nan])
+        ([10, 10, 10], 0, 0.5, [0.0, 0.0, None]),
+        ([20, 10, 10], 1, 0.5, [-0.33333334000000003, 0.0, None]),
+        ([10, 50, 10, 50, 10], 0, 0.5, [4.0, -1.3333334, 4.0, -1.3333334, None])
     ]
 )
 def test_battery_efficiency(prices, initial_charge, efficiency, expected_dispatch):
@@ -32,7 +32,6 @@ def test_battery_efficiency(prices, initial_charge, efficiency, expected_dispatc
         prices=prices, initial_charge=initial_charge
     )
 
-    dispatch = info.loc[:, 'Net [MW]'].values
+    dispatch = [res['Net [MW]'] for res in info]
 
-    np.testing.assert_array_almost_equal(dispatch, expected_dispatch)
-
+    unittest.TestCase().assertCountEqual(dispatch, expected_dispatch)

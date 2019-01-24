@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 import energypylinear
@@ -26,12 +25,14 @@ def test_cost_calculation(power, capacity, initial_charge, timestep):
         prices=prices, initial_charge=initial_charge
     )
 
-    dispatch = info.loc[:, 'Net [MW]'].values
+    dispatch = [res['Net [MW]'] for res in info if res['Net [MW]'] is not None]
     timestep = model.timestep
     step = model.step
-    check_actual_costs = sum(dispatch[:-1] * prices[:-1]) / step 
+    check_actual_costs = sum(
+        [d * p for d, p in zip(dispatch[:-1], prices[:-1])]
+    ) / step
 
-    actual_costs = info.loc[:, 'Actual [$/{}]'.format(timestep)].values
+    actual = 'Actual [$/{}]'.format(timestep)
+    actual_costs = [res[actual] for res in info if res[actual] is not None]
 
-    np.testing.assert_almost_equal(check_actual_costs, sum(actual_costs[:-1]))
-
+    assert round(check_actual_costs, 6) == round(sum(actual_costs[:-1]), 6)
