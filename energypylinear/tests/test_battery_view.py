@@ -1,4 +1,7 @@
 import pytest
+import io
+import csv
+
 import pandas as pd
 import numpy as np
 
@@ -22,6 +25,16 @@ def test_view_output():
                        'Forecast [$/MWh]', 'Actual [$/5min]',
                        'Forecast [$/5min]']
 
+    csvfile = io.StringIO()
+    fieldnames = info[0].keys()
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+    writer.writeheader()
+
+    for row in info:
+        writer.writerow(row)
+
+    import pdb;pdb.set_trace()
     results = pd.DataFrame(info, columns=info[0].keys())
     for header in expected_header:
         assert(header in results.columns)
