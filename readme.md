@@ -26,7 +26,7 @@ It is also possible to send in forecast prices along with actual prices, and to 
 #  a forecast that is the inverse of the prices we used above
 >>> forecasts = [50, 10, 50, 10, 50]
 
->>> info = model.optimize(prices, forecast=forecasts, initial_charge=4)
+>>> info = model.optimize(prices, forecasts=forecasts, initial_charge=4)
 ```
 
 ## Installation
