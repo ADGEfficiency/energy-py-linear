@@ -1,13 +1,10 @@
 ## energy-py-linear
 
-energy-py-linear is a library for optimizing energy systems using mixed integer linear programming.  Currently the library supports battery storage and combined heat power.
-
-Linear programming is a technique that guarantees finding the global optimum for a well formulated linear system.  
+energy-py-linear is a library for optimizing energy systems using mixed integer linear programming.  Linear programming is a technique that guarantees finding the global optimum for a linear system.  Battery storage and combined heat and power are two examples of energy systems that can be optimized as linear programs.
 
 ## Usage
 
 ```python
-
 >>> import energypylinear as epl
 
 >>> model = epl.Battery(power=2, capacity=4, timestep='30min')
