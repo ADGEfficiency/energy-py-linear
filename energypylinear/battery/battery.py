@@ -90,7 +90,6 @@ class Battery(object):
 
         imports = self.vars['imports']
         exports = self.vars['exports']
-        # gross_power = self.vars['gross_power']
         charges = self.vars['charges']
         losses = self.vars['losses']
 
@@ -103,7 +102,8 @@ class Battery(object):
         #  initial charge
         self.prob += charges[0] == initial_charge
 
-        #  TODO comment about why the last item in idx is ignored.
+        #  last item in the index isn't used because the last timestep only
+        #  represents the final charge level - no import or export is done
         for i in idx[:-1]:
             #  energy balance across two time periods
             self.prob += charges[i + 1] == charges[i] + (imports[i] - exports[i] - losses[i]) / self.step
@@ -183,8 +183,8 @@ class Battery(object):
                 ('Forecast [$/{}]'.format(self.timestep), forecast_costs)
             ]
 
+            #  added ordered dict to get consistent iteration across results
             out = OrderedDict()
-
             for key, value in result:
                 out[key] = value
 
