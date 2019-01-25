@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import json
 
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
@@ -169,19 +170,25 @@ class Battery(object):
             forecast_costs = self.calc_cost(net, forecast, self.step)
             gross = self.calc_gross(imp, exp)
 
-            result = {
-                'Import [MW]': imp,
-                'Export [MW]': exp,
-                'Gross [MW]': gross,
-                'Net [MW]': net,
-                'Losses [MW]': loss,
-                'Charge [MWh]': chg,
-                'Prices [$/MWh]': price,
-                'Forecast [$/MWh]': forecast,
-                'Actual [$/{}]'.format(self.timestep): actual_costs,
-                'Forecast [$/{}]'.format(self.timestep): forecast_costs
-            }
-            results.append(result)
+            result = [
+                ('Import [MW]', imp),
+                ('Export [MW]', exp),
+                ('Gross [MW]', gross),
+                ('Net [MW]', net),
+                ('Losses [MW]', loss),
+                ('Charge [MWh]', chg),
+                ('Prices [$/MWh]', price),
+                ('Forecast [$/MWh]', forecast),
+                ('Actual [$/{}]'.format(self.timestep), actual_costs),
+                ('Forecast [$/{}]'.format(self.timestep), forecast_costs)
+            ]
+
+            out = OrderedDict()
+
+            for key, value in result:
+                out[key] = value
+
+            results.append(out)
 
         return results
 
