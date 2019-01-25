@@ -5,8 +5,7 @@ from pulp import LpProblem, LpMinimize, LpVariable, LpStatus
 """
 all efficiencies are HHV
 
-you cant use divide by with pulp
-have to do obj first then do constraints
+you cant use divide by with pulp ?
 
 obj needs all the costs
 - gas
@@ -15,11 +14,29 @@ obj needs all the costs
 balances need
 - steam
 - elect
-
 """
 
 
-class GasTurbine(object):
+class Asset(object):
+    enthalpy =  (2851.34 - 418.991) / 1000
+    """
+    Generic CHP asset
+    """
+
+    def __init__(self):
+        pass
+
+    def steam_generated(self):
+        return 0.0
+
+    def gas_burnt(self):
+        return 0.0
+
+    def power_generated(self):
+        return 0.0
+
+
+class GasTurbine(Asset):
     lb = 50
     ub = 100
 
@@ -28,6 +45,7 @@ class GasTurbine(object):
             size,
             name,
     ):
+        super().__init__() 
 
         self.size = size
 
@@ -49,7 +67,7 @@ class GasTurbine(object):
     def steam_generated(self):
         """ t/h """
         heat_generated = self.size * self.load * (1 / self.effy['electrical']) * self.effy['thermal']
-        return heat_generated * (1 / enthalpy) * 3.6
+        return heat_generated * (1 / self.enthalpy) * 3.6
 
     def gas_burnt(self):
         """  MW HHV """
@@ -60,7 +78,7 @@ class GasTurbine(object):
         return self.load * self.size
 
 
-class Boiler(object):
+class Boiler(Asset):
 
     def __init__(
             self,
@@ -69,7 +87,7 @@ class Boiler(object):
             min_turndown=0.0,
             parasitics=0.0
     ):
-
+        super().__init__() 
         self.lb = min_turndown
         self.ub = size
 
@@ -89,38 +107,38 @@ class Boiler(object):
 
         self.parasitics = parasitics
 
-    def HP_steam_generated(self):
+    def steam_generated(self):
         """ t/h """
         return self.load
-
-    def LP_steam_generated(self):
-        return 0
 
     def gas_burnt(self):
         """ MW HHV """
         #  https://www.tlv.com/global/TI/calculator/steam-table-temperature.html
-        #  30 barG, 250 C vapour - liquid enthalpy at 100C
         #  MJ/kg = kJ/kg * MJ/kJ
 
         #  MW = t/h * kg/t * hr/sec * MJ/kg / effy
-        return self.load * (1/3.6) * enthalpy * (1/self.effy['thermal'])
+        return self.load * (1/3.6) * self.enthalpy * (1/self.effy['thermal'])
 
     def power_generated(self):
         """ MW """
         return self.parasitics
 
 
-class SteamTurbine(object):
+class SteamTurbine(Asset):
 
     def __init__(
             self,
             name,
     ):
-        self.lb = 15  # t/h
-        self.ub = 30  # t/h
+        super().__init__() 
 
-        max_power = 6  # MW
-        self.slope = (6 - 0) / (30 - 0)
+        #  t/h
+        self.lb = 15
+        self.ub = 30
+
+        #  MW
+        max_power = 6
+        self.slope = (max_power - 0) / (30 - 0)
 
         self.cont = LpVariable(
             name, 0, self.ub
@@ -144,9 +162,8 @@ class SteamTurbine(object):
         return self.cont * self.slope
 
 
-enthalpy =  (2851.34 - 418.991) / 1000
 gas_price = 20
-electricity_price = 1000
+electricity_price = -50
 
 prob = LpProblem('cost minimization', LpMinimize)
 
@@ -159,8 +176,7 @@ assets = [
 prob += sum([asset.gas_burnt() for asset in assets]) * gas_price \
     - sum([asset.power_generated() for asset in assets]) * electricity_price
 
-prob += sum([asset.HP_steam_generated() for asset in assets]) == 100, 'HP_steam_balance'
-prob += sum([asset.LP_steam_generated() for asset in assets]) == 100, 'LP_steam_balance'
+prob += sum([asset.steam_generated() for asset in assets]) == 100, 'steam_balance'
 
 net_grid = LpVariable('net_power_to_site', -100, 100)
 prob += sum([asset.power_generated() for asset in assets]) + net_grid == 100, 'power_balance'
