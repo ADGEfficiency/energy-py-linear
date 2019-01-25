@@ -1,11 +1,8 @@
-import logging
 import json
 
-import numpy as np
-import pandas as pd
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
 
-from energypylinear import make_logger, read_logs
+from energypylinear import make_logger
 
 logger = make_logger()
 
@@ -14,31 +11,23 @@ logger = make_logger()
 #  5min=12, 30min=2, 60min=1 etc
 
 steps = {
-    '5min': 60/5,
-    '30min': 60/30,
+    '5min': 60 / 5,
+    '30min': 60 / 30,
     '60min': 1,
     '1hr': 1
-    }
+}
 
 
 class Battery(object):
+    """Electric battery operating in price arbitrage.
+
+    power       float [MW] same for charge & discharge
+    capacity    float [MWh]
+    efficiency  float [%] round trip, applied to
+    step        str   5min, 1hr etc
     """
-    Electric battery operating in price arbitrage
 
-    power      float [MW] same for charge & discharge
-    capacity   float [MWh]
-    efficiency float [%] round trip, applied to
-    step   str   5min, 1hr etc
-    """
-
-    def __init__(
-            self,
-            power,
-            capacity,
-            efficiency=0.9,
-            timestep='5min'
-
-    ):
+    def __init__(self, power, capacity, efficiency=0.9, timestep='5min'):
         self.power = float(power)
         self.capacity = float(capacity)
         self.efficiency = float(efficiency)
@@ -59,15 +48,16 @@ class Battery(object):
         self.prob = LpProblem('cost minimization', LpMinimize)
 
     def setup_vars(self, idx):
-        """ creates a dictionary with the pulp variables """
-
+        """Create a dictionary with the pulp variables."""
         return {
             'imports': LpVariable.dicts(
-                'import', idx[:-1], lowBound=0, upBound=self.power, cat='Continuous'
+                'import', idx[:-1], lowBound=0,
+                upBound=self.power, cat='Continuous'
             ),
 
             'exports': LpVariable.dicts(
-                'export', idx[:-1], lowBound=0, upBound=self.power, cat='Continuous'
+                'export', idx[:-1], lowBound=0,
+                upBound=self.power, cat='Continuous'
             ),
 
             'charges': LpVariable.dicts(
@@ -79,14 +69,8 @@ class Battery(object):
             )
         }
 
-    def optimize(
-            self,
-            prices,
-            forecasts=None,
-            initial_charge=0
-    ):
-        """
-        runs the linear program to optimize the battery
+    def optimize(self, prices, forecasts=None, initial_charge=0):
+        """Run the linear program to optimize the battery.
 
         prices         list [$/MWh]
         forecasts      list [$/MWh]
@@ -118,10 +102,10 @@ class Battery(object):
         #  initial charge
         self.prob += charges[0] == initial_charge
 
-        #  TODO comment
+        #  TODO comment about why the last item in idx is ignored.
         for i in idx[:-1]:
             #  energy balance across two time periods
-            self.prob += charges[i+1] == charges[i] + (imports[i] - exports[i] - losses[i]) / self.step
+            self.prob += charges[i + 1] == charges[i] + (imports[i] - exports[i] - losses[i]) / self.step
 
             #  constrain battery charge level
             self.prob += charges[i] <= self.capacity
@@ -142,44 +126,64 @@ class Battery(object):
 
         return self.info
 
-    def generate_outputs(
-            self, prices, forecasts, idx
-    ):
-        """ creates a DataFrame summarizing the optimization run """
+    def get_value_or_nan(self, var_value):
+        """Get the value or assign None."""
+        try:
+            return var_value.value()
+        except AttributeError:
+            return None
 
-        imports = self.vars['imports']
-        exports = self.vars['exports']
-        charges = self.vars['charges']
-        losses = self.vars['losses']
+    def calc_net(self, imp, exp, loss):
+        """Calculate the Net, or None if inputs are None."""
+        if None in [imp, exp, loss]:
+            return None
+        else:
+            return imp - exp + loss
 
-        info = pd.DataFrame().from_dict({
-            'Import [MW]': [imports[i].varValue for i in idx[:-1]] + [np.nan],
-            'Export [MW]': [exports[i].varValue for i in idx[:-1]] + [np.nan],
-            'Losses [MW]': [losses[i].varValue for i in idx[:-1]] + [np.nan],
-            'Charge [MWh]': [charges[i].varValue for i in idx[:]],
-            'Prices [$/MWh]': prices,
-            'Forecast [$/MWh]': forecasts
-        })
+    def calc_cost(self, energy, price, step):
+        """Calculate the cost, or None if energy is None."""
+        if energy is None:
+            return None
+        return (energy * price) / step
 
-        info.loc[:, 'Net [MW]'] = info.loc[:, 'Import [MW]'] - info.loc[:, 'Export [MW]'] + info.loc[:, 'Losses [MW]']
-        info.loc[:, 'Gross [MW]'] = info.loc[:, 'Import [MW]'] - info.loc[:, 'Export [MW]'] 
+    def calc_gross(self, imp, exp):
+        """Calculate the Gross, or None if Import or Export are None."""
+        try:
+            return imp - exp
+        except TypeError:
+            return None
 
-        actual_costs = info.loc[:, 'Net [MW]'] * info.loc[:, 'Prices [$/MWh]'] / self.step
-        info.loc[:, 'Actual [$/{}]'.format(self.timestep)] = actual_costs
+    def generate_outputs(self, prices, forecasts, idx_range):
+        """Create a dictionary of results and summaries."""
+        results = []
+        for row_id in idx_range:
+            imp = self.get_value_or_nan(self.vars['imports'].get(row_id))
+            exp = self.get_value_or_nan(self.vars['exports'].get(row_id))
+            loss = self.get_value_or_nan(self.vars['losses'].get(row_id))
+            chg = self.get_value_or_nan(self.vars['charges'].get(row_id))
+            price = prices[row_id]
+            forecast = forecasts[row_id]
 
-        forecast_costs = info.loc[:, 'Net [MW]'] * info.loc[:, 'Forecast [$/MWh]'] / self.step
-        info.loc[:, 'Forecast [$/{}]'.format(self.timestep)] = forecast_costs
+            net = self.calc_net(imp, exp, loss)
+            actual_costs = self.calc_cost(net, price, self.step)
+            forecast_costs = self.calc_cost(net, forecast, self.step)
+            gross = self.calc_gross(imp, exp)
 
-        info = info.loc[:, [
-            'Import [MW]', 'Export [MW]', 'Gross [MW]', 'Net [MW]', 'Losses [MW]', 'Charge [MWh]',
-            'Prices [$/MWh]', 'Forecast [$/MWh]',
-            'Actual [$/{}]'.format(self.timestep),
-            'Forecast [$/{}]'.format(self.timestep)]]
+            result = {
+                'Import [MW]': imp,
+                'Export [MW]': exp,
+                'Gross [MW]': gross,
+                'Net [MW]': net,
+                'Losses [MW]': loss,
+                'Charge [MWh]': chg,
+                'Prices [$/MWh]': price,
+                'Forecast [$/MWh]': forecast,
+                'Actual [$/{}]'.format(self.timestep): actual_costs,
+                'Forecast [$/{}]'.format(self.timestep): forecast_costs
+            }
+            results.append(result)
 
-        with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-            print(info)
-
-        return info
+        return results
 
 if __name__ == '__main__':
 

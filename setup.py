@@ -1,10 +1,10 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 setup(
     name='energypylinear',
 
-    version='0.0.1',
+    version='0.0.2',
     description='linear programming for energy systems',
     author='Adam Green',
     author_email='adam.green@adgefficiency.com',
@@ -14,5 +14,5 @@ setup(
 
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
-    install_requires=[]
+    install_requires=['PuLP']
 )
