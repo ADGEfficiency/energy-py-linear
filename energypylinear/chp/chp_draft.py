@@ -85,7 +85,8 @@ class Boiler(Asset):
             size,
             name,
             min_turndown=0.0,
-            parasitics=0.0
+            parasitics=0.1,
+            efficiency=0.8
     ):
         super().__init__() 
         self.lb = min_turndown
@@ -102,7 +103,7 @@ class Boiler(Asset):
         self.load = self.cont
 
         self.effy = {
-            'thermal': 0.8
+            'thermal': efficiency
         }
 
         self.parasitics = parasitics
@@ -129,6 +130,7 @@ class SteamTurbine(Asset):
     def __init__(
             self,
             name,
+            size
     ):
         super().__init__() 
 
@@ -137,8 +139,7 @@ class SteamTurbine(Asset):
         self.ub = 30
 
         #  MW
-        max_power = 6
-        self.slope = (max_power - 0) / (30 - 0)
+        self.slope = (size - 0) / (30 - 0)
 
         self.cont = LpVariable(
             name, 0, self.ub
@@ -148,11 +149,8 @@ class SteamTurbine(Asset):
             '{}_bin'.format(name), lowBound=0, upBound=1, cat='Integer'
         )
 
-    def HP_steam_generated(self):
-        return - self.cont
-
-    def LP_steam_generated(self):
-        return self.cont
+    def steam_generated(self):
+        return -self.cont
 
     def gas_burnt(self):
         return 0
@@ -162,35 +160,70 @@ class SteamTurbine(Asset):
         return self.cont * self.slope
 
 
-gas_price = 20
-electricity_price = -50
+if __name__ == '__main__':
+    gas_price = 20
+    electricity_price = 1000
 
-prob = LpProblem('cost minimization', LpMinimize)
+    site_steam_demand = 100
+    site_power_demand = 50
 
-assets = [
-    GasTurbine(size=10, name='gt1'),
-    Boiler(size=100, name='blr1')
-]
+    prob = LpProblem('cost minimization', LpMinimize)
 
-#  need to form objective function first
-prob += sum([asset.gas_burnt() for asset in assets]) * gas_price \
-    - sum([asset.power_generated() for asset in assets]) * electricity_price
+    assets = [
+        GasTurbine(size=10, name='gt1'),
+        Boiler(size=100, name='blr1'),
+        Boiler(size=100, name='blr2', efficiency=0.9),
+        SteamTurbine(size=6, name='st1')
+    ]
 
-prob += sum([asset.steam_generated() for asset in assets]) == 100, 'steam_balance'
+    net_grid = LpVariable('net_power_to_site', -100, 100)
 
-net_grid = LpVariable('net_power_to_site', -100, 100)
-prob += sum([asset.power_generated() for asset in assets]) + net_grid == 100, 'power_balance'
+    #  need to form objective function first
+    prob += sum([asset.gas_burnt() for asset in assets]) * gas_price \
+        + net_grid * electricity_price
 
-#  constraints on the asset min & maxes
-for asset in assets:
-    prob += asset.cont - asset.ub * asset.binary <= 0
-    prob += asset.lb * asset.binary - asset.cont <= 0
+    prob += sum([asset.steam_generated() for asset in assets]) == site_steam_demand, 'steam_balance'
 
-prob.writeLP('chp.lp')
+    prob += sum([asset.power_generated() for asset in assets]) + net_grid == site_power_demand, 'power_balance'
 
-prob.solve()
+    #  constraints on the asset min & maxes
+    for asset in assets:
+        prob += asset.cont - asset.ub * asset.binary <= 0
+        prob += asset.lb * asset.binary - asset.cont <= 0
 
-print(LpStatus[prob.status])
+    prob.solve()
 
-for v in prob.variables():
-    print('{} {}'.format(v.name, v.varValue))
+    print(LpStatus[prob.status])
+
+    for v in prob.variables():
+        print('{} {}'.format(v.name, v.varValue))
+
+    steam_generated = sum(
+        [max(asset.steam_generated().value(), 0) for asset in assets]
+    )
+    steam_consumed = sum(
+        [-min(asset.steam_generated().value(), 0) for asset in assets]
+    )
+
+    print('total steam generated {:2.1f} t/h'.format(steam_generated))
+    print('total steam consumed {:2.1f} t/h'.format(steam_consumed))
+    print('steam to site {:2.1f} t/h'.format(site_steam_demand))
+
+    def calc_value(value):
+        try:
+            return float(value)
+        except TypeError:
+            return float(value.value())
+
+    power_generated = sum(
+        [max(calc_value(asset.power_generated()), 0) for asset in assets]
+    )
+    power_consumed = sum(
+        [-min(calc_value(asset.power_generated()), 0) for asset in assets]
+    )
+    net_grid = float(net_grid.value())
+
+    print('total power generated {:2.1f} MWe'.format(power_generated))
+    print('total power consumed {:2.1f} MWe'.format(power_consumed))
+    print('net grid {:2.1f} MWe'.format(net_grid))
+    print('power to site {:2.1f} MWe'.format(site_power_demand))
