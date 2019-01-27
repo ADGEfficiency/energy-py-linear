@@ -1,11 +1,10 @@
 from collections import OrderedDict
 import json
-
+import logging
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
 
-from energypylinear import make_logger
 
-logger = make_logger()
+logger = logging.getLogger(__name__)
 
 #  factor used to convert MW to MWh
 #  MWh = MW / step
