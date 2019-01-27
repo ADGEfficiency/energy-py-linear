@@ -2,7 +2,6 @@ import pulp
 
 from pulp import LpProblem, LpMinimize, LpVariable, LpStatus
 
-# from assets import Boiler, GasTurbine, SteamTurbine
 from energypylinear.chp import Boiler, GasTurbine, SteamTurbine
 
 
@@ -27,9 +26,13 @@ if __name__ == '__main__':
     prob += sum([asset.gas_burnt() for asset in assets]) * gas_price \
         + net_grid * electricity_price
 
-    prob += sum([asset.steam_generated() for asset in assets]) == site_steam_demand, 'steam_balance'
+    prob += sum([asset.steam_generated() for asset in assets]) \
+        - sum([asset.steam_consumed() for asset in assets]) \
+        == site_steam_demand, 'steam_balance'
 
-    prob += sum([asset.power_generated() for asset in assets]) + net_grid == site_power_demand, 'power_balance'
+    prob += sum([asset.power_generated() for asset in assets]) \
+        - sum([asset.power_consumed() for asset in assets]) \
+        + net_grid == site_power_demand, 'power_balance'
 
     #  constraints on the asset min & maxes
     for asset in assets:
@@ -43,28 +46,28 @@ if __name__ == '__main__':
     for v in prob.variables():
         print('{} {}'.format(v.name, v.varValue))
 
-    steam_generated = sum(
-        [max(asset.steam_generated().value(), 0) for asset in assets]
-    )
-    steam_consumed = sum(
-        [-min(asset.steam_generated().value(), 0) for asset in assets]
-    )
-
-    print('total steam generated {:2.1f} t/h'.format(steam_generated))
-    print('total steam consumed {:2.1f} t/h'.format(steam_consumed))
-    print('steam to site {:2.1f} t/h'.format(site_steam_demand))
-
     def calc_value(value):
         try:
             return float(value)
         except TypeError:
             return float(value.value())
 
+    steam_generated = sum(
+        [calc_value(asset.steam_generated()) for asset in assets]
+    )
+    steam_consumed = sum(
+        [calc_value(asset.steam_consumed()) for asset in assets]
+    )
+
+    print('total steam generated {:2.1f} t/h'.format(steam_generated))
+    print('total steam consumed {:2.1f} t/h'.format(steam_consumed))
+    print('steam to site {:2.1f} t/h'.format(site_steam_demand))
+
     power_generated = sum(
-        [max(calc_value(asset.power_generated()), 0) for asset in assets]
+        [calc_value(asset.power_generated()) for asset in assets]
     )
     power_consumed = sum(
-        [-min(calc_value(asset.power_generated()), 0) for asset in assets]
+        [calc_value(asset.power_consumed()) for asset in assets]
     )
     net_grid = float(net_grid.value())
 

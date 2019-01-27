@@ -15,11 +15,19 @@ class Asset(object):
         """ t/h """
         return 0.0
 
+    def steam_consumed(self):
+        """ t/h """
+        return 0.0
+
     def gas_burnt(self):
         """ MW HHV """
         return 0.0
 
     def power_generated(self):
+        """ MWe """
+        return 0.0
+
+    def power_consumed(self):
         """ MWe """
         return 0.0
 
@@ -108,7 +116,7 @@ class Boiler(Asset):
         """
         return self.load * (1/3.6) * self.enthalpy * (1/self.effy['thermal'])
 
-    def power_generated(self):
+    def power_consumed(self):
         """ MWe """
         return self.parasitics
 
@@ -136,12 +144,9 @@ class SteamTurbine(Asset):
             '{}_bin'.format(name), lowBound=0, upBound=1, cat='Integer'
         )
 
-    def steam_generated(self):
+    def steam_consumed(self):
         """ t/h """
-        return -self.cont
-
-    def gas_burnt(self):
-        return 0
+        return self.cont
 
     def power_generated(self):
         """ MWe """
