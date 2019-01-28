@@ -82,6 +82,7 @@ class Battery(object):
 
         assert len(forecasts) == len(prices)
         assert initial_charge <= self.capacity
+        assert initial_charge >= 0
 
         #  used to index timesteps
         idx = range(0, len(prices))
