@@ -24,23 +24,20 @@ class Battery(object):
     power       float [MW] same for charge & discharge
     capacity    float [MWh]
     efficiency  float [%] round trip, applied to
-    step        str   5min, 1hr etc
     """
 
-    def __init__(self, power, capacity, efficiency=0.9, timestep='5min'):
+    def __init__(self, power, capacity, efficiency=0.9):
         self.power = float(power)
         self.capacity = float(capacity)
         self.efficiency = float(efficiency)
-        self.timestep = timestep
-        self.step = steps[self.timestep]
 
         args = {
             "name": "args",
             "power": self.power,
             "capacity": self.capacity,
             "efficiency": self.efficiency,
-            "timestep": self.timestep,
-            "step": self.step
+            # "timestep": self.timestep,
+            # "step": self.step
         }
 
         logger.info(json.dumps(args))
@@ -69,13 +66,17 @@ class Battery(object):
             )
         }
 
-    def optimize(self, prices, forecasts=None, initial_charge=0):
+    def optimize(self, prices, forecasts=None, initial_charge=0, timestep='5min'):
         """Run the linear program to optimize the battery.
 
         prices         list [$/MWh]
         forecasts      list [$/MWh]
         initial_charge float [MWh]
+        timestep       str   5min, 1hr etc
         """
+        self.timestep = timestep
+        self.step = steps[self.timestep]
+
         if forecasts is None:
             forecasts = prices
 
@@ -193,8 +194,8 @@ class Battery(object):
 
 if __name__ == '__main__':
 
-    model = Battery(power=2, capacity=4, timestep='1hr')
+    model = Battery(power=2, capacity=4)
 
     prices = [50, 10, 10, 50, 50, 10]
 
-    info = model.optimize(prices, initial_charge=1)
+    info = model.optimize(prices, initial_charge=1, timestep='1hr')

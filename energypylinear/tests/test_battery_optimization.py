@@ -17,11 +17,11 @@ def test_battery_optimization(prices, initial_charge, expected_dispatch):
     capacity = 6
 
     model = energypylinear.Battery(
-        power=power, capacity=capacity, timestep='1hr', efficiency=1.0
+        power=power, capacity=capacity, efficiency=1.0
     )
 
     info = model.optimize(
-        prices=prices, initial_charge=initial_charge
+        prices=prices, initial_charge=initial_charge, timestep='1hr'
     )
 
     dispatch = [res['Net [MW]'] for res in info]

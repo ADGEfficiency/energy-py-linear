@@ -50,11 +50,11 @@ def test_view_output_adg():
     prices = [10, 20, 10]
 
     model = energypylinear.Battery(
-        power=2, capacity=4, efficiency=1.0, timestep='1hr'
+        power=2, capacity=4, efficiency=1.0
     )
 
     info = model.optimize(
-        prices=prices, initial_charge=0
+        prices=prices, initial_charge=0, timestep='1hr'
     )
     expected_header = ['Import [MW]', 'Export [MW]', 'Gross [MW]', 'Net [MW]',
                        'Losses [MW]', 'Charge [MWh]', 'Prices [$/MWh]',

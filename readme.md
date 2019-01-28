@@ -7,11 +7,11 @@ energy-py-linear is a library for optimizing energy systems using mixed integer 
 ```python
 >>> import energypylinear as epl
 
->>> model = epl.Battery(power=2, capacity=4, timestep='30min')
+>>> model = epl.Battery(power=2, capacity=4)
 
 >>> prices = [10, 50, 10, 50, 10]
 
->>> info = model.optimize(prices)
+>>> info = model.optimize(prices, timestep='30min')
 
    Import [MW]  Export [MW]  Power [MW]  Charge [MWh]
 0          2.0          0.0         2.0      0.000000
@@ -27,7 +27,7 @@ It is also possible to send in forecast prices along with actual prices, and to 
 #  a forecast that is the inverse of the prices we used above
 >>> forecasts = [50, 10, 50, 10, 50]
 
->>> info = model.optimize(prices, forecasts=forecasts, initial_charge=4)
+>>> info = model.optimize(prices, forecasts=forecasts, timestep='30min')
 ```
 
 ## Installation

@@ -26,11 +26,11 @@ def test_batt_efficiency(prices, initial_charge, efficiency, expected_dispatch):
     capacity = 4
 
     model = energypylinear.Battery(
-        power=power, capacity=capacity, timestep='1hr', efficiency=efficiency
+        power=power, capacity=capacity, efficiency=efficiency
     )
 
     info = model.optimize(
-        prices=prices, initial_charge=initial_charge
+        prices=prices, initial_charge=initial_charge, timestep='1hr'
     )
 
     dispatch = [res['Net [MW]'] for res in info]

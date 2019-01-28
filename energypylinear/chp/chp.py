@@ -12,6 +12,7 @@ if __name__ == '__main__':
     site_steam_demand = 100
     site_power_demand = 50
 
+    def optimize_sing
     prob = LpProblem('cost minimization', LpMinimize)
 
     assets = [

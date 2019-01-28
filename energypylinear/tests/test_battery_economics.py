@@ -18,11 +18,11 @@ def test_cost_calculation(power, capacity, initial_charge, timestep):
     prices = [10, 20, 30, -90, 50, 2000, -1]
 
     model = energypylinear.Battery(
-        power=power, capacity=capacity, timestep=timestep, efficiency=1.0
+        power=power, capacity=capacity, efficiency=1.0
     )
 
     info = model.optimize(
-        prices=prices, initial_charge=initial_charge
+        prices=prices, initial_charge=initial_charge, timestep=timestep
     )
 
     dispatch = [res['Net [MW]'] for res in info if res['Net [MW]'] is not None]
