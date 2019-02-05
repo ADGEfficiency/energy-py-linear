@@ -7,13 +7,18 @@ Battery storage and combined heat and power are two examples of energy systems t
 ## Usage
 
 ```python
->>> import energypylinear as epl
+import energypylinear as epl
 
->>> model = epl.Battery(power=2, capacity=4)
+model = epl.Battery(power=2, capacity=4)
 
->>> prices = [10, 50, 10, 50, 10]
+prices = [10, 50, 10, 50, 10]
 
->>> info = model.optimize(prices, timestep='30min')
+#  returns a list of ordered dictionaries
+info = model.optimize(prices, timestep='30min')
+
+import pandas as pd
+
+pd.DataFrame().from_dict(info)
 
    Import [MW]  Export [MW]  Power [MW]  Charge [MWh]
 0          2.0          0.0         2.0      0.000000
