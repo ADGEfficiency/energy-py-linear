@@ -7,9 +7,9 @@ import energypylinear
 @pytest.mark.parametrize(
     'prices, initial_charge, expected_dispatch',
     [
-        ([10, 10, 10], 0, [0, 0, None]),
-        ([20, 10, 10], 1, [-1, 0, None]),
-        ([10, 50, 10, 50, 10], 0, [4, -4, 4, -4, None])
+        ([10, 10, 10], 0, [0, 0, 0, None]),
+        ([20, 10, 10], 1, [-1, 0, 0, None]),
+        ([10, 50, 10, 50, 10], 0, [4, -4, 4, -4, 0, None])
     ]
 )
 def test_battery_optimization(prices, initial_charge, expected_dispatch):

@@ -74,6 +74,12 @@ class Battery(object):
         initial_charge float [MWh]
         timestep       str   5min, 1hr etc
         """
+        #  append a NaN onto the prices list to represent the price
+        #  during the last reported period, which is only used to give the
+        #  final charge, and not included in the optimization
+        prices = list(prices)
+        prices.append(None)
+
         self.timestep = timestep
         self.step = steps[self.timestep]
 
