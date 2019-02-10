@@ -36,13 +36,9 @@ class Battery(object):
             "power": self.power,
             "capacity": self.capacity,
             "efficiency": self.efficiency,
-            # "timestep": self.timestep,
-            # "step": self.step
         }
 
         logger.info(json.dumps(args))
-
-        self.prob = LpProblem('cost minimization', LpMinimize)
 
     def setup_vars(self, idx):
         """Create a dictionary with the pulp variables."""
@@ -74,6 +70,8 @@ class Battery(object):
         initial_charge float [MWh]
         timestep       str   5min, 1hr etc
         """
+        self.prob = LpProblem('cost minimization', LpMinimize)
+
         #  append a NaN onto the prices list to represent the price
         #  during the last reported period, which is only used to give the
         #  final charge, and not included in the optimization
