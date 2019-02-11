@@ -28,20 +28,14 @@ def test_battery_optimization(prices, initial_charge, expected_dispatch):
     unittest.TestCase().assertCountEqual(dispatch, expected_dispatch)
 
 
-@pytest.mark.parametrize(
-    'prices, forecasts, dispatch',
-    [
-        ([10, 10, 10], [10, 10, 10], [0, 0, 0, None]),
-    ]
-)
-def test_battery_optimization_against_forecast(prices, forecasts, dispatch):
+def test_battery_optimization_against_forecast():
     model = energypylinear.Battery(
         power=4, capacity=6, efficiency=1.0
     )
 
     info = model.optimize(
-        prices=prices, forecasts=forecasts, timestep='1hr'
+        prices=[10, 10, 10], forecasts=[10, 10, 10]
     )
 
     result = [res['Net [MW]'] for res in info]
-    unittest.TestCase().assertCountEqual(result, dispatch)
+    unittest.TestCase().assertCountEqual(result, [0, 0, 0, None])
