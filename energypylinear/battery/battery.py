@@ -84,7 +84,13 @@ class Battery(object):
         if forecasts is None:
             forecasts = prices
 
-        assert len(forecasts) == len(prices)
+        forecast_len = len(forecasts)
+        price_len = len(prices)
+        len_msg = """
+            The number of forecasts({}) should match the number of prices({}).
+        """.format(forecast_len, price_len)
+        assert forecast_len == price_len, len_msg
+
         assert initial_charge <= self.capacity
         assert initial_charge >= 0
 
