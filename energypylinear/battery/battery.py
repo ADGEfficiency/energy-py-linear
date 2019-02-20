@@ -207,7 +207,6 @@ if __name__ == '__main__':
 
     info = model.optimize(prices, initial_charge=0, timestep='1hr')
 
-    import pandas as pd
+    from pprint import pprint as pp
 
-    info = pd.DataFrame(info)
-    sub = info.loc[:, ['Initial charge [MWh]', 'Final charge [MWh]', 'Gross [MW]', 'Net [MW]']]
+    pp(info)
