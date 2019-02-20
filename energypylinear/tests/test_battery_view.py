@@ -17,7 +17,8 @@ def test_view_output():
         prices=prices, initial_charge=0, timestep='1hr'
     )
     expected_header = ['Import [MW]', 'Export [MW]', 'Gross [MW]', 'Net [MW]',
-                       'Losses [MW]', 'Charge [MWh]', 'Prices [$/MWh]',
+                       'Losses [MW]', 'Initial charge [MWh]', 'Final charge [MWh]',
+                       'Prices [$/MWh]',
                        'Forecast [$/MWh]', 'Actual [$/1hr]',
                        'Forecast [$/1hr]']
 

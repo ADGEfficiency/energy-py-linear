@@ -28,12 +28,16 @@ def test_power_capacity_initial_charge(power, capacity, initial_charge):
     assert(min(dispatch) >= -power)
 
     #  check we don't exceed battery capacity
-    charges = map_values(info, 'Charge [MWh]')
-    assert(max(charges) <= capacity)
-    assert(min(charges) >= 0)
+    i_charges = map_values(info, 'Initial charge [MWh]')
+    assert(max(i_charges) <= capacity)
+    assert(min(i_charges) >= 0)
+
+    f_charges = map_values(info, 'Final charge [MWh]')
+    assert(max(f_charges) <= capacity)
+    assert(min(f_charges) >= 0)
 
     #  check we set initial charge correctly
-    assert(charges[0] == initial_charge)
+    assert(i_charges[0] == initial_charge)
 
     # check gross is greater or eq to net
     gross = [abs(x) for x in map_values(info, 'Gross [MW]')]
