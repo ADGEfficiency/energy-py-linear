@@ -7,9 +7,9 @@ import energypylinear
 @pytest.mark.parametrize(
     'prices, initial_charge, expected_dispatch',
     [
-        ([10, 10, 10], 0, [0, 0, 0, None]),
-        ([20, 10, 10], 1, [-1, 0, 0, None]),
-        ([10, 50, 10, 50, 10], 0, [4, -4, 4, -4, 0, None])
+        ([10, 10, 10], 0, [0, 0, 0]),
+        ([20, 10, 10], 1, [-1, 0, 0]),
+        ([10, 50, 10, 50, 10], 0, [4, -4, 4, -4, 0])
     ]
 )
 def test_battery_optimization(prices, initial_charge, expected_dispatch):
@@ -38,4 +38,4 @@ def test_battery_optimization_against_forecast():
     )
 
     result = [res['Net [MW]'] for res in info]
-    unittest.TestCase().assertCountEqual(result, [0, 0, 0, None])
+    unittest.TestCase().assertCountEqual(result, [0, 0, 0])

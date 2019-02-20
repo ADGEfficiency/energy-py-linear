@@ -58,7 +58,7 @@ class Battery(object):
             ),
 
             'losses': LpVariable.dicts(
-                'loss', idx, lowBound=0, cat='Continuous'
+                'loss', idx[:-1], lowBound=0, cat='Continuous'
             )
         }
 
@@ -138,45 +138,36 @@ class Battery(object):
 
         logger.info(json.dumps(optimization_results))
 
-        self.info = self.generate_outputs(prices, forecasts, idx)
+        self.info = self.generate_outputs(prices, forecasts, idx,
+                                          initial_charge)
 
         return self.info
 
-    def get_value_or_nan(self, var_value):
-        """Get the value or assign None."""
-        try:
-            return var_value.value()
-        except AttributeError:
-            return None
-
     def calc_net(self, imp, exp, loss):
         """Calculate the Net, or None if inputs are None."""
-        if None in [imp, exp, loss]:
-            return None
-        else:
-            return imp - exp + loss
+        return imp - exp + loss
 
     def calc_cost(self, energy, price, step):
         """Calculate the cost, or None if energy is None."""
-        if energy is None:
-            return None
         return (energy * price) / step
 
     def calc_gross(self, imp, exp):
         """Calculate the Gross, or None if Import or Export are None."""
-        try:
-            return imp - exp
-        except TypeError:
-            return None
+        return imp - exp
 
-    def generate_outputs(self, prices, forecasts, idx_range):
+    def generate_outputs(self, prices, forecasts, idx_range, initial_charge):
         """Create a dictionary of results and summaries."""
+
         results = []
-        for row_id in idx_range:
-            imp = self.get_value_or_nan(self.vars['imports'].get(row_id))
-            exp = self.get_value_or_nan(self.vars['exports'].get(row_id))
-            loss = self.get_value_or_nan(self.vars['losses'].get(row_id))
-            chg = self.get_value_or_nan(self.vars['charges'].get(row_id))
+        for row_id in idx_range[:-1]:
+            imp = self.vars['imports'].get(row_id).value()
+            exp = self.vars['exports'].get(row_id).value()
+            loss = self.vars['losses'].get(row_id).value()
+
+            #  'charges' is the charge at the start of the interval
+            initial_chg = self.vars['charges'].get(row_id).value()
+            final_chg = self.vars['charges'].get(row_id + 1).value()
+
             price = prices[row_id]
             forecast = forecasts[row_id]
 
@@ -191,7 +182,8 @@ class Battery(object):
                 ('Gross [MW]', gross),
                 ('Net [MW]', net),
                 ('Losses [MW]', loss),
-                ('Charge [MWh]', chg),
+                ('Initial charge [MWh]', initial_chg),
+                ('Final charge [MWh]', final_chg),
                 ('Prices [$/MWh]', price),
                 ('Forecast [$/MWh]', forecast),
                 ('Actual [$/{}]'.format(self.timestep), actual_costs),
@@ -213,4 +205,9 @@ if __name__ == '__main__':
 
     prices = [50, 10, 10, 50, 50, 10]
 
-    info = model.optimize(prices, initial_charge=1, timestep='1hr')
+    info = model.optimize(prices, initial_charge=0, timestep='1hr')
+
+    import pandas as pd
+
+    info = pd.DataFrame(info)
+    sub = info.loc[:, ['Initial charge [MWh]', 'Final charge [MWh]', 'Gross [MW]', 'Net [MW]']]
