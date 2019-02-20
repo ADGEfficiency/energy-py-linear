@@ -9,7 +9,7 @@ Battery storage and combined heat and power are two examples of energy systems t
 ```python
 import energypylinear as epl
 
-model = epl.Battery(power=2, capacity=4)
+model = epl.Battery(power=2, capacity=4, efficiency=1.0)
 
 prices = [10, 50, 10, 50, 10]
 
