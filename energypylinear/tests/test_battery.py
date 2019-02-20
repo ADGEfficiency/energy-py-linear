@@ -38,6 +38,7 @@ def test_power_capacity_initial_charge(power, capacity, initial_charge):
     # check gross is greater or eq to net
     gross = [abs(x) for x in map_values(info, 'Gross [MW]')]
     net = [abs(x) for x in map_values(info, 'Net [MW]')]
+    losses = map_values(info, 'Losses [MW]')
 
     assert all([g >= n for g, n in zip(gross, net)])
 

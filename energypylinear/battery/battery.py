@@ -154,7 +154,7 @@ class Battery(object):
         if None in [imp, exp, loss]:
             return None
         else:
-            return imp - exp - loss
+            return imp - exp + loss
 
     def calc_cost(self, energy, price, step):
         """Calculate the cost, or None if energy is None."""
