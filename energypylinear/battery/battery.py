@@ -111,7 +111,7 @@ class Battery(object):
         #  the objective function we are minimizing
         self.prob += lpSum(
             [imports[i] * forecasts[i] for i in idx[:-1]] +
-            [-exports[i] * forecasts[i] for i in idx[:-1]]
+            [-(exports[i] - losses[i]) * forecasts[i] for i in idx[:-1]]
         )
 
         #  initial charge
@@ -121,7 +121,7 @@ class Battery(object):
         #  represents the final charge level - no import or export is done
         for i in idx[:-1]:
             #  energy balance across two time periods
-            self.prob += charges[i + 1] == charges[i] + (imports[i] - exports[i] - losses[i]) / self.step
+            self.prob += charges[i + 1] == charges[i] + (imports[i] - exports[i]) / self.step
 
             #  constrain battery charge level
             self.prob += charges[i] <= self.capacity
@@ -129,12 +129,14 @@ class Battery(object):
 
             self.prob += losses[i] == exports[i] * (1 - self.efficiency)
 
+
         self.prob.solve()
 
         optimization_results = {
             "name": "optimization_results",
             "status": LpStatus[self.prob.status]
         }
+        print(optimization_results['status'])
 
         logger.info(json.dumps(optimization_results))
 
