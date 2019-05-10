@@ -40,6 +40,11 @@ class Battery(object):
 
         logger.info(json.dumps(args))
 
+    def __repr__(self):
+        return 'Battery(power={}, capacity={}, eff={}'.format(
+            self.power, self.capacity, self.efficiency
+        )
+
     def setup_vars(self, idx):
         """Create a dictionary with the pulp variables."""
         return {
