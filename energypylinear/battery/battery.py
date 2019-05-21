@@ -41,7 +41,7 @@ class Battery(object):
         logger.info(json.dumps(args))
 
     def __repr__(self):
-        return 'Battery(power={}, capacity={}, eff={}'.format(
+        return 'Battery(power={}, capacity={}, eff={})'.format(
             self.power, self.capacity, self.efficiency
         )
 
@@ -134,16 +134,17 @@ class Battery(object):
 
             self.prob += losses[i] == exports[i] * (1 - self.efficiency)
 
-
+        print('starting linear program for {}'.format(self))
         self.prob.solve()
 
-        optimization_results = {
+        opt_results = {
             "name": "optimization_results",
             "status": LpStatus[self.prob.status]
         }
-        print(optimization_results['status'])
 
-        logger.info(json.dumps(optimization_results))
+        print('linear program for {} done - {}'.format(self, opt_results['status']))
+
+        logger.info(json.dumps(opt_results))
 
         self.info = self.generate_outputs(prices, forecasts, idx,
                                           initial_charge)
