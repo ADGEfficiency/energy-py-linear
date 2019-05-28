@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 #  MWh = MW / step
 #  5min=12, 30min=2, 60min=1 etc
 
+
 def parse_timedelta(time_str):
     """Parses a string (e.g. 24h, 24hours, 30m) into a timedelta"""
     regex = re.compile(r'((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?')
@@ -145,7 +146,6 @@ class Battery(object):
             "name": "optimization_results",
             "status": LpStatus[self.prob.status]
         }
-        print(optimization_results['status'])
 
         logger.info(json.dumps(optimization_results))
 
