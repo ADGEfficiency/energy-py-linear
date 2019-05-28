@@ -3,6 +3,7 @@ import json
 import logging
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
 import re
+from datetime import timedelta
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ def parse_timedelta(time_str):
     for (name, param) in parts.items():
         if param:
             time_params[name] = int(param)
-    return datetime.timedelta(**time_params)
+    return timedelta(**time_params)
 
 
 class Battery(object):
