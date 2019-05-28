@@ -80,8 +80,8 @@ class Battery(object):
 
         self.timestep = timestep
         timestep_timedelta = parse_timedelta(timestep)
-        self.step = timestep_timedelta.total_seconds() / (60*60)
-
+        timestep_hours = timestep_timedelta.total_seconds() / (60*60)
+        self.step = 1 / timestep_hours
         #  append a NaN onto the prices list to represent the price
         #  during the last reported period, which is only used to give the
         #  final charge, and not included in the optimization
