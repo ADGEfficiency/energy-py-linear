@@ -2,6 +2,7 @@ from collections import OrderedDict
 import json
 import logging
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
+import re
 
 
 logger = logging.getLogger(__name__)
