@@ -2,6 +2,8 @@ from collections import OrderedDict
 import json
 import logging
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
+import re
+from datetime import timedelta
 
 
 logger = logging.getLogger(__name__)
@@ -10,12 +12,19 @@ logger = logging.getLogger(__name__)
 #  MWh = MW / step
 #  5min=12, 30min=2, 60min=1 etc
 
-steps = {
-    '5min': 60 / 5,
-    '30min': 60 / 30,
-    '60min': 1,
-    '1hr': 1
-}
+
+def parse_timedelta(time_str):
+    """Parses a string (e.g. 24h, 24hours, 30m) into a timedelta"""
+    regex = re.compile(r'((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?')
+    parts = regex.match(time_str)
+    if not parts:
+        return
+    parts = parts.groupdict()
+    time_params = {}
+    for (name, param) in parts.items():
+        if param:
+            time_params[name] = int(param)
+    return timedelta(**time_params)
 
 
 class Battery(object):
@@ -73,8 +82,9 @@ class Battery(object):
         self.prob = LpProblem('cost minimization', LpMinimize)
 
         self.timestep = timestep
-        self.step = steps[self.timestep]
-
+        timestep_timedelta = parse_timedelta(timestep)
+        timestep_hours = timestep_timedelta.total_seconds() / (60*60)
+        self.step = 1 / timestep_hours
         #  append a NaN onto the prices list to represent the price
         #  during the last reported period, which is only used to give the
         #  final charge, and not included in the optimization
@@ -136,7 +146,6 @@ class Battery(object):
             "name": "optimization_results",
             "status": LpStatus[self.prob.status]
         }
-        print(optimization_results['status'])
 
         logger.info(json.dumps(optimization_results))
 
