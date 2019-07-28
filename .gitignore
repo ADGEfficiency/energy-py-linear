@@ -4,6 +4,7 @@
 *todo.md
 *__pycache__
 *.log
+.python-version
 
 dist* 
 build*
