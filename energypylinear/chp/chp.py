@@ -55,30 +55,30 @@ def generate_outputs(
         site_power_demand,
         net_grid
 ):
+    steam_generated = sum(
+        [calc_value(asset.steam_generated()) for asset in assets]
+    )
+    steam_consumed = sum(
+        [calc_value(asset.steam_consumed()) for asset in assets]
+    )
+    outputs = {}
+    outputs['total steam generated {:2.1f} t/h'] = steam_generated
+    outputs['total steam consumed {:2.1f} t/h'] = steam_consumed
+    outputs['steam to site {:2.1f} t/h'] = site_steam_demand
 
-        steam_generated = sum(
-            [calc_value(asset.steam_generated()) for asset in assets]
-        )
-        steam_consumed = sum(
-            [calc_value(asset.steam_consumed()) for asset in assets]
-        )
+    power_generated = sum(
+        [calc_value(asset.power_generated()) for asset in assets]
+    )
+    power_consumed = sum(
+        [calc_value(asset.power_consumed()) for asset in assets]
+    )
+    net_grid = float(net_grid.value())
 
-        print('total steam generated {:2.1f} t/h'.format(steam_generated))
-        print('total steam consumed {:2.1f} t/h'.format(steam_consumed))
-        print('steam to site {:2.1f} t/h'.format(site_steam_demand))
-
-        power_generated = sum(
-            [calc_value(asset.power_generated()) for asset in assets]
-        )
-        power_consumed = sum(
-            [calc_value(asset.power_consumed()) for asset in assets]
-        )
-        net_grid = float(net_grid.value())
-
-        print('total power generated {:2.1f} MWe'.format(power_generated))
-        print('total power consumed {:2.1f} MWe'.format(power_consumed))
-        print('net grid {:2.1f} MWe'.format(net_grid))
-        print('power to site {:2.1f} MWe'.format(site_power_demand))
+    outputs['total power generated {:2.1f} MWe'] = power_generated
+    outputs['total power consumed {:2.1f} MWe'] = power_consumed
+    outputs['net grid {:2.1f} MWe'] = net_grid
+    outputs['power to site {:2.1f} MWe'] = site_power_demand
+    return outputs
 
 
 if __name__ == '__main__':
