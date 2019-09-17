@@ -72,7 +72,15 @@ class Battery(object):
             )
         }
 
-    def optimize(self, prices, forecasts=None, initial_charge=0, timestep='5min'):
+    def optimize(
+        self,
+        prices,
+        forecasts=None,
+        carbon=None,
+        carbon_forecasts=None,
+        initial_charge=0,
+        timestep='5min'
+    ):
         """Run the linear program to optimize the battery.
 
         prices         list [$/MWh]
@@ -80,7 +88,7 @@ class Battery(object):
         initial_charge float [MWh]
         timestep       str   5min, 1hr etc
         """
-        self.prob = LpProblem('cost minimization', LpMinimize)
+        if objective == 'price':
 
         self.timestep = timestep
         timestep_timedelta = parse_timedelta(timestep)
@@ -108,16 +116,23 @@ class Battery(object):
 
         assert initial_charge <= self.capacity
         assert initial_charge >= 0
+        idx, variables = self.run_linear_program(forecasts, initial_charge)
 
+        self.info = self.generate_outputs(prices, forecasts, idx,
+                                          initial_charge, variables)
+
+        return self.info
+
+    def run_linear_program(self, forecasts, initial_charge):
         #  used to index timesteps
-        idx = range(0, len(prices))
+        idx = range(0, len(forecasts))
+        self.prob = LpProblem('cost minimization', LpMinimize)
+        variables = self.setup_vars(idx)
 
-        self.vars = self.setup_vars(idx)
-
-        imports = self.vars['imports']
-        exports = self.vars['exports']
-        charges = self.vars['charges']
-        losses = self.vars['losses']
+        imports = variables['imports']
+        exports = variables['exports']
+        charges = variables['charges']
+        losses = variables['losses']
 
         #  the objective function we are minimizing
         self.prob += lpSum(
@@ -151,11 +166,7 @@ class Battery(object):
         print('linear program for {} done - {}'.format(self, opt_results['status']))
 
         logger.info(json.dumps(opt_results))
-
-        self.info = self.generate_outputs(prices, forecasts, idx,
-                                          initial_charge)
-
-        return self.info
+        return idx, variables
 
     def calc_net(self, imp, exp, loss):
         """Calculate the Net, or None if inputs are None."""
@@ -169,18 +180,18 @@ class Battery(object):
         """Calculate the Gross, or None if Import or Export are None."""
         return imp - exp
 
-    def generate_outputs(self, prices, forecasts, idx_range, initial_charge):
+    def generate_outputs(self, prices, forecasts, idx_range, initial_charge, variables):
         """Create a dictionary of results and summaries."""
 
         results = []
         for row_id in idx_range[:-1]:
-            imp = self.vars['imports'].get(row_id).value()
-            exp = self.vars['exports'].get(row_id).value()
-            loss = self.vars['losses'].get(row_id).value()
+            imp = variables['imports'].get(row_id).value()
+            exp = variables['exports'].get(row_id).value()
+            loss = variables['losses'].get(row_id).value()
 
             #  'charges' is the charge at the start of the interval
-            initial_chg = self.vars['charges'].get(row_id).value()
-            final_chg = self.vars['charges'].get(row_id + 1).value()
+            initial_chg = variables['charges'].get(row_id).value()
+            final_chg = variables['charges'].get(row_id + 1).value()
 
             price = prices[row_id]
             forecast = forecasts[row_id]
