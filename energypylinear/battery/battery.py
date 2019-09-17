@@ -72,9 +72,17 @@ class Battery(object):
             )
         }
 
+    def get_step(self, timestep):
+        self.timestep = timestep
+        timestep_timedelta = parse_timedelta(timestep)
+        timestep_hours = timestep_timedelta.total_seconds() / (60*60)
+        step = 1 / timestep_hours
+        return step
+
     def optimize(
         self,
         prices,
+        objective='price',
         forecasts=None,
         carbon=None,
         carbon_forecasts=None,
@@ -88,24 +96,21 @@ class Battery(object):
         initial_charge float [MWh]
         timestep       str   5min, 1hr etc
         """
-        if objective == 'price':
-
         self.timestep = timestep
-        timestep_timedelta = parse_timedelta(timestep)
-        timestep_hours = timestep_timedelta.total_seconds() / (60*60)
-        self.step = 1 / timestep_hours
-        #  append a NaN onto the prices list to represent the price
-        #  during the last reported period, which is only used to give the
-        #  final charge, and not included in the optimization
-        prices = list(prices)
-        prices.append(None)
+        self.step = self.get_step(timestep)
+        if objective == 'price':
+            #  append a NaN onto the prices list to represent the price
+            #  during the last reported period, which is only used to give the
+            #  final charge, and not included in the optimization
+            prices = list(prices)
+            prices.append(None)
 
-        if forecasts is None:
-            forecasts = prices
-        else:
-            # If we're not inheriting the prices, we need to append to forecast
-            # to match the price list.
-            forecasts.append(None)
+            if forecasts is None:
+                forecasts = prices
+            else:
+                # If we're not inheriting the prices, we need to append to forecast
+                # to match the price list.
+                forecasts.append(None)
 
         forecast_len = len(forecasts)
         price_len = len(prices)
