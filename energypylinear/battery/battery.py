@@ -79,9 +79,32 @@ class Battery(object):
         step = 1 / timestep_hours
         return step
 
+    def process_actuals_forecasts(self, prices, forecasts):
+        #  append a NaN onto the prices list to represent the price
+        #  during the last reported period, which is only used to give the
+        #  final charge, and not included in the optimization
+        prices = list(prices)
+        prices.append(None)
+
+        if forecasts is None:
+            forecasts = prices
+        else:
+            # If we're not inheriting the prices, we need to append to forecast
+            # to match the price list.
+            forecasts.append(None)
+
+        forecast_len = len(forecasts)
+        price_len = len(prices)
+        len_msg = """
+            The number of forecasts({}) should match the number of prices({}).
+        """.format(forecast_len, price_len)
+        assert forecast_len == price_len, len_msg
+
+        return prices, forecasts
+
     def optimize(
         self,
-        prices,
+        prices=None,
         objective='price',
         forecasts=None,
         carbon=None,
@@ -98,38 +121,38 @@ class Battery(object):
         """
         self.timestep = timestep
         self.step = self.get_step(timestep)
+
+        if prices:
+            prices, forecasts = self.process_actuals_forecasts(prices, forecasts)
+
+        if carbon:
+            carbon, carbon_forecasts = self.process_actuals_forecasts(carbon, carbon_forecasts)
+
         if objective == 'price':
-            #  append a NaN onto the prices list to represent the price
-            #  during the last reported period, which is only used to give the
-            #  final charge, and not included in the optimization
-            prices = list(prices)
-            prices.append(None)
+            objective_costs = forecasts
+        elif objective == 'carbon':
+            objective_costs = carbon_forecasts
+        else:
+            raise ValueError()
 
-            if forecasts is None:
-                forecasts = prices
-            else:
-                # If we're not inheriting the prices, we need to append to forecast
-                # to match the price list.
-                forecasts.append(None)
+        idx, variables = self.run_linear_program(objective_costs, initial_charge)
 
-        forecast_len = len(forecasts)
-        price_len = len(prices)
-        len_msg = """
-            The number of forecasts({}) should match the number of prices({}).
-        """.format(forecast_len, price_len)
-        assert forecast_len == price_len, len_msg
-
-        assert initial_charge <= self.capacity
-        assert initial_charge >= 0
-        idx, variables = self.run_linear_program(forecasts, initial_charge)
-
-        self.info = self.generate_outputs(prices, forecasts, idx,
-                                          initial_charge, variables)
+        self.info = self.generate_outputs(
+            prices,
+            forecasts,
+            idx,
+            initial_charge,
+            variables,
+            carbon=carbon,
+            carbon_forecasts=carbon_forecasts
+        )
 
         return self.info
 
     def run_linear_program(self, forecasts, initial_charge):
         #  used to index timesteps
+        assert initial_charge <= self.capacity
+        assert initial_charge >= 0
         idx = range(0, len(forecasts))
         self.prob = LpProblem('cost minimization', LpMinimize)
         variables = self.setup_vars(idx)
@@ -185,8 +208,25 @@ class Battery(object):
         """Calculate the Gross, or None if Import or Export are None."""
         return imp - exp
 
-    def generate_outputs(self, prices, forecasts, idx_range, initial_charge, variables):
+    def generate_outputs(
+        self,
+        prices,
+        forecasts,
+        idx_range,
+        initial_charge,
+        variables,
+        carbon=None,
+        carbon_forecasts=None
+    ):
         """Create a dictionary of results and summaries."""
+
+        if prices is None:
+            prices = [0 for _ in carbon]
+            forecasts = [0 for _ in carbon]
+
+        if carbon is None:
+            carbon = [0 for _ in prices]
+            carbon_forecasts = [0 for _ in prices]
 
         results = []
         for row_id in idx_range[:-1]:
@@ -206,6 +246,11 @@ class Battery(object):
             forecast_costs = self.calc_cost(net, forecast, self.step)
             gross = self.calc_gross(imp, exp)
 
+            carb = carbon[row_id]
+            carb_forecast = carbon_forecasts[row_id]
+            carbon_costs = self.calc_cost(net, carb, self.step)
+            carbon_forecast_costs = self.calc_cost(net, carb_forecast, self.step)
+
             result = [
                 ('Import [MW]', imp),
                 ('Export [MW]', exp),
@@ -217,10 +262,14 @@ class Battery(object):
                 ('Prices [$/MWh]', price),
                 ('Forecast [$/MWh]', forecast),
                 ('Actual [$/{}]'.format(self.timestep), actual_costs),
-                ('Forecast [$/{}]'.format(self.timestep), forecast_costs)
+                ('Forecast [$/{}]'.format(self.timestep), forecast_costs),
+                ('Carbon [tC/MWh]', carb),
+                ('Forecast [tC/MWh]', carb_forecast),
+                ('Actual [tC/{}]'.format(self.timestep), carbon_costs),
+                ('Forecast [tC/{}]'.format(self.timestep), carbon_forecast_costs)
             ]
 
-            #  added ordered dict to get consistent iteration across results
+            #  ordered dict to get consistent iteration across results
             out = OrderedDict()
             for key, value in result:
                 out[key] = value
