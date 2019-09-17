@@ -8,10 +8,6 @@ from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
-#  factor used to convert MW to MWh
-#  MWh = MW / step
-#  5min=12, 30min=2, 60min=1 etc
-
 
 def parse_timedelta(time_str):
     """Parses a string (e.g. 24h, 24hours, 30m) into a timedelta"""
