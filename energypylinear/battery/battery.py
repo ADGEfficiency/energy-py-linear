@@ -214,13 +214,8 @@ class Battery(object):
         return results
 
 if __name__ == '__main__':
-
     model = Battery(power=2, capacity=4)
-
     prices = [50, 10, 10, 50, 50, 10]
-
     info = model.optimize(prices, initial_charge=0, timestep='1hr')
-
     from pprint import pprint as pp
-
     pp(info)
