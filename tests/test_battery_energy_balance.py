@@ -21,7 +21,7 @@ def test_battery_energy_balance():
     )
 
     energy_in = sum([res['Import [MW]'] for res in info])
-    energy_out = sum([res['Export [MW]'] for res in info]) + sum([res['Losses [MW]'] for res in info])
+    energy_out = sum([res['Export [MW]'] for res in info])
 
     initial_charge = info[0]['Initial charge [MWh]']
     final_charge = info[-1]['Final charge [MWh]']

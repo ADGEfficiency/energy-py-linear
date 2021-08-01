@@ -137,7 +137,7 @@ class Battery(object):
         #  represents the final charge level - no import or export is done
         for i in idx[:-1]:
             #  energy balance across two time periods
-            self.prob += charges[i + 1] == charges[i] + (imports[i] - (losses[i] + exports[i])) / self.step
+            self.prob += charges[i + 1] == charges[i] + (imports[i] - (exports[i])) / self.step
 
             #  constrain battery charge level
             self.prob += charges[i] <= self.capacity
