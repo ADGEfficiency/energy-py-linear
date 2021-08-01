@@ -69,7 +69,10 @@ class Battery(object):
 
             'losses': LpVariable.dicts(
                 'loss', idx[:-1], lowBound=0, cat='Continuous'
-            )
+            ),
+
+            'imports_on': LpVariable.dicts('import_on', idx[:-1], cat='Binary'),
+            'exports_on': LpVariable.dicts('export_on', idx[:-1], cat='Binary')
         }
 
     def optimize(self, prices, forecasts=None, initial_charge=0, timestep='5min'):
@@ -118,6 +121,8 @@ class Battery(object):
         exports = self.vars['exports']
         charges = self.vars['charges']
         losses = self.vars['losses']
+        imports_on = self.vars['imports_on']
+        exports_on = self.vars['exports_on']
 
         #  the objective function we are minimizing
         self.prob += lpSum(
@@ -140,6 +145,20 @@ class Battery(object):
 
             self.prob += losses[i] == exports[i] * (1 - self.efficiency)
 
+            #  add constraint on imports
+            #  max, value - maximum * binary <=0
+            self.prob += imports[i] - 100 * imports_on[i] <= 0
+            #  min, -value - min * binary <=0
+            self.prob += -imports[i] - 0 * imports_on[i] <= 0
+
+            #  max, value - maximum * binary <=0
+            self.prob += exports[i] - 100 * exports_on[i] <= 0
+            #  min, -value - min * binary <=0
+            self.prob += -exports[i] - 0 * exports_on[i] <= 0
+
+            #  now the magic constraint
+            self.prob += exports_on[i] + imports_on[i] <= 1
+
         print('starting linear program for {}'.format(self))
         self.prob.solve()
 
@@ -152,8 +171,7 @@ class Battery(object):
 
         logger.info(json.dumps(opt_results))
 
-        self.info = self.generate_outputs(prices, forecasts, idx,
-                                          initial_charge)
+        self.info = self.generate_outputs(prices, forecasts, idx, initial_charge)
 
         return self.info
 
