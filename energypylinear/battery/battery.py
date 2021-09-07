@@ -216,10 +216,10 @@ class Battery(object):
                 ('Losses [MW]', loss),
                 ('Initial charge [MWh]', initial_chg),
                 ('Final charge [MWh]', final_chg),
-                ('Prices [$/MWh]', price),
-                ('Forecast [$/MWh]', forecast),
-                ('Actual [$/{}]'.format(self.timestep), actual_costs),
-                ('Forecast [$/{}]'.format(self.timestep), forecast_costs)
+                ('Prices [$/MWh]', float(price)),
+                ('Forecast [$/MWh]', float(forecast)),
+                ('Actual [$/{}]'.format(self.timestep), float(actual_costs)),
+                ('Forecast [$/{}]'.format(self.timestep), float(forecast_costs))
             ]
 
             #  added ordered dict to get consistent iteration across results
