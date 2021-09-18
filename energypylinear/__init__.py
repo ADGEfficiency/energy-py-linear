@@ -1,1 +1,1 @@
-from energypylinear.battery.battery import Battery
+from energypylinear.battery import Battery
