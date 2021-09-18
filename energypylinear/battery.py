@@ -65,7 +65,7 @@ class Battery(object):
         if isinstance(carbon, float):
             carbon = [carbon for _ in prices]
 
-        carbon, _ = self.process_actuals_forecasts(carbon, carbon)
+        carbon, _ = self.process_actuals_forecasts(carbon, None)
 
         objectives = {
             "price": prices,
