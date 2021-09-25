@@ -1,20 +1,8 @@
 from collections import OrderedDict
 import json
-import logging
+
+import pulp
 from pulp import LpProblem, LpMinimize, lpSum, LpVariable, LpStatus
-import re
-from datetime import timedelta
-
-
-logger = logging.getLogger(__name__)
-
-
-# def get_step(self, timestep):
-#     self.timestep = timestep
-#     timestep_timedelta = parse_timedelta(timestep)
-#     timestep_hours = timestep_timedelta.total_seconds() / (60 * 60)
-#     step = 1 / timestep_hours
-#     return step
 
 
 def timestep_to_freq(timestep):
@@ -49,6 +37,7 @@ class Battery(object):
         initial_charge=0,
         objective="price",
         freq="5T",
+        verbose=True,
     ):
         """Run the linear program to optimize the battery.
 
@@ -67,14 +56,12 @@ class Battery(object):
 
         carbon, _ = self.process_actuals_forecasts(carbon, None)
 
-        objectives = {
-            "price": prices,
-            "forecast": forecasts,
-            "carbon": carbon,
-        }
+        objectives = {"price": prices, "forecast": forecasts, "carbon": carbon}
 
         objective_prices = objectives[objective]
-        idx, variables = self.run_linear_program(objective_prices, initial_charge, freq)
+        idx, variables = self.run_linear_program(
+            objective_prices, initial_charge, freq, verbose=verbose
+        )
 
         return self.generate_outputs(
             prices, forecasts, carbon, idx, initial_charge, variables, freq
@@ -115,22 +102,17 @@ class Battery(object):
 
         forecast_len = len(forecasts)
         price_len = len(prices)
-        len_msg = """
-            The number of forecasts({}) should match the number of prices({}).
-        """.format(
-            forecast_len, price_len
-        )
+        len_msg = f"Num. forecasts ({forecast_len}) should match the num prices ({price_len})."
         assert forecast_len == price_len, len_msg
-
         return prices, forecasts
 
-    def run_linear_program(self, forecasts, initial_charge, freq):
+    def run_linear_program(self, forecasts, initial_charge, freq, verbose):
+        """creates battery model and runs it"""
         timestep = freq_to_timestep(freq)
+
         #  used to index timesteps
-        assert initial_charge <= self.capacity
-        assert initial_charge >= 0
         idx = range(0, len(forecasts))
-        self.prob = LpProblem("cost minimization", LpMinimize)
+        self.prob = LpProblem("battery_cost_minimization", LpMinimize)
         variables = self.setup_vars(idx)
 
         imports = variables["imports"]
@@ -145,6 +127,8 @@ class Battery(object):
         )
 
         #  initial charge
+        assert initial_charge <= self.capacity
+        assert initial_charge >= 0
         self.prob += charges[0] == initial_charge
 
         #  last item in the index isn't used because the last timestep only
@@ -161,17 +145,16 @@ class Battery(object):
 
             self.prob += losses[i] == exports[i] * (1 - self.efficiency)
 
-        print("starting linear program for {}".format(self))
-        self.prob.solve()
+        solver = pulp.PULP_CBC_CMD(msg=0)
+        solver.solve(self.prob)
 
         opt_results = {
             "name": "optimization_results",
             "status": LpStatus[self.prob.status],
         }
 
-        print("linear program for {} done - {}".format(self, opt_results["status"]))
-
-        logger.info(json.dumps(opt_results))
+        if verbose:
+            print(f" {self}, {opt_results['status']}")
         return idx, variables
 
     def calc_net(self, imp, exp, loss):

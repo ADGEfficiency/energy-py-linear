@@ -12,3 +12,4 @@ build*
 
 #  project specific
 *.lp
+notebooks/results
