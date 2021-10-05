@@ -1,3 +1,5 @@
+.PHONY: test
+
 ./energypylinear.egg-info/PKG-INFO: setup.py
 	pip install -r requirements.txt
 	pip install -e .
@@ -5,10 +7,7 @@
 test: ./energypylinear.egg-info/PKG-INFO
 	pytest tests
 
-####
-
 expt-space-between: ./energypylinear.egg-info/PKG-INFO ./nem-data/setup.py ~/nem-data/data/TRADINGPRICE/2020-12/clean.parquet ~/nem-data/data/nemde/2020-12-31/clean.parquet
-	echo ""
 
 ./nem-data/setup.py:
 	rm -rf ./nem-data
