@@ -6,8 +6,6 @@ Currently the library has two models:
 - electric battery operating in price arbitrage,
 - a combined heat & power plant.
 
-The battery model is well developed and tested - the CHP model is working and requires more development.
-
 
 ## Use
 
@@ -65,7 +63,7 @@ $ make setup
 
 The main dependency of this project is [PuLP](https://github.com/coin-or/pulp).  For further reading on PuLP:
 
-- [the white paper - An Introduction to pulp for Python Programmers](https://projects.coin-or.org/PuLP/export/330/trunk/doc/KPyCon2009/PulpForPythonProgrammers.pdf),
+- [An Introduction to pulp for Python Programmers](https://projects.coin-or.org/PuLP/export/330/trunk/doc/KPyCon2009/PulpForPythonProgrammers.pdf),
 - the blog post series [Introduction to Linear Programming with Python and PuLP](http://benalexkeen.com/linear-programming-with-python-and-pulp/) - especially [Part 6](http://benalexkeen.com/linear-programming-with-python-and-pulp-part-6/) which covers how to formulate more complex conditional constraints.
 
 

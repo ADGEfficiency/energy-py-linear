@@ -13,3 +13,4 @@ build*
 #  project specific
 *.lp
 notebooks/results
+nem-data
