@@ -34,6 +34,7 @@ class Battery(object):
         prices=None,
         forecasts=None,
         carbon=0.5,
+        carbon_price=0,
         initial_charge=0,
         objective="price",
         freq="5T",
@@ -44,6 +45,7 @@ class Battery(object):
         prices         list             [$/MWh]
         forecasts      list             [$/MWh]
         carbon         list or float    [tC/MWh] carbon intensity
+        carbon_price   float            [$/tC] carbon intensity
         initial_charge float            [MWh]
         objective      str              one of {prices, forecast, carbon}
         freq           str              one of {5T, 15T, 30T, 60T}

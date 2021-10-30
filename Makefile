@@ -7,7 +7,10 @@
 test: ./energypylinear.egg-info/PKG-INFO
 	pytest tests
 
-expt-space-between: ./energypylinear.egg-info/PKG-INFO ./nem-data/setup.py ~/nem-data/data/TRADINGPRICE/2020-12/clean.parquet ~/nem-data/data/nemde/2020-12-31/clean.parquet
+pushs3:
+	aws s3 sync notebooks/results s3://adgefficiency-public/space-between/results
+
+space-between: ./energypylinear.egg-info/PKG-INFO ./nem-data/setup.py ~/nem-data/data/TRADINGPRICE/2020-12/clean.parquet ~/nem-data/data/nemde/2020-12-31/clean.parquet
 
 ./nem-data/setup.py:
 	rm -rf ./nem-data
