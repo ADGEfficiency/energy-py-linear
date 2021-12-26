@@ -217,7 +217,7 @@ class Battery(object):
             #  ordered dict to get consistent iteration across results
             out = OrderedDict()
             for key, value in result:
-                out[key] = value
+                out[key] = float(value)
 
             results.append(out)
 
