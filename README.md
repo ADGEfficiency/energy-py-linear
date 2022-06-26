@@ -1,15 +1,15 @@
 # energy-py-linear
 
-A library for optimizing energy systems using mixed integer linear programming.
+A Python library for optimizing energy systems using mixed integer linear programming.  This library has two programs - an electric battery operating in price arbitrage and a combined heat & power plant.
 
-Currently the library has two models: 
-- electric battery operating in price arbitrage,
-- a combined heat & power plant.
+The battery can be dispatched with perfect foresight of electricity prices or with a forecast, and will keep track of both financial and carbon benefits.  The battery can also be dispatched against carbon intensities to maximize carbon benefit rather than economic benefit.
 
 
 ## Use
 
-The battery model is optimized against a set of prices, and returns a list of dictionaries - one per interval:
+The battery model can optimized against a set of prices. 
+
+The optimization returns a list of dictionaries - one per time interval:
 
 ```python
 import energypylinear as epl
@@ -22,6 +22,7 @@ results = model.optimize(prices, freq="60T")
 
 ```python
 import pandas as pd
+
 pd.DataFrame().from_dict(results)
 
    Import [MW]  Export [MW]  Power [MW]  Charge [MWh]
@@ -34,34 +35,35 @@ pd.DataFrame().from_dict(results)
 
 The last row is all `NaN` except for `Charge` - `Charge` indicates the battery position at the start of each interval.  The last row is included so we can see the battery level at the end of the optimization run.
 
-It is also possible to send in forecast prices along with actual prices, and to change the initial charge.
+*An improvement here would be to use two separate columns for charge (one for initial charge at the start of the interval and one at the end) - will get around to it one day!*
 
-If the model receives forecasts it will optimize for them - this allows measurement of forecast quality by comparing actual with forecast costs:
+It is also possible to change the initial charge or to dispatch for forecast prices alongside with actual prices.  This allows measurement of forecast quality by comparing actual with forecast costs.
 
 ```python
 #  a forecast that is the inverse of the prices we used above
 forecasts = [50, 10, 50, 10, 50]
-results = model.optimize(prices, forecasts=forecasts, timestep='60T', objective='forecasts')
+results = model.optimize(prices, forecasts=forecasts, timestep="60T", objective="forecasts", initial_charge=0.5)
 ```
 
-The battery model also accounts for carbon.  If no carbon profile is passed in, a constant value of 0.5 tC/MWh is assumed.
-
-We can switch the optimization to focus on carbon:
+We can also switch the optimization to focus on carbon:
 
 ```python
-results = model.optimize(prices, forecasts=forecasts, carbon=carbon, timestep="60T", objective='carbon')
+carbon = [0.5, 0.5, 0.9, 0.1, 0.5]
+results = model.optimize(prices, carbon=carbon, timestep="60T", objective="carbon")
 ```
 
 
 ## Setup
 
-Install as an editable package:
+Install as a Python package:
 
 ```bash
 $ make setup
 ```
 
-The main dependency of this project is [PuLP](https://github.com/coin-or/pulp).  For further reading on PuLP:
+The main dependency of this project is [PuLP](https://github.com/coin-or/pulp) for a linear programming framework.
+
+Further reading on PuLP:
 
 - [An Introduction to pulp for Python Programmers](https://projects.coin-or.org/PuLP/export/330/trunk/doc/KPyCon2009/PulpForPythonProgrammers.pdf),
 - the blog post series [Introduction to Linear Programming with Python and PuLP](http://benalexkeen.com/linear-programming-with-python-and-pulp/) - especially [Part 6](http://benalexkeen.com/linear-programming-with-python-and-pulp-part-6/) which covers how to formulate more complex conditional constraints.
