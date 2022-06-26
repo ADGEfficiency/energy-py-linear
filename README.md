@@ -14,8 +14,7 @@ The battery model is optimized against a set of prices, and returns a list of di
 ```python
 import energypylinear as epl
 model = epl.Battery(power=2, capacity=4, efficiency=1.0)
-prices = [10, 50, 10, 50, 10]
-results = model.optimize(prices, freq="60T")
+results = model.optimize(prices=[10, 50, 10, 50, 10], freq="60T")
 ```
 
 `pandas` can be used to transform the results into a dataframe:
