@@ -1,10 +1,11 @@
 .PHONY: test
 
 ./energypylinear.egg-info/PKG-INFO: setup.py
-	pip install -r requirements.txt
+	pip install -qr requirements.txt
 	pip install -e .
 
 test: ./energypylinear.egg-info/PKG-INFO
+	pip install -qr requirements-test.txt
 	pytest tests
 
 pushs3:
