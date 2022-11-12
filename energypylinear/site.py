@@ -4,6 +4,9 @@ import typing
 import pulp
 import pydantic
 
+from energypylinear.frameworks import Pulp
+from energypylinear.freq import Freq
+
 
 class SiteConfig(pydantic.BaseModel):
     import_limit_mw: float = 10000
@@ -40,7 +43,7 @@ def site_one_interval(
     )
 
 
-def constrain_site_electricity_balance(framework, site, assets):
+def constrain_site_electricity_balance(framework, assets):
     """
     in = out + accumulation
     import + generation = (export + load) + (charge - discharge)
@@ -48,27 +51,44 @@ def constrain_site_electricity_balance(framework, site, assets):
 
     should losses occur here?
     """
-    assets = assets["assets"][-1]
+    assets_one_interval = assets["assets"][-1]
+    site_one_interval = assets["sites"][-1]
     framework.constrain(
-        site.import_power_mwh
-        + framework.sum([a.generation_mwh for a in assets])
-        - (site.export_power_mwh + framework.sum([a.load_mwh for a in assets]))
+        site_one_interval.import_power_mwh
+        + framework.sum([a.generation_mwh for a in assets_one_interval])
         - (
-            framework.sum([a.charge_mwh for a in assets])
-            - framework.sum([a.discharge_mwh for a in assets])
+            site_one_interval.export_power_mwh
+            + framework.sum([a.load_mwh for a in assets_one_interval])
+        )
+        - (
+            framework.sum([a.charge_mwh for a in assets_one_interval])
+            - framework.sum([a.discharge_mwh for a in assets_one_interval])
         )
         == 0
     )
 
 
-def constrain_site_import_export(framework, site):
+def constrain_site_import_export(framework, assets):
+    asset_one_interval = assets["assets"][-1]
+    site_one_interval = assets["sites"][-1]
     framework.constrain(
-        site.import_power_mwh - site.import_limit_mwh * site.import_power_bin <= 0
+        site_one_interval.import_power_mwh
+        - site_one_interval.import_limit_mwh * site_one_interval.import_power_bin
+        <= 0
     )
     framework.constrain(
-        site.export_power_mwh - site.export_limit_mwh * site.export_power_bin <= 0
+        site_one_interval.export_power_mwh
+        - site_one_interval.export_limit_mwh * site_one_interval.export_power_bin
+        <= 0
     )
-    framework.constrain(site.import_power_bin + site.export_power_bin == 1)
+    framework.constrain(
+        site_one_interval.import_power_bin + site_one_interval.export_power_bin == 1
+    )
+
+
+def constrain_within_interval(framework, assets):
+    constrain_site_electricity_balance(framework, assets)
+    constrain_site_import_export(framework, assets)
 
 
 class Site:

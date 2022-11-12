@@ -6,6 +6,7 @@ import pydantic
 
 from energypylinear import battery, site
 from energypylinear.frameworks import Pulp
+from energypylinear.freq import Freq
 
 
 class IntervalData:
@@ -47,7 +48,7 @@ class IntervalData:
 
 class Battery:
     def __init__(self, power_mw: float, capacity_mwh: float, efficiency: float = 0.9):
-        self.cfg = battery.Config(
+        self.cfg = battery.BatteryConfig(
             power_mw=power_mw,
             capacity_mwh=capacity_mwh,
             efficiency_pct=efficiency,
@@ -78,16 +79,14 @@ class Battery:
             assets["sites"].append(
                 site.site_one_interval(self.framework, self.site_cfg, i, freq)
             )
-
             batteries = [
                 battery.battery_one_interval(self.framework, self.cfg, i, freq)
             ]
             assets["batteries"].append(batteries)
+            assets["assets"].append(batteries)
 
             #  site constraints
-            constrain_site_electricity_balance(self.framework, site, assets)
-            constrain_site_import_export(self.framework, site)
-
+            site.constrain_within_interval(self.framework, assets)
             battery.constrain_within_interval(self.framework, assets)
 
         battery.constrain_after_intervals(self.framework, assets, [self.cfg])

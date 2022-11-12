@@ -99,10 +99,10 @@ def constrain_initial_final_charge(
         framework.constrain(battery.final_charge_mwh == cfg.final_charge_mwh)
 
 
-def constraint_within_interval(framework, assets):
+def constrain_within_interval(framework, assets):
     constrain_battery_electricity_balance(framework, assets)
     constrain_connection_batteries_between_intervals(framework, assets)
 
 
-def constraint_after_intervals(framework, assets, configs):
+def constrain_after_intervals(framework, assets, configs):
     constrain_initial_final_charge(framework, assets, configs)
