@@ -9,10 +9,18 @@ from energypylinear.freq import Freq
 
 
 class Asset(pydantic.BaseModel):
-    generation_mwh: typing.Union[pulp.LpVariable, float] = 0
-    load_mwh: typing.Union[pulp.LpVariable, float] = 0
-    charge_mwh: typing.Union[pulp.LpVariable, float] = 0
-    discharge_mwh: typing.Union[pulp.LpVariable, float] = 0
+    electric_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
+    high_temperature_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
+    low_temperature_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
+    cooling_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
+
+    electric_load_mwh: typing.Union[pulp.LpVariable, float] = 0
+    high_temperature_load_mwh: typing.Union[pulp.LpVariable, float] = 0
+    low_temperature_load_mwh: typing.Union[pulp.LpVariable, float] = 0
+    cooling_load_mwh: typing.Union[pulp.LpVariable, float] = 0
+
+    electric_charge_mwh: typing.Union[pulp.LpVariable, float] = 0
+    electric_discharge_mwh: typing.Union[pulp.LpVariable, float] = 0
 
     class Config:
         arbitrary_types_allowed: bool = True
@@ -26,7 +34,7 @@ class BatteryConfig(pydantic.BaseModel):
     final_charge_mwh: float = 0
 
 
-class BatteryModel(Asset):
+class BatteryOneInterval(Asset):
     charge_mwh: pulp.LpVariable
     discharge_mwh: pulp.LpVariable
     losses_mwh: pulp.LpVariable
@@ -37,8 +45,8 @@ class BatteryModel(Asset):
 
 def battery_one_interval(
     framework: Pulp, cfg: BatteryConfig, i: int, freq: Freq
-) -> BatteryModel:
-    return BatteryModel(
+) -> BatteryOneInterval:
+    return BatteryOneInterval(
         charge_mwh=framework.continuous(
             f"charge_mwh-{i}", up=freq.mw_to_mwh(cfg.power_mw)
         ),

@@ -2,24 +2,33 @@ import typing
 
 import pydantic
 
+from energypylinear.battery import Asset
 
-class CHPConfig(pydantic.BaseModel):
+
+class GeneratorConfig(Asset):
     electric_efficiency_pct: float
     high_temperature_efficiency_pct: float
     low_temperature_efficiency_pct: float
+    cooling_efficiency_pct: float
 
 
-class GasTurbine:
+class GeneratorOneInterval(Asset):
+    pass
+
+
+class Generator:
     def __init__(
         self,
         electric_efficiency_pct: float,
         high_temperature_efficiency_pct: float,
-        low_temperature_efficiency_pct: float
+        low_temperature_efficiency_pct: float,
+        cooling_efficiency_pct: float,
     ):
-        self.cfg = CHPConfig(
+        self.cfg = GeneratorConfig(
             electric_efficiency_pct=electric_efficiency_pct,
             high_temperature_efficiency_pct=high_temperature_efficiency_pct,
             low_temperature_efficiency_pct=low_temperature_efficiency_pct,
+            cooling_efficiency_pct=cooling_efficiency_pct,
         )
 
     def optimize(
