@@ -4,7 +4,7 @@ import pydantic
 class Defaults(pydantic.BaseModel):
     carbon_intensities: float = 0.1
     gas_prices: float = 20
-    freq_mins: int = 30
+    freq_mins: int = 60
 
     high_temperature_load_mwh: float = 0
     low_temperature_load_mwh: float = 0

@@ -266,13 +266,7 @@ class Generator:
             site = vars["sites"][i]
 
             results["import-power-mwh"].append(site.import_power_mwh.value())
-            results["import-power-mw"].append(
-                freq.mwh_to_mw(site.import_power_mwh.value())
-            )
             results["export-power-mwh"].append(site.export_power_mwh.value())
-            results["export-power-mw"].append(
-                freq.mwh_to_mw(site.export_power_mwh.value())
-            )
 
             spill = vars["spills"][i]
             for attr in [
@@ -301,6 +295,7 @@ class Generator:
                     results[f"{name}-{attr}"].append(getattr(boiler, attr).value())
 
         #  add totals
+        #  can I do this without pandas??
         results = pd.DataFrame(results)
         for col in [
             "electric_generation_mwh",
@@ -311,6 +306,7 @@ class Generator:
             results[f"total-{col}"] = results[cols].sum(axis=1)
 
         #  add balances + check them - TODO
+        # validate_results(results) from accounting
 
         #  add warnings on the spill generator + boiler use
 
