@@ -11,6 +11,39 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Pulp
 
 
+class SpillConfig(Asset):
+    name: str = "spill"
+
+
+class SpillOneInterval(Asset):
+    cfg: SpillConfig
+    electric_generation_mwh: pulp.LpVariable
+    high_temperature_generation_mwh: pulp.LpVariable
+
+    electric_load_mwh: pulp.LpVariable
+    high_temperature_load_mwh: pulp.LpVariable
+
+
+def spill_one_interval(
+    optimizer: Pulp, cfg: SpillConfig, i: int, freq: Freq
+) -> SpillOneInterval:
+    return SpillOneInterval(
+        cfg=cfg,
+        electric_generation_mwh=optimizer.continuous(
+            f"{cfg.name}-electric_generation_mwh-{i}",
+        ),
+        high_temperature_generation_mwh=optimizer.continuous(
+            f"{cfg.name}-high_temperature_generation_mwh-{i}",
+        ),
+        electric_load_mwh=optimizer.continuous(
+            f"{cfg.name}-electric_load_mwh-{i}",
+        ),
+        high_temperature_load_mwh=optimizer.continuous(
+            f"{cfg.name}-high_temperature_load_mwh-{i}",
+        ),
+    )
+
+
 class BoilerConfig(Asset):
     name: str
     high_temperature_generation_max_mw: float = 0
@@ -179,31 +212,31 @@ class Generator:
         )
         self.site_cfg = epl.site.SiteConfig()
 
-        self.spill_boiler_cfg = BoilerConfig(
-            name="spill-boiler",
-            high_temperature_generation_max_mw=defaults.spill_boiler_size_mw,
-            high_temperature_efficiency_pct=defaults.spill_boiler_efficiency_pct,
+        backup_boiler_size = freq.mw_to_mwh(
+            max(interval_data.high_temperature_load_mwh)
+            + max(interval_data.low_temperature_load_mwh)
         )
-        self.spill_generator_cfg = GeneratorConfig(
-            name="spill-generator",
-            electric_power_max_mw=defaults.spill_generator_size_mw,
-            electric_efficiency_pct=defaults.spill_generator_efficiency_pct,
+        self.default_boiler_cfg = BoilerConfig(
+            name="boiler",
+            high_temperature_generation_max_mw=backup_boiler_size,
+            high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
         )
+        self.spill_cfg = SpillConfig()
         vars = collections.defaultdict(list)
 
         for i in interval_data.idx:
-            #  setup linear program variables
             vars["sites"].append(
                 epl.site.site_one_interval(self.optimizer, self.site_cfg, i, freq)
             )
+            vars["spills"].append(
+                spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
+            )
+
             generators = [
                 generator_one_interval(self.optimizer, self.cfg, i, freq),
-                generator_one_interval(
-                    self.optimizer, self.spill_generator_cfg, i, freq
-                ),
             ]
             boilers = [
-                boiler_one_interval(self.optimizer, self.spill_boiler_cfg, i, freq),
+                boiler_one_interval(self.optimizer, self.default_boiler_cfg, i, freq),
             ]
             vars["generators"].append(generators)
             vars["boilers"].append(boilers)
@@ -243,6 +276,16 @@ class Generator:
                 freq.mwh_to_mw(site.export_power_mwh.value())
             )
 
+            spill = vars["spills"][i]
+            for attr in [
+                "electric_generation_mwh",
+                "high_temperature_generation_mwh",
+                "electric_load_mwh",
+                "high_temperature_load_mwh",
+            ]:
+                name = f"{spill.cfg.name}"
+                results[f"{name}-{attr}"].append(getattr(spill, attr).value())
+
             generators = vars["generators"][i]
             for generator in generators:
                 name = f"{generator.cfg.name}"
@@ -264,16 +307,12 @@ class Generator:
 
         #  add totals
         results = pd.DataFrame(results)
-        for col, include_spill in [
-            ("electric_generation_mwh", True),
-            ("gas_consumption_mwh", False),
-            ("high_temperature_generation_mwh", True),
+        for col in [
+            "electric_generation_mwh",
+            "gas_consumption_mwh",
+            "high_temperature_generation_mwh",
         ]:
-            #  probably a way to do this in a single line - TODO
-            if include_spill:
-                cols = [c for c in results.columns if (col in c)]
-            else:
-                cols = [c for c in results.columns if (col in c) and ("spill" not in c)]
+            cols = [c for c in results.columns if (col in c)]
             results[f"total-{col}"] = results[cols].sum(axis=1)
 
         #  add balances + check them - TODO

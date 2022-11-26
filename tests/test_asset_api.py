@@ -17,13 +17,14 @@ def test_asset_api_gas_turbine():
     test
     - high elecricity prices with load below, in range and higher than chp
     - low electricity price
-    - test the spill boiler warnings
+    - test the spill warnings
+    - test load temperature load
     """
     results = asset.optimize(
         electricity_prices=[1000, -100, 10, 50, 10],
         gas_prices=20,
-        high_temperature_load_mwh=[80, 75, 100, 20, 100],
+        high_temperature_load_mwh=[20, 75, 100, 20, 100],
+        freq_mins=60,
     )
+
     print(results)
-    results.to_csv("temp.csv")
-    breakpoint()  # fmt: skip

@@ -48,22 +48,19 @@ def constrain_site_electricity_balance(framework, assets):
     in = out + accumulation
     import + generation = (export + load) + (charge - discharge)
     import + generation - (export + load) - (charge - discharge) = 0
-
-    TODO add a spill import + export
     """
     assets_one_interval = assets["assets"][-1]
     site_one_interval = assets["sites"][-1]
+    spill = assets["spills"][-1]
     framework.constrain(
         site_one_interval.import_power_mwh
+        - site_one_interval.export_power_mwh
+        + spill.electric_generation_mwh
+        - spill.electric_load_mwh
         + framework.sum([a.electric_generation_mwh for a in assets_one_interval])
-        - (
-            site_one_interval.export_power_mwh
-            + framework.sum([a.electric_load_mwh for a in assets_one_interval])
-        )
-        - (
-            framework.sum([a.electric_charge_mwh for a in assets_one_interval])
-            - framework.sum([a.electric_discharge_mwh for a in assets_one_interval])
-        )
+        - framework.sum([a.electric_load_mwh for a in assets_one_interval])
+        - framework.sum([a.electric_charge_mwh for a in assets_one_interval])
+        + framework.sum([a.electric_discharge_mwh for a in assets_one_interval])
         == 0
     )
 
@@ -85,22 +82,25 @@ def constrain_site_import_export(framework, assets):
     )
 
 
-def constrain_site_high_temperature_heat(optimizer, vars, interval_data, i):
+def constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i):
     """
     in = out + accumulation
     generation = load
     generation - load = 0
     """
     assets = vars["assets"][-1]
+    spill = vars["spills"][-1]
     optimizer.constrain(
-        optimizer.sum([a.high_temperature_generation_mwh for a in assets])
+        spill.high_temperature_generation_mwh
+        - spill.high_temperature_load_mwh
+        + optimizer.sum([a.high_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.high_temperature_load_mwh for a in assets])
         - interval_data.high_temperature_load_mwh[i]
         == 0
     )
 
 
-def constrain_site_low_temperature_heat(optimizer, vars, interval_data, i):
+def constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, i):
     """
     in = out + accumulation
     generation = load
@@ -118,6 +118,6 @@ def constrain_site_low_temperature_heat(optimizer, vars, interval_data, i):
 def constrain_within_interval(framework, assets, interval_data, i):
     constrain_site_electricity_balance(framework, assets)
     constrain_site_import_export(framework, assets)
-    constrain_site_high_temperature_heat(framework, assets, interval_data, i)
-    constrain_site_low_temperature_heat(framework, assets, interval_data, i)
+    constrain_site_high_temperature_heat_balance(framework, assets, interval_data, i)
+    constrain_site_low_temperature_heat_balance(framework, assets, interval_data, i)
     #  add cooling constraint here TODO
