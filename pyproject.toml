@@ -11,6 +11,7 @@ python = "^3.10"
 PuLP = "^2.7.0"
 numpy = "^1.23.4"
 pydantic = "^1.10.2"
+pandas = "^1.5.2"
 
 
 [tool.poetry.group.format.dependencies]

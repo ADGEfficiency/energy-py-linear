@@ -85,7 +85,7 @@ def constrain_site_import_export(framework, assets):
     )
 
 
-def constrain_site_high_temperature_heat(optimizer, vars):
+def constrain_site_high_temperature_heat(optimizer, vars, interval_data, i):
     """
     in = out + accumulation
     generation = load
@@ -95,11 +95,12 @@ def constrain_site_high_temperature_heat(optimizer, vars):
     optimizer.constrain(
         optimizer.sum([a.high_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.high_temperature_load_mwh for a in assets])
+        - interval_data.high_temperature_load_mwh[i]
         == 0
     )
 
 
-def constrain_site_low_temperature_heat(optimizer, vars):
+def constrain_site_low_temperature_heat(optimizer, vars, interval_data, i):
     """
     in = out + accumulation
     generation = load
@@ -108,23 +109,15 @@ def constrain_site_low_temperature_heat(optimizer, vars):
     assets = vars["assets"][-1]
     optimizer.constrain(
         optimizer.sum([a.low_temperature_generation_mwh for a in assets])
-        - optimizer.sum([a.low_high_temperature_load_mwh for a in assets])
+        - optimizer.sum([a.low_temperature_load_mwh for a in assets])
+        - interval_data.low_temperature_load_mwh[i]
         == 0
     )
 
 
-def constrain_within_interval(framework, assets):
+def constrain_within_interval(framework, assets, interval_data, i):
     constrain_site_electricity_balance(framework, assets)
     constrain_site_import_export(framework, assets)
-    constrain_site_high_temperature_heat(framework, assets)
-    constrain_site_low_temperature_heat(framework, assets)
+    constrain_site_high_temperature_heat(framework, assets, interval_data, i)
+    constrain_site_low_temperature_heat(framework, assets, interval_data, i)
     #  add cooling constraint here TODO
-
-
-class Site:
-    def __init__(self, asset_configs: list):
-        self.cfg = SiteConfig()
-        self.asset_configs = asset_configs
-        self.battery_configs = [
-            cfg for cfg in self.asset_configs if isinstance(cfg, BatteryConfig)
-        ]

@@ -171,11 +171,7 @@ class Battery:
 
         #  objective functions
         sites = vars["sites"]
-        price_objective = self.optimizer.sum(
-            sites[i].import_power_mwh * interval_data.prices[i]
-            - sites[i].export_power_mwh * interval_data.prices[i]
-            for i in interval_data.idx
-        )
+
         forecast_objective = self.optimizer.sum(
             sites[i].import_power_mwh * interval_data.forecasts[i]
             - sites[i].export_power_mwh * interval_data.forecasts[i]

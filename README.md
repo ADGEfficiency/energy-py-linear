@@ -1,4 +1,7 @@
 
+# Assets
+
+## Spill Generator & Spill Boiler
 
 # Dispatch versus Accounting
 
@@ -7,7 +10,7 @@
 
 ## Asset API
 
-The asset API is designed to support optimization of a single asset - under the hood it uses the new Site API.
+The asset API is designed to support optimization of a single asset - under the hood it uses the Site API with a single asset (battery or generator) and a spill generator & boiler to avoid infeasible simulations when site limits or demand can't be met by the single asset.
 
 ```python
 import energypylinear as epl

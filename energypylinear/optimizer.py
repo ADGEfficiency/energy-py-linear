@@ -5,8 +5,8 @@ import pulp
 
 class Pulp:
     def __init__(self):
-        self.prob = pulp.LpProblem()
-        self.solver = pulp.PULP_CBC_CMD(msg=0)
+        self.prob = pulp.LpProblem("prob", pulp.LpMinimize)
+        self.solver = pulp.PULP_CBC_CMD(msg=1)
 
     def continuous(self, name: str, low: float = 0, up: typing.Optional[float] = None):
         return pulp.LpVariable(name=name, lowBound=low, upBound=up, cat="Continuous")
@@ -26,14 +26,25 @@ class Pulp:
         return self.prob.setObjective(objective)
 
     def solve(self):
+        self.assert_no_duplicate_variables()
         self.solver.solve(self.prob)
         return self.status()
+
+    def assert_no_duplicate_variables(self):
+        variables = self.variables()
+        names = [v.name for v in variables]
+        assert len(names) == len(
+            set(names)
+        ), f"duplicate variables detected - {[x for x in names if names.count(x) >= 2]}"
 
     def status(self):
         return pulp.LpStatus[self.prob.status]
 
     def constraints(self):
         return self.prob.constraints
+
+    def variables(self):
+        return self.prob.variables()
 
     def constrain_max(
         self, continuous: pulp.LpVariable, binary: pulp.LpVariable, max: float
