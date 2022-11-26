@@ -31,3 +31,16 @@ class Pulp:
 
     def status(self):
         return pulp.LpStatus[self.prob.status]
+
+    def constraints(self):
+        return self.prob.constraints
+
+    def constrain_max(
+        self, continuous: pulp.LpVariable, binary: pulp.LpVariable, max: float
+    ) -> pulp.LpConstraint:
+        return continuous - binary * max <= 0
+
+    def constrain_min(
+        self, continuous: pulp.LpVariable, binary: pulp.LpVariable, max: float
+    ) -> pulp.LpConstraint:
+        return -continuous + binary * max <= 0

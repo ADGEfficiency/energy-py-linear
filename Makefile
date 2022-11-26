@@ -8,7 +8,7 @@ setup-test:
 #  TEST
 .PHONY: test test-ci
 test: setup-test
-	pytest tests --showlocals --full-trace --tb=short --show-capture=no -v -x --lf --pdb
+	pytest tests --showlocals --full-trace --tb=short --show-capture=no -v -x --lf
 test-ci: setup-test
 	coverage run -m pytest tests --tb=short --show-capture=no
 	coverage report -m

@@ -4,8 +4,8 @@ import typing
 import pulp
 import pydantic
 
-from energypylinear.frameworks import Pulp
 from energypylinear.freq import Freq
+from energypylinear.optimizer import Pulp
 
 
 class SiteConfig(pydantic.BaseModel):
@@ -49,27 +49,26 @@ def constrain_site_electricity_balance(framework, assets):
     import + generation = (export + load) + (charge - discharge)
     import + generation - (export + load) - (charge - discharge) = 0
 
-    should losses occur here?
+    TODO add a spill import + export
     """
     assets_one_interval = assets["assets"][-1]
     site_one_interval = assets["sites"][-1]
     framework.constrain(
         site_one_interval.import_power_mwh
-        + framework.sum([a.generation_mwh for a in assets_one_interval])
+        + framework.sum([a.electric_generation_mwh for a in assets_one_interval])
         - (
             site_one_interval.export_power_mwh
-            + framework.sum([a.load_mwh for a in assets_one_interval])
+            + framework.sum([a.electric_load_mwh for a in assets_one_interval])
         )
         - (
-            framework.sum([a.charge_mwh for a in assets_one_interval])
-            - framework.sum([a.discharge_mwh for a in assets_one_interval])
+            framework.sum([a.electric_charge_mwh for a in assets_one_interval])
+            - framework.sum([a.electric_discharge_mwh for a in assets_one_interval])
         )
         == 0
     )
 
 
 def constrain_site_import_export(framework, assets):
-    asset_one_interval = assets["assets"][-1]
     site_one_interval = assets["sites"][-1]
     framework.constrain(
         site_one_interval.import_power_mwh
@@ -86,9 +85,40 @@ def constrain_site_import_export(framework, assets):
     )
 
 
+def constrain_site_high_temperature_heat(optimizer, vars):
+    """
+    in = out + accumulation
+    generation = load
+    generation - load = 0
+    """
+    assets = vars["assets"][-1]
+    optimizer.constrain(
+        optimizer.sum([a.high_temperature_generation_mwh for a in assets])
+        - optimizer.sum([a.high_temperature_load_mwh for a in assets])
+        == 0
+    )
+
+
+def constrain_site_low_temperature_heat(optimizer, vars):
+    """
+    in = out + accumulation
+    generation = load
+    generation - load = 0
+    """
+    assets = vars["assets"][-1]
+    optimizer.constrain(
+        optimizer.sum([a.low_temperature_generation_mwh for a in assets])
+        - optimizer.sum([a.low_high_temperature_load_mwh for a in assets])
+        == 0
+    )
+
+
 def constrain_within_interval(framework, assets):
     constrain_site_electricity_balance(framework, assets)
     constrain_site_import_export(framework, assets)
+    constrain_site_high_temperature_heat(framework, assets)
+    constrain_site_low_temperature_heat(framework, assets)
+    #  add cooling constraint here TODO
 
 
 class Site:
@@ -98,42 +128,3 @@ class Site:
         self.battery_configs = [
             cfg for cfg in self.asset_configs if isinstance(cfg, BatteryConfig)
         ]
-
-    def optimize(
-        self,
-        freq_mins: int,
-        prices: typing.Optional[list[float]],
-        forecasts: typing.Optional[list[float]] = None,
-        carbon_intensities: typing.Optional[list[float]] = None,
-        objective: typing.Literal["price", "forecast", "carbon"] = "price",
-    ):
-        freq = Freq(freq_mins)
-        interval_data = IntervalData(
-            prices=prices, forecasts=forecasts, carbon_intensities=carbon_intensities
-        )
-
-        assets = collections.defaultdict(list)
-        for i in interval_data.idx:
-
-            site = site_one_interval(self.framework, self.site_cfg, i, freq)
-            assets["sites"].append(site)
-
-            #  battery variables
-            assets["batteries"].append(
-                battery_one_interval(self.framework, cfg, i, freq)
-                for cfg in self.battery_configs
-            )
-
-            #  generator valiables
-            assets["generators"].append(
-                generator_one_interval(self.framework, cfg, i, freq)
-                for cfg in self.generator_configs
-            )
-
-            #  site constraints
-
-            battery.constraints_within_interval(framework, assets)
-
-            #  generation constraints
-
-        battery.constraints_after_intervals(framework, assets)
