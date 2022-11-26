@@ -88,13 +88,16 @@ def generator_one_interval(
     return GeneratorOneInterval(
         electric_generation_mwh=optimizer.continuous(
             f"{cfg.name}-electric_generation_mwh-{i}",
-            low=freq.mw_to_mwh(cfg.electric_power_min_mw),
+            low=0,
             up=freq.mw_to_mwh(cfg.electric_power_max_mw),
         ),
         binary=optimizer.binary(
             f"{cfg.name}-binary_mwh-{i}",
         ),
         gas_consumption_mwh=optimizer.continuous(f"{cfg.name}-gas_consumption_mwh-{i}"),
+        high_temperature_generation_mwh=optimizer.continuous(
+            f"{cfg.name}-high_temperature_generation_mwh-{i}"
+        ),
         cfg=cfg,
     )
 
@@ -107,6 +110,9 @@ def constrain_within_interval_generators(
             asset.gas_consumption_mwh
             == asset.electric_generation_mwh * (1 / asset.cfg.electric_efficiency_pct)
         )
+        # asset.high_temperature_generation_mwh = (
+        #     asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
+        # )
         optimizer.constrain(
             asset.high_temperature_generation_mwh
             == asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
@@ -132,7 +138,8 @@ def constrain_within_interval_generators(
 class Generator:
     def __init__(
         self,
-        electric_power_mw: float,
+        electric_power_max_mw: float,
+        electric_power_min_mw: float = 0.0,
         electric_efficiency_pct: float = 0.0,
         high_temperature_efficiency_pct: float = 0.0,
         low_temperature_efficiency_pct: float = 0.0,
@@ -143,7 +150,8 @@ class Generator:
         """
         self.cfg = GeneratorConfig(
             name="generator",
-            electric_power_mw=electric_power_mw,
+            electric_power_min_mw=electric_power_min_mw,
+            electric_power_max_mw=electric_power_max_mw,
             electric_efficiency_pct=electric_efficiency_pct,
             high_temperature_efficiency_pct=high_temperature_efficiency_pct,
             low_temperature_efficiency_pct=low_temperature_efficiency_pct,
@@ -238,7 +246,11 @@ class Generator:
             generators = vars["generators"][i]
             for generator in generators:
                 name = f"{generator.cfg.name}"
-                for attr in ["electric_generation_mwh", "gas_consumption_mwh"]:
+                for attr in [
+                    "electric_generation_mwh",
+                    "gas_consumption_mwh",
+                    "high_temperature_generation_mwh",
+                ]:
                     results[f"{name}-{attr}"].append(getattr(generator, attr).value())
 
             boilers = vars["boilers"][i]
@@ -247,6 +259,25 @@ class Generator:
                 for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
                     results[f"{name}-{attr}"].append(getattr(boiler, attr).value())
 
+        print(results)
         import pandas as pd
 
-        return pd.DataFrame(results)
+        #  add totals
+        results = pd.DataFrame(results)
+        for col, include_spill in [
+            ("electric_generation_mwh", True),
+            ("gas_consumption_mwh", False),
+            ("high_temperature_generation_mwh", True),
+        ]:
+            #  probably a way to do this in a single line - TODO
+            if include_spill:
+                cols = [c for c in results.columns if (col in c)]
+            else:
+                cols = [c for c in results.columns if (col in c) and ("spill" not in c)]
+            results[f"total-{col}"] = results[cols].sum(axis=1)
+
+        #  add balances + check them - TODO
+
+        #  add warnings on the spill generator + boiler use
+
+        return results

@@ -52,6 +52,6 @@ class Pulp:
         return continuous - binary * max <= 0
 
     def constrain_min(
-        self, continuous: pulp.LpVariable, binary: pulp.LpVariable, max: float
+        self, continuous: pulp.LpVariable, binary: pulp.LpVariable, min: float
     ) -> pulp.LpConstraint:
-        return -continuous + binary * max <= 0
+        return -continuous + binary * min <= 0

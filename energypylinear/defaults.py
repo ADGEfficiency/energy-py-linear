@@ -10,11 +10,11 @@ class Defaults(pydantic.BaseModel):
     low_temperature_load_mwh: float = 0
 
     #  high temperature
-    spill_boiler_efficiency_pct: float = 0.05
+    spill_boiler_efficiency_pct: float = 1e-17
     spill_boiler_size_mw: float = 100000
 
     #  electricity
-    spill_generator_efficiency_pct: float = 0.05
+    spill_generator_efficiency_pct: float = 1e-17
     spill_generator_size_mw: float = 100000
 
 
