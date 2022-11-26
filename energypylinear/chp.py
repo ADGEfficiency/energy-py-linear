@@ -143,9 +143,6 @@ def constrain_within_interval_generators(
             asset.gas_consumption_mwh
             == asset.electric_generation_mwh * (1 / asset.cfg.electric_efficiency_pct)
         )
-        # asset.high_temperature_generation_mwh = (
-        #     asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
-        # )
         optimizer.constrain(
             asset.high_temperature_generation_mwh
             == asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
@@ -212,13 +209,13 @@ class Generator:
         )
         self.site_cfg = epl.site.SiteConfig()
 
-        backup_boiler_size = freq.mw_to_mwh(
+        default_boiler_size = freq.mw_to_mwh(
             max(interval_data.high_temperature_load_mwh)
             + max(interval_data.low_temperature_load_mwh)
         )
         self.default_boiler_cfg = BoilerConfig(
             name="boiler",
-            high_temperature_generation_max_mw=backup_boiler_size,
+            high_temperature_generation_max_mw=default_boiler_size,
             high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
         )
         self.spill_cfg = SpillConfig()
