@@ -24,6 +24,7 @@ class IntervalData(pydantic.BaseModel):
         "high_temperature_load_mwh",
         "low_temperature_load_mwh",
         pre=True,
+        always=True,
     )
     def validate_float(cls, value, values, field):
         if isinstance(value, (float, int)):

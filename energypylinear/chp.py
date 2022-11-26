@@ -1,6 +1,7 @@
 import collections
 import typing
 
+import pandas as pd
 import pulp
 import pydantic
 
@@ -298,9 +299,6 @@ class Generator:
                 name = f"{boiler.cfg.name}"
                 for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
                     results[f"{name}-{attr}"].append(getattr(boiler, attr).value())
-
-        print(results)
-        import pandas as pd
 
         #  add totals
         results = pd.DataFrame(results)
