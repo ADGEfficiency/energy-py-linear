@@ -6,29 +6,14 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear import battery, site
+from energypylinear.assets.asset import Asset
+from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Pulp
 
 
-class Asset(pydantic.BaseModel):
-    electric_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
-    high_temperature_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
-    low_temperature_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
-    #  add cooling generation here TODO
-
-    electric_load_mwh: typing.Union[pulp.LpVariable, float] = 0
-    high_temperature_load_mwh: typing.Union[pulp.LpVariable, float] = 0
-    low_temperature_load_mwh: typing.Union[pulp.LpVariable, float] = 0
-    #  add cooling load here TODO
-
-    electric_charge_mwh: typing.Union[pulp.LpVariable, float] = 0
-    electric_discharge_mwh: typing.Union[pulp.LpVariable, float] = 0
-
-    class Config:
-        arbitrary_types_allowed: bool = True
-
-
 class BatteryConfig(pydantic.BaseModel):
+    name: str
     power_mw: float
     capacity_mwh: float
     efficiency_pct: float
@@ -37,6 +22,7 @@ class BatteryConfig(pydantic.BaseModel):
 
 
 class BatteryOneInterval(Asset):
+    cfg: BatteryConfig
     charge_mwh: pulp.LpVariable
     discharge_mwh: pulp.LpVariable
     losses_mwh: pulp.LpVariable
@@ -49,6 +35,7 @@ def battery_one_interval(
     optimizer: Pulp, cfg: BatteryConfig, i: int, freq: Freq
 ) -> BatteryOneInterval:
     return BatteryOneInterval(
+        cfg=cfg,
         charge_mwh=optimizer.continuous(
             f"charge_mwh-{i}", up=freq.mw_to_mwh(cfg.power_mw)
         ),
@@ -119,8 +106,15 @@ def constrain_after_intervals(optimizer, vars, configs):
 
 
 class Battery:
-    def __init__(self, power_mw: float, capacity_mwh: float, efficiency: float = 0.9):
+    def __init__(
+        self,
+        power_mw: float,
+        capacity_mwh: float,
+        efficiency: float = 0.9,
+        battery_name: str = "battery-alpha",
+    ):
         self.cfg = battery.BatteryConfig(
+            name=battery_name,
             power_mw=power_mw,
             capacity_mwh=capacity_mwh,
             efficiency_pct=efficiency,
@@ -129,20 +123,29 @@ class Battery:
 
     def optimize(
         self,
-        freq_mins: int,
-        prices: typing.Optional[list[float]],
-        forecasts: typing.Optional[list[float]] = None,
-        carbon_intensities: typing.Optional[list[float]] = None,
+        electricity_prices,
+        gas_prices=None,
+        carbon_intensities=None,
+        high_temperature_load_mwh=None,
+        low_temperature_load_mwh=None,
+        freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
-        objective: typing.Literal["price", "forecast", "carbon"] = "price",
+        final_charge_mwh: typing.Union[float, None] = None,
     ):
         freq = Freq(freq_mins)
         interval_data = epl.data.IntervalData(
-            prices=prices, forecasts=forecasts, carbon_intensities=carbon_intensities
+            electricity_prices=electricity_prices,
+            gas_prices=gas_prices,
+            carbon_intensities=carbon_intensities,
+            high_temperature_load_mwh=high_temperature_load_mwh,
+            low_temperature_load_mwh=low_temperature_load_mwh,
         )
-        self.site_cfg = site.SiteConfig()
+        self.site_cfg = epl.site.SiteConfig()
+        self.spill_cfg = epl.spill.SpillConfig()
         self.cfg.initial_charge_mwh = initial_charge_mwh
-        self.cfg.final_charge_mwh = initial_charge_mwh
+        self.cfg.final_charge_mwh = (
+            initial_charge_mwh if final_charge_mwh is None else final_charge_mwh
+        )
 
         vars = collections.defaultdict(list)
         for i in interval_data.idx:
@@ -150,6 +153,10 @@ class Battery:
             vars["sites"].append(
                 site.site_one_interval(self.optimizer, self.site_cfg, i, freq)
             )
+            vars["spills"].append(
+                epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
+            )
+
             batteries = [
                 battery.battery_one_interval(self.optimizer, self.cfg, i, freq)
             ]
@@ -157,7 +164,7 @@ class Battery:
             vars["batteries"].append(batteries)
             vars["assets"].append(batteries)
 
-            site.constrain_within_interval(self.optimizer, vars)
+            site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             battery.constrain_within_interval(self.optimizer, vars)
 
         battery.constrain_after_intervals(self.optimizer, vars, [self.cfg])
@@ -171,24 +178,12 @@ class Battery:
 
         #  objective functions
         sites = vars["sites"]
+        from energypylinear import objectives
 
-        forecast_objective = self.optimizer.sum(
-            sites[i].import_power_mwh * interval_data.forecasts[i]
-            - sites[i].export_power_mwh * interval_data.forecasts[i]
-            for i in interval_data.idx
+        self.optimizer.objective(
+            objectives.price_objective(self.optimizer, vars, interval_data)
         )
-        carbon_objective = self.optimizer.sum(
-            sites[i].import_power_mwh * interval_data.carbon_intensities[i]
-            - sites[i].export_power_mwh * interval_data.carbon_intensities[i]
-            for i in interval_data.idx
-        )
-
-        objectives = {
-            "price": price_objective,
-            "forecast": forecast_objective,
-            "carbon": carbon_objective,
-        }
-
-        self.optimizer.objective(objectives[objective])
         status = self.optimizer.solve()
         print(status)
+
+        return epl.data.extract_results(interval_data, vars)

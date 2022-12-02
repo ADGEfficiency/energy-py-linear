@@ -1,27 +1,9 @@
 import typing
 
 import pandas as pd
+import pydantic
 
 import energypylinear as epl
-
-
-def validate_results(results: pd.DataFrame) -> None:
-    """
-    validations TODO
-    - don't import / export in same interval
-    - column names (types?)
-    - validate against interval data - lengths
-    """
-
-    cols = [
-        "import_power_mwh",
-        "export_power_mwh",
-    ]
-    for c in cols:
-        assert c in results.columns
-
-
-import pydantic
 
 
 class OneElectricityAccount(pydantic.BaseModel):
@@ -66,7 +48,7 @@ def accounting(
     results: pd.DataFrame,
     forecasts: typing.Optional["epl.data.IntervalData"] = None,
 ):
-    validate_results(results)
+    epl.data.validate_results(results)
     return Account(
         electricity=get_electricity_account(actuals, results, forecasts),
     )

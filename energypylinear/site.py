@@ -43,43 +43,38 @@ def site_one_interval(
     )
 
 
-def constrain_site_electricity_balance(framework, assets):
+def constrain_site_electricity_balance(framework, vars):
     """
     in = out + accumulation
     import + generation = (export + load) + (charge - discharge)
     import + generation - (export + load) - (charge - discharge) = 0
     """
-    assets_one_interval = assets["assets"][-1]
-    site_one_interval = assets["sites"][-1]
-    spill = assets["spills"][-1]
+    assets = vars["assets"][-1]
+    site = vars["sites"][-1]
+    spill = vars["spills"][-1]
+
     framework.constrain(
-        site_one_interval.import_power_mwh
-        - site_one_interval.export_power_mwh
+        site.import_power_mwh
+        - site.export_power_mwh
         + spill.electric_generation_mwh
         - spill.electric_load_mwh
-        + framework.sum([a.electric_generation_mwh for a in assets_one_interval])
-        - framework.sum([a.electric_load_mwh for a in assets_one_interval])
-        - framework.sum([a.electric_charge_mwh for a in assets_one_interval])
-        + framework.sum([a.electric_discharge_mwh for a in assets_one_interval])
+        + framework.sum([a.electric_generation_mwh for a in assets])
+        - framework.sum([a.electric_load_mwh for a in assets])
+        - framework.sum([a.electric_charge_mwh for a in assets])
+        + framework.sum([a.electric_discharge_mwh for a in assets])
         == 0
     )
 
 
 def constrain_site_import_export(framework, assets):
-    site_one_interval = assets["sites"][-1]
+    site = assets["sites"][-1]
     framework.constrain(
-        site_one_interval.import_power_mwh
-        - site_one_interval.import_limit_mwh * site_one_interval.import_power_bin
-        <= 0
+        site.import_power_mwh - site.import_limit_mwh * site.import_power_bin <= 0
     )
     framework.constrain(
-        site_one_interval.export_power_mwh
-        - site_one_interval.export_limit_mwh * site_one_interval.export_power_bin
-        <= 0
+        site.export_power_mwh - site.export_limit_mwh * site.export_power_bin <= 0
     )
-    framework.constrain(
-        site_one_interval.import_power_bin + site_one_interval.export_power_bin == 1
-    )
+    framework.constrain(site.import_power_bin + site.export_power_bin == 1)
 
 
 def constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i):
@@ -115,9 +110,9 @@ def constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, 
     )
 
 
-def constrain_within_interval(framework, assets, interval_data, i):
-    constrain_site_electricity_balance(framework, assets)
-    constrain_site_import_export(framework, assets)
-    constrain_site_high_temperature_heat_balance(framework, assets, interval_data, i)
-    constrain_site_low_temperature_heat_balance(framework, assets, interval_data, i)
+def constrain_within_interval(framework, vars, interval_data, i):
+    constrain_site_electricity_balance(framework, vars)
+    constrain_site_import_export(framework, vars)
+    constrain_site_high_temperature_heat_balance(framework, vars, interval_data, i)
+    constrain_site_low_temperature_heat_balance(framework, vars, interval_data, i)
     #  add cooling constraint here TODO
