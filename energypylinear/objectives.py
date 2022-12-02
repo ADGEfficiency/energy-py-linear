@@ -1,9 +1,12 @@
 import pulp
 
+import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
-def price_objective(optimizer, vars, interval_data) -> pulp.LpAffineExpression:
+def price_objective(
+    optimizer: epl.optimizer.Pulp, vars, interval_data: epl.data.IntervalData
+) -> pulp.LpAffineExpression:
 
     sites = vars["sites"]
     spills = vars["spills"]
@@ -35,18 +38,36 @@ def price_objective(optimizer, vars, interval_data) -> pulp.LpAffineExpression:
     return optimizer.sum(obj)
 
 
-"""
+def carbon_objective(
+    optimizer: epl.optimizer.Pulp, vars, interval_data: epl.data.IntervalData
+) -> pulp.LpAffineExpression:
 
+    sites = vars["sites"]
+    spills = vars["spills"]
+    generators = vars.get("generators", [])
+    boilers = vars.get("boilers", [])
 
-        forecast_objective = self.optimizer.sum(
-            sites[i].import_power_mwh * interval_data.forecasts[i]
-            - sites[i].export_power_mwh * interval_data.forecasts[i]
+    assert isinstance(interval_data.carbon_intensities, list)
+    obj = [
+        sites[i].import_power_mwh * interval_data.carbon_intensities[i]
+        - sites[i].export_power_mwh * interval_data.carbon_intensities[i]
+        + spills[i].electric_generation_mwh * defaults.spill_objective_penalty
+        + spills[i].high_temperature_generation_mwh * defaults.spill_objective_penalty
+        + spills[i].electric_load_mwh * defaults.spill_objective_penalty
+        #  dumping heat has no penalty
+        + spills[i].high_temperature_load_mwh
+        for i in interval_data.idx
+    ]
+    if generators:
+        obj += [
+            generator.gas_consumption_mwh * defaults.gas_carbon_intensity_tc_per_mwh
             for i in interval_data.idx
-        )
-        carbon_objective = self.optimizer.sum(
-            sites[i].import_power_mwh * interval_data.carbon_intensities[i]
-            - sites[i].export_power_mwh * interval_data.carbon_intensities[i]
+            for generator in generators[i]
+        ]
+    if boilers:
+        obj += [
+            boiler.gas_consumption_mwh * defaults.gas_carbon_intensity_tc_per_mwh
             for i in interval_data.idx
-        )
-
-"""
+            for boiler in boilers[i]
+        ]
+    return optimizer.sum(obj)

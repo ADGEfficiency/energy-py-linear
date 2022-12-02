@@ -13,6 +13,41 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Pulp
 
 
+class Valve(Asset):
+    name: str
+
+
+class ValveConfig(Asset):
+    name: str
+
+
+class ValveOneInterval(Asset):
+    cfg: ValveConfig
+    high_temperature_load_mwh: pulp.LpVariable
+    low_temperature_generation_mwh: pulp.LpVariable
+
+
+def valve_one_interval(
+    optimizer: Pulp, cfg: ValveConfig, i: int, freq: Freq
+) -> ValveOneInterval:
+    return ValveOneInterval(
+        cfg=cfg,
+        high_temperature_load_mwh=optimizer.continuous(
+            f"{cfg.name}-high_temperature_generation_mwh-{i}",
+        ),
+        low_temperature_generation_mwh=optimizer.continuous(
+            f"{cfg.name}-low_temperature_generation_mwh-{i}",
+        ),
+    )
+
+
+def constrain_within_interval_valve(optimizer: Pulp, vars: dict) -> None:
+    valve = vars["valves"][-1]
+    optimizer.constrain(
+        valve.high_temperature_load_mwh == valve.low_temperature_generation_mwh
+    )
+
+
 class BoilerConfig(Asset):
     name: str
     high_temperature_generation_max_mw: float = 0
@@ -21,10 +56,10 @@ class BoilerConfig(Asset):
 
 
 class BoilerOneInterval(Asset):
+    cfg: BoilerConfig
     high_temperature_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
     binary: pulp.LpVariable
-    cfg: BoilerConfig
 
 
 def boiler_one_interval(
@@ -44,7 +79,7 @@ def boiler_one_interval(
     )
 
 
-def constrain_within_interval_boilers(optimizer: Pulp, vars: dict, freq: Freq):
+def constrain_within_interval_boilers(optimizer: Pulp, vars: dict, freq: Freq) -> None:
     for asset in vars["boilers"][-1]:
         optimizer.constrain(
             asset.gas_consumption_mwh
@@ -142,7 +177,6 @@ class Generator:
         electric_efficiency_pct: float = 0.0,
         high_temperature_efficiency_pct: float = 0.0,
         low_temperature_efficiency_pct: float = 0.0,
-        cooling_efficiency_pct: float = 0.0,
     ):
         """
         Make sure to get your efficiencies and gas prices on the same basis LHV or HHV!
@@ -154,7 +188,6 @@ class Generator:
             electric_efficiency_pct=electric_efficiency_pct,
             high_temperature_efficiency_pct=high_temperature_efficiency_pct,
             low_temperature_efficiency_pct=low_temperature_efficiency_pct,
-            cooling_efficiency_pct=cooling_efficiency_pct,
         )
         self.optimizer = Pulp()
 
@@ -166,7 +199,7 @@ class Generator:
         high_temperature_load_mwh=None,
         low_temperature_load_mwh=None,
         freq_mins: int = defaults.freq_mins,
-    ):
+    ) -> pd.DataFrame:
         freq = Freq(freq_mins)
         interval_data = epl.data.IntervalData(
             electricity_prices=electricity_prices,
@@ -177,6 +210,7 @@ class Generator:
         )
         self.site_cfg = epl.site.SiteConfig()
         self.spill_cfg = epl.spill.SpillConfig()
+        self.valve_cfg = ValveConfig(name="valve-alpha")
 
         default_boiler_size = freq.mw_to_mwh(
             max(interval_data.high_temperature_load_mwh)
@@ -196,6 +230,9 @@ class Generator:
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
             )
+            vars["valves"].append(
+                valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
+            )
 
             generators = [
                 generator_one_interval(self.optimizer, self.cfg, i, freq),
@@ -210,6 +247,7 @@ class Generator:
             epl.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             constrain_within_interval_generators(self.optimizer, vars, freq)
             constrain_within_interval_boilers(self.optimizer, vars, freq)
+            constrain_within_interval_valve(self.optimizer, vars)
 
         assert (
             len(interval_data.idx)

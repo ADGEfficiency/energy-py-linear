@@ -8,10 +8,12 @@ class Pulp:
         self.prob = pulp.LpProblem("prob", pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=1)
 
-    def continuous(self, name: str, low: float = 0, up: typing.Optional[float] = None):
+    def continuous(
+        self, name: str, low: float = 0, up: typing.Optional[float] = None
+    ) -> pulp.LpVariable:
         return pulp.LpVariable(name=name, lowBound=low, upBound=up, cat="Continuous")
 
-    def binary(self, name: str):
+    def binary(self, name: str) -> pulp.LpVariable:
         return pulp.LpVariable(name=name, cat="Binary")
 
     def sum(self, vector: list[pulp.LpAffineExpression]):
@@ -19,7 +21,7 @@ class Pulp:
 
     def constrain(
         self, constraint: pulp.LpConstraint, name: typing.Optional[str] = None
-    ):
+    ) -> pulp.LpConstraint:
         return self.prob.addConstraint(constraint, name)
 
     def objective(self, objective):
@@ -40,10 +42,10 @@ class Pulp:
     def status(self):
         return pulp.LpStatus[self.prob.status]
 
-    def constraints(self):
+    def constraints(self) -> list[pulp.LpConstraint]:
         return self.prob.constraints
 
-    def variables(self):
+    def variables(self) -> list[pulp.LpVariable]:
         return self.prob.variables()
 
     def constrain_max(

@@ -27,23 +27,23 @@ class SiteOneInterval(pydantic.BaseModel):
 
 
 def site_one_interval(
-    framework: Pulp, site: SiteConfig, i: int, freq: Freq
+    optimizer: Pulp, site: SiteConfig, i: int, freq: Freq
 ) -> SiteOneInterval:
     return SiteOneInterval(
-        import_power_mwh=framework.continuous(
+        import_power_mwh=optimizer.continuous(
             f"import_power_mw-{i}", up=freq.mw_to_mwh(site.import_limit_mw)
         ),
-        export_power_mwh=framework.continuous(
+        export_power_mwh=optimizer.continuous(
             f"export_power_mw-{i}", up=freq.mw_to_mwh(site.import_limit_mw)
         ),
-        import_power_bin=framework.binary(f"import_power_bin-{i}"),
-        export_power_bin=framework.binary(f"export_power_bin-{i}"),
+        import_power_bin=optimizer.binary(f"import_power_bin-{i}"),
+        export_power_bin=optimizer.binary(f"export_power_bin-{i}"),
         import_limit_mwh=freq.mw_to_mwh(site.import_limit_mw),
         export_limit_mwh=freq.mw_to_mwh(site.export_limit_mw),
     )
 
 
-def constrain_site_electricity_balance(framework, vars):
+def constrain_site_electricity_balance(optimizer, vars):
     """
     in = out + accumulation
     import + generation = (export + load) + (charge - discharge)
@@ -53,28 +53,28 @@ def constrain_site_electricity_balance(framework, vars):
     site = vars["sites"][-1]
     spill = vars["spills"][-1]
 
-    framework.constrain(
+    optimizer.constrain(
         site.import_power_mwh
         - site.export_power_mwh
         + spill.electric_generation_mwh
         - spill.electric_load_mwh
-        + framework.sum([a.electric_generation_mwh for a in assets])
-        - framework.sum([a.electric_load_mwh for a in assets])
-        - framework.sum([a.charge_mwh for a in assets])
-        + framework.sum([a.discharge_mwh for a in assets])
+        + optimizer.sum([a.electric_generation_mwh for a in assets])
+        - optimizer.sum([a.electric_load_mwh for a in assets])
+        - optimizer.sum([a.charge_mwh for a in assets])
+        + optimizer.sum([a.discharge_mwh for a in assets])
         == 0
     )
 
 
-def constrain_site_import_export(framework, assets):
-    site = assets["sites"][-1]
-    framework.constrain(
+def constrain_site_import_export(optimizer, vars):
+    site = vars["sites"][-1]
+    optimizer.constrain(
         site.import_power_mwh - site.import_limit_mwh * site.import_power_bin <= 0
     )
-    framework.constrain(
+    optimizer.constrain(
         site.export_power_mwh - site.export_limit_mwh * site.export_power_bin <= 0
     )
-    framework.constrain(site.import_power_bin + site.export_power_bin == 1)
+    optimizer.constrain(site.import_power_bin + site.export_power_bin == 1)
 
 
 def constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i):
@@ -110,9 +110,9 @@ def constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, 
     )
 
 
-def constrain_within_interval(framework, vars, interval_data, i):
-    constrain_site_electricity_balance(framework, vars)
-    constrain_site_import_export(framework, vars)
-    constrain_site_high_temperature_heat_balance(framework, vars, interval_data, i)
-    constrain_site_low_temperature_heat_balance(framework, vars, interval_data, i)
+def constrain_within_interval(optimizer, vars, interval_data, i):
+    constrain_site_electricity_balance(optimizer, vars)
+    constrain_site_import_export(optimizer, vars)
+    constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i)
+    constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, i)
     #  add cooling constraint here TODO
