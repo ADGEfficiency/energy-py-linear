@@ -7,12 +7,12 @@ setup:
 	python -m pip install --upgrade pip -q
 	python -m pip install poetry -c ./constraints.txt -q
 	poetry install --with main
-setup-test:
-	poetry install --with main,test
-setup-static:
-	poetry install --with main,static
-setup-format:
-	poetry install --with main,format
+setup-test: setup
+	poetry install --with test
+setup-static: setup
+	poetry install --with static
+setup-format: setup
+	poetry install --with format
 
 #  TEST
 .PHONY: test test-ci
