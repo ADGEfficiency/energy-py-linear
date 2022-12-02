@@ -6,7 +6,7 @@ all: test
 setup:
 	pip install --upgrade pip -q
 	pip install poetry -c ./constraints.txt -q
-	poetry install --with main
+	poetry install --with main -q
 setup-test: setup
 	poetry install --with test -q
 setup-static: setup
