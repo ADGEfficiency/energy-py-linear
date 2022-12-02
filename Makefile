@@ -2,7 +2,7 @@
 all: test
 
 #  SETUP
-.PHONY: setup setup-test setup-static setup-format
+.PHONY: setup setup-test setup-static setup-check
 setup:
 	pip install --upgrade pip -q
 	pip install poetry -c ./constraints.txt -q
@@ -11,8 +11,8 @@ setup-test: setup
 	poetry install --with test -q
 setup-static: setup
 	poetry install --with static -q
-setup-format: setup
-	poetry install --with format -q
+setup-check: setup
+	poetry install --with check -q
 
 #  TEST
 .PHONY: test test-ci
@@ -28,12 +28,13 @@ static: setup-static
 	mypy **/*.py --config-file ./mypy.ini --pretty
 
 #  FORMATTING & LINTING
-.PHONY: format lint
-format: setup-format
+.PHONY: check check
+lint: setup-check
 	isort **/*.py --profile black
 	black **/*.py
 	poetry lock --no-update
-lint: setup-format
+check: setup-check
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
+	flake8 --extend-ignore E501
