@@ -15,5 +15,7 @@ class Defaults(pydantic.BaseModel):
 
     gas_carbon_intensity_tc_per_mwh: float = 0.185
 
+    decimal_tolerance: int = 4
+
 
 defaults = Defaults()

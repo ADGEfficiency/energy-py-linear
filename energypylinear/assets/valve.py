@@ -24,7 +24,7 @@ def valve_one_interval(
     return ValveOneInterval(
         cfg=cfg,
         high_temperature_load_mwh=optimizer.continuous(
-            f"{cfg.name}-high_temperature_generation_mwh-{i}", low=0
+            f"{cfg.name}-high_temperature_load_mwh-{i}", low=0
         ),
         low_temperature_generation_mwh=optimizer.continuous(
             f"{cfg.name}-low_temperature_generation_mwh-{i}", low=0

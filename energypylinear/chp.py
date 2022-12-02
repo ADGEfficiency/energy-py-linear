@@ -78,6 +78,8 @@ class GeneratorConfig(Asset):
 class GeneratorOneInterval(Asset):
     electric_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
+    high_temperature_generation_mwh: pulp.LpVariable
+    low_temperature_generation_mwh: pulp.LpVariable
     binary: pulp.LpVariable
     cfg: GeneratorConfig
 
@@ -98,7 +100,12 @@ def generator_one_interval(
         ),
         gas_consumption_mwh=optimizer.continuous(f"{cfg.name}-gas_consumption_mwh-{i}"),
         high_temperature_generation_mwh=optimizer.continuous(
-            f"{cfg.name}-high_temperature_generation_mwh-{i}"
+            f"{cfg.name}-high_temperature_generation_mwh-{i}",
+            low=0,
+        ),
+        low_temperature_generation_mwh=optimizer.continuous(
+            f"{cfg.name}-low_temperature_generation_mwh-{i}",
+            low=0,
         ),
         cfg=cfg,
     )
