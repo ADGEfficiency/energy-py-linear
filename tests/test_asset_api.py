@@ -25,7 +25,7 @@ from energypylinear.chp import Generator
 from energypylinear.defaults import defaults
 
 
-def test_asset_api_gas_turbine():
+def test_asset_api_gas_turbine() -> None:
     asset = Generator(
         electric_power_max_mw=100,
         electric_power_min_mw=50,
@@ -71,7 +71,7 @@ def test_asset_api_gas_turbine():
     )
 
 
-def test_asset_api_gas_engine():
+def test_asset_api_gas_engine() -> None:
     #  add a gas engine
     asset = Generator(
         electric_power_max_mw=100,
@@ -107,7 +107,7 @@ def test_asset_api_gas_engine():
     )
 
 
-def test_asset_api_battery():
+def test_asset_api_battery() -> None:
     power_mw = 2
     capacity_mwh = 4
     efficiency = 0.95
@@ -167,7 +167,7 @@ def test_asset_api_battery():
 )
 def test_asset_api_battery_optimization(
     electricity_prices, initial_charge_mwh, expected_dispatch
-):
+) -> None:
     power_mw = 4
     capacity_mwh = 6
     efficiency = 1.0

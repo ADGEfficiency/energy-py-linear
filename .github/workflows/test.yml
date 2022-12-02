@@ -7,13 +7,13 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Get Python version from Poetry `pyproject.toml`
+        uses: actions/checkout@v3
+      - name: Get Python Version from Poetry `pyproject.toml`
         run: |
           PYTHONVERSION=$(cat pyproject.toml | sed -En "s/^python =//p" | tr -d '" ^')
           echo "PYTHONVERSION=$PYTHONVERSION" >> $GITHUB_ENV
@@ -21,6 +21,9 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHONVERSION }}
-      - name: Run tests
+      - name: Run Tests
         run: |
           make test
+      - name: Run Linting
+        run: |
+          make lint
