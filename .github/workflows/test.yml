@@ -11,16 +11,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v2
-      - name: get python version from poetry pyproject.toml
+      - name: Get Python version from Poetry `pyproject.toml`
         run: |
           PYTHONVERSION=$(cat pyproject.toml | sed -En "s/^python =//p" | tr -d '" ^')
           echo "PYTHONVERSION=$PYTHONVERSION" >> $GITHUB_ENV
-      - name: setup python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHONVERSION }}
-      - name: run tests
+      - name: Run tests
         run: |
           make test

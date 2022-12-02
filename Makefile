@@ -4,15 +4,15 @@ all: test
 #  SETUP
 .PHONY: setup setup-test setup-static setup-format
 setup:
-	python -m pip install --upgrade pip -q
-	python -m pip install poetry -c ./constraints.txt -q
+	pip install --upgrade pip -q
+	pip install poetry -c ./constraints.txt -q
 	poetry install --with main
 setup-test: setup
-	poetry install --with test
+	poetry install --with test -q
 setup-static: setup
-	poetry install --with static
+	poetry install --with static -q
 setup-format: setup
-	poetry install --with format
+	poetry install --with format -q
 
 #  TEST
 .PHONY: test test-ci
