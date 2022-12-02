@@ -2,12 +2,17 @@
 all: test
 
 #  SETUP
-.PHONY: setup setup-test
+.PHONY: setup setup-test setup-static setup-format
 setup:
-	python -m pip install --upgrade pip
+	python -m pip install --upgrade pip -q
+	python -m pip install poetry -c ./constraints.txt -q
 	poetry install --with main
 setup-test:
 	poetry install --with main,test
+setup-static:
+	poetry install --with main,static
+setup-format:
+	poetry install --with main,format
 
 #  TEST
 .PHONY: test test-ci
@@ -19,7 +24,7 @@ test-ci: setup-test
 
 #  STATIC TYPING
 .PHONY: static
-static: setup-checks
+static: setup-static
 	mypy **/*.py --config-file ./mypy.ini --pretty
 
 #  FORMATTING & LINTING
@@ -27,6 +32,7 @@ static: setup-checks
 format: setup-format
 	isort **/*.py --profile black
 	black **/*.py
+	poetry lock --no-update
 lint: setup-format
 	isort --check **/*.py --profile black
 	black --check **/*.py
