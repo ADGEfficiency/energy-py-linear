@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v2
       - name: get python version from poetry pyproject.toml
         run: |
-          PYTHONVERSION=$(cat pyproject.toml | sed -En "s/python =//p" | tr -d '" ^')
+          PYTHONVERSION=$(cat pyproject.toml | sed -En "s/^python =//p" | tr -d '" ^')
           echo "PYTHONVERSION=$PYTHONVERSION" >> $GITHUB_ENV
       - name: setup python
         uses: actions/setup-python@v4
