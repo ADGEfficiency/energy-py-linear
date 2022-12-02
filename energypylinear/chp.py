@@ -265,8 +265,8 @@ class Generator:
         for i in interval_data.idx:
             site = vars["sites"][i]
 
-            results["import-power-mwh"].append(site.import_power_mwh.value())
-            results["export-power-mwh"].append(site.export_power_mwh.value())
+            results["import_power_mwh"].append(site.import_power_mwh.value())
+            results["export_power_mwh"].append(site.export_power_mwh.value())
 
             spill = vars["spills"][i]
             for attr in [
@@ -306,7 +306,7 @@ class Generator:
             results[f"total-{col}"] = results[cols].sum(axis=1)
 
         #  add balances + check them - TODO
-        # validate_results(results) from accounting
+        epl.accounting.validate_results(results)
 
         #  add warnings on the spill generator + boiler use
 

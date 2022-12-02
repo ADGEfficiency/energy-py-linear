@@ -12,6 +12,7 @@ PuLP = "^2.7.0"
 numpy = "^1.23.4"
 pydantic = "^1.10.2"
 pandas = "^1.5.2"
+matplotlib = "^3.6.2"
 
 
 [tool.poetry.group.format.dependencies]
@@ -21,6 +22,10 @@ isort = "^5.10.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
+
+
+[tool.poetry.group.develop.dependencies]
+ipython = "^8.7.0"
 
 [build-system]
 requires = ["poetry-core"]
