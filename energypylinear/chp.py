@@ -13,41 +13,6 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Pulp
 
 
-class Valve(Asset):
-    name: str
-
-
-class ValveConfig(Asset):
-    name: str
-
-
-class ValveOneInterval(Asset):
-    cfg: ValveConfig
-    high_temperature_load_mwh: pulp.LpVariable
-    low_temperature_generation_mwh: pulp.LpVariable
-
-
-def valve_one_interval(
-    optimizer: Pulp, cfg: ValveConfig, i: int, freq: Freq
-) -> ValveOneInterval:
-    return ValveOneInterval(
-        cfg=cfg,
-        high_temperature_load_mwh=optimizer.continuous(
-            f"{cfg.name}-high_temperature_generation_mwh-{i}",
-        ),
-        low_temperature_generation_mwh=optimizer.continuous(
-            f"{cfg.name}-low_temperature_generation_mwh-{i}",
-        ),
-    )
-
-
-def constrain_within_interval_valve(optimizer: Pulp, vars: dict) -> None:
-    valve = vars["valves"][-1]
-    optimizer.constrain(
-        valve.high_temperature_load_mwh == valve.low_temperature_generation_mwh
-    )
-
-
 class BoilerConfig(Asset):
     name: str
     high_temperature_generation_max_mw: float = 0
@@ -172,7 +137,7 @@ def constrain_within_interval_generators(
 class Generator:
     def __init__(
         self,
-        electric_power_max_mw: float,
+        electric_power_max_mw: float = 0.0,
         electric_power_min_mw: float = 0.0,
         electric_efficiency_pct: float = 0.0,
         high_temperature_efficiency_pct: float = 0.0,
@@ -210,7 +175,7 @@ class Generator:
         )
         self.site_cfg = epl.site.SiteConfig()
         self.spill_cfg = epl.spill.SpillConfig()
-        self.valve_cfg = ValveConfig(name="valve-alpha")
+        self.valve_cfg = epl.valve.ValveConfig(name="valve-alpha")
 
         default_boiler_size = freq.mw_to_mwh(
             max(interval_data.high_temperature_load_mwh)
@@ -231,7 +196,7 @@ class Generator:
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
             )
             vars["valves"].append(
-                valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
+                epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
 
             generators = [
@@ -247,7 +212,7 @@ class Generator:
             epl.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             constrain_within_interval_generators(self.optimizer, vars, freq)
             constrain_within_interval_boilers(self.optimizer, vars, freq)
-            constrain_within_interval_valve(self.optimizer, vars)
+            epl.valve.constrain_within_interval_valve(self.optimizer, vars)
 
         assert (
             len(interval_data.idx)

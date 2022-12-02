@@ -39,11 +39,11 @@ def test_asset_api_gas_turbine():
     )
     """
     - high electricity price, low heat demand
-    - expect generator to run full load and dump heat
+    - expect generator to run full load and dump heat to low temperature
     """
     row = results.iloc[0, :]
     assert row["generator-alpha-electric_generation_mwh"] == 100
-    assert row["spill-alpha-high_temperature_load_mwh"] == (100 / 0.4) * 0.6 - 20
+    assert row["spill-alpha-low_temperature_load_mwh"] == (100 / 0.4) * 0.6 - 20
 
     """
     - low electricity price, low heat demand
@@ -62,6 +62,30 @@ def test_asset_api_gas_turbine():
     assert (
         row["boiler-alpha-high_temperature_generation_mwh"] == 1000 - (100 / 0.4) * 0.6
     )
+
+
+def test_asset_api_gas_engine():
+    #  add a gas engine
+    asset = Generator(
+        electric_power_max_mw=100,
+        electric_power_min_mw=10,
+        electric_efficiency_pct=0.4,
+        high_temperature_efficiency_pct=0.3,
+        low_temperature_efficiency_pct=0.0,
+    )
+    results = asset.optimize(
+        electricity_prices=[1000, -100, 1000],
+        gas_prices=20,
+        high_temperature_load_mwh=[20, 20, 1000],
+        freq_mins=60,
+    )
+    # breakpoint()  # fmt: skip
+    """
+    - high electricity price, low heat demand
+    - expect generator to run full load and dump heat
+    """
+    row = results.iloc[0, :]
+    assert row["generator-alpha-electric_generation_mwh"] == 100
 
 
 def test_asset_api_battery():

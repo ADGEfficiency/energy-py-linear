@@ -85,9 +85,11 @@ def constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data,
     """
     assets = vars["assets"][-1]
     spill = vars["spills"][-1]
+    valve = vars["valves"][-1]
     optimizer.constrain(
         spill.high_temperature_generation_mwh
-        - spill.high_temperature_load_mwh
+        # - spill.high_temperature_load_mwh
+        - valve.high_temperature_load_mwh
         + optimizer.sum([a.high_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.high_temperature_load_mwh for a in assets])
         - interval_data.high_temperature_load_mwh[i]
@@ -102,10 +104,14 @@ def constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, 
     generation - load = 0
     """
     assets = vars["assets"][-1]
+    spill = vars["spills"][-1]
+    valve = vars["valves"][-1]
     optimizer.constrain(
         optimizer.sum([a.low_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.low_temperature_load_mwh for a in assets])
         - interval_data.low_temperature_load_mwh[i]
+        + valve.low_temperature_generation_mwh
+        - spill.low_temperature_load_mwh
         == 0
     )
 

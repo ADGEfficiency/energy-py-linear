@@ -14,7 +14,7 @@ class SpillOneInterval(Asset):
     high_temperature_generation_mwh: pulp.LpVariable
 
     electric_load_mwh: pulp.LpVariable
-    high_temperature_load_mwh: pulp.LpVariable
+    low_temperature_load_mwh: pulp.LpVariable
 
 
 def spill_one_interval(
@@ -31,7 +31,7 @@ def spill_one_interval(
         electric_load_mwh=optimizer.continuous(
             f"{cfg.name}-electric_load_mwh-{i}",
         ),
-        high_temperature_load_mwh=optimizer.continuous(
-            f"{cfg.name}-high_temperature_load_mwh-{i}",
+        low_temperature_load_mwh=optimizer.continuous(
+            f"{cfg.name}-low_temperature_load_mwh-{i}", low=0
         ),
     )

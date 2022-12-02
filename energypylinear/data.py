@@ -72,7 +72,7 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
             "electric_generation_mwh",
             "high_temperature_generation_mwh",
             "electric_load_mwh",
-            "high_temperature_load_mwh",
+            "low_temperature_load_mwh",
         ]:
             name = f"{spill.cfg.name}"
             results[f"{name}-{attr}"].append(getattr(spill, attr).value())

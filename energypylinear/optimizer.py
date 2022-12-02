@@ -30,7 +30,9 @@ class Pulp:
     def solve(self):
         self.assert_no_duplicate_variables()
         self.solver.solve(self.prob)
-        return self.status()
+        status = self.status()
+        assert status == "Optimal"
+        return status
 
     def assert_no_duplicate_variables(self):
         variables = self.variables()

@@ -142,6 +142,8 @@ class Battery:
         )
         self.site_cfg = epl.site.SiteConfig()
         self.spill_cfg = epl.spill.SpillConfig()
+        self.valve_cfg = epl.valve.ValveConfig(name="valve-alpha")
+
         self.cfg.initial_charge_mwh = initial_charge_mwh
         self.cfg.final_charge_mwh = (
             initial_charge_mwh if final_charge_mwh is None else final_charge_mwh
@@ -155,6 +157,9 @@ class Battery:
             )
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
+            )
+            vars["valves"].append(
+                epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
 
             batteries = [

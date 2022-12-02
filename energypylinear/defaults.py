@@ -13,7 +13,7 @@ class Defaults(pydantic.BaseModel):
 
     default_boiler_efficiency_pct: float = 0.8
 
-    gas_carbon_intensity_tc_per_mwh: float 0.185
+    gas_carbon_intensity_tc_per_mwh: float = 0.185
 
 
 defaults = Defaults()
