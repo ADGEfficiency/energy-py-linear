@@ -5,7 +5,7 @@ import pulp
 import pydantic
 
 import energypylinear as epl
-from energypylinear import battery, site
+from energypylinear import battery, objectives, site
 from energypylinear.assets.asset import Asset
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
@@ -175,15 +175,8 @@ class Battery:
             == len(vars["batteries"])
             == len(vars["sites"])
         )
-
-        #  objective functions
-        sites = vars["sites"]
-        from energypylinear import objectives
-
         self.optimizer.objective(
             objectives.price_objective(self.optimizer, vars, interval_data)
         )
         status = self.optimizer.solve()
-        print(status)
-
         return epl.data.extract_results(interval_data, vars)

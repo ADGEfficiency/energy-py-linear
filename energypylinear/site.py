@@ -60,8 +60,8 @@ def constrain_site_electricity_balance(framework, vars):
         - spill.electric_load_mwh
         + framework.sum([a.electric_generation_mwh for a in assets])
         - framework.sum([a.electric_load_mwh for a in assets])
-        - framework.sum([a.electric_charge_mwh for a in assets])
-        + framework.sum([a.electric_discharge_mwh for a in assets])
+        - framework.sum([a.charge_mwh for a in assets])
+        + framework.sum([a.discharge_mwh for a in assets])
         == 0
     )
 

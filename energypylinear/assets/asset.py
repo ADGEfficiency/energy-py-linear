@@ -15,8 +15,8 @@ class Asset(pydantic.BaseModel):
     low_temperature_load_mwh: typing.Union[pulp.LpVariable, float] = 0
     #  add cooling load here TODO
 
-    electric_charge_mwh: typing.Union[pulp.LpVariable, float] = 0
-    electric_discharge_mwh: typing.Union[pulp.LpVariable, float] = 0
+    charge_mwh: typing.Union[pulp.LpVariable, float] = 0
+    discharge_mwh: typing.Union[pulp.LpVariable, float] = 0
 
     class Config:
         arbitrary_types_allowed: bool = True

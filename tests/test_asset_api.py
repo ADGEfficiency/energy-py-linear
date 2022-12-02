@@ -5,8 +5,19 @@ More tests
 - import / export limits
 - test the spill warnings
 - test low temperature load - will require the valve
+
+TODO
+
+test errors
+- test negative power_mw, efficiency > 1.0 etc
+- test we throw error when initial_charge_mwh or final_charge_mwh larger than capacity
+- test final_charge_mwh = None
+- test freq mins
 """
+
+
 import numpy as np
+import pytest
 
 import energypylinear as epl
 from energypylinear.battery import Battery
@@ -53,16 +64,6 @@ def test_asset_api_gas_turbine():
     )
 
 
-"""
-TODO
-
-test errors
-- test negative power_mw, efficiency > 1.0 etc
-- test we throw error when initial_charge_mwh or final_charge_mwh larger than capacity
-- test final_charge_mwh = None
-"""
-
-
 def test_asset_api_battery():
     power_mw = 2
     capacity_mwh = 4
@@ -80,8 +81,6 @@ def test_asset_api_battery():
     )
 
     freq = epl.freq.Freq(freq_mins)
-
-    # /Users/adam/energy-py-linear-v1/tests/test_battery.py
 
     #  check we don't exceed the battery rating
     assert all(results["battery-alpha-charge_mwh"] <= freq.mw_to_mwh(power_mw))
@@ -113,3 +112,31 @@ def test_asset_api_battery():
     mask = results[f"{name}-discharge_mwh"] > 0
     subset = results[mask]
     assert all(subset[f"{name}-losses_mwh"] == 0)
+
+
+@pytest.mark.parametrize(
+    "electricity_prices, initial_charge_mwh, expected_dispatch",
+    [
+        # ([10, 10, 10], 0, [0, 0, 0]),
+        # ([20, 10, 10], 6, [-1, 0, 0]),
+        ([10, 50, 10, 5000, 10], 0, [4, -4, 4, -4, 0]),
+    ],
+)
+def test_asset_api_battery_optimization(
+    electricity_prices, initial_charge_mwh, expected_dispatch
+):
+    power_mw = 4
+    capacity_mwh = 6
+    efficiency = 1.0
+    freq_mins = 60
+    asset = Battery(power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency)
+    results = asset.optimize(
+        electricity_prices=electricity_prices,
+        freq_mins=freq_mins,
+        initial_charge_mwh=initial_charge_mwh,
+        final_charge_mwh=0,
+    )
+    charge = results["battery-alpha-charge_mwh"].values
+    discharge = results["battery-alpha-discharge_mwh"].values
+    dispatch = charge - discharge
+    np.testing.assert_almost_equal(dispatch, expected_dispatch)
