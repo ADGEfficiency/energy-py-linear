@@ -1,6 +1,10 @@
+.PHONY: all clean
+all: test
+
 #  SETUP
 .PHONY: setup setup-test
 setup:
+	python -m pip install --upgrade pip
 	poetry install --with main
 setup-test:
 	poetry install --with main,test
