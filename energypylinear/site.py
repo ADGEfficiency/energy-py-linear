@@ -4,6 +4,7 @@ import typing
 import pulp
 import pydantic
 
+import energypylinear as epl
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Pulp
 

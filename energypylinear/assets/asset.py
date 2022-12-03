@@ -18,5 +18,7 @@ class Asset(pydantic.BaseModel):
     charge_mwh: typing.Union[pulp.LpVariable, float] = 0
     discharge_mwh: typing.Union[pulp.LpVariable, float] = 0
 
+    gas_consumption_mwh: typing.Union[pulp.LpVariable, float] = 0
+
     class Config:
         arbitrary_types_allowed: bool = True

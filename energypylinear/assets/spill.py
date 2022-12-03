@@ -1,3 +1,5 @@
+import typing
+
 import pulp
 
 import energypylinear as epl
@@ -5,11 +7,11 @@ from energypylinear.assets.asset import Asset
 
 
 class SpillConfig(Asset):
-    name: str = "spill-alpha"
+    name: str = "spill-default"
 
 
 class SpillOneInterval(Asset):
-    cfg: SpillConfig
+    cfg: SpillConfig = SpillConfig()
     electric_generation_mwh: pulp.LpVariable
     high_temperature_generation_mwh: pulp.LpVariable
 

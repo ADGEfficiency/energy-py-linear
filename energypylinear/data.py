@@ -134,6 +134,19 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
                 for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
                     results[f"{name}-{attr}"].append(getattr(boiler, attr).value())
 
+        if len(vars["evs-array"]):
+            evs = vars["evs-array"][i]
+            """
+            for each timestep (i)
+                for each charger
+                    select all charge events
+            """
+            for charger_idx, charger_cfg in enumerate(evs.charger_cfgs[0, 0, :]):
+                for attr in ["charge_mwh", "charge_binary"]:
+                    results[f"{charger_cfg.name}-{attr}"].append(
+                        sum([x.value() for x in getattr(evs, attr)[0, :, charger_idx]])
+                    )
+
     #  add totals
     #  can I do this without pandas??
     results = pd.DataFrame(results)

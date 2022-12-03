@@ -9,13 +9,13 @@ class Defaults(pydantic.BaseModel):
     high_temperature_load_mwh: float = 0
     low_temperature_load_mwh: float = 0
 
-    spill_objective_penalty: float = 1e17
+    spill_objective_penalty: float = 1e10
 
     default_boiler_efficiency_pct: float = 0.8
 
     gas_carbon_intensity_tc_per_mwh: float = 0.185
 
-    spill_charge_max_mw: float = 1e8
+    spill_charge_max_mw: float = 1e10
 
     decimal_tolerance: int = 4
 

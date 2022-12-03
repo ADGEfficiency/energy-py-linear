@@ -45,7 +45,7 @@ def test_asset_api_gas_turbine() -> None:
     row = results.iloc[0, :]
     assert row["generator-alpha-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
-        row["spill-alpha-low_temperature_load_mwh"],
+        row["spill-default-low_temperature_load_mwh"],
         (100 / 0.3) * 0.5 - 20,
         decimal=defaults.decimal_tolerance,
     )
@@ -101,7 +101,7 @@ def test_asset_api_gas_engine() -> None:
     row = results.iloc[0, :]
     assert row["generator-alpha-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
-        row["spill-alpha-low_temperature_load_mwh"],
+        row["spill-default-low_temperature_load_mwh"],
         (100 / 0.4) * 0.4 - 40,
         decimal=defaults.decimal_tolerance,
     )

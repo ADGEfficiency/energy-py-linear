@@ -6,7 +6,7 @@ import pulp
 class Pulp:
     def __init__(self):
         self.prob = pulp.LpProblem("prob", pulp.LpMinimize)
-        self.solver = pulp.PULP_CBC_CMD(msg=1)
+        self.solver = pulp.PULP_CBC_CMD(msg=0)
 
     def continuous(
         self, name: str, low: float = 0, up: typing.Optional[float] = None
@@ -53,9 +53,9 @@ class Pulp:
     def constrain_max(
         self, continuous: pulp.LpVariable, binary: pulp.LpVariable, max: float
     ) -> pulp.LpConstraint:
-        return continuous - binary * max <= 0
+        return self.constrain(continuous - binary * max <= 0)
 
     def constrain_min(
         self, continuous: pulp.LpVariable, binary: pulp.LpVariable, min: float
     ) -> pulp.LpConstraint:
-        return -continuous + binary * min <= 0
+        return self.constrain(-continuous + binary * min <= 0)

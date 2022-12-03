@@ -3,61 +3,47 @@ import numpy as np
 import energypylinear as epl
 from energypylinear.freq import Freq
 
+"""
+TODO
+- test smaller charger mws
+- test overlap between chargers
+- test use of the spill chargers
+    - make spill charger optional or choose to throw an error when spill charger used?
+"""
+
 
 def test_evs():
     evs = epl.evs.EVs(
-        charger_mws=[2, 4],
+        charger_mws=[100, 100],
+        # charger_efficiency=1.0  TODO
     )
-    evs.optimize(
-        electricity_prices=[50, 50, 50, 50, 50],
-        charge_events=[[1, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 1, 1]],
-        charge_event_mwh=[50, 100, 25],
+    charge_event_mwh = [50, 100, 30]
+    results = evs.optimize(
+        electricity_prices=[-100, 50, 30, 50, 40],
+        charge_events=[[1, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 1, 1]],
+        charge_event_mwh=charge_event_mwh,
     )
+    print("\n")
+    print(
+        results[
+            [
+                "charger-0-charge_mwh",
+                "charger-0-charge_binary",
+                "charger-1-charge_mwh",
+                "charger-1-charge_binary",
+            ]
+        ]
+    )
+    """
+    test
+    - total charge across all == sum(charge_events)
+    - that all charge events get their charge
+    """
+    #  test total import power equal to total charge event mwh
+    #  requires efficiency to be 100%
+    np.testing.assert_equal(results["import_power_mwh"].sum(), sum(charge_event_mwh))
+    #  no exporting at all
+    np.testing.assert_equal(results["export_power_mwh"].sum(), 0)
 
-    if False:
-        import collections
-
-        vars = collections.defaultdict(list)
-        for i in idx:
-            vars["evs"].append(
-                ev_one_interval(optimizer, chargers, charge_events, i, freq)
-            )
-            vars["spill-evs"].append(
-                ev_one_interval(
-                    optimizer,
-                    spill_chargers,
-                    charge_events,
-                    i,
-                    freq,
-                )
-            )
-
-            constrain_within_interval(
-                optimizer,
-                vars["evs"][i],
-                charge_events,
-                freq,
-                chargers,
-                i,
-            )
-            constrain_within_interval(
-                optimizer,
-                vars["spill-evs"][i],
-                charge_events,
-                freq,
-                spill_chargers,
-                i,
-                add_single_charger_or_event_constraints=False,
-            )
-
-        constrain_after_intervals(optimizer, vars, charge_event_mwh)
-
-        #  check the stack worked correctly
-        #  TODO move after interval data refactor
-        stacked_charge_mwh = stack_ev(vars, "charge_mwh")
-        assert stacked_charge_mwh.shape[0] == len(idx)
-        assert stacked_charge_mwh.shape[1] == charge_events.shape[1]
-        assert (
-            stacked_charge_mwh.shape[2] == chargers.shape[0] + spill_chargers.shape[0]
-        )
-        out = stacked_charge_mwh
+    #  test dispatch exactly as we expect
+    np.testing.assert_array_equal(results["import_power_mwh"], [50, 0, 100, 0, 30])

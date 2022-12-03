@@ -10,8 +10,18 @@ def price_objective(
 
     sites = vars["sites"]
     spills = vars["spills"]
+    spill_evs = vars["spill-evs"]
     generators = vars.get("generators", [])
     boilers = vars.get("boilers", [])
+
+    if len(generators) == 0:
+        generators = [[epl.assets.asset.Asset()] for i in interval_data.idx]
+    if len(boilers) == 0:
+        boilers = [[epl.assets.asset.Asset()] for i in interval_data.idx]
+    if len(spill_evs) == 0:
+        spill_evs = [[epl.assets.asset.Asset()] for i in interval_data.idx]
+
+    assert isinstance(interval_data.gas_prices, list)
 
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_prices[i]
@@ -21,20 +31,20 @@ def price_objective(
         + spills[i].electric_load_mwh * defaults.spill_objective_penalty
         #  dumping heat has no penalty
         + spills[i].high_temperature_load_mwh
-        for i in interval_data.idx
-    ]
-    if generators:
-        obj += [
+        + [
+            spill_ev.charge_mwh * defaults.spill_objective_penalty
+            for spill_ev in spill_evs[i]
+        ]
+        + [
             generator.gas_consumption_mwh * interval_data.gas_prices[i]
-            for i in interval_data.idx
             for generator in generators[i]
         ]
-    if boilers:
-        obj += [
+        + [
             boiler.gas_consumption_mwh * interval_data.gas_prices[i]
-            for i in interval_data.idx
             for boiler in boilers[i]
         ]
+        for i in interval_data.idx
+    ]
     return optimizer.sum(obj)
 
 
