@@ -160,8 +160,8 @@ def test_asset_api_battery() -> None:
 @pytest.mark.parametrize(
     "electricity_prices, initial_charge_mwh, expected_dispatch",
     [
-        # ([10, 10, 10], 0, [0, 0, 0]),
-        # ([20, 10, 10], 6, [-1, 0, 0]),
+        ([10, 10, 10], 0, [0, 0, 0]),
+        ([20, 10, 10], 6, [-1, 0, 0]),
         ([10, 50, 10, 5000, 10], 0, [4, -4, 4, -4, 0]),
     ],
 )
@@ -183,3 +183,13 @@ def test_asset_api_battery_optimization(
     discharge = results["battery-alpha-discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
+
+
+def test_asset_api_carbon_optimization():
+    """
+    how to test this?
+
+    run a battery with different carbon intensities in different intervals
+    check dispatch changes appropriately
+    """
+    pass
