@@ -1,4 +1,4 @@
 from energypylinear import accounting, data, defaults, site
-from energypylinear.assets import spill, valve
+from energypylinear.assets import evs, spill, valve
 
-__all__ = ["accounting", "data", "defaults", "spill", "valve"]
+__all__ = ["accounting", "data", "defaults", "spill", "valve", "evs"]

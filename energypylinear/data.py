@@ -5,9 +5,29 @@ import pandas as pd
 import pulp
 
 floats = typing.Sequence[float]
+import numpy as np
 import pydantic
 
 from energypylinear.defaults import defaults
+
+
+class EVIntervalData(pydantic.BaseModel):
+    charge_events: typing.Union[list[list[int]], np.ndarray]
+    idx: typing.Any = []
+    charge_event_mwh: typing.Union[list[int], np.ndarray]
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @pydantic.validator("idx", always=True, pre=True)
+    def setup_idx(cls, value, values):
+        return np.arange(values["charge_events"].shape[0])
+
+    @pydantic.validator("charge_event_mwh", pre=True, always=True)
+    def validate_charge_event_mwh(cls, charge_event_mwh, values):
+        assert values["idx"].shape[0] == values["charge_events"].shape[0]
+        assert values["charge_events"].shape[1] == charge_event_mwh.shape[0]
+        return charge_event_mwh
 
 
 class IntervalData(pydantic.BaseModel):
@@ -18,6 +38,13 @@ class IntervalData(pydantic.BaseModel):
     high_temperature_load_mwh: typing.Union[float, floats, None] = None
     low_temperature_load_mwh: typing.Union[float, floats, None] = None
     idx: typing.Any = []
+
+    evs: typing.Union[EVIntervalData, None] = None
+
+    @pydantic.validator("evs")
+    def validate_evs(cls, evs, values, field):
+        assert all(evs.idx == values["idx"])
+        return evs
 
     @pydantic.validator(
         "gas_prices",

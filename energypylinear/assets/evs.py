@@ -1,8 +1,102 @@
+"""
+Electric vehicle models
+
+Both smart and on-demand charging
+
+- On demand charging is modelled by reducing the charge event length,
+- Smart charging / queuing is modelled by having a large charge event length.
+
+In future do V2G
+
+- V2G / bi-directional charging modelled by allowing charge_mwh to be positive and negative
+- bi-directional charging would require tracking the capacity of the car, which would require an additional input of `Car` with a capacity
+
+# Input Data
+
+chargers
+
+- power_mw
+
+charge_event_mwh
+
+- list of floats
+- n charge events
+- mwh of charge required for that charge event
+
+charge_events
+
+- 2D array of binary integers
+- n charge events * m intervals
+- 0 = charger disconnected, 1 = charger connected
+
+cars
+
+- for bi-directional only
+- capacity_mwh
+- leave to future
+
+# Variables
+
+charge_mwh
+
+- actual charging in each interval
+- 2D array of floats, same shape as charge_event_binary
+- n charge events * n_chargers * m intervals
+- should I try to make this 3D?
+
+charge_binary
+
+- same shape as charge_mwh
+- n charge events * n_chargers * m intervals
+- linked to the charge_mwh via a min and/or max constraint
+
+Example - 2 chargers, 3 charge events, 4 intervals
+
+charger_0, charge_event_0, [0, 0, 0, 0]
+charger_0, charge_event_1, [0, 0, 0, 0]
+charger_0, charge_event_2, [0, 0, 0, 0]
+charger_1, charge_event_0, [0, 0, 0, 0]
+charger_1, charge_event_1, [0, 0, 0, 0]
+charger_1, charge_event_2, [0, 0, 0, 0]
+
+# Constraints
+
+constrain each charge event to get all the charge it needs
+- energy balance constraint
+- charge_mwh.sum(time) == charge_event_mwh
+
+one charger can only be attached to one charge event at a time
+
+one charge event can only have one attached charger at a time
+
+only one charger can be used for one charge event across all times
+- this prevents chargers switching during charge events
+
+# Objective
+
+minimum energy cost
+- energy cost = charge_mwh * electricity_price
+
+incentivize early charging
+- want to reduce the cost to charge earlier on
+- could just reduce prices earlier in the intervals???
+- perhaps quantify as `value_of_time` ?
+- interval_length * value_per_interval
+- if charged 30 min earlier -> some benefit
+
+could perhaps just add something like the below to each interval:
+- [5, 10, 15, 20, 25, 30]
+- and multiply it by the binary variable?
+- 5 = `value_of_interval`
+
+could maybe test by reversing the value_of_interval
+"""
 import typing
 
 import numpy as np
 import pydantic
 
+import energypylinear as epl
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Pulp as Optimizer
@@ -60,7 +154,7 @@ def stack_ev(vars, attr):
 
 def constrain_within_interval(
     optimizer: Optimizer,
-    evs: list[EVOneInterval],
+    evs: EVOneInterval,
     charge_event,
     freq: Freq,
     chargers: np.ndarray,
@@ -104,32 +198,6 @@ def constrain_within_interval(
 
 # def test_ev_one_interval():
 
-chargers = np.array(
-    [
-        ChargerConfig(name="charger-0", power_mw=2),
-        ChargerConfig(name="charger-1", power_mw=4),
-    ]
-)
-
-spill_chargers = np.array(
-    [ChargerConfig(name="charger-spill", power_mw=defaults.spill_charge_max_mw)]
-)
-
-#  transpose to have time as first dimension
-charge_event = np.array(
-    [
-        [0, 1, 1, 1, 0],
-        [0, 0, 1, 0, 0],
-        [0, 0, 1, 1, 1],
-    ]
-).T
-charge_event_mwh = np.array([50, 100, 25])
-idx = np.arange(charge_event.shape[0])
-
-#  TODO move to interval data validation
-assert idx.shape[0] == charge_event.shape[0]
-assert charge_event.shape[1] == charge_event_mwh.shape[0]
-
 
 def constrain_after_intervals(
     optimizer: Optimizer, vars: dict, charge_event_mwh
@@ -150,48 +218,38 @@ def constrain_after_intervals(
         )
 
 
-import collections
+class EVs:
+    def __init__(self, charger_mws: list[float]):
 
-freq = Freq(30)
-optimizer = Optimizer()
-
-vars = collections.defaultdict(list)
-for i in idx:
-    vars["evs"].append(ev_one_interval(optimizer, chargers, charge_event, i, freq))
-    vars["spill-evs"].append(
-        ev_one_interval(
-            optimizer,
-            spill_chargers,
-            charge_event,
-            i,
-            freq,
+        self.charger_cfgs = np.array(
+            [
+                ChargerConfig(name=f"charger-{name}", power_mw=power_mw)
+                for name, power_mw in enumerate(charger_mws)
+            ]
         )
-    )
+        self.spill_charger_config = np.array(
+            [ChargerConfig(name="charger-spill", power_mw=defaults.spill_charge_max_mw)]
+        )
 
-    constrain_within_interval(
-        optimizer,
-        vars["evs"][i],
-        charge_event,
-        freq,
-        chargers,
-        i,
-    )
-    constrain_within_interval(
-        optimizer,
-        vars["spill-evs"][i],
-        charge_event,
-        freq,
-        spill_chargers,
-        i,
-        add_single_charger_or_event_constraints=False,
-    )
+        self.optimizer = Optimizer()
 
-constrain_after_intervals(optimizer, vars, charge_event_mwh)
+    def optimize(
+        self,
+        charge_events: typing.Union[list[list[int]], np.ndarray],
+        charge_event_mwh: typing.Union[list[int], np.ndarray],
+        electricity_prices,
+        freq_mins: int = defaults.freq_mins,
+    ):
+        freq = Freq(freq_mins)
 
-#  check the stack worked correctly
-#  TODO move after interval data refactor
-stacked_charge_mwh = stack_ev(vars, "charge_mwh")
-assert stacked_charge_mwh.shape[0] == len(idx)
-assert stacked_charge_mwh.shape[1] == charge_event.shape[1]
-assert stacked_charge_mwh.shape[2] == chargers.shape[0] + spill_chargers.shape[0]
-out = stacked_charge_mwh
+        #  transpose to have time as first dimension
+        charge_events = np.array(charge_events).T
+        charge_event_mwh = np.array(charge_event_mwh)
+
+        interval_data = epl.data.IntervalData(
+            electricity_prices=electricity_prices,
+            evs=epl.data.EVIntervalData(
+                charge_events=charge_events,
+                charge_event_mwh=charge_event_mwh,
+            ),
+        )
