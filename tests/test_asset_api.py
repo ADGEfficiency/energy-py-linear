@@ -161,7 +161,7 @@ def test_asset_api_battery() -> None:
     "electricity_prices, initial_charge_mwh, expected_dispatch",
     [
         ([10, 10, 10], 0, [0, 0, 0]),
-        ([20, 10, 10], 6, [-1, 0, 0]),
+        ([20, 10, 10], 6, [-4, -2, 0]),
         ([10, 50, 10, 5000, 10], 0, [4, -4, 4, -4, 0]),
     ],
 )
