@@ -1,16 +1,14 @@
 import collections
-import typing
 
 import pandas as pd
 import pulp
-import pydantic
 
 import energypylinear as epl
 from energypylinear import objectives
 from energypylinear.assets.asset import Asset
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
-from energypylinear.optimizer import Pulp
+from energypylinear.optimizer import Optimizer
 
 
 class BoilerConfig(Asset):
@@ -28,7 +26,7 @@ class BoilerOneInterval(Asset):
 
 
 def boiler_one_interval(
-    optimizer: Pulp, cfg: BoilerConfig, i: int, freq: Freq
+    optimizer: Optimizer, cfg: BoilerConfig, i: int, freq: Freq
 ) -> BoilerOneInterval:
     return BoilerOneInterval(
         high_temperature_generation_mwh=optimizer.continuous(
@@ -44,7 +42,9 @@ def boiler_one_interval(
     )
 
 
-def constrain_within_interval_boilers(optimizer: Pulp, vars: dict, freq: Freq) -> None:
+def constrain_within_interval_boilers(
+    optimizer: Optimizer, vars: dict, freq: Freq
+) -> None:
     for asset in vars["boilers"][-1]:
         optimizer.constrain(
             asset.gas_consumption_mwh
@@ -85,7 +85,7 @@ class GeneratorOneInterval(Asset):
 
 
 def generator_one_interval(
-    optimizer: Pulp, cfg: GeneratorConfig, i: int, freq: Freq
+    optimizer: Optimizer, cfg: GeneratorConfig, i: int, freq: Freq
 ) -> GeneratorOneInterval:
     #  probably need to include more from config here???
     #  maybe just include the config itself????
@@ -112,7 +112,7 @@ def generator_one_interval(
 
 
 def constrain_within_interval_generators(
-    optimizer: Pulp, vars: dict, freq: Freq
+    optimizer: Optimizer, vars: dict, freq: Freq
 ) -> None:
     for asset in vars["generators"][-1]:
         optimizer.constrain(
@@ -161,7 +161,7 @@ class Generator:
             high_temperature_efficiency_pct=high_temperature_efficiency_pct,
             low_temperature_efficiency_pct=low_temperature_efficiency_pct,
         )
-        self.optimizer = Pulp()
+        self.optimizer = Optimizer()
 
     def optimize(
         self,

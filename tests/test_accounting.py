@@ -39,7 +39,11 @@ def test_accounting_actuals():
         20 + 30 + 40
     )
 
-    #  TODO test the diff
+    #  made accounts with no forecasts
+    #  so the variance should be zero
+    variance = account.actuals - account.forecasts
+    assert variance.cost == 0
+    assert variance.emissions == 0
 
 
 def test_accounting_forecasts():
@@ -81,3 +85,7 @@ def test_accounting_forecasts():
     assert account.forecasts.cost == 200 * 100 + -100 * 50 - 20 * 100 + 10 * (
         20 + 30 + 40
     )
+
+    variance = account.actuals - account.forecasts
+    assert variance.cost == account.actuals.cost - account.forecasts.cost
+    assert variance.emissions == account.actuals.emissions - account.forecasts.emissions

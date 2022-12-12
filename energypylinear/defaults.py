@@ -2,7 +2,7 @@ import pydantic
 
 
 class Defaults(pydantic.BaseModel):
-    carbon_intensities: float = 0.1
+    electricity_carbon_intensities: float = 0.1
     gas_prices: float = 20
     freq_mins: int = 60
 

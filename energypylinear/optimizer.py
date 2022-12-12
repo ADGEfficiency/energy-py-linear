@@ -3,7 +3,7 @@ import typing
 import pulp
 
 
-class Pulp:
+class Optimizer:
     def __init__(self):
         self.prob = pulp.LpProblem("prob", pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=0)

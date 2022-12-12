@@ -20,7 +20,7 @@ class SpillOneInterval(Asset):
 
 
 def spill_one_interval(
-    optimizer: epl.optimizer.Pulp, cfg: SpillConfig, i: int, freq: epl.freq.Freq
+    optimizer: epl.optimizer.Optimizer, cfg: SpillConfig, i: int, freq: epl.freq.Freq
 ) -> SpillOneInterval:
     return SpillOneInterval(
         cfg=cfg,

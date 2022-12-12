@@ -20,3 +20,13 @@ results = asset.optimize(prices=[10, 50, 10, 50, 10], freq=30)
 
 
 # Accounting API
+
+
+```python
+results_actuals = epl.Battery.optimize(actuals)
+results_forecasts = epl.Battery.optimize(forecasts)
+
+account = epl.account(actuals, results_actuals, forecasts, results_forecasts)
+account_forecast = epl.account(results_forecast, forecast)
+variance = account_actual - account_forecast
+```

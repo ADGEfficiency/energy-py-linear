@@ -19,7 +19,7 @@ class ValveOneInterval(Asset):
 
 
 def valve_one_interval(
-    optimizer: "epl.optimizer.Pulp", cfg: ValveConfig, i: int, freq: "epl.freq.Freq"
+    optimizer: "epl.optimizer.Optimizer", cfg: ValveConfig, i: int, freq: "epl.freq.Freq"
 ) -> ValveOneInterval:
     return ValveOneInterval(
         cfg=cfg,
@@ -33,7 +33,7 @@ def valve_one_interval(
 
 
 def constrain_within_interval_valve(
-    optimizer: "epl.optimizer.Pulp", vars: dict
+    optimizer: "epl.optimizer.Optimizer", vars: dict
 ) -> None:
     valve = vars["valves"][-1]
     optimizer.constrain(

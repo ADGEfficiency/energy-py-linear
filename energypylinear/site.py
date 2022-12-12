@@ -6,7 +6,7 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear.freq import Freq
-from energypylinear.optimizer import Pulp
+from energypylinear.optimizer import Optimizer
 
 
 class SiteConfig(pydantic.BaseModel):
@@ -28,7 +28,7 @@ class SiteOneInterval(pydantic.BaseModel):
 
 
 def site_one_interval(
-    optimizer: Pulp, site: SiteConfig, i: int, freq: Freq
+    optimizer: Optimizer, site: SiteConfig, i: int, freq: Freq
 ) -> SiteOneInterval:
     return SiteOneInterval(
         import_power_mwh=optimizer.continuous(

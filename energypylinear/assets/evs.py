@@ -104,7 +104,7 @@ from energypylinear import objectives, site
 from energypylinear.assets.asset import Asset
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
-from energypylinear.optimizer import Pulp as Optimizer
+from energypylinear.optimizer import Optimizer
 
 
 class ChargerConfig(pydantic.BaseModel):
@@ -227,9 +227,6 @@ def constrain_within_interval(
         #     )
 
     #  TODO perhaps could do these in the loop above?
-
-
-# def test_ev_one_interval():
 
 
 def constrain_after_intervals(

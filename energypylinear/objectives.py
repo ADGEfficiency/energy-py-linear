@@ -5,7 +5,7 @@ from energypylinear.defaults import defaults
 
 
 def price_objective(
-    optimizer: epl.optimizer.Pulp, vars, interval_data: epl.data.IntervalData
+    optimizer: epl.optimizer.Optimizer, vars, interval_data: epl.data.IntervalData
 ) -> pulp.LpAffineExpression:
 
     sites = vars["sites"]
@@ -49,7 +49,7 @@ def price_objective(
 
 
 def carbon_objective(
-    optimizer: epl.optimizer.Pulp, vars, interval_data: epl.data.IntervalData
+    optimizer: epl.optimizer.Optimizer, vars, interval_data: epl.data.IntervalData
 ) -> pulp.LpAffineExpression:
 
     sites = vars["sites"]

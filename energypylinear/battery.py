@@ -9,7 +9,7 @@ from energypylinear import battery, objectives, site
 from energypylinear.assets.asset import Asset
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
-from energypylinear.optimizer import Pulp
+from energypylinear.optimizer import Optimizer
 
 
 class BatteryConfig(pydantic.BaseModel):
@@ -32,7 +32,7 @@ class BatteryOneInterval(Asset):
 
 
 def battery_one_interval(
-    optimizer: Pulp, cfg: BatteryConfig, i: int, freq: Freq
+    optimizer: Optimizer, cfg: BatteryConfig, i: int, freq: Freq
 ) -> BatteryOneInterval:
     return BatteryOneInterval(
         cfg=cfg,
@@ -50,7 +50,7 @@ def battery_one_interval(
 
 
 def constrain_battery_electricity_balance(
-    optimizer: Pulp, vars: collections.defaultdict
+    optimizer: Optimizer, vars: collections.defaultdict
 ) -> None:
     for battery in vars["batteries"][-1]:
         optimizer.constrain(
@@ -66,7 +66,7 @@ def constrain_battery_electricity_balance(
 
 
 def constrain_connection_batteries_between_intervals(
-    optimizer: Pulp, vars: collections.defaultdict
+    optimizer: Optimizer, vars: collections.defaultdict
 ) -> None:
     batteries = vars["batteries"]
 
@@ -83,7 +83,9 @@ def constrain_connection_batteries_between_intervals(
 
 
 def constrain_initial_final_charge(
-    optimizer: Pulp, vars: collections.defaultdict, battery_cfgs: list[BatteryConfig]
+    optimizer: Optimizer,
+    vars: collections.defaultdict,
+    battery_cfgs: list[BatteryConfig],
 ) -> None:
 
     batteries = vars["batteries"]
@@ -119,7 +121,7 @@ class Battery:
             capacity_mwh=capacity_mwh,
             efficiency_pct=efficiency,
         )
-        self.optimizer = Pulp()
+        self.optimizer = Optimizer()
 
     def optimize(
         self,
@@ -136,7 +138,7 @@ class Battery:
         interval_data = epl.data.IntervalData(
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
-            carbon_intensities=carbon_intensities,
+            electricity_carbon_intensities=carbon_intensities,
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
