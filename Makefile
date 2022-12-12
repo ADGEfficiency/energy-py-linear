@@ -29,12 +29,12 @@ static: setup-static
 
 #  CHECKS, FORMATTING & LINTING
 .PHONY: check check
-lint: setup-check
-	isort **/*.py --profile black
-	black **/*.py
-	poetry lock --no-update
 check: setup-check
 	flake8 --extend-ignore E501
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
+lint: setup-check
+	isort **/*.py --profile black
+	black **/*.py
+	poetry lock --no-update

@@ -33,7 +33,7 @@ class EVIntervalData(pydantic.BaseModel):
 class IntervalData(pydantic.BaseModel):
     electricity_prices: floats
     gas_prices: typing.Union[float, floats, None] = None
-    carbon_intensities: typing.Union[float, floats, None] = None
+    electricity_carbon_intensities: typing.Union[float, floats, None] = None
 
     high_temperature_load_mwh: typing.Union[float, floats, None] = None
     low_temperature_load_mwh: typing.Union[float, floats, None] = None
@@ -48,7 +48,7 @@ class IntervalData(pydantic.BaseModel):
 
     @pydantic.validator(
         "gas_prices",
-        "carbon_intensities",
+        "electricity_carbon_intensities",
         "high_temperature_load_mwh",
         "low_temperature_load_mwh",
         pre=True,

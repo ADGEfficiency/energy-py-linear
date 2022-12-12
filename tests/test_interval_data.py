@@ -11,16 +11,18 @@ def test_interval_data():
     id = epl.data.IntervalData(
         electricity_prices=electricity_prices,
         gas_prices=gas_prices,
-        carbon_intensities=carbon_intensities,
+        electricity_carbon_intensities=carbon_intensities,
     )
     assert id.electricity_prices == electricity_prices
     assert id.gas_prices == gas_prices
-    assert id.carbon_intensities == carbon_intensities
+    assert id.electricity_carbon_intensities == carbon_intensities
 
     id = epl.data.IntervalData(
-        electricity_prices=electricity_prices, gas_prices=40, carbon_intensities=0.05
+        electricity_prices=electricity_prices,
+        gas_prices=40,
+        electricity_carbon_intensities=0.05,
     )
     assert id.electricity_prices == electricity_prices
     assert id.gas_prices == [40, 40, 40, 40]
-    assert id.carbon_intensities == [0.05, 0.05, 0.05, 0.05]
+    assert id.electricity_carbon_intensities == [0.05, 0.05, 0.05, 0.05]
     assert id.high_temperature_load_mwh == [0, 0, 0, 0]
