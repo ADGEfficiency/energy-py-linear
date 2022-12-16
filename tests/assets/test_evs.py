@@ -1,7 +1,6 @@
 import numpy as np
 
 import energypylinear as epl
-from energypylinear.freq import Freq
 
 """
 TODO

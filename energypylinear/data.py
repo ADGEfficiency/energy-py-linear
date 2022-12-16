@@ -23,11 +23,19 @@ class EVIntervalData(pydantic.BaseModel):
     def setup_idx(cls, value, values):
         return np.arange(values["charge_events"].shape[0])
 
-    @pydantic.validator("charge_event_mwh", pre=True, always=True)
-    def validate_charge_event_mwh(cls, charge_event_mwh, values):
-        assert values["idx"].shape[0] == values["charge_events"].shape[0]
-        assert values["charge_events"].shape[1] == charge_event_mwh.shape[0]
-        return charge_event_mwh
+    @pydantic.root_validator()
+    def validate_all_things(cls, values):
+        assert all(
+            np.array(values["charge_events"]).sum(axis=0) > 0
+        ), "sum across axis=0"
+
+        assert (
+            values["idx"].shape[0] == values["charge_events"].shape[0]
+        ), "Charge event MWh not equal to length of electricitiy prices."
+        assert (
+            values["charge_events"].shape[1] == values["charge_event_mwh"].shape[0]
+        ), "Charge events not equal to charge event MWh"
+        return values
 
 
 class IntervalData(pydantic.BaseModel):
@@ -141,6 +149,13 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
                 for each charger
                     select all charge events
             """
+            for charger_idx, charger_cfg in enumerate(evs.charger_cfgs[0, 0, :]):
+                for attr in ["charge_mwh", "charge_binary"]:
+                    results[f"{charger_cfg.name}-{attr}"].append(
+                        sum([x.value() for x in getattr(evs, attr)[0, :, charger_idx]])
+                    )
+        if len(vars["spill-evs-array"]):
+            evs = vars["spill-evs-array"][i]
             for charger_idx, charger_cfg in enumerate(evs.charger_cfgs[0, 0, :]):
                 for attr in ["charge_mwh", "charge_binary"]:
                     results[f"{charger_cfg.name}-{attr}"].append(
