@@ -186,4 +186,4 @@ class Battery:
             objectives.price_objective(self.optimizer, vars, interval_data)
         )
         status = self.optimizer.solve()
-        return epl.data.extract_results(interval_data, vars)
+        return epl.results.extract_results(interval_data, vars)

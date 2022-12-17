@@ -196,20 +196,25 @@ def constrain_within_interval(
 
     for charge_event_idx in range(n_charge_events):
         for charger_idx, charger in enumerate(chargers):
-            #  add the connection between the contiunous and binary variables
-            continuous = evs.charge_mwh[0, charge_event_idx, charger_idx]
-            binary = evs.charge_binary[0, charge_event_idx, charger_idx]
+            #  here could only create variables  if during a potential charge event
+            if charge_event[i, charge_event_idx] == 1:
+                #  add the connection between the contiunous and binary variables
+                continuous = evs.charge_mwh[0, charge_event_idx, charger_idx]
+                binary = evs.charge_binary[0, charge_event_idx, charger_idx]
 
-            optimizer.constrain_max(
-                continuous, binary, freq.mw_to_mwh(charger.power_max_mw)
-            )
-            optimizer.constrain_min(
-                continuous, binary, freq.mw_to_mwh(charger.power_min_mw)
-            )
-            #  only let the binary be positive when the charge_event is positive
-            #  this forces the charger to only charge during a charge event
-            if constrain_to_only_charge_events is True:
-                optimizer.constrain(binary <= charge_event[i, charge_event_idx])
+                optimizer.constrain_max(
+                    continuous, binary, freq.mw_to_mwh(charger.power_max_mw)
+                )
+                optimizer.constrain_min(
+                    continuous, binary, freq.mw_to_mwh(charger.power_min_mw)
+                )
+                #  only let the binary be positive when the charge_event is positive
+                #  this forces the charger to only charge during a charge event
+                if constrain_to_only_charge_events is True:
+                    optimizer.constrain(binary <= charge_event[i, charge_event_idx])
+            else:
+                evs.charge_mwh[0, charge_event_idx, charger_idx] = 0
+                evs.charge_binary[0, charge_event_idx, charger_idx] = 0
 
     #  required to handle the spill charger case
     #  where we don't want to limit it
@@ -381,4 +386,5 @@ class EVs:
             objectives.price_objective(self.optimizer, vars, interval_data)
         )
         self.optimizer.solve()
-        return epl.data.extract_results(interval_data, vars)
+        self.interval_data = interval_data
+        return epl.results.extract_results(interval_data, vars)
