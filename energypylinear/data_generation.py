@@ -29,6 +29,7 @@ def generate_random_ev_input_data(
     charge_event_mwh = np.random.normal(
         normal_mu, normal_std, n_charge_events
     ) + np.random.uniform(uniform_min, uniform_max, n_charge_events)
+    charge_event_mwh = np.clip(charge_event_mwh, a_min=0, a_max=None)
 
     return {
         "electricity_prices": electricity_prices.tolist(),

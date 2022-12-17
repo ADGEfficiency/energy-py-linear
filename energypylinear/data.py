@@ -25,16 +25,22 @@ class EVIntervalData(pydantic.BaseModel):
 
     @pydantic.root_validator()
     def validate_all_things(cls, values):
+
+        #  only_positive or zero charge_event_mwh
+        assert all(
+            values["charge_event_mwh"] >= 0
+        ), "charge_event_mwh has negative values"
+
         assert all(
             np.array(values["charge_events"]).sum(axis=0) > 0
         ), "sum across axis=0"
 
         assert (
             values["idx"].shape[0] == values["charge_events"].shape[0]
-        ), "Charge event MWh not equal to length of electricitiy prices."
+        ), "charge_event_mwh not equal to length of electricitiy prices."
         assert (
             values["charge_events"].shape[1] == values["charge_event_mwh"].shape[0]
-        ), "Charge events not equal to charge event MWh"
+        ), "charge_events not equal to charge_event_mwh"
         return values
 
 
