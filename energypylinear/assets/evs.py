@@ -220,11 +220,10 @@ def constrain_within_interval(
             )
         #  constrain to only one charge event per charger
         #  sum across all charge events for one charger <= 1
-        #  TODO - this needs to be per interval, not over all intervals
-        # for charger_idx in range(n_chargers):
-        #     optimizer.constrain(
-        #         optimizer.sum(evs.charge_binary[0, :, charger_idx]) <= 1
-        #     )
+        for charger_idx in range(n_chargers):
+            optimizer.constrain(
+                optimizer.sum(evs.charge_binary[0, :, charger_idx]) <= 1
+            )
 
     #  TODO perhaps could do these in the loop above?
 
