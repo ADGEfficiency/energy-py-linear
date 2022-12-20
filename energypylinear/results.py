@@ -30,7 +30,9 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
                 name = f"{battery.cfg.name}"
                 for attr in [
                     "charge_mwh",
+                    "charge_binary",
                     "discharge_mwh",
+                    "discharge_binary",
                     "losses_mwh",
                     "initial_charge_mwh",
                     "final_charge_mwh",

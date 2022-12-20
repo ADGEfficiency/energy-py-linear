@@ -23,7 +23,6 @@ class EVIntervalData(pydantic.BaseModel):
 
     @pydantic.root_validator()
     def validate_all_things(cls, values):
-
         #  only_positive or zero charge_event_mwh
         assert all(
             values["charge_event_mwh"] >= 0

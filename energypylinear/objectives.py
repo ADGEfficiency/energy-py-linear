@@ -57,10 +57,10 @@ def carbon_objective(
     generators = vars.get("generators", [])
     boilers = vars.get("boilers", [])
 
-    assert isinstance(interval_data.carbon_intensities, list)
+    assert isinstance(interval_data.electricity_carbon_intensities, list)
     obj = [
-        sites[i].import_power_mwh * interval_data.carbon_intensities[i]
-        - sites[i].export_power_mwh * interval_data.carbon_intensities[i]
+        sites[i].import_power_mwh * interval_data.electricity_carbon_intensities[i]
+        - sites[i].export_power_mwh * interval_data.electricity_carbon_intensities[i]
         + spills[i].electric_generation_mwh * defaults.spill_objective_penalty
         + spills[i].high_temperature_generation_mwh * defaults.spill_objective_penalty
         + spills[i].electric_load_mwh * defaults.spill_objective_penalty
@@ -81,3 +81,6 @@ def carbon_objective(
             for boiler in boilers[i]
         ]
     return optimizer.sum(obj)
+
+
+objectives = {"price": price_objective, "carbon": carbon_objective}

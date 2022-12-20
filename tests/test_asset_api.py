@@ -1,21 +1,3 @@
-"""
-More tests
-- test efficiencies
-- test min / maxes of generator output
-- import / export limits
-- test the spill warnings
-- test low temperature load - will require the valve
-
-TODO
-
-test errors
-- test negative power_mw, efficiency > 1.0 etc
-- test we throw error when initial_charge_mwh or final_charge_mwh larger than capacity
-- test final_charge_mwh = None
-- test freq mins
-"""
-
-
 import numpy as np
 import pytest
 

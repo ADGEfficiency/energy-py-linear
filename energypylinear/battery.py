@@ -24,7 +24,9 @@ class BatteryConfig(pydantic.BaseModel):
 class BatteryOneInterval(Asset):
     cfg: BatteryConfig
     charge_mwh: pulp.LpVariable
+    charge_binary: pulp.LpVariable
     discharge_mwh: pulp.LpVariable
+    discharge_binary: pulp.LpVariable
     losses_mwh: pulp.LpVariable
     initial_charge_mwh: pulp.LpVariable
     final_charge_mwh: pulp.LpVariable
@@ -39,14 +41,39 @@ def battery_one_interval(
         charge_mwh=optimizer.continuous(
             f"charge_mwh-{i}", up=freq.mw_to_mwh(cfg.power_mw)
         ),
+        charge_binary=optimizer.binary(f"charge_binary-{i}"),
         discharge_mwh=optimizer.continuous(
             f"discharge_mwh-{i}", up=freq.mw_to_mwh(cfg.power_mw)
         ),
+        discharge_binary=optimizer.binary(f"discharge_binary-{i}"),
         losses_mwh=optimizer.continuous(f"losses_mwh-{i}"),
-        initial_charge_mwh=optimizer.continuous(f"initial_charge_mwh-{i}"),
-        final_charge_mwh=optimizer.continuous(f"final_charge_mwh-{i}"),
+        initial_charge_mwh=optimizer.continuous(
+            f"initial_charge_mwh-{i}", low=0, up=cfg.capacity_mwh
+        ),
+        final_charge_mwh=optimizer.continuous(
+            f"final_charge_mwh-{i}", low=0, up=cfg.capacity_mwh
+        ),
         efficiency_pct=cfg.efficiency_pct,
     )
+
+
+def constrain_within_interval(optimizer, vars, configs):
+    constrain_only_charge_or_discharge(optimizer, vars, configs)
+    constrain_battery_electricity_balance(optimizer, vars)
+    constrain_connection_batteries_between_intervals(optimizer, vars)
+
+
+def constrain_only_charge_or_discharge(
+    optimizer: Optimizer, vars: collections.defaultdict, configs
+) -> None:
+    for battery, cfg in zip(vars["batteries"][-1], configs, strict=True):
+        optimizer.constrain_max(
+            battery.charge_mwh, battery.charge_binary, cfg.capacity_mwh
+        )
+        optimizer.constrain_max(
+            battery.discharge_mwh, battery.discharge_binary, cfg.capacity_mwh
+        )
+        optimizer.constrain(battery.charge_binary + battery.discharge_binary <= 1)
 
 
 def constrain_battery_electricity_balance(
@@ -82,6 +109,10 @@ def constrain_connection_batteries_between_intervals(
             optimizer.constrain(alt.final_charge_mwh == neu.initial_charge_mwh)
 
 
+def constrain_after_intervals(optimizer, vars, configs):
+    constrain_initial_final_charge(optimizer, vars, configs)
+
+
 def constrain_initial_final_charge(
     optimizer: Optimizer,
     vars: collections.defaultdict,
@@ -96,15 +127,6 @@ def constrain_initial_final_charge(
     last = batteries[-1]
     for battery, cfg in zip(last, battery_cfgs, strict=True):
         optimizer.constrain(battery.final_charge_mwh == cfg.final_charge_mwh)
-
-
-def constrain_within_interval(optimizer, vars):
-    constrain_battery_electricity_balance(optimizer, vars)
-    constrain_connection_batteries_between_intervals(optimizer, vars)
-
-
-def constrain_after_intervals(optimizer, vars, configs):
-    constrain_initial_final_charge(optimizer, vars, configs)
 
 
 class Battery:
@@ -127,18 +149,19 @@ class Battery:
         self,
         electricity_prices,
         gas_prices=None,
-        carbon_intensities=None,
+        electricity_carbon_intensities=None,
         high_temperature_load_mwh=None,
         low_temperature_load_mwh=None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,
+        objective: str = "price",
     ):
         freq = Freq(freq_mins)
         interval_data = epl.data.IntervalData(
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
-            electricity_carbon_intensities=carbon_intensities,
+            electricity_carbon_intensities=electricity_carbon_intensities,
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
@@ -146,9 +169,11 @@ class Battery:
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve-alpha")
 
-        self.cfg.initial_charge_mwh = initial_charge_mwh
+        self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)
         self.cfg.final_charge_mwh = (
-            initial_charge_mwh if final_charge_mwh is None else final_charge_mwh
+            self.cfg.initial_charge_mwh
+            if final_charge_mwh is None
+            else min(final_charge_mwh, self.cfg.capacity_mwh)
         )
 
         vars = collections.defaultdict(list)
@@ -172,7 +197,7 @@ class Battery:
             vars["assets"].append(batteries)
 
             site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-            battery.constrain_within_interval(self.optimizer, vars)
+            battery.constrain_within_interval(self.optimizer, vars, [self.cfg])
 
         battery.constrain_after_intervals(self.optimizer, vars, [self.cfg])
 
@@ -182,8 +207,7 @@ class Battery:
             == len(vars["batteries"])
             == len(vars["sites"])
         )
-        self.optimizer.objective(
-            objectives.price_objective(self.optimizer, vars, interval_data)
-        )
+        objective = objectives[objective]
+        self.optimizer.objective(objective(self.optimizer, vars, interval_data))
         status = self.optimizer.solve()
         return epl.results.extract_results(interval_data, vars)
