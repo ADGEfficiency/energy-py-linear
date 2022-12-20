@@ -32,9 +32,7 @@ def price_objective(
         #  dumping heat has no penalty
         + spills[i].high_temperature_load_mwh
         + [
-            spill_ev.charge_mwh
-            * defaults.spill_objective_penalty
-            * interval_data.electricity_prices[i]
+            spill_ev.charge_mwh * defaults.spill_objective_penalty
             for spill_ev in spill_evs[i]
         ]
         + [

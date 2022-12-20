@@ -211,7 +211,8 @@ def constrain_within_interval(
 
     #  required to handle the spill charger case
     #  where we don't want to limit it
-    if add_single_charger_or_event_constraints:
+    if add_single_charger_or_event_constraints is True:
+
         #  constrain to only one charger per charging event
         #  sum across all chargers for one charge event <= 1
         for charge_event_idx in range(n_charge_events):
@@ -224,8 +225,6 @@ def constrain_within_interval(
             optimizer.constrain(
                 optimizer.sum(evs.charge_binary[0, :, charger_idx]) <= 1
             )
-
-    #  TODO perhaps could do these in the loop above?
 
 
 def constrain_after_intervals(

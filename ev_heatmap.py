@@ -45,7 +45,7 @@ if __name__ == "__main__":
     import seaborn
 
     fig, axes = plt.subplots(
-        ncols=3, figsize=(14, 6), width_ratios=(5, 10, 1), sharey=True
+        ncols=4, figsize=(14, 6), width_ratios=(5, 10, 1, 1), sharey=True
     )
 
     heatmap_config = {
@@ -68,10 +68,19 @@ if __name__ == "__main__":
 
     spill_charge_usage = results["charger-spill-charge_mwh"].values.reshape(-1, 1)
     data = spill_charge_usage
-    seaborn.heatmap(data, ax=axes[2], **heatmap_config, mask=data >= 0)
+    seaborn.heatmap(data, ax=axes[2], **heatmap_config, xticklabels=["spill"])
 
-    # data = prices
-    # seaborn.heatmap(data, ax=axes[2], **heatmap_config, mask=data == 0)
+    #  add error - the thing that is failing
+    # data = results["charge_event_usage_error_mwh"].values.reshape(-1, 1)
+    # seaborn.heatmap(
+    #     data, ax=axes[3], **heatmap_config, mask=data >= 0, xticklabels=["error"]
+    # )
+
+    #  prices
+    import numpy as np
+
+    data = np.array(ds["electricity_prices"]).reshape(-1, 1)
+    seaborn.heatmap(data, ax=axes[3], **heatmap_config, xticklabels=["price"])
 
     plt.tight_layout()
     pathlib.Path("./figs").mkdir(

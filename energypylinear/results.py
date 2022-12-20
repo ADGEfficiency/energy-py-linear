@@ -150,3 +150,7 @@ def validate_results(interval_data: IntervalData, results: pd.DataFrame) -> None
                 charge_event_mwh,
                 decimal=5,
             )
+        """
+        want to check
+        - only one charger -> one charge event each interval
+        """

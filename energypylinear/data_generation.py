@@ -16,7 +16,7 @@ def generate_random_ev_input_data(
     n_charge_events=10,
 ):
     np.random.seed(2)
-    electricity_prices = np.random.normal(100, 5, idx_length)
+    electricity_prices = np.random.normal(0, 20, idx_length)
     charger_mws = np.random.randint(10, 100, n_chargers)
 
     charge_events = np.zeros((n_charge_events, idx_length))
