@@ -129,8 +129,8 @@ def get_accounts(
     if forecasts is None:
         forecasts = actuals
 
-    epl.data.validate_results(results_actuals)
-    epl.data.validate_results(results_forecasts)
+    epl.results.validate_results(actuals, results_actuals)
+    epl.results.validate_results(forecasts, results_forecasts)
 
     electricity = get_electricity_accounts(
         actuals, results_actuals, results_forecasts, forecasts

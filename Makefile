@@ -17,7 +17,7 @@ setup-check: setup
 #  TEST
 .PHONY: test test-ci
 test: setup-test
-	pytest tests --showlocals --full-trace --tb=short --show-capture=no -v -x --lf
+	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes
 test-ci: setup-test
 	coverage run -m pytest tests --tb=short --show-capture=no
 	coverage report -m

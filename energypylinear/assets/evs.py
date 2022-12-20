@@ -381,4 +381,5 @@ class EVs:
             objectives.price_objective(self.optimizer, vars, interval_data)
         )
         self.optimizer.solve()
-        return epl.data.extract_results(interval_data, vars)
+        self.interval_data = interval_data
+        return epl.results.extract_results(interval_data, vars)

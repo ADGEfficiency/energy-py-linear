@@ -232,6 +232,4 @@ class Generator:
             objectives.price_objective(self.optimizer, vars, interval_data)
         )
         status = self.optimizer.solve()
-        print(status)
-
-        return epl.data.extract_results(interval_data, vars)
+        return epl.results.extract_results(interval_data, vars)
