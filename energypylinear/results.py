@@ -154,3 +154,12 @@ def validate_results(interval_data: IntervalData, results: pd.DataFrame) -> None
         want to check
         - only one charger -> one charge event each interval
         """
+        cols = [
+            c
+            for c in results.columns
+            if c.startswith("charger-")
+            and c.endswith("-charge_binary")
+            and "spill" not in c
+        ]
+        subset = results[cols]
+        assert (subset <= 1).all().all()
