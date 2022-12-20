@@ -59,9 +59,3 @@ class Optimizer:
         self, continuous: pulp.LpVariable, binary: pulp.LpVariable, min: float
     ) -> pulp.LpConstraint:
         return self.constrain(-continuous + binary * min <= 0)
-
-    def value(self, x: typing.Union[pulp.LpVariable, float]) -> float:
-        if isinstance(x, pulp.LpVariable):
-            return x.value()
-        else:
-            return float(x)

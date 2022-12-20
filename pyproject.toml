@@ -24,12 +24,10 @@ flake8-docstring-checker = "^1.1"
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
 coverage = "^6.5.0"
-hypothesis = "^6.61.0"
 
 
 [tool.poetry.group.develop.dependencies]
 ipython = "^8.7.0"
-seaborn = "^0.12.1"
 
 
 [tool.poetry.group.static.dependencies]

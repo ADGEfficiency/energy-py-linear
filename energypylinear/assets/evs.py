@@ -189,48 +189,44 @@ def constrain_within_interval(
     chargers: np.ndarray,
     i: int,
     add_single_charger_or_event_constraints: bool = True,
-    constrain_to_only_charge_events: bool = True,
 ) -> None:
     n_charge_events = charge_event.shape[1]
     n_chargers = chargers.shape[0]
 
     for charge_event_idx in range(n_charge_events):
         for charger_idx, charger in enumerate(chargers):
-            #  here could only create variables  if during a potential charge event
-            if charge_event[i, charge_event_idx] == 1:
-                #  add the connection between the contiunous and binary variables
-                continuous = evs.charge_mwh[0, charge_event_idx, charger_idx]
-                binary = evs.charge_binary[0, charge_event_idx, charger_idx]
+            #  add the connection between the contiunous and binary variables
+            continuous = evs.charge_mwh[0, charge_event_idx, charger_idx]
+            binary = evs.charge_binary[0, charge_event_idx, charger_idx]
 
-                optimizer.constrain_max(
-                    continuous, binary, freq.mw_to_mwh(charger.power_max_mw)
-                )
-                optimizer.constrain_min(
-                    continuous, binary, freq.mw_to_mwh(charger.power_min_mw)
-                )
-                #  only let the binary be positive when the charge_event is positive
-                #  this forces the charger to only charge during a charge event
-                if constrain_to_only_charge_events is True:
-                    optimizer.constrain(binary <= charge_event[i, charge_event_idx])
-            else:
-                evs.charge_mwh[0, charge_event_idx, charger_idx] = 0
-                evs.charge_binary[0, charge_event_idx, charger_idx] = 0
+            optimizer.constrain_max(
+                continuous, binary, freq.mw_to_mwh(charger.power_max_mw)
+            )
+            optimizer.constrain_min(
+                continuous, binary, freq.mw_to_mwh(charger.power_min_mw)
+            )
+            #  only let the binary be positive when the charge_event is positive
+            #  this forces the charger to only charge during a charge event
+            optimizer.constrain(binary <= charge_event[i, charge_event_idx])
 
     #  required to handle the spill charger case
     #  where we don't want to limit it
-    if add_single_charger_or_event_constraints is True:
+    if add_single_charger_or_event_constraints:
         #  constrain to only one charger per charging event
         #  sum across all chargers for one charge event <= 1
         for charge_event_idx in range(n_charge_events):
             optimizer.constrain(
                 optimizer.sum(evs.charge_binary[0, charge_event_idx, :]) <= 1
             )
-        # constrain to only one charge event per charger
-        # sum across all charge events for one charger <= 1
-        for charger_idx in range(n_chargers):
-            optimizer.constrain(
-                optimizer.sum(evs.charge_binary[0, :, charger_idx]) <= 1
-            )
+        #  constrain to only one charge event per charger
+        #  sum across all charge events for one charger <= 1
+        #  TODO - this needs to be per interval, not over all intervals
+        # for charger_idx in range(n_chargers):
+        #     optimizer.constrain(
+        #         optimizer.sum(evs.charge_binary[0, :, charger_idx]) <= 1
+        #     )
+
+    #  TODO perhaps could do these in the loop above?
 
 
 def constrain_after_intervals(
@@ -271,14 +267,14 @@ def constrain_after_intervals(
 
 
 class EVs:
-    def __init__(self, charger_mws: list[float], charger_turndown: float = 0.5):
+    def __init__(self, charger_mws: list[float]):
 
         self.charger_cfgs = np.array(
             [
                 ChargerConfig(
                     name=f"charger-{name}",
                     power_max_mw=power_mw,
-                    power_min_mw=power_mw * charger_turndown,
+                    power_min_mw=power_mw * 0.5,
                 )
                 for name, power_mw in enumerate(charger_mws)
             ]
@@ -369,7 +365,6 @@ class EVs:
                 self.spill_charger_config,
                 i,
                 add_single_charger_or_event_constraints=False,
-                constrain_to_only_charge_events=False,
             )
 
         assert isinstance(interval_data.evs.charge_events, np.ndarray)
@@ -386,5 +381,4 @@ class EVs:
             objectives.price_objective(self.optimizer, vars, interval_data)
         )
         self.optimizer.solve()
-        self.interval_data = interval_data
-        return epl.results.extract_results(interval_data, vars)
+        return epl.data.extract_results(interval_data, vars)
