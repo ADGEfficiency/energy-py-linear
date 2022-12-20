@@ -267,14 +267,14 @@ def constrain_after_intervals(
 
 
 class EVs:
-    def __init__(self, charger_mws: list[float]):
+    def __init__(self, charger_mws: list[float], charger_turndown: float = 0.1):
 
         self.charger_cfgs = np.array(
             [
                 ChargerConfig(
                     name=f"charger-{name}",
                     power_max_mw=power_mw,
-                    power_min_mw=power_mw * 0.5,
+                    power_min_mw=power_mw * charger_turndown,
                 )
                 for name, power_mw in enumerate(charger_mws)
             ]
