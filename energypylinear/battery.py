@@ -12,6 +12,13 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
+class Flags(pydantic.BaseModel):
+    include_charge_discharge_binary_variables: bool = False
+
+
+flags = Flags()
+
+
 class BatteryConfig(pydantic.BaseModel):
     name: str
     power_mw: float
@@ -24,9 +31,9 @@ class BatteryConfig(pydantic.BaseModel):
 class BatteryOneInterval(Asset):
     cfg: BatteryConfig
     charge_mwh: pulp.LpVariable
-    charge_binary: pulp.LpVariable
+    charge_binary: typing.Union[pulp.LpVariable, int]
     discharge_mwh: pulp.LpVariable
-    discharge_binary: pulp.LpVariable
+    discharge_binary: typing.Union[pulp.LpVariable, int]
     losses_mwh: pulp.LpVariable
     initial_charge_mwh: pulp.LpVariable
     final_charge_mwh: pulp.LpVariable
@@ -36,16 +43,23 @@ class BatteryOneInterval(Asset):
 def battery_one_interval(
     optimizer: Optimizer, cfg: BatteryConfig, i: int, freq: Freq
 ) -> BatteryOneInterval:
+
+    flags = Flags()
+
     return BatteryOneInterval(
         cfg=cfg,
         charge_mwh=optimizer.continuous(
             f"charge_mwh-{i}", up=freq.mw_to_mwh(cfg.power_mw)
         ),
-        charge_binary=optimizer.binary(f"charge_binary-{i}"),
         discharge_mwh=optimizer.continuous(
             f"discharge_mwh-{i}", up=freq.mw_to_mwh(cfg.power_mw)
         ),
-        discharge_binary=optimizer.binary(f"discharge_binary-{i}"),
+        charge_binary=optimizer.binary(f"charge_binary-{i}")
+        if flags.include_charge_discharge_binary_variables
+        else 0,
+        discharge_binary=optimizer.binary(f"discharge_binary-{i}")
+        if flags.include_charge_discharge_binary_variables
+        else 0,
         losses_mwh=optimizer.continuous(f"losses_mwh-{i}"),
         initial_charge_mwh=optimizer.continuous(
             f"initial_charge_mwh-{i}", low=0, up=cfg.capacity_mwh
@@ -66,14 +80,15 @@ def constrain_within_interval(optimizer, vars, configs):
 def constrain_only_charge_or_discharge(
     optimizer: Optimizer, vars: collections.defaultdict, configs
 ) -> None:
-    for battery, cfg in zip(vars["batteries"][-1], configs, strict=True):
-        optimizer.constrain_max(
-            battery.charge_mwh, battery.charge_binary, cfg.capacity_mwh
-        )
-        optimizer.constrain_max(
-            battery.discharge_mwh, battery.discharge_binary, cfg.capacity_mwh
-        )
-        optimizer.constrain(battery.charge_binary + battery.discharge_binary <= 1)
+    if flags.include_charge_discharge_binary_variables:
+        for battery, cfg in zip(vars["batteries"][-1], configs, strict=True):
+            optimizer.constrain_max(
+                battery.charge_mwh, battery.charge_binary, cfg.capacity_mwh
+            )
+            optimizer.constrain_max(
+                battery.discharge_mwh, battery.discharge_binary, cfg.capacity_mwh
+            )
+            optimizer.constrain(battery.charge_binary + battery.discharge_binary <= 1)
 
 
 def constrain_battery_electricity_balance(

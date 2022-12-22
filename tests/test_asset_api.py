@@ -75,7 +75,6 @@ def test_asset_api_gas_engine() -> None:
         ],
         freq_mins=60,
     )
-    # breakpoint()  # fmt: skip
     """
     - high electricity price, low heat demand
     - expect generator to run full load and dump heat

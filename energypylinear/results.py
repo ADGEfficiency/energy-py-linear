@@ -6,6 +6,8 @@ import pandas as pd
 from energypylinear.data import IntervalData
 from energypylinear.optimizer import Optimizer
 
+optimizer = Optimizer()
+
 
 def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
     results = collections.defaultdict(list)
@@ -38,7 +40,9 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
                     "final_charge_mwh",
                     # "efficiency_pct",  TODO this is a float
                 ]:
-                    results[f"{name}-{attr}"].append(getattr(battery, attr).value())
+                    results[f"{name}-{attr}"].append(
+                        optimizer.value(getattr(battery, attr))
+                    )
 
         if len(vars["generators"]) > 0:
             for generator in vars["generators"][i]:

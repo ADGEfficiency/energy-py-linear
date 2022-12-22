@@ -34,7 +34,7 @@ def test_evs_optimization_price():
     print_blob=True,
     max_examples=200,
     verbosity=hypothesis.Verbosity.verbose,
-    deadline=1000,
+    deadline=4000,
 )
 @hypothesis.given(
     idx_length=hypothesis.strategies.integers(min_value=10, max_value=24),
