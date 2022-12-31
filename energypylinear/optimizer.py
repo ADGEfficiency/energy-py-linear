@@ -27,10 +27,12 @@ class Optimizer:
     def objective(self, objective):
         return self.prob.setObjective(objective)
 
-    def solve(self):
+    def solve(self, verbose=0):
         self.assert_no_duplicate_variables()
         self.solver.solve(self.prob)
         status = self.status()
+        if verbose > 0:
+            print(f"status is {status}")
         assert status == "Optimal"
         return status
 

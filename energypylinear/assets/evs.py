@@ -100,10 +100,11 @@ import pulp
 import pydantic
 
 import energypylinear as epl
-from energypylinear import objectives, site
+from energypylinear import site
 from energypylinear.assets.asset import Asset
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
+from energypylinear.objectives import objectives
 from energypylinear.optimizer import Optimizer
 
 
@@ -294,16 +295,23 @@ class EVs:
         charge_events: typing.Union[list[list[int]], np.ndarray],
         charge_event_mwh: typing.Union[list[int], np.ndarray],
         electricity_prices,
+        electricity_carbon_intensities=None,
+        gas_prices=None,
         freq_mins: int = defaults.freq_mins,
+        objective: str = "price",
     ) -> pd.DataFrame:
         freq = Freq(freq_mins)
 
-        #  transpose to have time as first dimension
+        #  transpose charge_events to have time as first dimension
+        #  this makes it more natural to select by the first dimension as the time dimension
+        #  equivilant to the batch dimension when training deep learning
         charge_events = np.array(charge_events).T
         charge_event_mwh = np.array(charge_event_mwh)
 
         interval_data = epl.data.IntervalData(
             electricity_prices=electricity_prices,
+            gas_prices=gas_prices,
+            electricity_carbon_intensities=electricity_carbon_intensities,
             evs=epl.data.EVIntervalData(
                 charge_events=charge_events,
                 charge_event_mwh=charge_event_mwh,
@@ -375,9 +383,8 @@ class EVs:
             self.charger_cfgs,
             self.spill_charger_config,
         )
-        self.optimizer.objective(
-            objectives.price_objective(self.optimizer, vars, interval_data)
-        )
-        self.optimizer.solve()
+        objective_fn = objectives[objective]
+        self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
+        status = self.optimizer.solve()
         self.interval_data = interval_data
         return epl.results.extract_results(interval_data, vars)

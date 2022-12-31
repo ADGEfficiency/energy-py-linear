@@ -8,13 +8,9 @@ import energypylinear as epl
 from energypylinear import battery, objectives, site
 from energypylinear.assets.asset import Asset
 from energypylinear.defaults import defaults
+from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
-
-
-class Flags(pydantic.BaseModel):
-    include_charge_discharge_binary_variables: bool = False
-
 
 flags = Flags()
 
@@ -43,8 +39,6 @@ class BatteryOneInterval(Asset):
 def battery_one_interval(
     optimizer: Optimizer, cfg: BatteryConfig, i: int, freq: Freq
 ) -> BatteryOneInterval:
-
-    flags = Flags()
 
     return BatteryOneInterval(
         cfg=cfg,
@@ -222,7 +216,7 @@ class Battery:
             == len(vars["batteries"])
             == len(vars["sites"])
         )
-        objective = objectives[objective]
-        self.optimizer.objective(objective(self.optimizer, vars, interval_data))
+        objective_fn = objectives[objective]
+        self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
         status = self.optimizer.solve()
         return epl.results.extract_results(interval_data, vars)

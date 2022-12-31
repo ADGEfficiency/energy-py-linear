@@ -30,6 +30,36 @@ def test_evs_optimization_price():
     np.testing.assert_array_equal(results["import_power_mwh"], [50, 40, 100, 0, 30])
 
 
+def test_evs_optimization_carbon():
+    evs = epl.evs.EVs(
+        charger_mws=[100, 100],
+    )
+    charge_event_mwh = [50, 100, 30, 40]
+    results = evs.optimize(
+        electricity_prices=[-100, 50, 30, 50, 40, 10],
+        electricity_carbon_intensities=[0.1, 0.3, -0.5, 0.9, 0.9, 0.0],
+        charge_events=[
+            [1, 1, 0, 0, 0, 0],
+            [0, 1, 1, 0, 0, 0],
+            [0, 0, 0, 1, 1, 0],
+            [0, 0, 0, 0, 1, 1],
+        ],
+        charge_event_mwh=charge_event_mwh,
+        objective="carbon",
+    )
+    #  test total import power equal to total charge event mwh
+    #  requires efficiency to be 100%
+    np.testing.assert_equal(results["import_power_mwh"].sum(), sum(charge_event_mwh))
+
+    #  no exporting at all
+    np.testing.assert_equal(results["export_power_mwh"].sum(), 0)
+
+    #  test dispatch exactly as we expect
+    np.testing.assert_array_equal(
+        results["import_power_mwh"], [50.0, 0.0, 100.0, 0.0, 30.0, 40]
+    )
+
+
 @hypothesis.settings(
     print_blob=True,
     max_examples=200,

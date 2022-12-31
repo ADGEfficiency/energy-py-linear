@@ -145,13 +145,11 @@ def test_battery_hypothesis(
         (1 - efficiency) * subset[f"{name}-charge_mwh"].values,
         decimal=4,
     )
-
     #  check losses are always zero when we discharge
-
-    #  bit of a bug here TODO
     mask = results[f"{name}-discharge_mwh"] > 0
     subset = results[mask]
 
+    #  temporaray debugging dataframe
     temp = pd.DataFrame(
         {
             "charge": results[f"{name}-charge_mwh"],
@@ -161,4 +159,10 @@ def test_battery_hypothesis(
             "losses": results[f"{name}-losses_mwh"],
         }
     )
+    """
+    TODO DEBT
+    bit of a bug here TODO - issue with charge and discharge at the same time
+
+    this will cause the line below to break
+    """
     # assert all(subset[f"{name}-losses_mwh"] == 0)
