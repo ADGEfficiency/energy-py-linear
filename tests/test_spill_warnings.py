@@ -29,7 +29,7 @@ def test_chp_gas_turbine_price(capsys) -> None:
     capture = capsys.readouterr()
     assert "Spill Occurred" in capture.out
     row = results.iloc[0, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 100
+    assert row["generator-electric_generation_mwh"] == 100
 
     """
     - low electricity price, low heat demand

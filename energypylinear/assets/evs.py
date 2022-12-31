@@ -320,7 +320,7 @@ class EVs:
         assert interval_data.evs
         self.site_cfg = epl.site.SiteConfig()
         self.spill_cfg = epl.spill.SpillConfig()
-        self.valve_cfg = epl.valve.ValveConfig(name="valve-alpha")
+        self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
         vars = collections.defaultdict(list)
         for i in interval_data.idx:

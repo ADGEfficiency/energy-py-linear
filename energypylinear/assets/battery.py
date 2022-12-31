@@ -181,7 +181,7 @@ class Battery:
         )
         self.site_cfg = epl.site.SiteConfig()
         self.spill_cfg = epl.spill.SpillConfig()
-        self.valve_cfg = epl.valve.ValveConfig(name="valve-alpha")
+        self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
         self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)
         self.cfg.final_charge_mwh = (
