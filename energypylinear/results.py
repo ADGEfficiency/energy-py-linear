@@ -2,6 +2,7 @@ import collections
 
 import numpy as np
 import pandas as pd
+from rich import print
 
 from energypylinear.data import IntervalData
 from energypylinear.flags import Flags
@@ -131,13 +132,21 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
     spill_results = results[spill_columns]
     spill_occured = spill_results.sum().sum() > 0.0
 
-    spill_message = f"""
-    Spill Occurred
-    {spill_results.sum(axis=1)}
-    """
+    spills = spill_results.sum(axis=0).to_dict()
+    spills = {k: v for k, v in spills.items() if v > 0}
     if spill_occured and flags.fail_on_spill_asset_use:
+        spill_message = f"""
+        Spill Occurred!
+        {len(spills)} of {spill_results.shape[0]} spill columns
+        {spills}
+        """
         raise ValueError(spill_message)
     elif spill_occured:
+        spill_message = f"""
+        [red]Spill Occurred![/]
+        {len(spills)} of {spill_results.shape[0]} spill columns
+        {spills}
+        """
         print(spill_message)
     else:
         pass

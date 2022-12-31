@@ -67,7 +67,6 @@ def plot_battery(results: pd.DataFrame, path: pathlib.Path):
 def plot_evs(
     results: pd.DataFrame, interval_data: epl.data.IntervalData, path: pathlib.Path
 ):
-    results.to_csv("temp.csv")
     fig, axes = plt.subplots(nrows=5)
 
     charger_usage = results[
@@ -108,12 +107,6 @@ def plot_evs(
     data = spill_charge_usage
     seaborn.heatmap(data, ax=axes[2], **heatmap_config, xticklabels=["spill"])
 
-    #  add error - the thing that is failing
-    # data = results["charge_event_usage_error_mwh"].values.reshape(-1, 1)
-    # seaborn.heatmap(
-    #     data, ax=axes[3], **heatmap_config, mask=data >= 0, xticklabels=["error"]
-    # )
-
     data = np.array(results["electricity_prices"]).reshape(-1, 1)
     seaborn.heatmap(data, ax=axes[3], **heatmap_config, xticklabels=["price"])
 
@@ -122,9 +115,52 @@ def plot_evs(
         exist_ok=True,
         parents=True,
     )
-    fig.savefig("./figs/evs.png")
 
     if path.is_dir():
         fig.savefig(path / "evs.png")
     else:
         fig.savefig(path)
+
+
+def plot_chp(results: pd.DataFrame, path: pathlib.Path):
+    results.to_csv("temp.csv")
+    fig, axes = plt.subplots(nrows=5)
+    results["idx"] = np.arange(results.shape[0]).tolist()
+
+    results["import-export-balance"] = (
+        results["import_power_mwh"] - results["export_power_mwh"]
+    )
+    results.plot(
+        ax=axes[0],
+        y="import-export-balance",
+        label="Power Balance MWh (Import Positive)",
+    )
+    results.plot(
+        ax=axes[1],
+        y="boiler-high_temperature_generation_mwh",
+        label="Boiler Heat Generation MWh",
+    )
+    results.plot(
+        ax=axes[2],
+        y="spill-default-low_temperature_load_mwh",
+        label="Low Temperature Heat Dump MWh",
+    )
+    results.plot(
+        "idx",
+        "electricity_prices",
+        ax=axes[3],
+        label="Electricity Prices",
+    )
+    results.plot(
+        "idx",
+        "electricity_carbon_intensities",
+        ax=axes[4],
+        label="Carbon Intensities",
+    )
+
+    if path.is_dir():
+        fig.savefig(path / "chp.png")
+    else:
+        fig.savefig(path)
+
+    fig.savefig("temp.png")

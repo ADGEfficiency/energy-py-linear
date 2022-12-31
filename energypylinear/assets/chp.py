@@ -160,7 +160,7 @@ class Generator:
         Make sure to get your efficiencies and gas prices on the same basis LHV or HHV!
         """
         self.cfg = GeneratorConfig(
-            name="generator-alpha",
+            name="generator",
             electric_power_min_mw=electric_power_min_mw,
             electric_power_max_mw=electric_power_max_mw,
             electric_efficiency_pct=electric_efficiency_pct,
@@ -189,14 +189,14 @@ class Generator:
         )
         self.site_cfg = epl.site.SiteConfig()
         self.spill_cfg = epl.spill.SpillConfig()
-        self.valve_cfg = epl.valve.ValveConfig(name="valve-alpha")
+        self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
         default_boiler_size = freq.mw_to_mwh(
             max(interval_data.high_temperature_load_mwh)
             + max(interval_data.low_temperature_load_mwh)
         )
         self.default_boiler_cfg = BoilerConfig(
-            name="boiler-alpha",
+            name="boiler",
             high_temperature_generation_max_mw=default_boiler_size,
             high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
         )
@@ -239,3 +239,6 @@ class Generator:
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
         self.optimizer.solve()
         return epl.results.extract_results(interval_data, vars)
+
+    def plot(self, *args, **kwargs):
+        return epl.plot.plot_chp(*args, **kwargs)

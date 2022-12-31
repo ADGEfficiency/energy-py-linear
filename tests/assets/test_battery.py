@@ -127,7 +127,7 @@ def test_battery_hypothesis(
     assert all(results["battery-discharge_mwh"] >= 0 - tol)
 
     #  check we don't exceed battery capacity
-    name = "battery-"
+    name = "battery"
     for var in ["initial_charge_mwh", "final_charge_mwh"]:
         assert all(results[f"{name}-{var}"] <= capacity_mwh + tol)
         assert all(results[f"{name}-{var}"] >= 0 - tol)

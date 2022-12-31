@@ -22,7 +22,7 @@ def test_chp_gas_turbine_price() -> None:
     - expect generator to run full load and dump heat to low temperature
     """
     row = results.iloc[0, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 100
+    assert row["generator-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
         row["spill-default-low_temperature_load_mwh"],
         (100 / 0.3) * 0.5 - 20,
@@ -33,17 +33,17 @@ def test_chp_gas_turbine_price() -> None:
     - expect all heat demand met from boiler
     """
     row = results.iloc[1, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 0
-    assert row["boiler-alpha-high_temperature_generation_mwh"] == 20
+    assert row["generator-electric_generation_mwh"] == 0
+    assert row["boiler-high_temperature_generation_mwh"] == 20
 
     """
     - high electricity price, high heat demand
     - expect generator to run full load and boiler to pick up slack
     """
     row = results.iloc[2, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 100
+    assert row["generator-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
-        row["boiler-alpha-high_temperature_generation_mwh"],
+        row["boiler-high_temperature_generation_mwh"],
         1000 - (100 / 0.3) * 0.5,
         decimal=defaults.decimal_tolerance,
     )
@@ -69,7 +69,7 @@ def test_chp_gas_turbine_carbon() -> None:
     - expect generator to run full load and dump heat to low temperature
     """
     row = results.iloc[0, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 100
+    assert row["generator-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
         row["spill-default-low_temperature_load_mwh"],
         (100 / 0.3) * 0.5 - 20,
@@ -80,17 +80,17 @@ def test_chp_gas_turbine_carbon() -> None:
     - expect all heat demand met from boiler
     """
     row = results.iloc[1, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 0
-    assert row["boiler-alpha-high_temperature_generation_mwh"] == 20
+    assert row["generator-electric_generation_mwh"] == 0
+    assert row["boiler-high_temperature_generation_mwh"] == 20
 
     """
     - high carbon intensity, high heat demand
     - expect generator to run full load and boiler to pick up slack
     """
     row = results.iloc[2, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 100
+    assert row["generator-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
-        row["boiler-alpha-high_temperature_generation_mwh"],
+        row["boiler-high_temperature_generation_mwh"],
         1000 - (100 / 0.3) * 0.5,
         decimal=defaults.decimal_tolerance,
     )
@@ -122,7 +122,7 @@ def test_chp_gas_engine_price() -> None:
     - expect generator to run full load and dump heat
     """
     row = results.iloc[0, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 100
+    assert row["generator-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
         row["spill-default-low_temperature_load_mwh"],
         (100 / 0.4) * 0.4 - 40,
@@ -152,7 +152,7 @@ def test_chp_gas_engine_carbon() -> None:
     - expect generator to run full load and dump heat
     """
     row = results.iloc[0, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 100
+    assert row["generator-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
         row["spill-default-low_temperature_load_mwh"],
         (100 / 0.4) * 0.4 - 40,
@@ -163,7 +163,7 @@ def test_chp_gas_engine_carbon() -> None:
     - expect generator to not run at all
     """
     row = results.iloc[1, :]
-    assert row["generator-alpha-electric_generation_mwh"] == 0
+    assert row["generator-electric_generation_mwh"] == 0
     np.testing.assert_almost_equal(
         row["spill-default-low_temperature_load_mwh"],
         0,

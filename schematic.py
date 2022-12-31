@@ -17,6 +17,7 @@ class SchematicConfig(pydantic.BaseModel):
 
     #  headers
     header_x: float = 1.0
+    incomer_height: float = 9
     electric_header_height: float = 8
     ht_header_height: float = 5
     lt_header_height: float = 2
@@ -25,6 +26,8 @@ class SchematicConfig(pydantic.BaseModel):
     generator_height: float = 6
     ht_height: float = 3
     lt_height: float = 0
+
+    label_size: float = 8
 
 
 def get_fig(cfg: SchematicConfig, remove_ticks: bool = False):
@@ -86,6 +89,15 @@ def draw_generator(
                 x + 1 / 2, 7, 0, 1, width=0.05, length_includes_head=True
             )
         )
+
+    ax.annotate(
+        "CHP",
+        (x + 1 / 2, y + 1 / 2),
+        size=cfg.label_size,
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+
     return patches
 
 
@@ -103,10 +115,17 @@ def draw_battery(x, y):
             x + 2 / 3, 8, 0, -1, width=0.05, length_includes_head=True
         )
     )
+    ax.annotate(
+        "BAT",
+        (x + 1 / 2, y + 1 / 2),
+        size=cfg.label_size,
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
     return patches
 
 
-def draw_load(x, y, header_height):
+def draw_load(x, y, header_height, name):
     patches = [
         matplotlib.patches.Rectangle(xy=(x, y), width=1.0, height=1.0),
     ]
@@ -115,6 +134,57 @@ def draw_load(x, y, header_height):
             x + 1 / 2, header_height, 0, -1, width=0.05, length_includes_head=True
         )
     )
+    ax.annotate(
+        name,
+        (x + 1 / 2, y + 1 / 2),
+        size=cfg.label_size,
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+    return patches
+
+
+def draw_boiler(x, y, header_height):
+    patches = [
+        matplotlib.patches.Rectangle(xy=(x, y), width=1.0, height=1.0),
+    ]
+    patches.append(
+        matplotlib.patches.FancyArrow(
+            x + 1 / 2, header_height - 1, 0, 1, width=0.05, length_includes_head=True
+        )
+    )
+    ax.annotate(
+        "BLR",
+        (x + 1 / 2, y + 1 / 2),
+        size=cfg.label_size,
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+    return patches
+
+
+def draw_incomer(x, y, header_height):
+    patches = [
+        matplotlib.patches.Rectangle(xy=(x, y), width=1.0, height=1.0),
+    ]
+    patches.append(
+        matplotlib.patches.FancyArrow(
+            x + 1 / 3, header_height, 0, 1, width=0.05, length_includes_head=True
+        )
+    )
+    patches.append(
+        matplotlib.patches.FancyArrow(
+            x + 2 / 3, header_height + 1, 0, -1, width=0.05, length_includes_head=True
+        )
+    )
+    ax.annotate(
+        "GRID",
+        (x + 1 / 2, y + 1 / 2),
+        size=cfg.label_size,
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+
     return patches
 
 
@@ -144,11 +214,15 @@ if __name__ == "__main__":
     collection.extend(draw_generator(6, cfg.generator_height))
     collection.extend(draw_generator(8, cfg.generator_height))
     collection.extend(draw_battery(10, cfg.generator_height))
-    collection.extend(draw_load(2, cfg.generator_height, cfg.electric_header_height))
-    collection.extend(draw_load(2, cfg.ht_height, cfg.ht_header_height))
-    collection.extend(draw_load(2, cfg.lt_height, cfg.lt_header_height))
+    collection.extend(
+        draw_load(2, cfg.generator_height, cfg.electric_header_height, "LOAD")
+    )
+    collection.extend(draw_load(2, cfg.ht_height, cfg.ht_header_height, "LOAD"))
+    collection.extend(draw_load(2, cfg.lt_height, cfg.lt_header_height, "LOAD"))
 
-    collection.extend(draw_boiler(2, cfg.generator_height, cfg.electric_header_height))
+    collection.extend(draw_boiler(4, cfg.ht_height, cfg.ht_header_height))
+    collection.extend(draw_boiler(4, cfg.lt_height, cfg.lt_header_height))
+    collection.extend(draw_incomer(4, cfg.incomer_height, cfg.electric_header_height))
 
     pc = matplotlib.collections.PatchCollection(collection)
     ax.add_collection(pc)
