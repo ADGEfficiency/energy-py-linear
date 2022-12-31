@@ -288,8 +288,6 @@ class EVs:
             ]
         )
 
-        self.optimizer = Optimizer()
-
     def optimize(
         self,
         charge_events: typing.Union[list[list[int]], np.ndarray],
@@ -300,6 +298,7 @@ class EVs:
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
     ) -> pd.DataFrame:
+        self.optimizer = Optimizer()
         freq = Freq(freq_mins)
 
         #  transpose charge_events to have time as first dimension

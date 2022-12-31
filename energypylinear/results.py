@@ -4,9 +4,11 @@ import numpy as np
 import pandas as pd
 
 from energypylinear.data import IntervalData
+from energypylinear.flags import Flags
 from energypylinear.optimizer import Optimizer
 
 optimizer = Optimizer()
+flags = Flags()
 
 
 def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
@@ -63,11 +65,7 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
 
         if len(vars["evs-array"]):
             evs = vars["evs-array"][i]
-            """
-            for each timestep (i)
-                for each charger
-                    select all charge events
-            """
+
             for charger_idx, charger_cfg in enumerate(evs.charger_cfgs[0, 0, :]):
                 for attr in ["charge_mwh", "charge_binary"]:
                     results[f"{charger_cfg.name}-{attr}"].append(
@@ -128,7 +126,21 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
     #  add balances + check them - TODO
     validate_results(interval_data, results)
 
-    #  add warnings on the spill generator + boiler use
+    #  add warnings on the use of any spill asset
+    spill_columns = [c for c in results.columns if "spill" in c]
+    spill_results = results[spill_columns]
+    spill_occured = spill_results.sum().sum() > 0.0
+
+    spill_message = f"""
+    Spill Occurred
+    {spill_results.sum(axis=1)}
+    """
+    if spill_occured and flags.fail_on_spill_asset_use:
+        raise ValueError(spill_message)
+    elif spill_occured:
+        print(spill_message)
+    else:
+        pass
     return results
 
 

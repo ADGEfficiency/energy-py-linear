@@ -70,13 +70,13 @@ def carbon_objective(
     ]
     if generators:
         obj += [
-            generator.gas_consumption_mwh * defaults.gas_carbon_intensity_tc_per_mwh
+            generator.gas_consumption_mwh * defaults.gas_carbon_intensity
             for i in interval_data.idx
             for generator in generators[i]
         ]
     if boilers:
         obj += [
-            boiler.gas_consumption_mwh * defaults.gas_carbon_intensity_tc_per_mwh
+            boiler.gas_consumption_mwh * defaults.gas_carbon_intensity
             for i in interval_data.idx
             for boiler in boilers[i]
         ]

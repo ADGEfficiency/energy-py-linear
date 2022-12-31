@@ -161,23 +161,23 @@ class Generator:
             high_temperature_efficiency_pct=high_temperature_efficiency_pct,
             low_temperature_efficiency_pct=low_temperature_efficiency_pct,
         )
-        self.optimizer = Optimizer()
 
     def optimize(
         self,
         electricity_prices,
         gas_prices=None,
-        carbon_intensities=None,
+        electricity_carbon_intensities=None,
         high_temperature_load_mwh=None,
         low_temperature_load_mwh=None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
     ) -> pd.DataFrame:
+        self.optimizer = Optimizer()
         freq = Freq(freq_mins)
         interval_data = epl.data.IntervalData(
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
-            electricity_carbon_intensities=carbon_intensities,
+            electricity_carbon_intensities=electricity_carbon_intensities,
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
@@ -229,8 +229,7 @@ class Generator:
             == len(vars["boilers"])
         )
 
-        self.optimizer.objective(
-            objectives[objective](self.optimizer, vars, interval_data)
-        )
-        status = self.optimizer.solve()
+        objective_fn = objectives[objective]
+        self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
+        self.optimizer.solve()
         return epl.results.extract_results(interval_data, vars)

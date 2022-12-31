@@ -6,6 +6,9 @@ import pytest
 import energypylinear as epl
 from energypylinear.battery import Battery
 
+#  maybe can move to defaults / constants
+tol = 1e-5
+
 
 @pytest.mark.parametrize(
     "electricity_prices, initial_charge_mwh, expected_dispatch",
@@ -108,8 +111,6 @@ def test_battery_hypothesis(
     )
 
     freq = epl.freq.Freq(freq_mins)
-
-    tol = 1e-5
 
     #  check we don't exceed the battery rating
     assert all(results["battery-alpha-charge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)

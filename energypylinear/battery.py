@@ -152,7 +152,6 @@ class Battery:
             capacity_mwh=capacity_mwh,
             efficiency_pct=efficiency,
         )
-        self.optimizer = Optimizer()
 
     def optimize(
         self,
@@ -166,6 +165,7 @@ class Battery:
         final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
     ):
+        self.optimizer = Optimizer()
         freq = Freq(freq_mins)
         interval_data = epl.data.IntervalData(
             electricity_prices=electricity_prices,
@@ -216,7 +216,8 @@ class Battery:
             == len(vars["batteries"])
             == len(vars["sites"])
         )
+
         objective_fn = objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
-        status = self.optimizer.solve()
+        self.optimizer.solve()
         return epl.results.extract_results(interval_data, vars)
