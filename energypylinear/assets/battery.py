@@ -5,7 +5,7 @@ import pulp
 import pydantic
 
 import energypylinear as epl
-from energypylinear import battery, objectives, site
+from energypylinear import site
 from energypylinear.assets.asset import Asset
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
@@ -22,6 +22,11 @@ class BatteryConfig(pydantic.BaseModel):
     efficiency_pct: float
     initial_charge_mwh: float = 0
     final_charge_mwh: float = 0
+
+    @pydantic.validator("name")
+    def check_name(cls, name):
+        assert "battery" in name
+        return name
 
 
 class BatteryOneInterval(Asset):
@@ -144,9 +149,9 @@ class Battery:
         power_mw: float,
         capacity_mwh: float,
         efficiency: float = 0.9,
-        battery_name: str = "battery-alpha",
+        battery_name: str = "battery",
     ):
-        self.cfg = battery.BatteryConfig(
+        self.cfg = BatteryConfig(
             name=battery_name,
             power_mw=power_mw,
             capacity_mwh=capacity_mwh,
@@ -198,17 +203,15 @@ class Battery:
                 epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
 
-            batteries = [
-                battery.battery_one_interval(self.optimizer, self.cfg, i, freq)
-            ]
+            batteries = [battery_one_interval(self.optimizer, self.cfg, i, freq)]
             #  do I need both??? can I just get away with `assets`
             vars["batteries"].append(batteries)
             vars["assets"].append(batteries)
 
             site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-            battery.constrain_within_interval(self.optimizer, vars, [self.cfg])
+            constrain_within_interval(self.optimizer, vars, [self.cfg])
 
-        battery.constrain_after_intervals(self.optimizer, vars, [self.cfg])
+        constrain_after_intervals(self.optimizer, vars, [self.cfg])
 
         assert (
             len(interval_data.idx)
@@ -217,7 +220,11 @@ class Battery:
             == len(vars["sites"])
         )
 
-        objective_fn = objectives[objective]
+        objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
         self.optimizer.solve()
+        self.interval_data = interval_data
         return epl.results.extract_results(interval_data, vars)
+
+    def plot(self, *args, **kwargs):
+        return epl.plot.plot_battery(*args, **kwargs)

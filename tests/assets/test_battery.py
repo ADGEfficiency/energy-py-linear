@@ -102,6 +102,7 @@ def test_battery_hypothesis(
     #  TODO
     #  possible to enter into infeasible situations where the final charge is more than the battery can
     #  produce in the interval
+    #  this is a problem with the tests, not the application
     final_charge_mwh = None
     results = asset.optimize(
         electricity_prices=electricity_prices,

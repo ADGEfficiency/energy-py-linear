@@ -141,6 +141,13 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
         print(spill_message)
     else:
         pass
+
+    #  include interval data in results
+    results["electricity_prices"] = interval_data.electricity_prices
+    results[
+        "electricity_carbon_intensities"
+    ] = interval_data.electricity_carbon_intensities
+
     return results
 
 

@@ -2,11 +2,10 @@
 Want to draw a diagram / plot of the system over time
 """
 
+import matplotlib
 import matplotlib.pyplot as plt
-import pandas as pd
 import pydantic
 
-import matplotlib
 import energypylinear as epl
 
 
@@ -70,26 +69,39 @@ def draw_generator(
         matplotlib.patches.Rectangle(xy=(x, y), width=1.0, height=1.0),
     ]
     if high_temperature:
-        patches.append(matplotlib.patches.FancyArrow(x+1/3, 6, 0, -1, width=0.05, length_includes_head=True))
+        patches.append(
+            matplotlib.patches.FancyArrow(
+                x + 1 / 3, 6, 0, -1, width=0.05, length_includes_head=True
+            )
+        )
     if low_temperature:
-        patches.append(matplotlib.patches.FancyArrow(x+2/3, 6, 0, -4, width=0.05, length_includes_head=True))
+        patches.append(
+            matplotlib.patches.FancyArrow(
+                x + 2 / 3, 6, 0, -4, width=0.05, length_includes_head=True
+            )
+        )
     if electric:
-        patches.append(matplotlib.patches.FancyArrow(x+1/2, 7, 0, 1, width=0.05, length_includes_head=True))
+        patches.append(
+            matplotlib.patches.FancyArrow(
+                x + 1 / 2, 7, 0, 1, width=0.05, length_includes_head=True
+            )
+        )
     return patches
 
 
-def draw_battery(
-    x,
-    y
-):
+def draw_battery(x, y):
     patches = [
         matplotlib.patches.Rectangle(xy=(x, y), width=1.0, height=1.0),
     ]
     patches.append(
-        matplotlib.patches.FancyArrow(x+1/3, 7, 0, 1, width=0.05, length_includes_head=True)
+        matplotlib.patches.FancyArrow(
+            x + 1 / 3, 7, 0, 1, width=0.05, length_includes_head=True
+        )
     )
     patches.append(
-        matplotlib.patches.FancyArrow(x+2/3, 8, 0, -1, width=0.05, length_includes_head=True)
+        matplotlib.patches.FancyArrow(
+            x + 2 / 3, 8, 0, -1, width=0.05, length_includes_head=True
+        )
     )
     return patches
 
@@ -99,21 +111,30 @@ def draw_load(x, y, header_height):
         matplotlib.patches.Rectangle(xy=(x, y), width=1.0, height=1.0),
     ]
     patches.append(
-        matplotlib.patches.FancyArrow(x+1/2, header_height, 0, -1, width=0.05, length_includes_head=True)
+        matplotlib.patches.FancyArrow(
+            x + 1 / 2, header_height, 0, -1, width=0.05, length_includes_head=True
+        )
     )
     return patches
 
+
 if __name__ == "__main__":
     cfg = SchematicConfig()
-    fig, ax = get_fig(cfg, remove_ticks=False)
 
-    results = pd.DataFrame(
-        {
-            "total-import_power_mwh": [20, 0, 10, 40],
-            "total-export_power_mwh": [20, 0, 10, 40],
-        }
+    asset = epl.chp.Generator(
+        electric_power_max_mw=100,
+        electric_power_min_mw=50,
+        electric_efficiency_pct=0.3,
+        high_temperature_efficiency_pct=0.5,
     )
-    epl.accounting.validate_results(results)
+    results = asset.optimize(
+        electricity_prices=[1000, -100, 1000],
+        gas_prices=20,
+        high_temperature_load_mwh=[20, 20, 1000],
+        freq_mins=60,
+    )
+
+    fig, ax = get_fig(cfg, remove_ticks=False)
 
     plot_header_or_busbar(8.0, cfg.header_x, "Electric")
     plot_header_or_busbar(cfg.ht_header_height, cfg.header_x, "HT")
@@ -123,11 +144,11 @@ if __name__ == "__main__":
     collection.extend(draw_generator(6, cfg.generator_height))
     collection.extend(draw_generator(8, cfg.generator_height))
     collection.extend(draw_battery(10, cfg.generator_height))
-    collection.extend(draw_load(2, cfg.generator_height, cfg.electric_header_height ))
+    collection.extend(draw_load(2, cfg.generator_height, cfg.electric_header_height))
     collection.extend(draw_load(2, cfg.ht_height, cfg.ht_header_height))
     collection.extend(draw_load(2, cfg.lt_height, cfg.lt_header_height))
 
-    collection.extend(draw_boiler(2, cfg.generator_height, cfg.electric_header_height ))
+    collection.extend(draw_boiler(2, cfg.generator_height, cfg.electric_header_height))
 
     pc = matplotlib.collections.PatchCollection(collection)
     ax.add_collection(pc)

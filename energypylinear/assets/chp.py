@@ -5,10 +5,10 @@ import pulp
 import pydantic
 
 import energypylinear as epl
-from energypylinear import objectives
 from energypylinear.assets.asset import Asset
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
+from energypylinear.objectives import objectives
 from energypylinear.optimizer import Optimizer
 
 
