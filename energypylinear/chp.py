@@ -2,6 +2,7 @@ import collections
 
 import pandas as pd
 import pulp
+import pydantic
 
 import energypylinear as epl
 from energypylinear import objectives
@@ -23,6 +24,31 @@ class BoilerOneInterval(Asset):
     high_temperature_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
     binary: pulp.LpVariable
+
+
+class GeneratorConfig(Asset):
+    name: str
+    electric_power_max_mw: float = 0
+    electric_power_min_mw: float = 0
+
+    electric_efficiency_pct: float = 0
+    high_temperature_efficiency_pct: float = 0
+    low_temperature_efficiency_pct: float = 0
+    #  add cooling efficieny here TODO
+
+    @pydantic.validator("name")
+    def ensure_generator_in_name(cls, name):
+        assert "generator" in name
+        return name
+
+
+class GeneratorOneInterval(Asset):
+    electric_generation_mwh: pulp.LpVariable
+    gas_consumption_mwh: pulp.LpVariable
+    high_temperature_generation_mwh: pulp.LpVariable
+    low_temperature_generation_mwh: pulp.LpVariable
+    binary: pulp.LpVariable
+    cfg: GeneratorConfig
 
 
 def boiler_one_interval(
@@ -62,26 +88,6 @@ def constrain_within_interval_boilers(
             asset.binary,
             freq.mw_to_mwh(asset.cfg.high_temperature_generation_min_mw),
         )
-
-
-class GeneratorConfig(Asset):
-    name: str
-    electric_power_max_mw: float = 0
-    electric_power_min_mw: float = 0
-
-    electric_efficiency_pct: float = 0
-    high_temperature_efficiency_pct: float = 0
-    low_temperature_efficiency_pct: float = 0
-    #  add cooling efficieny here TODO
-
-
-class GeneratorOneInterval(Asset):
-    electric_generation_mwh: pulp.LpVariable
-    gas_consumption_mwh: pulp.LpVariable
-    high_temperature_generation_mwh: pulp.LpVariable
-    low_temperature_generation_mwh: pulp.LpVariable
-    binary: pulp.LpVariable
-    cfg: GeneratorConfig
 
 
 def generator_one_interval(
