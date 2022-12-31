@@ -1,11 +1,11 @@
 import numpy as np
 
-from energypylinear.chp import Generator
+import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
 def test_chp_gas_turbine_price(capsys) -> None:
-    asset = Generator(
+    asset = epl.chp.Generator(
         electric_power_max_mw=100,
         electric_power_min_mw=50,
         electric_efficiency_pct=0.3,

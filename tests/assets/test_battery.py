@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 
 import energypylinear as epl
-from energypylinear.battery import Battery
 
 #  maybe can move to defaults / constants
 tol = 1e-5
@@ -25,15 +24,17 @@ def test_battery_optimization_price(
     capacity_mwh = 6
     efficiency = 1.0
     freq_mins = 60
-    asset = Battery(power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency)
+    asset = epl.battery.Battery(
+        power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
+    )
     results = asset.optimize(
         electricity_prices=electricity_prices,
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=0,
     )
-    charge = results["battery-alpha-charge_mwh"].values
-    discharge = results["battery-alpha-discharge_mwh"].values
+    charge = results["battery-charge_mwh"].values
+    discharge = results["battery-discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
@@ -54,7 +55,9 @@ def test_battery_optimization_carbon(
     efficiency = 1.0
     freq_mins = 60
     prices = np.random.uniform(-100, 100, len(carbon_intensities)).tolist()
-    asset = Battery(power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency)
+    asset = epl.battery.Battery(
+        power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
+    )
     results = asset.optimize(
         electricity_prices=prices,
         electricity_carbon_intensities=carbon_intensities,
@@ -62,8 +65,8 @@ def test_battery_optimization_carbon(
         initial_charge_mwh=initial_charge_mwh,
         objective="carbon",
     )
-    charge = results["battery-alpha-charge_mwh"].values
-    discharge = results["battery-alpha-discharge_mwh"].values
+    charge = results["battery-charge_mwh"].values
+    discharge = results["battery-discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
@@ -97,7 +100,9 @@ def test_battery_hypothesis(
     freq_mins = 30
     electricity_prices = np.random.normal(prices_mu, prices_std, idx_length).tolist()
 
-    asset = Battery(power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency)
+    asset = epl.battery.Battery(
+        power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
+    )
 
     #  TODO
     #  possible to enter into infeasible situations where the final charge is more than the battery can
@@ -114,15 +119,15 @@ def test_battery_hypothesis(
     freq = epl.freq.Freq(freq_mins)
 
     #  check we don't exceed the battery rating
-    assert all(results["battery-alpha-charge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
-    assert all(results["battery-alpha-discharge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
+    assert all(results["battery-charge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
+    assert all(results["battery-discharge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
 
     #  check charge & discharge are always positive
-    assert all(results["battery-alpha-charge_mwh"] >= 0 - tol)
-    assert all(results["battery-alpha-discharge_mwh"] >= 0 - tol)
+    assert all(results["battery-charge_mwh"] >= 0 - tol)
+    assert all(results["battery-discharge_mwh"] >= 0 - tol)
 
     #  check we don't exceed battery capacity
-    name = "battery-alpha"
+    name = "battery-"
     for var in ["initial_charge_mwh", "final_charge_mwh"]:
         assert all(results[f"{name}-{var}"] <= capacity_mwh + tol)
         assert all(results[f"{name}-{var}"] >= 0 - tol)

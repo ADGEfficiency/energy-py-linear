@@ -1,7 +1,6 @@
 import numpy as np
 
 import energypylinear as epl
-from energypylinear.chp import Generator
 from energypylinear.defaults import defaults
 
 
