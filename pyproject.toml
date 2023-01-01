@@ -14,6 +14,7 @@ pydantic = "^1.10.2"
 pandas = "^1.5.2"
 matplotlib = "^3.6.2"
 rich = "^13.0.0"
+seaborn = "^0.12.2"
 
 
 [tool.poetry.group.check.dependencies]
