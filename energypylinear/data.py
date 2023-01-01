@@ -1,12 +1,11 @@
 import typing
 
 import numpy as np
-import pandas as pd
 import pydantic
 
 from energypylinear.defaults import defaults
 
-floats = typing.Sequence[float]
+floats = typing.Union[np.ndarray, typing.Sequence[float]]
 
 
 class EVIntervalData(pydantic.BaseModel):
@@ -42,9 +41,11 @@ class EVIntervalData(pydantic.BaseModel):
 
 
 class IntervalData(pydantic.BaseModel):
-    electricity_prices: floats
+    electricity_carbon_intensities: typing.Union[
+        float, floats, None
+    ] = defaults.electricity_carbon_intensities
+    electricity_prices: typing.Union[float, floats, None] = defaults.electricity_prices
     gas_prices: typing.Union[float, floats, None] = None
-    electricity_carbon_intensities: typing.Union[float, floats, None] = None
 
     high_temperature_load_mwh: typing.Union[float, floats, None] = None
     low_temperature_load_mwh: typing.Union[float, floats, None] = None
@@ -52,29 +53,42 @@ class IntervalData(pydantic.BaseModel):
 
     evs: typing.Union[EVIntervalData, None] = None
 
+    class Config:
+        arbitrary_types_allowed = True
+
     @pydantic.validator("evs")
-    def validate_evs(cls, evs, values, field):
+    def validate_evs(cls, evs, values):
         assert all(evs.idx == values["idx"])
         return evs
 
-    @pydantic.validator(
-        "gas_prices",
-        "electricity_carbon_intensities",
-        "high_temperature_load_mwh",
-        "low_temperature_load_mwh",
-        pre=True,
-        always=True,
-    )
-    def validate_float(cls, value, values, field):
-        if isinstance(value, (float, int)):
-            return [value] * len(values["electricity_prices"])
+    @pydantic.root_validator(pre=True)
+    def validate_all_things(cls, values):
 
-        elif value is None:
-            return [getattr(defaults, field.name)] * len(values["electricity_prices"])
-
+        if "electricity_prices" in values.keys():
+            base_field = "electricity_prices"
         else:
-            assert len(value) == len(values["electricity_prices"])
-            return value
+            base_field = "electricity_carbon_intensities"
+
+        fields = [
+            "electricity_prices",
+            "gas_prices",
+            "electricity_carbon_intensities",
+            "high_temperature_load_mwh",
+            "low_temperature_load_mwh",
+        ]
+        fields.remove(base_field)
+        for field in fields:
+            value = values.get(field)
+            if isinstance(value, (float, int)):
+                values[field] = [value] * len(values[base_field])
+
+            elif value is None:
+                values[field] = [getattr(defaults, field)] * len(values[base_field])
+
+            else:
+                assert len(value) == len(values[base_field])
+                values[field] = value
+        return values
 
     @pydantic.validator("idx", always=True)
     def setup_idx(cls, value, values):
