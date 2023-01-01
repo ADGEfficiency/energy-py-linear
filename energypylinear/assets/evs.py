@@ -297,7 +297,6 @@ class EVs:
         gas_prices=None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
-        return_interval_data: bool = False,
     ) -> pd.DataFrame:
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
@@ -387,12 +386,7 @@ class EVs:
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
         status = self.optimizer.solve()
         self.interval_data = interval_data
-        results = epl.results.extract_results(interval_data, vars)
-
-        if not return_interval_data:
-            return results
-        else:
-            return results, interval_data
+        return epl.results.extract_results(interval_data, vars)
 
     def plot(self, *args, **kwargs):
         return epl.plot.plot_evs(*args, **kwargs)

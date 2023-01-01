@@ -19,6 +19,7 @@ def test_evs_optimization_price():
         ],
         charge_event_mwh=charge_event_mwh,
     )
+    results = results.simulation
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
     np.testing.assert_equal(results["import_power_mwh"].sum(), sum(charge_event_mwh))
@@ -47,6 +48,7 @@ def test_evs_optimization_carbon():
         charge_event_mwh=charge_event_mwh,
         objective="carbon",
     )
+    results = results.simulation
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
     np.testing.assert_equal(results["import_power_mwh"].sum(), sum(charge_event_mwh))

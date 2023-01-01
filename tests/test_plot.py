@@ -25,12 +25,13 @@ def test_evs_plot(tmp_path_factory: pytest.TempPathFactory):
         charger_mws=ds["charger_mws"].tolist(),
     )
     ds.pop("charger_mws")
-    results = asset.optimize(**ds, return_interval_data=True)
-
+    results = asset.optimize(
+        **ds,
+    )
     assert not (path / "evs.png").exists()
-    asset.plot(*results, path=path)
+    asset.plot(results, path=path)
     assert (path / "evs.png").exists()
-    asset.plot(*results, path=path / "evs-custom.png")
+    asset.plot(results, path=path / "evs-custom.png")
     assert (path / "evs-custom.png").exists()
 
 

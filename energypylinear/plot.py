@@ -14,8 +14,9 @@ def find_column(df: pd.DataFrame, start: str, end: str) -> str:
     return cols[0]
 
 
-def plot_battery(results: pd.DataFrame, path: pathlib.Path):
+def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path):
     fig, axes = plt.subplots(nrows=5)
+    results = results.simulation
 
     results["import-export-balance"] = (
         results["import_power_mwh"] - results["export_power_mwh"]
@@ -64,10 +65,10 @@ def plot_battery(results: pd.DataFrame, path: pathlib.Path):
         fig.savefig(path)
 
 
-def plot_evs(
-    results: pd.DataFrame, interval_data: epl.data.IntervalData, path: pathlib.Path
-):
+def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path):
     fig, axes = plt.subplots(nrows=5)
+    interval_data = results.interval_data
+    results = results.simulation
 
     charger_usage = results[
         [
@@ -122,7 +123,8 @@ def plot_evs(
         fig.savefig(path)
 
 
-def plot_chp(results: pd.DataFrame, path: pathlib.Path):
+def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path):
+    results = results.simulation
     results.to_csv("temp.csv")
     fig, axes = plt.subplots(nrows=5)
     results["idx"] = np.arange(results.shape[0]).tolist()

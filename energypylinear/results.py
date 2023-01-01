@@ -2,6 +2,7 @@ import collections
 
 import numpy as np
 import pandas as pd
+import pydantic
 from rich import print
 
 from energypylinear.data import IntervalData
@@ -12,7 +13,15 @@ optimizer = Optimizer()
 flags = Flags()
 
 
-def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
+class SimulationResult(pydantic.BaseModel):
+    simulation: pd.DataFrame
+    interval_data: IntervalData
+
+    class Config:
+        arbitrary_types_allowed: bool = True
+
+
+def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult:
     results = collections.defaultdict(list)
     for i in interval_data.idx:
         site = vars["sites"][i]
@@ -157,7 +166,7 @@ def extract_results(interval_data: IntervalData, vars: dict) -> pd.DataFrame:
         "electricity_carbon_intensities"
     ] = interval_data.electricity_carbon_intensities
 
-    return results
+    return SimulationResult(simulation=results, interval_data=interval_data)
 
 
 def validate_results(interval_data: IntervalData, results: pd.DataFrame) -> None:

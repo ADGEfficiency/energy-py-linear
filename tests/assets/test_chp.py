@@ -17,6 +17,7 @@ def test_chp_gas_turbine_price() -> None:
         high_temperature_load_mwh=[20, 20, 1000],
         freq_mins=60,
     )
+    results = results.simulation
     """
     - high electricity price, low heat demand
     - expect generator to run full load and dump heat to low temperature
@@ -64,6 +65,7 @@ def test_chp_gas_turbine_carbon() -> None:
         freq_mins=60,
         objective="carbon",
     )
+    results = results.simulation
     """
     - high carbon intensity, low heat demand
     - expect generator to run full load and dump heat to low temperature
@@ -117,6 +119,7 @@ def test_chp_gas_engine_price() -> None:
         ],
         freq_mins=60,
     )
+    results = results.simulation
     """
     - high electricity price, low heat demand
     - expect generator to run full load and dump heat
@@ -147,6 +150,7 @@ def test_chp_gas_engine_carbon() -> None:
         freq_mins=60,
         objective="carbon",
     )
+    results = results.simulation
     """
     - high carbon intensity, low heat demand
     - expect generator to run full load and dump heat

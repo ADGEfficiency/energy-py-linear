@@ -33,6 +33,7 @@ def test_battery_optimization_price(
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=0,
     )
+    results = results.simulation
     charge = results["battery-charge_mwh"].values
     discharge = results["battery-discharge_mwh"].values
     dispatch = charge - discharge
@@ -65,6 +66,7 @@ def test_battery_optimization_carbon(
         initial_charge_mwh=initial_charge_mwh,
         objective="carbon",
     )
+    results = results.simulation
     charge = results["battery-charge_mwh"].values
     discharge = results["battery-discharge_mwh"].values
     dispatch = charge - discharge
@@ -115,6 +117,7 @@ def test_battery_hypothesis(
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=final_charge_mwh,
     )
+    results = results.simulation
 
     freq = epl.freq.Freq(freq_mins)
 

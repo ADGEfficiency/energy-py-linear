@@ -25,6 +25,7 @@ def test_chp_gas_turbine_price(capsys) -> None:
         ],
         freq_mins=60,
     )
+    results = results.simulation
     #  https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
     capture = capsys.readouterr()
     assert "Spill Occurred" in capture.out
@@ -41,6 +42,7 @@ def test_chp_gas_turbine_price(capsys) -> None:
         high_temperature_load_mwh=[20],
         freq_mins=60,
     )
+    results = results.simulation
     #  https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
     capture = capsys.readouterr()
     assert "Spill Occurred" not in capture.out
