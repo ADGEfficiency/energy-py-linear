@@ -148,7 +148,7 @@ def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult
     #  filter out binary columns - TODO separate loop while dev
     spill_columns = [c for c in spill_columns if "charge_binary" not in c]
     spill_results = simulation[spill_columns]
-    assert isinstance(spill_results, pd.Series)
+    assert isinstance(spill_results, pd.DataFrame)
     spill_occured = spill_results.sum().sum() > 0.0
 
     spills = spill_results.sum(axis=0).to_dict()

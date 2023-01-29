@@ -84,7 +84,6 @@ def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path) ->
 def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
     simulation = results.simulation
     fig, axes = plt.subplots(nrows=5)
-    interval_data = simulation.interval_data
 
     charger_usage = simulation[
         [
@@ -124,7 +123,7 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
         data,
         ax=axes[1],
         **heatmap_config,
-        mask=interval_data.evs.charge_events == 0,
+        mask=results.interval_data.evs.charge_events == 0,
         fmt="g",
         cbar_kws={"label": "Charge MWh", "location": "left"}
     )
