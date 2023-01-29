@@ -356,6 +356,19 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "monotable"
+version = "3.1.0"
+description = "ASCII table with per column format specs, multi-line content, formatting directives, column width control."
+category = "dev"
+optional = false
+python-versions = ">=3.5"
+
+[package.extras]
+cover = ["codecov", "coverage", "pytest"]
+docs = ["sphinx (<=1.8.5)", "sphinx-rtd-theme (<=0.5)"]
+inspect = ["check-manifest", "flake8", "mypy", "pep8-naming", "twine", "typing"]
+
+[[package]]
 name = "mypy"
 version = "0.991"
 description = "Optional static typing for Python"
@@ -447,6 +460,26 @@ python-versions = "*"
 
 [package.dependencies]
 ptyprocess = ">=0.5"
+
+[[package]]
+name = "phmdoctest"
+version = "1.4.0"
+description = "Python syntax highlighted Markdown doctest."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+Click = ">=7.1.1"
+commonmark = ">=0.9.1"
+monotable = ">=2.1.1"
+pytest = "*"
+tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
+
+[package.extras]
+docs = ["myst-parser", "sphinx", "sphinx-rtd-theme"]
+inspect = ["black", "check-manifest", "flake8", "mypy", "pep8-naming", "twine", "typing"]
+test = ["PyYAML (>=5.4.1)", "coverage", "pytest (>=6.2)"]
 
 [[package]]
 name = "pickleshare"
@@ -757,7 +790,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.6"
-content-hash = "bd8a5b97d4763a1f28f3564e2cbffac96552acc0809b4dea2ccb3472440ca4cc"
+content-hash = "0dd5175b08013e07133245c147c05c13a4485abecb6789446677105fa807c4e2"
 
 [metadata.files]
 appnope = [
@@ -1103,6 +1136,10 @@ mccabe = [
     {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
     {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
 ]
+monotable = [
+    {file = "monotable-3.1.0-py3-none-any.whl", hash = "sha256:2bdd9b245f894406642899ab82032cc4ad0d890b2972fd0ecdb52c1b1a6c9f21"},
+    {file = "monotable-3.1.0.tar.gz", hash = "sha256:68fafb1df6b1f0aff391d558921215d808fcaca076b2960e44e3fd0657e243d4"},
+]
 mypy = [
     {file = "mypy-0.991-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7d17e0a9707d0772f4a7b878f04b4fd11f6f5bcb9b3813975a9b13c9332153ab"},
     {file = "mypy-0.991-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:0714258640194d75677e86c786e80ccf294972cc76885d3ebbb560f11db0003d"},
@@ -1213,6 +1250,10 @@ pathspec = [
 pexpect = [
     {file = "pexpect-4.8.0-py2.py3-none-any.whl", hash = "sha256:0b48a55dcb3c05f3329815901ea4fc1537514d6ba867a152b581d69ae3710937"},
     {file = "pexpect-4.8.0.tar.gz", hash = "sha256:fc65a43959d153d0114afe13997d439c22823a27cefceb5ff35c2178c6784c0c"},
+]
+phmdoctest = [
+    {file = "phmdoctest-1.4.0-py3-none-any.whl", hash = "sha256:4c9db90314183bc874d20947dba4ee93018d0412380f26137db0050a8b7903a9"},
+    {file = "phmdoctest-1.4.0.tar.gz", hash = "sha256:eb9dd5dc415d6e48ccd3a273e250c519b1e2b9e22e21ddf6e6f716efbb0f2e09"},
 ]
 pickleshare = [
     {file = "pickleshare-0.7.5-py2.py3-none-any.whl", hash = "sha256:9649af414d74d4df115d5d718f82acb59c9d418196b7b4290ed47a12ce62df56"},

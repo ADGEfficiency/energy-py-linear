@@ -17,6 +17,7 @@ setup-check: setup
 #  TEST
 .PHONY: test test-ci
 test: setup-test
+	python -m phmdoctest README.md --outfile tests/test_readme.py
 	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes
 test-ci: setup-test
 	coverage run -m pytest tests --tb=short --show-capture=no

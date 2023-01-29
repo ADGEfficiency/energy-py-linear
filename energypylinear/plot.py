@@ -119,6 +119,7 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
 
     data = charge_event_usage
     #  want to unmask out the periods where charge_event was positive
+    assert results.interval_data.evs is not None
     seaborn.heatmap(
         data,
         ax=axes[1],
