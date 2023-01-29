@@ -102,7 +102,7 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear import site
-from energypylinear.assets.asset import Asset
+from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
 from energypylinear.objectives import objectives
@@ -115,7 +115,7 @@ class ChargerConfig(pydantic.BaseModel):
     power_min_mw: float
 
 
-class EVOneInterval(Asset):
+class EVOneInterval(AssetOneInterval):
     #  could use `electric_charge_mwh`
     #  or event electric_load_mwh
     charge_mwh: pulp.LpVariable
@@ -125,7 +125,7 @@ class EVOneInterval(Asset):
         arbitrary_types_allowed = True
 
 
-class EVsArrayOneInterval(Asset):
+class EVsArrayOneInterval(AssetOneInterval):
     #  could use `electric_charge_mwh`
     #  or event electric_load_mwh
     charge_mwh: np.ndarray

@@ -26,6 +26,7 @@ test-ci: setup-test
 #  STATIC TYPING
 .PHONY: static
 static: setup-static
+	rm -rf ./tests/test_readme.py
 	mypy **/*.py --config-file ./mypy.ini --pretty
 
 #  CHECKS & FORMATTING

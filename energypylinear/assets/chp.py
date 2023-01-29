@@ -7,28 +7,28 @@ import pulp
 import pydantic
 
 import energypylinear as epl
-from energypylinear.assets.asset import Asset
+from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
 from energypylinear.objectives import objectives
 from energypylinear.optimizer import Optimizer
 
 
-class BoilerConfig(Asset):
+class BoilerConfig(AssetOneInterval):
     name: str
     high_temperature_generation_max_mw: float = 0
     high_temperature_generation_min_mw: float = 0
     high_temperature_efficiency_pct: float = 0
 
 
-class BoilerOneInterval(Asset):
+class BoilerOneInterval(AssetOneInterval):
     cfg: BoilerConfig
     high_temperature_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
     binary: pulp.LpVariable
 
 
-class GeneratorConfig(Asset):
+class GeneratorConfig(pydantic.BaseModel):
     name: str
     electric_power_max_mw: float = 0
     electric_power_min_mw: float = 0
@@ -44,7 +44,7 @@ class GeneratorConfig(Asset):
         return name
 
 
-class GeneratorOneInterval(Asset):
+class GeneratorOneInterval(AssetOneInterval):
     electric_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
     high_temperature_generation_mwh: pulp.LpVariable

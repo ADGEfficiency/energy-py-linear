@@ -2,10 +2,10 @@ import pulp
 import pydantic
 
 import energypylinear as epl
-from energypylinear.assets.asset import Asset
+from energypylinear.assets.asset import AssetOneInterval
 
 
-class SpillConfig(Asset):
+class SpillConfig(AssetOneInterval):
     name: str = "spill-default"
 
     @pydantic.validator("name")
@@ -14,7 +14,7 @@ class SpillConfig(Asset):
         return name
 
 
-class SpillOneInterval(Asset):
+class SpillOneInterval(AssetOneInterval):
     cfg: SpillConfig = SpillConfig()
     electric_generation_mwh: pulp.LpVariable
     electric_load_mwh: pulp.LpVariable

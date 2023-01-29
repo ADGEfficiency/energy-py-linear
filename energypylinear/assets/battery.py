@@ -8,7 +8,7 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear import site
-from energypylinear.assets.asset import Asset
+from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
@@ -33,7 +33,7 @@ class BatteryConfig(pydantic.BaseModel):
         return name
 
 
-class BatteryOneInterval(Asset):
+class BatteryOneInterval(AssetOneInterval):
     """Battery asset in a single interval"""
 
     cfg: BatteryConfig

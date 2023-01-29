@@ -1,25 +1,25 @@
 import pulp
+import pydantic
 
 import energypylinear as epl
-from energypylinear.assets.asset import Asset
+from energypylinear.assets.asset import AssetOneInterval
 
 
-class Valve(Asset):
+class ValveConfig(pydantic.BaseModel):
     name: str
 
 
-class ValveConfig(Asset):
-    name: str
-
-
-class ValveOneInterval(Asset):
+class ValveOneInterval(AssetOneInterval):
     cfg: ValveConfig
     high_temperature_load_mwh: pulp.LpVariable
     low_temperature_generation_mwh: pulp.LpVariable
 
 
 def valve_one_interval(
-    optimizer: "epl.optimizer.Optimizer", cfg: ValveConfig, i: int, freq: "epl.freq.Freq"
+    optimizer: "epl.optimizer.Optimizer",
+    cfg: ValveConfig,
+    i: int,
+    freq: "epl.freq.Freq",
 ) -> ValveOneInterval:
     return ValveOneInterval(
         cfg=cfg,

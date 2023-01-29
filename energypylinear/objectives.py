@@ -15,11 +15,11 @@ def price_objective(
     boilers = vars.get("boilers", [])
 
     if len(generators) == 0:
-        generators = [[epl.assets.asset.Asset()] for i in interval_data.idx]
+        generators = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
     if len(boilers) == 0:
-        boilers = [[epl.assets.asset.Asset()] for i in interval_data.idx]
+        boilers = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
     if len(spill_evs) == 0:
-        spill_evs = [[epl.assets.asset.Asset()] for i in interval_data.idx]
+        spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
 
     assert isinstance(interval_data.gas_prices, list)
     assert isinstance(interval_data.electricity_prices, list)
