@@ -1,3 +1,4 @@
+"""A set of tools for mixed-integer linear optimization of energy systems."""
 from energypylinear import (
     accounting,
     data,

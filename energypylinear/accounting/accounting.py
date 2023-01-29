@@ -1,3 +1,5 @@
+"""Functions to calculate electricity and gas accounts."""
+
 import typing
 
 import pandas as pd
@@ -7,32 +9,9 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
-class ElectricityAccount(pydantic.BaseModel):
-    import_cost: float
-    export_cost: float
-    cost: float
-
-    import_emissions: float
-    export_emissions: float
-    emissions: float
-
-
-class GasAccount(pydantic.BaseModel):
-    cost: float
-    emissions: float
-
-
-class GasAccounts(pydantic.BaseModel):
-    actuals: GasAccount
-    forecasts: GasAccount
-
-
-class ElectricityAccounts(pydantic.BaseModel):
-    actuals: ElectricityAccount
-    forecasts: ElectricityAccount
-
-
 class Account(pydantic.BaseModel):
+    """An account containing cost and emissions."""
+
     cost: float
     emissions: float
 
@@ -48,6 +27,38 @@ class Account(pydantic.BaseModel):
         )
 
 
+class ElectricityAccount(Account):
+    """An electricity account, containing import and export costs and emissions."""
+
+    import_cost: float
+    export_cost: float
+    cost: float
+
+    import_emissions: float
+    export_emissions: float
+    emissions: float
+
+
+class GasAccount(Account):
+    """A natural gas account, containing cost and emissions"""
+
+    pass
+
+
+class GasAccounts(pydantic.BaseModel):
+    """A set of gas accounts, containing actuals and forecasts."""
+
+    actuals: GasAccount
+    forecasts: GasAccount
+
+
+class ElectricityAccounts(pydantic.BaseModel):
+    """A set of electricity accounts, containing actuals and forecasts."""
+
+    actuals: ElectricityAccount
+    forecasts: ElectricityAccount
+
+
 class Accounts(pydantic.BaseModel):
     electricity: ElectricityAccounts
     gas: GasAccounts
@@ -59,6 +70,7 @@ def get_one_gas_account(
     interval_data: "epl.data.IntervalData",
     results: pd.DataFrame,
 ):
+    """Calculate a single gas account from interval data and results."""
     return GasAccount(
         cost=(interval_data.gas_prices * results["gas_consumption_mwh"]).sum(),
         emissions=(
@@ -73,6 +85,7 @@ def get_gas_accounts(
     results_forecasts: pd.DataFrame,
     forecasts: "epl.data.IntervalData",
 ) -> GasAccounts:
+    """Calculate gas accounts from actuals and forecasts interval data and results."""
     actuals_account = get_one_gas_account(actuals, results_actuals)
     forecasts_account = get_one_gas_account(forecasts, results_forecasts)
     return GasAccounts(actuals=actuals_account, forecasts=forecasts_account)
@@ -82,6 +95,7 @@ def get_one_electricity_account(
     interval_data: "epl.data.IntervalData",
     results: pd.DataFrame,
 ):
+    """Calculate a single electricity account from interval data and results."""
     import_cost = (interval_data.electricity_prices * results["import_power_mwh"]).sum()
 
     export_cost = -(
@@ -111,6 +125,7 @@ def get_electricity_accounts(
     results_forecasts: pd.DataFrame,
     forecasts: "epl.data.IntervalData",
 ) -> ElectricityAccounts:
+    """Calculate electricity accounts from actuals and forecasts interval data and results."""
     actuals_account = get_one_electricity_account(actuals, results_actuals)
     forecasts_account = get_one_electricity_account(forecasts, results_forecasts)
     return ElectricityAccounts(actuals=actuals_account, forecasts=forecasts_account)
@@ -122,6 +137,7 @@ def get_accounts(
     results_forecasts: typing.Optional[pd.DataFrame] = None,
     forecasts: typing.Optional["epl.data.IntervalData"] = None,
 ):
+    """Calculate electricity and gas accounts from actuals and forecasts interval data and results."""
     if results_forecasts is None:
         results_forecasts = results_actuals
     assert results_forecasts is not None

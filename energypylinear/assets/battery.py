@@ -1,3 +1,4 @@
+"""Battery asset for optimizing battery dispatch."""
 import collections
 import pathlib
 import typing
@@ -17,6 +18,8 @@ flags = Flags()
 
 
 class BatteryConfig(pydantic.BaseModel):
+    """Battery Asset Configuration"""
+
     name: str
     power_mw: float
     capacity_mwh: float
@@ -31,6 +34,8 @@ class BatteryConfig(pydantic.BaseModel):
 
 
 class BatteryOneInterval(Asset):
+    """Battery asset in a single interval"""
+
     cfg: BatteryConfig
     charge_mwh: pulp.LpVariable
     charge_binary: typing.Union[pulp.LpVariable, int]
@@ -45,6 +50,7 @@ class BatteryOneInterval(Asset):
 def battery_one_interval(
     optimizer: Optimizer, cfg: BatteryConfig, i: int, freq: Freq
 ) -> BatteryOneInterval:
+    """Create a Battery asset model for a single interval."""
 
     return BatteryOneInterval(
         cfg=cfg,
@@ -72,6 +78,7 @@ def battery_one_interval(
 
 
 def constrain_within_interval(optimizer, vars, configs):
+    """Constrain battery dispatch within a single interval"""
     constrain_only_charge_or_discharge(optimizer, vars, configs)
     constrain_battery_electricity_balance(optimizer, vars)
     constrain_connection_batteries_between_intervals(optimizer, vars)
@@ -80,6 +87,10 @@ def constrain_within_interval(optimizer, vars, configs):
 def constrain_only_charge_or_discharge(
     optimizer: Optimizer, vars: collections.defaultdict, configs
 ) -> None:
+    """Constrain battery to only charge or discharge.
+
+    Usually flagged off - slows things down a lot (~2x as slow).
+    """
     if flags.include_charge_discharge_binary_variables:
         for battery, cfg in zip(vars["batteries"][-1], configs, strict=True):
             optimizer.constrain_max(
@@ -94,6 +105,7 @@ def constrain_only_charge_or_discharge(
 def constrain_battery_electricity_balance(
     optimizer: Optimizer, vars: collections.defaultdict
 ) -> None:
+    """Constrain energy balance in a single interval - also calculates losses."""
     for battery in vars["batteries"][-1]:
         optimizer.constrain(
             battery.initial_charge_mwh
@@ -110,6 +122,7 @@ def constrain_battery_electricity_balance(
 def constrain_connection_batteries_between_intervals(
     optimizer: Optimizer, vars: collections.defaultdict
 ) -> None:
+    """Constrain battery dispatch between two adjacent intervals."""
     batteries = vars["batteries"]
 
     #  if in first interval, do nothing
@@ -125,6 +138,7 @@ def constrain_connection_batteries_between_intervals(
 
 
 def constrain_after_intervals(optimizer, vars, configs):
+    """Constrain battery dispatch after all interval asset models are created."""
     constrain_initial_final_charge(optimizer, vars, configs)
 
 
@@ -133,6 +147,7 @@ def constrain_initial_final_charge(
     vars: collections.defaultdict,
     battery_cfgs: list[BatteryConfig],
 ) -> None:
+    """Constrain the battery state of charge at the start and end of the simulation."""
 
     batteries = vars["batteries"]
     first = batteries[0]
