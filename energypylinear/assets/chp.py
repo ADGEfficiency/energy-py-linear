@@ -1,4 +1,6 @@
 import collections
+import pathlib
+import typing
 
 import pandas as pd
 import pulp
@@ -240,5 +242,9 @@ class Generator:
         self.optimizer.solve()
         return epl.results.extract_results(interval_data, vars)
 
-    def plot(self, *args, **kwargs):
-        return epl.plot.plot_chp(*args, **kwargs)
+    def plot(
+        self,
+        results: "epl.results.SimulationResult",
+        path: typing.Union[pathlib.Path, str],
+    ):
+        return epl.plot.plot_chp(results, pathlib.Path(path))

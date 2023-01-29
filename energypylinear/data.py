@@ -3,6 +3,7 @@ import typing
 import numpy as np
 import pydantic
 
+import energypylinear as epl
 from energypylinear.defaults import defaults
 
 floats = typing.Union[np.ndarray, typing.Sequence[float]]
@@ -17,11 +18,11 @@ class EVIntervalData(pydantic.BaseModel):
         arbitrary_types_allowed = True
 
     @pydantic.validator("idx", always=True, pre=True)
-    def setup_idx(cls, value, values):
+    def setup_idx(cls, value: list, values: dict) -> np.ndarray:
         return np.arange(values["charge_events"].shape[0])
 
     @pydantic.root_validator()
-    def validate_all_things(cls, values):
+    def validate_all_things(cls, values: dict) -> dict:
         #  only_positive or zero charge_event_mwh
         assert all(
             values["charge_event_mwh"] >= 0
@@ -41,10 +42,12 @@ class EVIntervalData(pydantic.BaseModel):
 
 
 class IntervalData(pydantic.BaseModel):
-    electricity_carbon_intensities: typing.Union[
-        float, floats, None
-    ] = defaults.electricity_carbon_intensities
-    electricity_prices: typing.Union[float, floats, None] = defaults.electricity_prices
+    # electricity_carbon_intensities: typing.Union[
+    #     float, floats, None
+    # ] = defaults.electricity_carbon_intensities
+    # electricity_prices: typing.Union[float, floats, None] = defaults.electricity_prices
+    electricity_carbon_intensities: floats
+    electricity_prices: floats
     gas_prices: typing.Union[float, floats, None] = None
 
     high_temperature_load_mwh: typing.Union[float, floats, None] = None
@@ -57,12 +60,14 @@ class IntervalData(pydantic.BaseModel):
         arbitrary_types_allowed = True
 
     @pydantic.validator("evs")
-    def validate_evs(cls, evs, values):
+    def validate_evs(
+        cls, evs: "epl.data.EVIntervalData", values: dict
+    ) -> "epl.data.EVIntervalData":
         assert all(evs.idx == values["idx"])
         return evs
 
     @pydantic.root_validator(pre=True)
-    def validate_all_things(cls, values):
+    def validate_all_things(cls, values: dict) -> dict:
 
         if "electricity_prices" in values.keys():
             base_field = "electricity_prices"
@@ -91,5 +96,5 @@ class IntervalData(pydantic.BaseModel):
         return values
 
     @pydantic.validator("idx", always=True)
-    def setup_idx(cls, value, values):
+    def setup_idx(cls, value: list, values: dict) -> list:
         return list(range(len(values["electricity_prices"])))

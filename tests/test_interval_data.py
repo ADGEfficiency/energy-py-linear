@@ -3,7 +3,7 @@ import numpy as np
 import energypylinear as epl
 
 
-def test_interval_data():
+def test_interval_data() -> None:
     electricity_prices = [20, 40, -100, 50]
     gas_prices = [20, 40, -100, 50]
     carbon_intensities = [0.1, 0.4, 0.3, 0.9]
@@ -29,7 +29,7 @@ def test_interval_data():
     assert id.idx == [0, 1, 2, 3]
 
 
-def test_interval_data_numpy_arrays():
+def test_interval_data_numpy_arrays() -> None:
     electricity_prices = np.array([20, 40, -100, 50])
     gas_prices = [20, 40, -100, 50]
     carbon_intensities = [0.1, 0.4, 0.3, 0.9]
@@ -41,7 +41,7 @@ def test_interval_data_numpy_arrays():
     )
 
 
-def test_interval_data_no_electricity_prices():
+def test_interval_data_no_electricity_prices() -> None:
     carbon_intensities = [0.1, 0.4, 0.3, 0.9]
 
     id = epl.data.IntervalData(

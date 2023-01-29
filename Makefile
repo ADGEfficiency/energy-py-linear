@@ -27,14 +27,14 @@ test-ci: setup-test
 static: setup-static
 	mypy **/*.py --config-file ./mypy.ini --pretty
 
-#  CHECKS, FORMATTING & LINTING
+#  CHECKS & FORMATTING
 .PHONY: check check
 check: setup-check
 	flake8 --extend-ignore E501
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
-lint: setup-check
+format: setup-check
 	isort **/*.py --profile black
 	black **/*.py
 	poetry lock --no-update

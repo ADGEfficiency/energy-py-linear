@@ -5,6 +5,7 @@ import pandas as pd
 import pydantic
 from rich import print
 
+import energypylinear as epl
 from energypylinear.data import IntervalData
 from energypylinear.flags import Flags
 from energypylinear.optimizer import Optimizer
@@ -111,17 +112,23 @@ def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult
                         )
                     )
 
-    results = pd.DataFrame(results)
+    simulation = pd.DataFrame(results)
 
     #  add totals for charge events across both the spill and normal chargers
     if len(vars["evs-array"]):
+        assert isinstance(interval_data.evs, epl.data.EVIntervalData)
+        assert interval_data.evs is not None
         for charge_event_idx, _ in enumerate(interval_data.evs.charge_event_mwh):
-            results[f"charge-event-{charge_event_idx}-total-charge_mwh"] = results[
+            simulation[
+                f"charge-event-{charge_event_idx}-total-charge_mwh"
+            ] = simulation[
                 [
                     f"charge-event-{charge_event_idx}-charge_mwh",
                     f"spill-charge-event-{charge_event_idx}-charge_mwh",
                 ]
-            ].sum(axis=1)
+            ].sum(
+                axis=1
+            )
 
     #  add totals
     #  can I do this without pandas??
@@ -130,17 +137,18 @@ def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult
         "gas_consumption_mwh",
         "high_temperature_generation_mwh",
     ]:
-        cols = [c for c in results.columns if (col in c)]
-        results[col] = results[cols].sum(axis=1)
+        cols = [c for c in simulation.columns if (col in c)]
+        simulation[col] = simulation[cols].sum(axis=1)
 
     #  add balances + check them - TODO
-    validate_results(interval_data, results)
+    validate_results(interval_data, simulation)
 
     #  add warnings on the use of any spill asset
-    spill_columns = [c for c in results.columns if "spill" in c]
+    spill_columns = [c for c in simulation.columns if "spill" in c]
     #  filter out binary columns - TODO separate loop while dev
     spill_columns = [c for c in spill_columns if "charge_binary" not in c]
-    spill_results = results[spill_columns]
+    spill_results = simulation[spill_columns]
+    assert isinstance(spill_results, pd.Series)
     spill_occured = spill_results.sum().sum() > 0.0
 
     spills = spill_results.sum(axis=0).to_dict()
@@ -163,12 +171,14 @@ def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult
         pass
 
     #  include interval data in results
-    results["electricity_prices"] = interval_data.electricity_prices
-    results[
+    assert isinstance(interval_data.electricity_prices, list)
+    assert isinstance(interval_data.electricity_carbon_intensities, list)
+    simulation["electricity_prices"] = interval_data.electricity_prices
+    simulation[
         "electricity_carbon_intensities"
     ] = interval_data.electricity_carbon_intensities
 
-    return SimulationResult(simulation=results, interval_data=interval_data)
+    return SimulationResult(simulation=simulation, interval_data=interval_data)
 
 
 def validate_results(interval_data: IntervalData, results: pd.DataFrame) -> None:

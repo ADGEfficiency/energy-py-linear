@@ -1,7 +1,7 @@
 import energypylinear as epl
 
 
-def test_freq():
+def test_freq() -> None:
 
     freq = epl.freq.Freq(60)
     assert 100 == freq.mw_to_mwh(100)

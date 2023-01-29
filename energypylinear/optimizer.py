@@ -4,7 +4,7 @@ import pulp
 
 
 class Optimizer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.prob = pulp.LpProblem("prob", pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=0)
 
@@ -16,7 +16,7 @@ class Optimizer:
     def binary(self, name: str) -> pulp.LpVariable:
         return pulp.LpVariable(name=name, cat="Binary")
 
-    def sum(self, vector: list[pulp.LpAffineExpression]):
+    def sum(self, vector: list[pulp.LpAffineExpression]) -> pulp.LpAffineExpression:
         return pulp.lpSum(vector)
 
     def constrain(
@@ -24,10 +24,10 @@ class Optimizer:
     ) -> pulp.LpConstraint:
         return self.prob.addConstraint(constraint, name)
 
-    def objective(self, objective):
+    def objective(self, objective: pulp.LpAffineExpression) -> pulp.LpConstraint:
         return self.prob.setObjective(objective)
 
-    def solve(self, verbose=0):
+    def solve(self, verbose: int = 0) -> str:
         self.assert_no_duplicate_variables()
         self.solver.solve(self.prob)
         status = self.status()
@@ -36,14 +36,14 @@ class Optimizer:
         assert status == "Optimal"
         return status
 
-    def assert_no_duplicate_variables(self):
+    def assert_no_duplicate_variables(self) -> None:
         variables = self.variables()
         names = [v.name for v in variables]
         assert len(names) == len(
             set(names)
         ), f"duplicate variables detected - {[x for x in names if names.count(x) >= 2]}"
 
-    def status(self):
+    def status(self) -> str:
         return pulp.LpStatus[self.prob.status]
 
     def constraints(self) -> list[pulp.LpConstraint]:
@@ -62,7 +62,7 @@ class Optimizer:
     ) -> pulp.LpConstraint:
         return self.constrain(-continuous + binary * min <= 0)
 
-    def value(self, variable):
+    def value(self, variable: typing.Union[float, pulp.LpVariable]) -> float:
         if isinstance(variable, pulp.LpVariable):
             return variable.value()
         else:

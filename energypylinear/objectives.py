@@ -5,7 +5,7 @@ from energypylinear.defaults import defaults
 
 
 def price_objective(
-    optimizer: epl.optimizer.Optimizer, vars, interval_data: epl.data.IntervalData
+    optimizer: epl.optimizer.Optimizer, vars: dict, interval_data: epl.data.IntervalData
 ) -> pulp.LpAffineExpression:
 
     sites = vars["sites"]
@@ -22,6 +22,7 @@ def price_objective(
         spill_evs = [[epl.assets.asset.Asset()] for i in interval_data.idx]
 
     assert isinstance(interval_data.gas_prices, list)
+    assert isinstance(interval_data.electricity_prices, list)
 
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_prices[i]
@@ -49,7 +50,7 @@ def price_objective(
 
 
 def carbon_objective(
-    optimizer: epl.optimizer.Optimizer, vars, interval_data: epl.data.IntervalData
+    optimizer: epl.optimizer.Optimizer, vars: dict, interval_data: epl.data.IntervalData
 ) -> pulp.LpAffineExpression:
 
     sites = vars["sites"]

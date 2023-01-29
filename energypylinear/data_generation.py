@@ -6,17 +6,17 @@ import energypylinear as epl
 
 
 def generate_random_ev_input_data(
-    idx_length,
-    n_chargers,
-    charge_length,
-    normal_mu=0,
-    normal_std=1,
-    uniform_min=0,
-    uniform_max=10,
-    n_charge_events=10,
-    prices_mu=100,
-    prices_std=20,
-):
+    idx_length: int,
+    n_chargers: int,
+    charge_length: int,
+    normal_mu: float = 0,
+    normal_std: float = 1,
+    uniform_min: float = 0,
+    uniform_max: float = 10,
+    n_charge_events: int = 10,
+    prices_mu: float = 100,
+    prices_std: float = 20,
+) -> dict:
     np.random.seed(2)
     electricity_prices = np.random.normal(prices_mu, prices_std, idx_length)
     charger_mws = np.random.randint(10, 100, n_chargers)

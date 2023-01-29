@@ -4,7 +4,7 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
-def test_accounting_actuals():
+def test_accounting_actuals() -> None:
     results = pd.DataFrame(
         {
             "import_power_mwh": [100, 50, 0],
@@ -46,7 +46,7 @@ def test_accounting_actuals():
     assert variance.emissions == 0
 
 
-def test_accounting_forecasts():
+def test_accounting_forecasts() -> None:
     results = pd.DataFrame(
         {
             "import_power_mwh": [100, 50, 0],

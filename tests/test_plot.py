@@ -5,7 +5,7 @@ import pytest
 import energypylinear as epl
 
 
-def test_battery_plot(tmp_path_factory: pytest.TempPathFactory):
+def test_battery_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     path = tmp_path_factory.mktemp("figs")
     asset = epl.battery.Battery(power_mw=2, capacity_mwh=4)
     electricity_prices = np.random.normal(100, 10, 10).tolist()
@@ -18,7 +18,7 @@ def test_battery_plot(tmp_path_factory: pytest.TempPathFactory):
     assert (path / "battery-custom.png").exists()
 
 
-def test_evs_plot(tmp_path_factory: pytest.TempPathFactory):
+def test_evs_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     path = tmp_path_factory.mktemp("figs")
     ds = epl.data_generation.generate_random_ev_input_data(10, 2, 3)
     asset = epl.evs.EVs(
@@ -35,7 +35,7 @@ def test_evs_plot(tmp_path_factory: pytest.TempPathFactory):
     assert (path / "evs-custom.png").exists()
 
 
-def test_chp_plot(tmp_path_factory: pytest.TempPathFactory):
+def test_chp_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     path = tmp_path_factory.mktemp("figs")
 
     prices = np.random.uniform(-1000, 1000, 24).tolist()

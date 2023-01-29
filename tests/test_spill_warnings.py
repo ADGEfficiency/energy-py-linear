@@ -1,10 +1,11 @@
 import numpy as np
+from _pytest.capture import CaptureFixture
 
 import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
-def test_chp_gas_turbine_price(capsys) -> None:
+def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
     asset = epl.chp.Generator(
         electric_power_max_mw=100,
         electric_power_min_mw=50,

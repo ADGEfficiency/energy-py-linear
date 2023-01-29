@@ -44,7 +44,7 @@ def site_one_interval(
     )
 
 
-def constrain_site_electricity_balance(optimizer, vars):
+def constrain_site_electricity_balance(optimizer: Optimizer, vars: dict) -> None:
     """
     in = out + accumulation
     import + generation = (export + load) + (charge - discharge)
@@ -67,7 +67,7 @@ def constrain_site_electricity_balance(optimizer, vars):
     )
 
 
-def constrain_site_import_export(optimizer, vars):
+def constrain_site_import_export(optimizer: Optimizer, vars: dict) -> None:
     site = vars["sites"][-1]
     optimizer.constrain(
         site.import_power_mwh - site.import_limit_mwh * site.import_power_bin <= 0
@@ -78,7 +78,9 @@ def constrain_site_import_export(optimizer, vars):
     optimizer.constrain(site.import_power_bin + site.export_power_bin == 1)
 
 
-def constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i):
+def constrain_site_high_temperature_heat_balance(
+    optimizer: Optimizer, vars: dict, interval_data: "epl.data.IntervalData", i: int
+) -> None:
     """
     in = out + accumulation
     generation = load
@@ -87,6 +89,7 @@ def constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data,
     assets = vars["assets"][-1]
     spill = vars["spills"][-1]
     valve = vars["valves"][-1]
+    assert isinstance(interval_data.high_temperature_load_mwh, list)
     optimizer.constrain(
         spill.high_temperature_generation_mwh
         - valve.high_temperature_load_mwh
@@ -97,7 +100,9 @@ def constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data,
     )
 
 
-def constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, i):
+def constrain_site_low_temperature_heat_balance(
+    optimizer: Optimizer, vars: dict, interval_data: "epl.data.IntervalData", i: int
+) -> None:
     """
     in = out + accumulation
     generation = load
@@ -106,6 +111,7 @@ def constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, 
     assets = vars["assets"][-1]
     spill = vars["spills"][-1]
     valve = vars["valves"][-1]
+    assert isinstance(interval_data.low_temperature_load_mwh, list)
     optimizer.constrain(
         optimizer.sum([a.low_temperature_generation_mwh for a in assets])
         + valve.low_temperature_generation_mwh
@@ -116,7 +122,9 @@ def constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, 
     )
 
 
-def constrain_within_interval(optimizer, vars, interval_data, i):
+def constrain_within_interval(
+    optimizer: Optimizer, vars: dict, interval_data: "epl.data.IntervalData", i: int
+) -> None:
     constrain_site_electricity_balance(optimizer, vars)
     constrain_site_import_export(optimizer, vars)
     constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i)
