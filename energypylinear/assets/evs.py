@@ -92,6 +92,7 @@ could perhaps just add something like the below to each interval:
 could maybe test by reversing the value_of_interval
 """
 import collections
+import pathlib
 import typing
 
 import numpy as np
@@ -388,5 +389,9 @@ class EVs:
         self.interval_data = interval_data
         return epl.results.extract_results(interval_data, vars)
 
-    def plot(self, *args, **kwargs):
-        return epl.plot.plot_evs(*args, **kwargs)
+    def plot(
+        self,
+        results: "epl.results.SimulationResult",
+        path: typing.Union[pathlib.Path, str],
+    ):
+        return epl.plot.plot_evs(results, pathlib.Path(path))

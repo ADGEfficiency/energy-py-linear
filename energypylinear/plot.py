@@ -1,11 +1,14 @@
 import pathlib
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn
 
 import energypylinear as epl
+
+mpl.rcParams["axes.titlesize"] = 10
 
 
 def find_column(df: pd.DataFrame, start: str, end: str) -> str:
@@ -15,17 +18,21 @@ def find_column(df: pd.DataFrame, start: str, end: str) -> str:
 
 
 def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path):
-    fig, axes = plt.subplots(nrows=5)
+    fig, axes = plt.subplots(nrows=5, sharex=True, figsize=(12, 8))
     results = results.simulation
+
+    results["Index"] = np.arange(results.shape[0]).tolist()
 
     results["import-export-balance"] = (
         results["import_power_mwh"] - results["export_power_mwh"]
     )
     results.plot(
         ax=axes[0],
+        x="Index",
         y="import-export-balance",
-        label="Power Balance MWh (Import Positive)",
     )
+    axes[0].set_title("Power Balance MWh (Import Positive)")
+    axes[0].set_ylabel("MWh")
     #  TODO will need some work in a multi-battery world
     results["net-battery-charge"] = (
         results[find_column(results, "battery-", "-charge_mwh")]
@@ -33,31 +40,41 @@ def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path):
     )
     results.plot(
         ax=axes[1],
+        x="Index",
         y="net-battery-charge",
-        label="Battery Charge / Discharge MWh (Charge Positive)",
     )
+    axes[1].set_title("Battery Charge / Discharge MWh (Charge Positive)")
+    axes[1].set_ylabel("MWh")
 
-    results["idx"] = np.arange(results.shape[0]).tolist()
     results.plot(
-        "idx",
+        "Index",
         "battery-final_charge_mwh",
         ax=axes[2],
-        label="Battery SOC MWh (End of Interval)",
         kind="bar",
     )
+    axes[2].set_title("Battery SOC MWh (End of Interval)")
+    axes[2].set_ylabel("MWh")
 
     results.plot(
-        "idx",
+        "Index",
         "electricity_prices",
         ax=axes[3],
-        label="Electricity Prices",
     )
+    axes[3].set_title("Electricity Prices")
+    axes[3].set_ylabel("$/MWh")
     results.plot(
-        "idx",
+        "Index",
         "electricity_carbon_intensities",
         ax=axes[4],
         label="Carbon Intensities",
     )
+    axes[4].set_title("Carbon Intensities")
+    axes[4].set_ylabel("tC/MWh")
+
+    for ax in axes:
+        ax.get_legend().remove()
+
+    plt.tight_layout()
 
     if path.is_dir():
         fig.savefig(path / "battery.png")
@@ -96,20 +113,34 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path):
         "annot": True,
     }
     data = charger_usage
-    seaborn.heatmap(data, ax=axes[0], **heatmap_config, mask=data == 0)
+    seaborn.heatmap(
+        data, ax=axes[0], **heatmap_config, mask=data == 0, fmt="g", cbar=False
+    )
+    axes[0].set_ylabel("Time")
+    axes[0].set_xlabel("Chargers")
 
     data = charge_event_usage
     #  want to unmask out the periods where charge_event was positive
     seaborn.heatmap(
-        data, ax=axes[1], **heatmap_config, mask=interval_data.evs.charge_events == 0
+        data,
+        ax=axes[1],
+        **heatmap_config,
+        mask=interval_data.evs.charge_events == 0,
+        fmt="g",
+        cbar_kws={"label": "Charge MWh", "location": "left"}
     )
+    axes[1].set_xlabel("Charge Events")
 
     spill_charge_usage = results["charger-spill-charge_mwh"].values.reshape(-1, 1)
     data = spill_charge_usage
-    seaborn.heatmap(data, ax=axes[2], **heatmap_config, xticklabels=["spill"])
+    seaborn.heatmap(
+        data, ax=axes[2], **heatmap_config, xticklabels=["spill"], fmt="g", cbar=False
+    )
 
     data = np.array(results["electricity_prices"]).reshape(-1, 1)
-    seaborn.heatmap(data, ax=axes[3], **heatmap_config, xticklabels=["price"])
+    seaborn.heatmap(
+        data, ax=axes[3], **heatmap_config, xticklabels=["price"], fmt="g", cbar=False
+    )
 
     plt.tight_layout()
     pathlib.Path("./figs").mkdir(
@@ -134,16 +165,19 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path):
     )
     results.plot(
         ax=axes[0],
+        x="idx",
         y="import-export-balance",
         label="Power Balance MWh (Import Positive)",
     )
     results.plot(
         ax=axes[1],
+        x="idx",
         y="boiler-high_temperature_generation_mwh",
         label="Boiler Heat Generation MWh",
     )
     results.plot(
         ax=axes[2],
+        x="idx",
         y="spill-default-low_temperature_load_mwh",
         label="Low Temperature Heat Dump MWh",
     )
@@ -161,8 +195,6 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path):
     )
 
     if path.is_dir():
-        fig.savefig(path / "chp.png")
+        fig.savefig(path / "battery.png")
     else:
         fig.savefig(path)
-
-    fig.savefig("temp.png")

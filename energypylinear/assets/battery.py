@@ -1,4 +1,5 @@
 import collections
+import pathlib
 import typing
 
 import pulp
@@ -226,5 +227,9 @@ class Battery:
         self.interval_data = interval_data
         return epl.results.extract_results(interval_data, vars)
 
-    def plot(self, *args, **kwargs):
-        return epl.plot.plot_battery(*args, **kwargs)
+    def plot(
+        self,
+        results: "epl.results.SimulationResult",
+        path: typing.Union[pathlib.Path, str],
+    ):
+        return epl.plot.plot_battery(results, pathlib.Path(path))

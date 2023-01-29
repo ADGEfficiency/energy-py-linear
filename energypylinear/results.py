@@ -131,13 +131,15 @@ def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult
         "high_temperature_generation_mwh",
     ]:
         cols = [c for c in results.columns if (col in c)]
-        results[f"total-{col}"] = results[cols].sum(axis=1)
+        results[col] = results[cols].sum(axis=1)
 
     #  add balances + check them - TODO
     validate_results(interval_data, results)
 
     #  add warnings on the use of any spill asset
     spill_columns = [c for c in results.columns if "spill" in c]
+    #  filter out binary columns - TODO separate loop while dev
+    spill_columns = [c for c in spill_columns if "charge_binary" not in c]
     spill_results = results[spill_columns]
     spill_occured = spill_results.sum().sum() > 0.0
 

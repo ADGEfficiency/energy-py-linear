@@ -2,6 +2,7 @@ import pandas as pd
 
 import energypylinear as epl
 
+
 if __name__ == "__main__":
     idx_length = 24
     n_chargers = 5
