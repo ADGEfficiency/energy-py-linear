@@ -2,8 +2,6 @@
 
 A Python library for optimizing the dispatch of energy assets with mixed-integer linear programming.
 
-# Use
-
 ## Setup
 
 Requires Python 3.10:
@@ -27,11 +25,38 @@ results = asset.optimize(
   initial_charge_mwh=1,
   final_charge_mwh=3
 )
+print(results.simulation.head(3))
 ```
 
 ## CHP
 
-Dispatch a Combined Heat & Power unit to generate high price electricity:
+Dispatch a Combined Heat & Power unit to generate high price electricity from natural gas.
+
+The `epl.chp.Generator` model can be setup with an electric, high and low temperature thermal efficiencies - this allows modelling both gas engines and gas turbines:
+
+```python
+import energypylinear as epl
+
+#  100 MWe gas engine
+asset = epl.chp.Generator(
+    electric_power_max_mw=100,
+    electric_power_min_mw=30,
+    electric_efficiency_pct=0.4,
+    high_temperature_efficiency_pct=0.2,
+    low_temperature_efficiency_pct=0.2,
+)
+
+#  100 MWe gas turbine
+asset = epl.chp.Generator(
+    electric_power_max_mw=100,
+    electric_power_min_mw=50,
+    electric_efficiency_pct=0.3,
+    high_temperature_efficiency_pct=0.5,
+)
+```
+
+When optimizing, we can input data for both the high and low temperature loads - both will be met by gas boilers if the CHP chooses not to generate.
+
 
 ```python
 import energypylinear as epl
@@ -44,12 +69,19 @@ asset = epl.chp.Generator(
     high_temperature_efficiency_pct=0.2,
     low_temperature_efficiency_pct=0.2,
 )
-results = asset.optimize(electricity_prices=[100, 50, 200, -100, 0, 200, 100, -100])
+results = asset.optimize(
+  electricity_prices=[100, 50, 200, -100, 0, 200, 100, -100],
+  high_temperature_load_mwh=[100, 50, 200, 40, 0, 200, 100, 100],
+  low_temperature_load_mwh=20
+)
+print(results.simulation.head(3))
 ```
+
+The `epl.chp.Generator` is allowed to dump both high temperature and low temperature heat.
 
 ## EVs
 
-Control a number of EV chargers to charge each charge event with a required amount of electricity:
+Control a number of EV chargers to charge a number of charge events.  Each charge event has a required amount of electricity `charge_event_mwh`:
 
 ```python
 import energypylinear as epl
@@ -71,11 +103,12 @@ results = asset.optimize(
     charge_events=charge_events,
     charge_event_mwh=charge_event_mwh,
 )
+print(results.simulation.head(3))
 ```
 
 ## Price versus Carbon Optimization
 
-A key feature of `energypylinear` is the ability to optimize for both price and carbon side by side.
+A key feature of `energypylinear` is the ability to optimize for both price and carbon as a first class feature of the library.
 
 We can dispatch a battery for carbon by passing in `objective='carbon'`:
 
@@ -88,50 +121,50 @@ results = asset.optimize(
   electricity_carbon_intensities = [0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01],
   objective='carbon'
 )
+print(results.simulation)
 ```
 
 We can compare the results above with a simulation that optimizes for price.
 
-We can use an `energypylinear.accounting.Account` to compare both simulations.
-
-This accounting API is in it's first iteration - expect it to change in the future:
+We can use an `energypylinear.accounting.Account` to compare both simulations.  The accounting API is in it's first iteration - expect it to change in the future.
 
 ```python
 import energypylinear as epl
 
+#  interval data
 electricity_prices = [100, 50, 200, -100, 0, 200, 100, -100]
 electricity_carbon_intensities = [0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01]
+
+#  battery asset
 asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
+
+#  optimize for money
 price = asset.optimize(electricity_prices=electricity_prices)
+
+#  optimize for the planet
 carbon = asset.optimize(
   electricity_prices=electricity_prices,
   electricity_carbon_intensities=electricity_carbon_intensities,
   objective='carbon'
 )
 
+#  get an account representing the difference between the two
 account = epl.accounting.get_accounts(
   price.interval_data,
   price.simulation,
   carbon.simulation,
 )
-```
-Actuals are our optimization for price - we have a high negative cost:
-
-```python
 print(account.actuals)
-Account(cost=-1057.777778, emissions=0.08222222199999996)
+# Account(cost=-1057.777778, emissions=0.08222222199999996)
+print(account.forecasts)
+# Account(cost=-134.44444399999998, emissions=0.06444444400000005)
 ```
 
-Forecast here represents our alternative scenario where we optimize for emissions reduction 
+Actuals are our optimization for price - we have a high negative cost.
 
-We have lower (better) emissions when we optimize for carbon, but at a higher cost (we make less money):
+Forecast here represents our alternative scenario where we optimize for emissions reduction.  We have lower (better) emissions when we optimize for carbon, but at a higher cost (we make less money).
 
-```python
-print(account.forecast)
-Account(cost=-134.44444399999998, emissions=0.06444444400000005)
-```
-
-# Test
+## Test
 
 ```shell
 $ make test
