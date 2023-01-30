@@ -110,12 +110,16 @@ from energypylinear.optimizer import Optimizer
 
 
 class ChargerConfig(pydantic.BaseModel):
+    """Electric vehicle (EV) charger asset configuration."""
+
     name: str
     power_max_mw: float
     power_min_mw: float
 
 
 class EVOneInterval(AssetOneInterval):
+    """EV asset in a single interval"""
+
     #  could use `electric_charge_mwh`
     #  or event electric_load_mwh
     charge_mwh: pulp.LpVariable
@@ -126,6 +130,8 @@ class EVOneInterval(AssetOneInterval):
 
 
 class EVsArrayOneInterval(AssetOneInterval):
+    """EV asset in a single interval, but with 2D array data."""
+
     #  could use `electric_charge_mwh`
     #  or event electric_load_mwh
     charge_mwh: np.ndarray
@@ -139,6 +145,7 @@ class EVsArrayOneInterval(AssetOneInterval):
 def evs_one_interval(
     optimizer: Optimizer, chargers, charge_event, i, freq: Freq
 ) -> tuple[list[EVOneInterval], EVsArrayOneInterval]:
+    """Create a EV asset model for a single interval."""
     n_chargers = len(chargers)
     n_charge_events = charge_event.shape[1]
 
@@ -171,7 +178,7 @@ def evs_one_interval(
     return evs, evs_array
 
 
-def stack_ev(vars, attr):
+def stack_ev(vars: dict, attr: str) -> np.ndarray:
     evs = np.concatenate(
         [getattr(v, attr) for v in vars["evs-array"]],
         axis=0,
@@ -268,6 +275,13 @@ def constrain_after_intervals(
 
 class EVs:
     def __init__(self, charger_mws: list[float], charger_turndown: float = 0.1):
+        """
+        EV asset class - handles optimization and plotting of results over many intervals.
+
+        Args:
+            charger_mws - size of EV chargers in mega-watts.
+            charger_turndown - minimum charger output defined by the charger_turndown as a percent of the charger size in mega-watts.
+        """
 
         self.charger_cfgs = np.array(
             [
@@ -299,6 +313,37 @@ class EVs:
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
     ) -> pd.DataFrame:
+        """
+        Optimize the EVs's dispatch using a mixed-integer linear program.
+
+            Args:
+            charge_events: 2D matrix representing when a charge event is active.
+
+                Shape is (n_charge_events, n_timesteps).
+
+                A charge events matrix for 4 charge events over 5 intervals.
+                ```
+                charge_events = [
+                    [1, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 0],
+                    [0, 0, 0, 1, 1],
+                    [0, 1, 0, 0, 0],
+                ]
+                ```
+
+            charge_event_mwh: 1D array of the total charge energy required for each charge event - total across all intervals in mega-watts.
+
+                Length is the number of charge events.
+
+                ```python
+                charge_event_mwh = [50, 100, 30, 40]
+                ```
+            electricity_prices - the price of electricity in each interval.
+            gas_prices - the prices of natural gas, used in CHP and boilers in each interval.
+            electricity_carbon_intensities - carbon intensity of electricity in each interval.
+            freq_mins - the size of an interval in minutes.
+            objective - the optimization objective - either "price" or "carbon".
+        """
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
 

@@ -157,11 +157,13 @@ def get_accounts(
         electricity=electricity,
         gas=gas,
         actuals=Account(
-            cost=electricity.actuals.cost + gas.actuals.cost,
+            cost=-(electricity.actuals.cost + gas.actuals.cost),
+            profit=(electricity.actuals.cost + gas.actuals.cost),
             emissions=electricity.actuals.emissions + gas.actuals.emissions,
         ),
         forecasts=Account(
             cost=electricity.forecasts.cost + gas.forecasts.cost,
+            profit=-(electricity.forecasts.cost + gas.forecasts.cost),
             emissions=electricity.forecasts.emissions + gas.forecasts.emissions,
         ),
     )

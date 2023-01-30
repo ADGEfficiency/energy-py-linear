@@ -1,3 +1,4 @@
+"""CHP asset for optimizing dispatch of combined heat and power (CHP) generators."""
 import collections
 import pathlib
 import typing
@@ -15,6 +16,8 @@ from energypylinear.optimizer import Optimizer
 
 
 class BoilerConfig(AssetOneInterval):
+    """Gas boiler configuration."""
+
     name: str
     high_temperature_generation_max_mw: float = 0
     high_temperature_generation_min_mw: float = 0
@@ -22,6 +25,8 @@ class BoilerConfig(AssetOneInterval):
 
 
 class BoilerOneInterval(AssetOneInterval):
+    """Boiler asset in a single interval."""
+
     cfg: BoilerConfig
     high_temperature_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
@@ -29,6 +34,8 @@ class BoilerOneInterval(AssetOneInterval):
 
 
 class GeneratorConfig(pydantic.BaseModel):
+    """CHP generator configuration."""
+
     name: str
     electric_power_max_mw: float = 0
     electric_power_min_mw: float = 0
@@ -45,6 +52,8 @@ class GeneratorConfig(pydantic.BaseModel):
 
 
 class GeneratorOneInterval(AssetOneInterval):
+    """CHP generator in a single interval."""
+
     electric_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
     high_temperature_generation_mwh: pulp.LpVariable
@@ -73,6 +82,7 @@ def boiler_one_interval(
 def constrain_within_interval_boilers(
     optimizer: Optimizer, vars: dict, freq: Freq
 ) -> None:
+    """Constrain boiler upper and lower bounds for generating high & low temperature heat."""
     for asset in vars["boilers"][-1]:
         optimizer.constrain(
             asset.gas_consumption_mwh
@@ -95,8 +105,7 @@ def constrain_within_interval_boilers(
 def generator_one_interval(
     optimizer: Optimizer, cfg: GeneratorConfig, i: int, freq: Freq
 ) -> GeneratorOneInterval:
-    #  probably need to include more from config here???
-    #  maybe just include the config itself????
+    """Create a Generator asset model for one interval."""
     return GeneratorOneInterval(
         electric_generation_mwh=optimizer.continuous(
             f"{cfg.name}-electric_generation_mwh-{i}",
@@ -122,6 +131,7 @@ def generator_one_interval(
 def constrain_within_interval_generators(
     optimizer: Optimizer, vars: dict, freq: Freq
 ) -> None:
+    """Constrain generator upper and lower bounds for generating electricity, high & low temperature heat."""
     for asset in vars["generators"][-1]:
         optimizer.constrain(
             asset.gas_consumption_mwh
@@ -159,7 +169,16 @@ class Generator:
         low_temperature_efficiency_pct: float = 0.0,
     ):
         """
-        Make sure to get your efficiencies and gas prices on the same basis LHV or HHV!
+        CHP generator asset class - handles optimization and plotting of results over many intervals.
+
+        Args:
+            electric_power_max_mw - maximum electric power output of the generator in mega-watts.
+            electric_power_min_mw - minimum electric power output of the generator in mega-watts.
+            electric_efficiency_pct - electric efficiency of the generator, measured in percentage.
+            high_temperature_efficiency_pct - high temperature efficiency of the generator, measured in percentage.
+            low_temperature_efficiency_pct - the low temperature efficiency of the generator, measured in percentage.
+
+        Make sure to get your efficiencies and gas prices on the same basis (HHV or LHV).
         """
         self.cfg = GeneratorConfig(
             name="generator",
@@ -180,6 +199,18 @@ class Generator:
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
     ) -> pd.DataFrame:
+        """
+        Optimize the CHP generator's dispatch using a mixed-integer linear program.
+
+        Args:
+            electricity_prices - the price of electricity in each interval.
+            gas_prices - the prices of natural gas, used in CHP and boilers in each interval.
+            electricity_carbon_intensities - carbon intensity of electricity in each interval.
+            high_temperature_load_mwh - high temperature load of the site in mega-watt hours.
+            low_temperature_load_mwh - low temperature load of the site in mega-watt hours.
+            freq_mins - the size of an interval in minutes.
+            objective - the optimization objective - either "price" or "carbon".
+        """
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
         interval_data = epl.data.IntervalData(

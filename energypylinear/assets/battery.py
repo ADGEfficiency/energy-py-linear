@@ -18,7 +18,7 @@ flags = Flags()
 
 
 class BatteryConfig(pydantic.BaseModel):
-    """Battery Asset Configuration"""
+    """Battery asset configuration."""
 
     name: str
     power_mw: float
@@ -167,6 +167,15 @@ class Battery:
         efficiency: float = 0.9,
         battery_name: str = "battery",
     ):
+        """
+        Battery asset class - handles optimization and plotting of results over many intervals.
+
+        Args:
+            power_mw - the maximum power output of the battery in mega-watts, used for both charge and discharge.
+            capacity_mwh - battery capacity in mega-watt hours.
+            efficiency - round-trip efficiency of the battery, with a default value of 90% efficient.
+            battery_name parameter represents the name of the battery, with a default value of "battery".
+        """
         self.cfg = BatteryConfig(
             name=battery_name,
             power_mw=power_mw,
@@ -179,6 +188,7 @@ class Battery:
         electricity_prices,
         gas_prices=None,
         electricity_carbon_intensities=None,
+        #  should these go in here?  TODO
         high_temperature_load_mwh=None,
         low_temperature_load_mwh=None,
         freq_mins: int = defaults.freq_mins,
@@ -186,6 +196,20 @@ class Battery:
         final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
     ):
+        """
+        Optimize the battery's dispatch using a mixed-integer linear program.
+
+        Args:
+            electricity_prices - the price of electricity in each interval.
+            gas_prices - the prices of natural gas, used in CHP and boilers in each interval.
+            electricity_carbon_intensities - carbon intensity of electricity in each interval.
+            high_temperature_load_mwh - high temperature load of the site in mega-watt hours.
+            low_temperature_load_mwh - low temperature load of the site in mega-watt hours.
+            freq_mins - the size of an interval in minutes.
+            initial_charge_mwh - initial charge state of the battery in mega-watt hours.
+            final_charge_mwh - final charge state of the battery in mega-watt hours.
+            objective - the optimization objective - either "price" or "carbon".
+        """
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
         interval_data = epl.data.IntervalData(
