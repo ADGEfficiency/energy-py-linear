@@ -1,6 +1,4 @@
-import collections
-import typing
-
+import numpy as np
 import pulp
 import pydantic
 
@@ -79,7 +77,10 @@ def constrain_site_import_export(optimizer: Optimizer, vars: dict) -> None:
 
 
 def constrain_site_high_temperature_heat_balance(
-    optimizer: Optimizer, vars: dict, interval_data: "epl.data.IntervalData", i: int
+    optimizer: Optimizer,
+    vars: dict,
+    interval_data: "epl.interval_data.IntervalData",
+    i: int,
 ) -> None:
     """
     in = out + accumulation
@@ -89,7 +90,7 @@ def constrain_site_high_temperature_heat_balance(
     assets = vars["assets"][-1]
     spill = vars["spills"][-1]
     valve = vars["valves"][-1]
-    assert isinstance(interval_data.high_temperature_load_mwh, list)
+    assert isinstance(interval_data.high_temperature_load_mwh, np.ndarray)
     optimizer.constrain(
         spill.high_temperature_generation_mwh
         - valve.high_temperature_load_mwh
@@ -101,7 +102,10 @@ def constrain_site_high_temperature_heat_balance(
 
 
 def constrain_site_low_temperature_heat_balance(
-    optimizer: Optimizer, vars: dict, interval_data: "epl.data.IntervalData", i: int
+    optimizer: Optimizer,
+    vars: dict,
+    interval_data: "epl.interval_data.IntervalData",
+    i: int,
 ) -> None:
     """
     in = out + accumulation
@@ -111,7 +115,7 @@ def constrain_site_low_temperature_heat_balance(
     assets = vars["assets"][-1]
     spill = vars["spills"][-1]
     valve = vars["valves"][-1]
-    assert isinstance(interval_data.low_temperature_load_mwh, list)
+    assert isinstance(interval_data.low_temperature_load_mwh, np.ndarray)
     optimizer.constrain(
         optimizer.sum([a.low_temperature_generation_mwh for a in assets])
         + valve.low_temperature_generation_mwh
@@ -123,7 +127,10 @@ def constrain_site_low_temperature_heat_balance(
 
 
 def constrain_within_interval(
-    optimizer: Optimizer, vars: dict, interval_data: "epl.data.IntervalData", i: int
+    optimizer: Optimizer,
+    vars: dict,
+    interval_data: "epl.interval_data.IntervalData",
+    i: int,
 ) -> None:
     constrain_site_electricity_balance(optimizer, vars)
     constrain_site_import_export(optimizer, vars)

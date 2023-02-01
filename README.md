@@ -20,7 +20,7 @@ import energypylinear as epl
 #  2.0 MW, 4.0 MWh battery
 asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
 results = asset.optimize(
-  electricity_prices=[100, 50, 200, -100, 0, 200, 100, -100],
+  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
   freq_mins=60,
   initial_charge_mwh=1,
   final_charge_mwh=3

@@ -29,14 +29,22 @@ static: setup-static
 	rm -rf ./tests/test_readme.py
 	mypy **/*.py --config-file ./mypy.ini --pretty
 
-#  CHECKS & FORMATTING
 .PHONY: check check
-check: setup-check
+lint: setup-check
 	flake8 --extend-ignore E501
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
+
 format: setup-check
 	isort **/*.py --profile black
 	black **/*.py
 	poetry lock --no-update
+
+check: lint static
+
+-include .env.secret
+publish: setup
+	poetry build
+	@poetry config pypi-token.pypi $(PYPI_TOKEN)
+	poetry publish

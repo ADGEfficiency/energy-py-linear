@@ -212,7 +212,7 @@ class Battery:
         """
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
-        interval_data = epl.data.IntervalData(
+        interval_data = epl.interval_data.IntervalData(
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
             electricity_carbon_intensities=electricity_carbon_intensities,

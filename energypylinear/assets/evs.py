@@ -239,7 +239,7 @@ def constrain_within_interval(
 def constrain_after_intervals(
     optimizer: Optimizer,
     vars: dict,
-    interval_data: epl.data.IntervalData,
+    interval_data: "epl.interval_data.IntervalData",
     charger_cfgs: np.ndarray,
     spill_charger_config: np.ndarray,
 ) -> None:
@@ -353,11 +353,11 @@ class EVs:
         charge_events = np.array(charge_events).T
         charge_event_mwh = np.array(charge_event_mwh)
 
-        interval_data = epl.data.IntervalData(
+        interval_data = epl.interval_data.IntervalData(
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
             electricity_carbon_intensities=electricity_carbon_intensities,
-            evs=epl.data.EVIntervalData(
+            evs=epl.interval_data.EVIntervalData(
                 charge_events=charge_events,
                 charge_event_mwh=charge_event_mwh,
             ),

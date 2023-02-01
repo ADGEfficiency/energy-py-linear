@@ -1,3 +1,4 @@
+import numpy as np
 import pulp
 
 import energypylinear as epl
@@ -5,7 +6,9 @@ from energypylinear.defaults import defaults
 
 
 def price_objective(
-    optimizer: epl.optimizer.Optimizer, vars: dict, interval_data: epl.data.IntervalData
+    optimizer: epl.optimizer.Optimizer,
+    vars: dict,
+    interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
 
     sites = vars["sites"]
@@ -21,8 +24,8 @@ def price_objective(
     if len(spill_evs) == 0:
         spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
 
-    assert isinstance(interval_data.gas_prices, list)
-    assert isinstance(interval_data.electricity_prices, list)
+    assert isinstance(interval_data.gas_prices, np.ndarray)
+    assert isinstance(interval_data.electricity_prices, np.ndarray)
 
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_prices[i]
@@ -50,7 +53,9 @@ def price_objective(
 
 
 def carbon_objective(
-    optimizer: epl.optimizer.Optimizer, vars: dict, interval_data: epl.data.IntervalData
+    optimizer: epl.optimizer.Optimizer,
+    vars: dict,
+    interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
 
     sites = vars["sites"]
@@ -58,7 +63,7 @@ def carbon_objective(
     generators = vars.get("generators", [])
     boilers = vars.get("boilers", [])
 
-    assert isinstance(interval_data.electricity_carbon_intensities, list)
+    assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_carbon_intensities[i]
         - sites[i].export_power_mwh * interval_data.electricity_carbon_intensities[i]

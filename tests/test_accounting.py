@@ -12,7 +12,7 @@ def test_accounting_actuals() -> None:
             "gas_consumption_mwh": [20, 30, 40],
         }
     )
-    actuals = epl.data.IntervalData(
+    actuals = epl.interval_data.IntervalData(
         electricity_prices=[100, 200, -300],
         gas_prices=15,
         electricity_carbon_intensities=0.5,
@@ -54,12 +54,12 @@ def test_accounting_forecasts() -> None:
             "gas_consumption_mwh": [20, 30, 40],
         }
     )
-    actuals = epl.data.IntervalData(
+    actuals = epl.interval_data.IntervalData(
         electricity_prices=[100, 200, -300],
         gas_prices=15,
         electricity_carbon_intensities=0.5,
     )
-    forecasts = epl.data.IntervalData(
+    forecasts = epl.interval_data.IntervalData(
         electricity_prices=[200, -100, 100],
         gas_prices=10,
         electricity_carbon_intensities=0.4,

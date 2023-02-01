@@ -67,7 +67,7 @@ class Accounts(pydantic.BaseModel):
 
 
 def get_one_gas_account(
-    interval_data: "epl.data.IntervalData",
+    interval_data: "epl.interval_data.IntervalData",
     results: pd.DataFrame,
 ):
     """Calculate a single gas account from interval data and results."""
@@ -80,10 +80,10 @@ def get_one_gas_account(
 
 
 def get_gas_accounts(
-    actuals: "epl.data.IntervalData",
+    actuals: "epl.interval_data.IntervalData",
     results_actuals: pd.DataFrame,
     results_forecasts: pd.DataFrame,
-    forecasts: "epl.data.IntervalData",
+    forecasts: "epl.interval_data.IntervalData",
 ) -> GasAccounts:
     """Calculate gas accounts from actuals and forecasts interval data and results."""
     actuals_account = get_one_gas_account(actuals, results_actuals)
@@ -92,7 +92,7 @@ def get_gas_accounts(
 
 
 def get_one_electricity_account(
-    interval_data: "epl.data.IntervalData",
+    interval_data: "epl.interval_data.IntervalData",
     results: pd.DataFrame,
 ):
     """Calculate a single electricity account from interval data and results."""
@@ -120,10 +120,10 @@ def get_one_electricity_account(
 
 
 def get_electricity_accounts(
-    actuals: "epl.data.IntervalData",
+    actuals: "epl.interval_data.IntervalData",
     results_actuals: pd.DataFrame,
     results_forecasts: pd.DataFrame,
-    forecasts: "epl.data.IntervalData",
+    forecasts: "epl.interval_data.IntervalData",
 ) -> ElectricityAccounts:
     """Calculate electricity accounts from actuals and forecasts interval data and results."""
     actuals_account = get_one_electricity_account(actuals, results_actuals)
@@ -132,10 +132,10 @@ def get_electricity_accounts(
 
 
 def get_accounts(
-    actuals: "epl.data.IntervalData",
+    actuals: "epl.interval_data.IntervalData",
     results_actuals: pd.DataFrame,
     results_forecasts: typing.Optional[pd.DataFrame] = None,
-    forecasts: typing.Optional["epl.data.IntervalData"] = None,
+    forecasts: typing.Optional["epl.interval_data.IntervalData"] = None,
 ):
     """Calculate electricity and gas accounts from actuals and forecasts interval data and results."""
     if results_forecasts is None:

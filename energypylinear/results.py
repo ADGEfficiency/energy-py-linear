@@ -6,8 +6,8 @@ import pydantic
 from rich import print
 
 import energypylinear as epl
-from energypylinear.data import IntervalData
 from energypylinear.flags import Flags
+from energypylinear.interval_data import IntervalData
 from energypylinear.optimizer import Optimizer
 
 optimizer = Optimizer()
@@ -116,7 +116,7 @@ def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult
 
     #  add totals for charge events across both the spill and normal chargers
     if len(vars["evs-array"]):
-        assert isinstance(interval_data.evs, epl.data.EVIntervalData)
+        assert isinstance(interval_data.evs, epl.interval_data.EVIntervalData)
         assert interval_data.evs is not None
         for charge_event_idx, _ in enumerate(interval_data.evs.charge_event_mwh):
             simulation[
@@ -171,8 +171,8 @@ def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult
         pass
 
     #  include interval data in results
-    assert isinstance(interval_data.electricity_prices, list)
-    assert isinstance(interval_data.electricity_carbon_intensities, list)
+    assert isinstance(interval_data.electricity_prices, np.ndarray)
+    assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
     simulation["electricity_prices"] = interval_data.electricity_prices
     simulation[
         "electricity_carbon_intensities"
