@@ -1,13 +1,15 @@
 import numpy as np
+import pydantic
+import pytest
 from _pytest.capture import CaptureFixture
 
 import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
-def test_spill_validation():
-    with pytest.raises(AssertionError as err:
-        sc = epl.assets.spill.SiteConfig(name='not-valid')
+def test_spill_validation() -> None:
+    with pytest.raises(pydantic.ValidationError) as err:
+        sc = epl.assets.spill.SpillConfig(name="not-valid")
 
 
 def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
