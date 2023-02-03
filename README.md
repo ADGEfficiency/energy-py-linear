@@ -10,7 +10,9 @@ Requires Python 3.10:
 $ pip install energypylinear
 ```
 
-## Battery
+## Assets
+
+### Battery
 
 Dispatch an electric battery operating in wholesale price arbitrage:
 
@@ -28,7 +30,7 @@ results = asset.optimize(
 print(results.simulation.head(3))
 ```
 
-## CHP
+### CHP
 
 Dispatch a Combined Heat & Power unit to generate high price electricity from natural gas.
 
@@ -79,9 +81,15 @@ print(results.simulation.head(3))
 
 The `epl.chp.Generator` is allowed to dump both high temperature and low temperature heat.
 
-## EVs
+### EVs
 
-Control a number of EV chargers to charge a number of charge events.  Each charge event has a required amount of electricity `charge_event_mwh`:
+Control a number of EV chargers to charge a number of charge events.  
+
+A `charge_event` is a period of time where an EV can be charged.  This is given as a boolean 2D array, with one binary digit for each pair of charge events and intervals.
+
+Each charge event has a required amount of electricity `charge_event_mwh`, that can be delivered anytime the `charge_event` is 1.
+
+Chargers are configured by `charger_mws`.  Below we model two 100 MWe chargers:
 
 ```python
 import energypylinear as epl
@@ -106,7 +114,9 @@ results = asset.optimize(
 print(results.simulation.head(3))
 ```
 
-## Price versus Carbon Optimization
+## Examples
+
+### Price versus Carbon Optimization
 
 A key feature of `energypylinear` is the ability to optimize for both price and carbon as a first class feature of the library.
 
@@ -173,7 +183,7 @@ print(-variance.cost / variance.emissions)
 
 Our optimization for price has a high negative cost.  The optimization for carbon has lower emissions, but at a higher cost.
 
-## Actuals versus Forecasts
+### Actuals versus Forecasts
 
 The same primitives can be used to model the variance in performance of an asset optimized for actual prices versus forecast prices.
 
