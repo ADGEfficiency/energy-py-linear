@@ -44,20 +44,6 @@ class GasAccount(Account):
     pass
 
 
-class GasAccounts(pydantic.BaseModel):
-    """A set of gas accounts, containing actuals and forecasts."""
-
-    actuals: GasAccount
-    forecasts: GasAccount
-
-
-class ElectricityAccounts(pydantic.BaseModel):
-    """A set of electricity accounts, containing actuals and forecasts."""
-
-    actuals: ElectricityAccount
-    forecasts: ElectricityAccount
-
-
 class Accounts(Account):
     electricity: ElectricityAccount = pydantic.Field(..., repr=False)
     gas: GasAccount = pydantic.Field(..., repr=False)
@@ -70,7 +56,7 @@ class Accounts(Account):
 def get_one_gas_account(
     interval_data: "epl.interval_data.IntervalData",
     results: pd.DataFrame,
-):
+) -> GasAccount:
     """Calculate a single gas account from interval data and results."""
     return GasAccount(
         cost=(interval_data.gas_prices * results["gas_consumption_mwh"]).sum(),
@@ -83,7 +69,7 @@ def get_one_gas_account(
 def get_one_electricity_account(
     interval_data: "epl.interval_data.IntervalData",
     results: pd.DataFrame,
-):
+) -> ElectricityAccount:
     """Calculate a single electricity account from interval data and results."""
     import_cost = (interval_data.electricity_prices * results["import_power_mwh"]).sum()
 
@@ -111,7 +97,7 @@ def get_one_electricity_account(
 def get_accounts(
     interval_data: "epl.interval_data.IntervalData",
     simulation: pd.DataFrame,
-):
+) -> Accounts:
     epl.results.validate_results(interval_data, simulation)
     electricity = get_one_electricity_account(interval_data, simulation)
     gas = get_one_gas_account(interval_data, simulation)

@@ -159,11 +159,11 @@ carbon = asset.optimize(
 )
 
 #  get an account representing the difference between the two
-price = epl.accounting.get_accounts(
+price = epl.get_accounts(
   price.interval_data,
   price.simulation,
 )
-carbon = epl.accounting.get_accounts(
+carbon = epl.get_accounts(
   carbon.interval_data,
   carbon.simulation,
 )

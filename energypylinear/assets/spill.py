@@ -9,7 +9,7 @@ class SpillConfig(AssetOneInterval):
     name: str = "spill-default"
 
     @pydantic.validator("name")
-    def ensure_spill_in_name(cls, name):
+    def check_name(cls, name: str) -> str:
         assert "spill" in name
         return name
 

@@ -143,7 +143,11 @@ class EVsArrayOneInterval(AssetOneInterval):
 
 
 def evs_one_interval(
-    optimizer: Optimizer, chargers, charge_event, i, freq: Freq
+    optimizer: Optimizer,
+    chargers: np.ndarray,
+    charge_event: np.ndarray,
+    i: int,
+    freq: Freq,
 ) -> tuple[list[EVOneInterval], EVsArrayOneInterval]:
     """Create a EV asset model for a single interval."""
     n_chargers = len(chargers)
@@ -193,7 +197,7 @@ def stack_ev(vars: dict, attr: str) -> np.ndarray:
 def constrain_within_interval(
     optimizer: Optimizer,
     evs: EVsArrayOneInterval,
-    charge_event,
+    charge_event: np.ndarray,
     freq: Freq,
     chargers: np.ndarray,
     i: int,
@@ -226,13 +230,13 @@ def constrain_within_interval(
         #  sum across all chargers for one charge event <= 1
         for charge_event_idx in range(n_charge_events):
             optimizer.constrain(
-                optimizer.sum(evs.charge_binary[0, charge_event_idx, :]) <= 1
+                optimizer.sum(evs.charge_binary[0, charge_event_idx, :] <= 1)
             )
         #  constrain to only one charge event per charger
         #  sum across all charge events for one charger <= 1
         for charger_idx in range(n_chargers):
             optimizer.constrain(
-                optimizer.sum(evs.charge_binary[0, :, charger_idx]) <= 1
+                optimizer.sum(evs.charge_binary[0, :, charger_idx] <= 1)
             )
 
 
@@ -251,6 +255,7 @@ def constrain_after_intervals(
     #  TODO move after interval data refactor
     stacked_charge_mwh = stack_ev(vars, "charge_mwh")
     assert stacked_charge_mwh.shape[0] == len(interval_data.idx)
+    assert isinstance(interval_data.evs.charge_events, np.ndarray)
     assert stacked_charge_mwh.shape[1] == interval_data.evs.charge_events.shape[1]
     assert (
         stacked_charge_mwh.shape[2]
@@ -312,7 +317,7 @@ class EVs:
         gas_prices=None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
-    ) -> pd.DataFrame:
+    ) -> "epl.results.SimulationResult":
         """
         Optimize the EVs's dispatch using a mixed-integer linear program.
 
@@ -367,7 +372,9 @@ class EVs:
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
-        vars = collections.defaultdict(list)
+        #  TODO - difficult to type the list of list thing
+        #  maybe sign something should be reworked
+        vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
                 site.site_one_interval(self.optimizer, self.site_cfg, i, freq)
@@ -430,7 +437,7 @@ class EVs:
         )
         objective_fn = objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
-        status = self.optimizer.solve()
+        self.optimizer.solve()
         self.interval_data = interval_data
         return epl.results.extract_results(interval_data, vars)
 
@@ -438,5 +445,5 @@ class EVs:
         self,
         results: "epl.results.SimulationResult",
         path: typing.Union[pathlib.Path, str],
-    ):
+    ) -> None:
         return epl.plot.plot_evs(results, pathlib.Path(path))

@@ -46,7 +46,7 @@ class GeneratorConfig(pydantic.BaseModel):
     #  add cooling efficieny here TODO
 
     @pydantic.validator("name")
-    def ensure_generator_in_name(cls, name):
+    def ensure_generator_in_name(cls, name: str) -> str:
         assert "generator" in name
         return name
 
@@ -198,7 +198,7 @@ class Generator:
         low_temperature_load_mwh=None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
-    ) -> pd.DataFrame:
+    ) -> "epl.results.SimulationResult":
         """
         Optimize the CHP generator's dispatch using a mixed-integer linear program.
 
@@ -233,8 +233,10 @@ class Generator:
             high_temperature_generation_max_mw=default_boiler_size,
             high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
         )
-        vars = collections.defaultdict(list)
 
+        #  TODO - difficult to type the list of list thing
+        #  maybe sign something should be reworked
+        vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
                 epl.site.site_one_interval(self.optimizer, self.site_cfg, i, freq)
@@ -277,5 +279,5 @@ class Generator:
         self,
         results: "epl.results.SimulationResult",
         path: typing.Union[pathlib.Path, str],
-    ):
+    ) -> None:
         return epl.plot.plot_chp(results, pathlib.Path(path))

@@ -27,7 +27,8 @@ test-ci: setup-test
 .PHONY: static
 static: setup-static
 	rm -rf ./tests/test_readme.py
-	mypy **/*.py --config-file ./mypy.ini --pretty
+	mypy --config-file ./mypy.ini --pretty ./energypylinear
+	mypy --config-file ./mypy.ini --pretty ./tests
 
 .PHONY: check check
 lint: setup-check

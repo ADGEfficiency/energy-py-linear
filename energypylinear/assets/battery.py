@@ -28,7 +28,7 @@ class BatteryConfig(pydantic.BaseModel):
     final_charge_mwh: float = 0
 
     @pydantic.validator("name")
-    def check_name(cls, name):
+    def check_name(cls, name: str) -> str:
         assert "battery" in name
         return name
 
@@ -77,7 +77,9 @@ def battery_one_interval(
     )
 
 
-def constrain_within_interval(optimizer, vars, configs):
+def constrain_within_interval(
+    optimizer: Optimizer, vars: collections.defaultdict, configs: list[BatteryConfig]
+) -> None:
     """Constrain battery dispatch within a single interval"""
     constrain_only_charge_or_discharge(optimizer, vars, configs)
     constrain_battery_electricity_balance(optimizer, vars)
@@ -85,7 +87,7 @@ def constrain_within_interval(optimizer, vars, configs):
 
 
 def constrain_only_charge_or_discharge(
-    optimizer: Optimizer, vars: collections.defaultdict, configs
+    optimizer: Optimizer, vars: collections.defaultdict, configs: list[BatteryConfig]
 ) -> None:
     """Constrain battery to only charge or discharge.
 
@@ -137,7 +139,9 @@ def constrain_connection_batteries_between_intervals(
             optimizer.constrain(alt.final_charge_mwh == neu.initial_charge_mwh)
 
 
-def constrain_after_intervals(optimizer, vars, configs):
+def constrain_after_intervals(
+    optimizer: Optimizer, vars: collections.defaultdict, configs: list[BatteryConfig]
+) -> None:
     """Constrain battery dispatch after all interval asset models are created."""
     constrain_initial_final_charge(optimizer, vars, configs)
 
@@ -195,7 +199,7 @@ class Battery:
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
-    ):
+    ) -> "epl.results.SimulationResult":
         """
         Optimize the battery's dispatch using a mixed-integer linear program.
 
@@ -230,7 +234,9 @@ class Battery:
             else min(final_charge_mwh, self.cfg.capacity_mwh)
         )
 
-        vars = collections.defaultdict(list)
+        #  TODO - difficult to type the list of list thing
+        #  maybe sign something should be reworked
+        vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
 
             vars["sites"].append(
@@ -270,5 +276,5 @@ class Battery:
         self,
         results: "epl.results.SimulationResult",
         path: typing.Union[pathlib.Path, str],
-    ):
+    ) -> None:
         return epl.plot.plot_battery(results, pathlib.Path(path))
