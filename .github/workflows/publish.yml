@@ -8,7 +8,8 @@ on:
 
 jobs:
   publish:
-    if: ${{ github.event.label.name == 'publish' }}
+    # if: ${{ github.event.label.name == 'publish' }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'publish') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
