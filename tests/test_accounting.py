@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 import energypylinear as epl
 from energypylinear.defaults import defaults
@@ -38,6 +39,10 @@ def test_accounting_actuals() -> None:
     variance = actuals - actuals
     assert variance.cost == 0
     assert variance.emissions == 0
+
+    #  randomly thrown in here for coverage
+    with pytest.raises(NotImplementedError) as err:
+        actuals - float(32)
 
 
 def test_accounting_forecasts() -> None:

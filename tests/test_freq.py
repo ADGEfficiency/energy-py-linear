@@ -14,3 +14,7 @@ def test_freq() -> None:
     freq = epl.freq.Freq(5)
     assert 200 / 12 == freq.mw_to_mwh(200)
     assert 200 * 12 == freq.mwh_to_mw(200)
+
+    #  test the repr
+    print(freq)
+    repr(freq)

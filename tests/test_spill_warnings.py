@@ -5,6 +5,11 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
+def test_spill_validation():
+    with pytest.raises(AssertionError as err:
+        sc = epl.assets.spill.SiteConfig(name='not-valid')
+
+
 def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
     asset = epl.chp.Generator(
         electric_power_max_mw=100,
