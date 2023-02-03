@@ -27,14 +27,15 @@ results = asset.optimize(
   initial_charge_mwh=1,
   final_charge_mwh=3
 )
-print(results.simulation.head(3))
 ```
 
 ### CHP
 
 Dispatch a Combined Heat & Power unit to generate high price electricity from natural gas.
 
-The `epl.chp.Generator` model can be setup with an electric, high and low temperature thermal efficiencies - this allows modelling both gas engines and gas turbines:
+The `epl.chp.Generator` model can be setup with electric, high and low temperature thermal efficiencies. 
+
+This allows modelling both gas engines and gas turbines:
 
 ```python
 import energypylinear as epl
@@ -111,12 +112,11 @@ results = asset.optimize(
     charge_events=charge_events,
     charge_event_mwh=charge_event_mwh,
 )
-print(results.simulation.head(3))
 ```
 
 ## Examples
 
-### Price versus Carbon Optimization
+### Price vs. Carbon Optimization
 
 A key feature of `energypylinear` is the ability to optimize for both price and carbon as a first class feature of the library.
 
@@ -183,7 +183,7 @@ print(-variance.cost / variance.emissions)
 
 Our optimization for price has a high negative cost.  The optimization for carbon has lower emissions, but at a higher cost.
 
-### Actuals versus Forecasts
+### Actuals vs. Forecasts
 
 The same primitives can be used to model the variance in performance of an asset optimized for actual prices versus forecast prices.
 
@@ -211,8 +211,6 @@ variance = perfect_foresight - forecast
 print(variance)
 # cost=-1197.777778 emissions=0.002222221999999996
 ```
-
-
 
 
 ## Test
