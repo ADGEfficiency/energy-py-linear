@@ -12,12 +12,12 @@ def test_accounting_actuals() -> None:
             "gas_consumption_mwh": [20, 30, 40],
         }
     )
-    actuals = epl.interval_data.IntervalData(
+    actuals_data = epl.interval_data.IntervalData(
         electricity_prices=[100, 200, -300],
         gas_prices=15,
         electricity_carbon_intensities=0.5,
     )
-    actuals = epl.accounting.get_accounts(actuals, results)
+    actuals = epl.accounting.get_accounts(actuals_data, results)
 
     assert actuals.electricity.import_cost == 100 * 100 + 200 * 50
     assert actuals.electricity.export_cost == -20 * -300
@@ -48,18 +48,18 @@ def test_accounting_forecasts() -> None:
             "gas_consumption_mwh": [20, 30, 40],
         }
     )
-    actuals = epl.interval_data.IntervalData(
+    actuals_data = epl.interval_data.IntervalData(
         electricity_prices=[100, 200, -300],
         gas_prices=15,
         electricity_carbon_intensities=0.5,
     )
-    forecasts = epl.interval_data.IntervalData(
+    forecasts_data = epl.interval_data.IntervalData(
         electricity_prices=[200, -100, 100],
         gas_prices=10,
         electricity_carbon_intensities=0.4,
     )
-    actuals = epl.accounting.get_accounts(actuals, results)
-    forecasts = epl.accounting.get_accounts(forecasts, results)
+    actuals = epl.accounting.get_accounts(actuals_data, results)
+    forecasts = epl.accounting.get_accounts(forecasts_data, results)
 
     assert forecasts.electricity.import_cost == 200 * 100 + -100 * 50
     assert forecasts.electricity.export_cost == -20 * 100
