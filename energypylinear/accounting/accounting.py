@@ -1,7 +1,5 @@
 """Functions to calculate electricity and gas accounts."""
 
-import typing
-
 import pandas as pd
 import pydantic
 
@@ -21,6 +19,7 @@ class Account(pydantic.BaseModel):
         """
         if not isinstance(other, Account):
             raise NotImplementedError("Cannot compare {other} to Account")
+
         return Account(
             cost=self.cost - other.cost,
             emissions=self.emissions - other.emissions,
@@ -59,11 +58,13 @@ class ElectricityAccounts(pydantic.BaseModel):
     forecasts: ElectricityAccount
 
 
-class Accounts(pydantic.BaseModel):
-    electricity: ElectricityAccounts
-    gas: GasAccounts
-    actuals: Account
-    forecasts: Account
+class Accounts(Account):
+    electricity: ElectricityAccount = pydantic.Field(..., repr=False)
+    gas: GasAccount = pydantic.Field(..., repr=False)
+
+    cost: float
+    profit: float
+    emissions: float
 
 
 def get_one_gas_account(
@@ -77,18 +78,6 @@ def get_one_gas_account(
             defaults.gas_carbon_intensity * results["gas_consumption_mwh"]
         ).sum(),
     )
-
-
-def get_gas_accounts(
-    actuals: "epl.interval_data.IntervalData",
-    results_actuals: pd.DataFrame,
-    results_forecasts: pd.DataFrame,
-    forecasts: "epl.interval_data.IntervalData",
-) -> GasAccounts:
-    """Calculate gas accounts from actuals and forecasts interval data and results."""
-    actuals_account = get_one_gas_account(actuals, results_actuals)
-    forecasts_account = get_one_gas_account(forecasts, results_forecasts)
-    return GasAccounts(actuals=actuals_account, forecasts=forecasts_account)
 
 
 def get_one_electricity_account(
@@ -119,51 +108,18 @@ def get_one_electricity_account(
     )
 
 
-def get_electricity_accounts(
-    actuals: "epl.interval_data.IntervalData",
-    results_actuals: pd.DataFrame,
-    results_forecasts: pd.DataFrame,
-    forecasts: "epl.interval_data.IntervalData",
-) -> ElectricityAccounts:
-    """Calculate electricity accounts from actuals and forecasts interval data and results."""
-    actuals_account = get_one_electricity_account(actuals, results_actuals)
-    forecasts_account = get_one_electricity_account(forecasts, results_forecasts)
-    return ElectricityAccounts(actuals=actuals_account, forecasts=forecasts_account)
-
-
 def get_accounts(
-    actuals: "epl.interval_data.IntervalData",
-    results_actuals: pd.DataFrame,
-    results_forecasts: typing.Optional[pd.DataFrame] = None,
-    forecasts: typing.Optional["epl.interval_data.IntervalData"] = None,
+    interval_data: "epl.interval_data.IntervalData",
+    simulation: pd.DataFrame,
 ):
-    """Calculate electricity and gas accounts from actuals and forecasts interval data and results."""
-    if results_forecasts is None:
-        results_forecasts = results_actuals
-    assert results_forecasts is not None
-
-    if forecasts is None:
-        forecasts = actuals
-
-    epl.results.validate_results(actuals, results_actuals)
-    epl.results.validate_results(forecasts, results_forecasts)
-
-    electricity = get_electricity_accounts(
-        actuals, results_actuals, results_forecasts, forecasts
-    )
-    gas = get_gas_accounts(actuals, results_actuals, results_forecasts, forecasts)
+    epl.results.validate_results(interval_data, simulation)
+    electricity = get_one_electricity_account(interval_data, simulation)
+    gas = get_one_gas_account(interval_data, simulation)
 
     return Accounts(
         electricity=electricity,
         gas=gas,
-        actuals=Account(
-            cost=electricity.actuals.cost + gas.actuals.cost,
-            profit=-(electricity.actuals.cost + gas.actuals.cost),
-            emissions=electricity.actuals.emissions + gas.actuals.emissions,
-        ),
-        forecasts=Account(
-            cost=electricity.forecasts.cost + gas.forecasts.cost,
-            profit=-(electricity.forecasts.cost + gas.forecasts.cost),
-            emissions=electricity.forecasts.emissions + gas.forecasts.emissions,
-        ),
+        cost=electricity.cost + gas.cost,
+        profit=-(electricity.cost + gas.cost),
+        emissions=electricity.emissions + gas.emissions,
     )

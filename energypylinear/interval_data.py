@@ -155,6 +155,7 @@ class IntervalData(pydantic.BaseModel):
 
             assert values[field] is not None
             assert isinstance(values[field], np.ndarray)
+            assert np.isnan(values[field]).sum() == 0
 
         return values
 

@@ -17,31 +17,25 @@ def test_accounting_actuals() -> None:
         gas_prices=15,
         electricity_carbon_intensities=0.5,
     )
-    account = epl.accounting.get_accounts(actuals, results, forecasts=None)
+    actuals = epl.accounting.get_accounts(actuals, results)
 
-    assert account.electricity.actuals.import_cost == 100 * 100 + 200 * 50
-    assert account.electricity.actuals.export_cost == -20 * -300
-    assert account.electricity.actuals.cost == 100 * 100 + 50 * 200 - 20 * -300
+    assert actuals.electricity.import_cost == 100 * 100 + 200 * 50
+    assert actuals.electricity.export_cost == -20 * -300
+    assert actuals.electricity.cost == 100 * 100 + 50 * 200 - 20 * -300
 
-    assert account.electricity.actuals.import_emissions == 0.5 * (100 + 50)
-    assert account.electricity.actuals.export_emissions == -0.5 * (20)
-    assert account.electricity.actuals.emissions == 0.5 * (100 + 50 - 20)
+    assert actuals.electricity.import_emissions == 0.5 * (100 + 50)
+    assert actuals.electricity.export_emissions == -0.5 * (20)
+    assert actuals.electricity.emissions == 0.5 * (100 + 50 - 20)
 
-    assert account.gas.actuals.cost == 15 * (20 + 30 + 40)
-    assert account.gas.actuals.emissions == defaults.gas_carbon_intensity * (
-        20 + 30 + 40
-    )
+    assert actuals.gas.cost == 15 * (20 + 30 + 40)
+    assert actuals.gas.emissions == defaults.gas_carbon_intensity * (20 + 30 + 40)
 
-    assert account.actuals.emissions == 0.5 * (
+    assert actuals.emissions == 0.5 * (
         100 + 50 - 20
     ) + defaults.gas_carbon_intensity * (20 + 30 + 40)
-    assert account.actuals.cost == 100 * 100 + 50 * 200 - 20 * -300 + 15 * (
-        20 + 30 + 40
-    )
+    assert actuals.cost == 100 * 100 + 50 * 200 - 20 * -300 + 15 * (20 + 30 + 40)
 
-    #  made accounts with no forecasts
-    #  so the variance should be zero
-    variance = account.actuals - account.forecasts
+    variance = actuals - actuals
     assert variance.cost == 0
     assert variance.emissions == 0
 
@@ -64,28 +58,25 @@ def test_accounting_forecasts() -> None:
         gas_prices=10,
         electricity_carbon_intensities=0.4,
     )
-    account = epl.accounting.get_accounts(actuals, results, forecasts=forecasts)
+    actuals = epl.accounting.get_accounts(actuals, results)
+    forecasts = epl.accounting.get_accounts(forecasts, results)
 
-    assert account.electricity.forecasts.import_cost == 200 * 100 + -100 * 50
-    assert account.electricity.forecasts.export_cost == -20 * 100
-    assert account.electricity.forecasts.cost == 200 * 100 + -100 * 50 - 20 * 100
+    assert forecasts.electricity.import_cost == 200 * 100 + -100 * 50
+    assert forecasts.electricity.export_cost == -20 * 100
+    assert forecasts.electricity.cost == 200 * 100 + -100 * 50 - 20 * 100
 
-    assert account.electricity.forecasts.import_emissions == 0.4 * (100 + 50)
-    assert account.electricity.forecasts.export_emissions == -0.4 * (20)
-    assert account.electricity.forecasts.emissions == 0.4 * (100 + 50 - 20)
+    assert forecasts.electricity.import_emissions == 0.4 * (100 + 50)
+    assert forecasts.electricity.export_emissions == -0.4 * (20)
+    assert forecasts.electricity.emissions == 0.4 * (100 + 50 - 20)
 
-    assert account.gas.forecasts.cost == 10 * (20 + 30 + 40)
-    assert account.gas.forecasts.emissions == defaults.gas_carbon_intensity * (
-        20 + 30 + 40
-    )
+    assert forecasts.gas.cost == 10 * (20 + 30 + 40)
+    assert forecasts.gas.emissions == defaults.gas_carbon_intensity * (20 + 30 + 40)
 
-    assert account.forecasts.emissions == 0.4 * (
+    assert forecasts.emissions == 0.4 * (
         100 + 50 - 20
     ) + defaults.gas_carbon_intensity * (20 + 30 + 40)
-    assert account.forecasts.cost == 200 * 100 + -100 * 50 - 20 * 100 + 10 * (
-        20 + 30 + 40
-    )
+    assert forecasts.cost == 200 * 100 + -100 * 50 - 20 * 100 + 10 * (20 + 30 + 40)
 
-    variance = account.actuals - account.forecasts
-    assert variance.cost == account.actuals.cost - account.forecasts.cost
-    assert variance.emissions == account.actuals.emissions - account.forecasts.emissions
+    variance = actuals - forecasts
+    assert variance.cost == actuals.cost - forecasts.cost
+    assert variance.emissions == actuals.emissions - forecasts.emissions
