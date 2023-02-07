@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Get Python Version from Poetry `pyproject.toml`
+      - name: Get Python Version from `pyproject.toml`
         run: |
           PYTHONVERSION=$(cat pyproject.toml | sed -En "s/^python =//p" | tr -d '" ^')
           echo "PYTHONVERSION=$PYTHONVERSION" >> $GITHUB_ENV

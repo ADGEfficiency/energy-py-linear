@@ -33,7 +33,7 @@ static: setup-static
 	mypy --config-file ./mypy.ini --pretty ./tests
 
 #  LINTING
-.PHONY: check check
+.PHONY: lint
 lint: setup-check
 	flake8 --extend-ignore E501
 	isort --check **/*.py --profile black
@@ -41,16 +41,19 @@ lint: setup-check
 	poetry lock --check
 
 #  FORMATTING
+.PHONY: format
 format: setup-check
 	isort **/*.py --profile black
 	black **/*.py
 	poetry lock --no-update
 
 #  CHECK
+.PHONY: check
 check: lint static
 
 #  PUBLISH
 -include .env.secret
+.PHONY: publish
 publish: setup
 	poetry build
 	@poetry config pypi-token.pypi $(PYPI_TOKEN)
