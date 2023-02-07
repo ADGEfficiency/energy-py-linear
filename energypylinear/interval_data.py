@@ -160,7 +160,7 @@ class IntervalData(pydantic.BaseModel):
     def setup_idx(cls, value: list, values: dict) -> list:
         return list(range(len(values["electricity_prices"])))
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         data = self.dict()
 
         expected_len = len(data["idx"])

@@ -39,7 +39,7 @@ class ElectricityAccount(Account):
     emissions: float
 
     @pydantic.validator("import_emissions", "export_emissions")
-    def no_infinite(cls, v):
+    def no_infinite(cls, v: float) -> float:
         assert np.isfinite(v)
         return v
 

@@ -3,6 +3,7 @@ import collections
 import pathlib
 import typing
 
+import numpy as np
 import pulp
 import pydantic
 
@@ -191,11 +192,11 @@ class Generator:
 
     def optimize(
         self,
-        electricity_prices,
-        gas_prices=None,
-        electricity_carbon_intensities=None,
-        high_temperature_load_mwh=None,
-        low_temperature_load_mwh=None,
+        electricity_prices: np.ndarray,
+        gas_prices: typing.Union[None, np.ndarray] = None,
+        electricity_carbon_intensities: typing.Union[None, np.ndarray] = None,
+        high_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
+        low_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
     ) -> "epl.results.SimulationResult":

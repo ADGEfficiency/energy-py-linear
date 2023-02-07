@@ -3,6 +3,7 @@ import collections
 import pathlib
 import typing
 
+import numpy as np
 import pulp
 import pydantic
 
