@@ -36,23 +36,22 @@ def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
         ],
         freq_mins=60,
     )
-    results = results.simulation
+    simulation = results.simulation
     #  https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
     capture = capsys.readouterr()
     assert "Spill Occurred" in capture.out
-    row = results.iloc[0, :]
+    row = simulation.iloc[0, :]
     assert row["generator-electric_generation_mwh"] == 100
 
     """
     - low electricity price, low heat demand
     - expect all heat demand met from boiler
     """
-    results = asset.optimize(
+    asset.optimize(
         electricity_prices=[-100],
         gas_prices=20,
         high_temperature_load_mwh=[20],
         freq_mins=60,
     )
-    results = results.simulation
     capture = capsys.readouterr()
     assert "Spill Occurred" not in capture.out

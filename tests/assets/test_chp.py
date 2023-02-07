@@ -144,9 +144,9 @@ def test_chp_gas_engine_carbon() -> None:
     results = asset.optimize(
         electricity_prices=[0, 0],
         electricity_carbon_intensities=[1.5, 0.1],
-        gas_prices=20,
-        high_temperature_load_mwh=[20, 20],
-        low_temperature_load_mwh=[20, 20],
+        gas_prices=20.0,
+        high_temperature_load_mwh=[20.0, 20],
+        low_temperature_load_mwh=[20.0, 20],
         freq_mins=60,
         objective="carbon",
     )

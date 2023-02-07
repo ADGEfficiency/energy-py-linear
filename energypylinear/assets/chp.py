@@ -192,12 +192,14 @@ class Generator:
 
     def optimize(
         self,
-        electricity_prices: np.ndarray,
-        gas_prices: typing.Union[None, np.ndarray] = None,
-        electricity_carbon_intensities: typing.Union[None, np.ndarray] = None,
+        electricity_prices: typing.Union[np.ndarray, list[float]],
+        gas_prices: typing.Union[None, np.ndarray, float] = None,
+        electricity_carbon_intensities: typing.Union[
+            None, np.ndarray, list[float], float
+        ] = None,
         #  should these go in here?  TODO
-        high_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
-        low_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
+        high_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
+        low_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
     ) -> "epl.results.SimulationResult":
