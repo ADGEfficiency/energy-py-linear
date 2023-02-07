@@ -1,4 +1,4 @@
-"""Draw a diagram / plot of the system at a single point in time.""""
+"""Draw a diagram / plot of the system at a single point in time."""
 
 import matplotlib
 import matplotlib.pyplot as plt

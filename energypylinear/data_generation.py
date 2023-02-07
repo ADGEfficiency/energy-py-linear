@@ -25,7 +25,7 @@ def generate_random_ev_input_data(
     for step in range(charge_events.shape[0]):
         length = int(np.random.randint(1, charge_length, 1))
         start = int(np.random.randint(0, charge_events.shape[1] - length - 1, 1))
-        charge_events[step, start : start + length] = 1
+        charge_events[step, start: start + length] = 1  # fmt: skip
 
     charge_event_mwh = np.random.normal(
         normal_mu, normal_std, n_charge_events

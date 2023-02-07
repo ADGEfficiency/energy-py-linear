@@ -162,7 +162,7 @@ def test_battery_hypothesis(
     subset = simulation[mask]
 
     #  temporaray debugging dataframe
-    temp = pd.DataFrame(
+    pd.DataFrame(
         {
             "charge": simulation[f"{name}-charge_mwh"],
             "charge_bin": simulation[f"{name}-charge_binary"],

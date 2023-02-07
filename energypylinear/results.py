@@ -24,6 +24,8 @@ class SimulationResult(pydantic.BaseModel):
     spill: bool
 
     class Config:
+        """pydantic.BaseModel configuration."""
+
         arbitrary_types_allowed: bool = True
 
 

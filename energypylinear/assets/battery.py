@@ -30,6 +30,7 @@ class BatteryConfig(pydantic.BaseModel):
 
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
+        """Check that name includes battery."""
         assert "battery" in name
         return name
 

@@ -43,7 +43,7 @@ def test_accounting_actuals() -> None:
     assert variance.emissions == 0
 
     #  randomly thrown in here for coverage
-    with pytest.raises(NotImplementedError) as err:
+    with pytest.raises(NotImplementedError):
         actuals - float(32)
 
 

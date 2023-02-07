@@ -1,7 +1,6 @@
 """Spill asset for allowing addition electric or thermal generation or consumption.
 
-This allows infeasible simulations to become feasible.  If a spill asset is used,
-then a warning is raised.
+This allows infeasible simulations to become feasible. If a spill asset is used, then a warning is raised.
 """
 import pulp
 import pydantic

@@ -5,12 +5,11 @@ import pytest
 from _pytest.capture import CaptureFixture
 
 import energypylinear as epl
-from energypylinear.defaults import defaults
 
 
 def test_spill_validation() -> None:
     """Check we fail for incorrectly named spill asset."""
-    with pytest.raises(pydantic.ValidationError) as err:
+    with pytest.raises(pydantic.ValidationError):
         epl.assets.spill.SpillConfig(name="not-valid")
 
 

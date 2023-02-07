@@ -40,4 +40,6 @@ class AssetOneInterval(pydantic.BaseModel):
     gas_consumption_mwh: typing.Union[pulp.LpVariable, float] = 0
 
     class Config:
+        """pydantic.BaseModel configuration."""
+
         arbitrary_types_allowed: bool = True

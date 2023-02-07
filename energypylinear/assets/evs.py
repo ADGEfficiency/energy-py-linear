@@ -12,7 +12,6 @@ from energypylinear.assets import site
 from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
-from energypylinear.objectives import objectives
 from energypylinear.optimizer import Optimizer
 
 
