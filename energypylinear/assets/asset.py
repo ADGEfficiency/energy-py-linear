@@ -1,4 +1,4 @@
-"""Base AssetOneInterval class which is used as the base for all single interval energy assets models."""
+"""Contains AssetOneInterval - used as the base for all single interval energy assets data samples."""
 import typing
 
 import pulp
@@ -6,7 +6,7 @@ import pydantic
 
 
 class AssetOneInterval(pydantic.BaseModel):
-    """Generic Energy Asset for a single interval.
+    """Generic energy asset that contains data for a single interval.
 
     Brought to you by the energy balance:
         input - output = accumulation
@@ -19,7 +19,8 @@ class AssetOneInterval(pydantic.BaseModel):
         - gas consumption.
 
     These quantities are considered as both generation and consumption (load).
-    Charge and discharge are accumulation terms.
+
+    Charge and discharge are handled as accumulation terms.
     """
 
     electric_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
@@ -32,7 +33,7 @@ class AssetOneInterval(pydantic.BaseModel):
     low_temperature_load_mwh: typing.Union[pulp.LpVariable, float] = 0
     #  add cooling load here TODO
 
-    #  maybe should be electric charge TODO
+    #  maybe should c be electric charge TODO
     charge_mwh: typing.Union[pulp.LpVariable, float] = 0
     discharge_mwh: typing.Union[pulp.LpVariable, float] = 0
 

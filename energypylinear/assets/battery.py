@@ -1,4 +1,4 @@
-"""Battery asset for optimizing battery dispatch."""
+"""Battery asset for optimizing battery dispatch for price or carbon arbitrage."""
 import collections
 import pathlib
 import typing
@@ -7,7 +7,7 @@ import pulp
 import pydantic
 
 import energypylinear as epl
-from energypylinear import site
+from energypylinear.assets import site
 from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
@@ -34,7 +34,7 @@ class BatteryConfig(pydantic.BaseModel):
 
 
 class BatteryOneInterval(AssetOneInterval):
-    """Battery asset in a single interval"""
+    """Battery asset data for a single interval"""
 
     cfg: BatteryConfig
     charge_mwh: pulp.LpVariable
@@ -50,7 +50,7 @@ class BatteryOneInterval(AssetOneInterval):
 def battery_one_interval(
     optimizer: Optimizer, cfg: BatteryConfig, i: int, freq: Freq
 ) -> BatteryOneInterval:
-    """Create a Battery asset model for a single interval."""
+    """Create Battery asset data for a single interval."""
 
     return BatteryOneInterval(
         cfg=cfg,
@@ -164,6 +164,15 @@ def constrain_initial_final_charge(
 
 
 class Battery:
+    """Battery asset class - handles optimization and plotting of results over many intervals.
+
+    Args:
+        power_mw - the maximum power output of the battery in mega-watts, used for both charge and discharge.
+        capacity_mwh - battery capacity in mega-watt hours.
+        efficiency - round-trip efficiency of the battery, with a default value of 90% efficient.
+        battery_name parameter represents the name of the battery, with a default value of "battery".
+    """
+
     def __init__(
         self,
         power_mw: float,
@@ -171,15 +180,6 @@ class Battery:
         efficiency: float = 0.9,
         battery_name: str = "battery",
     ):
-        """
-        Battery asset class - handles optimization and plotting of results over many intervals.
-
-        Args:
-            power_mw - the maximum power output of the battery in mega-watts, used for both charge and discharge.
-            capacity_mwh - battery capacity in mega-watt hours.
-            efficiency - round-trip efficiency of the battery, with a default value of 90% efficient.
-            battery_name parameter represents the name of the battery, with a default value of "battery".
-        """
         self.cfg = BatteryConfig(
             name=battery_name,
             power_mw=power_mw,
@@ -199,20 +199,24 @@ class Battery:
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
+        allow_infeasible: bool = False,
     ) -> "epl.results.SimulationResult":
-        """
-        Optimize the battery's dispatch using a mixed-integer linear program.
+        """Optimize the battery's dispatch using a mixed-integer linear program.
 
         Args:
-            electricity_prices - the price of electricity in each interval.
-            gas_prices - the prices of natural gas, used in CHP and boilers in each interval.
-            electricity_carbon_intensities - carbon intensity of electricity in each interval.
-            high_temperature_load_mwh - high temperature load of the site in mega-watt hours.
-            low_temperature_load_mwh - low temperature load of the site in mega-watt hours.
-            freq_mins - the size of an interval in minutes.
-            initial_charge_mwh - initial charge state of the battery in mega-watt hours.
-            final_charge_mwh - final charge state of the battery in mega-watt hours.
-            objective - the optimization objective - either "price" or "carbon".
+            electricity_prices: the price of electricity in each interval.
+            gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
+            electricity_carbon_intensities: carbon intensity of electricity in each interval.
+            high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
+            low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
+            freq_mins: the size of an interval in minutes.
+            initial_charge_mwh: initial charge state of the battery in mega-watt hours.
+            final_charge_mwh: final charge state of the battery in mega-watt hours.
+            objective: the optimization objective - either "price" or "carbon".
+            allow_infeasible: whether to fail on infeasible linear programs.
+
+        Returns:
+            epl.results.SimulationResult
         """
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
@@ -223,7 +227,7 @@ class Battery:
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
-        self.site_cfg = epl.site.SiteConfig()
+        self.site_cfg = epl.assets.site.SiteConfig()
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
@@ -235,7 +239,7 @@ class Battery:
         )
 
         #  TODO - difficult to type the list of list thing
-        #  maybe sign something should be reworked
+        #  maybe sign something should be reworked with this `vars` dict
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
 
@@ -248,9 +252,7 @@ class Battery:
             vars["valves"].append(
                 epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
-
             batteries = [battery_one_interval(self.optimizer, self.cfg, i, freq)]
-            #  do I need both??? can I just get away with `assets`
             vars["batteries"].append(batteries)
             vars["assets"].append(batteries)
 
@@ -268,9 +270,9 @@ class Battery:
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
-        self.optimizer.solve()
+        _, feasible = self.optimizer.solve()
         self.interval_data = interval_data
-        return epl.results.extract_results(interval_data, vars)
+        return epl.results.extract_results(interval_data, vars, feasible=feasible)
 
     def plot(
         self,

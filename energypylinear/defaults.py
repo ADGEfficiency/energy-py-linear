@@ -1,7 +1,10 @@
+"""Constant values for the library."""
 import pydantic
 
 
 class Defaults(pydantic.BaseModel):
+    """Collection of constant values."""
+
     electricity_prices: float = 100.0
     electricity_carbon_intensities: float = 0.1
     gas_prices: float = 20
@@ -10,8 +13,8 @@ class Defaults(pydantic.BaseModel):
     high_temperature_load_mwh: float = 0
     low_temperature_load_mwh: float = 0
 
-    #   setting this too high will break the evs...
-    spill_objective_penalty: float = 1e10
+    #   setting this too high will break the evs... was as 1e10
+    spill_objective_penalty: float = 1e11
 
     default_boiler_efficiency_pct: float = 0.8
 

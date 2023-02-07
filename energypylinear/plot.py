@@ -1,3 +1,4 @@
+"""Plot functions for the energy asset linear programming simulation results."""
 import pathlib
 
 import matplotlib as mpl
@@ -12,12 +13,14 @@ mpl.rcParams["axes.titlesize"] = 10
 
 
 def find_column(df: pd.DataFrame, start: str, end: str) -> str:
+    """Finds a column based on the start and end of the column name."""
     cols = [c for c in df.columns if c.startswith(start) and c.endswith(end)]
     assert len(cols) == 1
     return cols[0]
 
 
 def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
+    """Plot battery simulation results."""
     fig, axes = plt.subplots(nrows=5, sharex=True, figsize=(12, 8))
     simulation = results.simulation
 
@@ -82,6 +85,7 @@ def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path) ->
 
 
 def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
+    """Plot electric vehicle simulation results."""
     simulation = results.simulation
     fig, axes = plt.subplots(nrows=5)
 
@@ -154,6 +158,7 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
 
 
 def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
+    """Plot CHP generator simulation results."""
     simulation = results.simulation
     fig, axes = plt.subplots(nrows=5, sharex=True, figsize=(12, 8))
     simulation["Index"] = np.arange(simulation.shape[0]).tolist()

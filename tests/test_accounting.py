@@ -1,3 +1,4 @@
+"""Tests for `epl.accounting`."""
 import pandas as pd
 import pytest
 
@@ -6,6 +7,7 @@ from energypylinear.defaults import defaults
 
 
 def test_accounting_actuals() -> None:
+    """Check calculation of electricity and gas costs and emissions."""
     results = pd.DataFrame(
         {
             "import_power_mwh": [100, 50, 0],
@@ -46,6 +48,7 @@ def test_accounting_actuals() -> None:
 
 
 def test_accounting_forecasts() -> None:
+    """Check calculation of forecast electricity and gas costs and emissions."""
     results = pd.DataFrame(
         {
             "import_power_mwh": [100, 50, 0],

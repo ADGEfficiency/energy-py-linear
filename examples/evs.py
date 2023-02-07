@@ -1,4 +1,4 @@
-"""example of smart charging of EVs for economic and carbon optimization"""
+"""Example of smart charging of electric vehicles for economic and carbon optimization."""
 import energypylinear as epl
 
 if __name__ == "__main__":

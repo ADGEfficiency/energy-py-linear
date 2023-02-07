@@ -1,4 +1,4 @@
-"""example of using a battery for economic and carbon optimization"""
+"""Example of using a battery for economic and carbon optimization."""
 import energypylinear as epl
 
 if __name__ == "__main__":

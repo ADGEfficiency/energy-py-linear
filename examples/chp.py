@@ -1,5 +1,4 @@
-"""example of using a CHP for economic and carbon optimization
-CHP = Combined Heat & Power.
+"""Example of dispatching a Combined Heat & Power (CHP) for economic and carbon optimization.
 """
 import energypylinear as epl
 

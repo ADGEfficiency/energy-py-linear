@@ -2,9 +2,17 @@
 
 A Python library for optimizing the dispatch of energy assets with mixed-integer linear programming.
 
+`energy-py-linear` has optimization models for:
+
+- electric batteries,
+- combined heat & power (CHP) generators,
+- electric vehicle smart charging.
+
+All of these optimization models can be dispatched to maximize profit or minimize carbon emissions.
+
 ## Setup
 
-Requires Python 3.10:
+Requires Python 3.10+:
 
 ```shell
 $ pip install energypylinear
@@ -14,7 +22,7 @@ $ pip install energypylinear
 
 ### Battery
 
-Dispatch an electric battery operating in wholesale price arbitrage:
+Dispatch an electric battery operating in wholesale price arbitrage using `epl.Battery`:
 
 ```python
 import energypylinear as epl
@@ -31,9 +39,9 @@ results = asset.optimize(
 
 ### CHP
 
-Dispatch a Combined Heat & Power unit to generate high price electricity from natural gas.
+Dispatch a CHP unit to generate high price electricity from natural gas.
 
-The `epl.chp.Generator` model can be setup with electric, high and low temperature thermal efficiencies. 
+The `epl.Generator` model can be setup with electric, high and low temperature thermal efficiencies. 
 
 This allows modelling both gas engines and gas turbines:
 
@@ -77,7 +85,6 @@ results = asset.optimize(
   high_temperature_load_mwh=[100, 50, 200, 40, 0, 200, 100, 100],
   low_temperature_load_mwh=20
 )
-print(results.simulation.head(3))
 ```
 
 The `epl.chp.Generator` is allowed to dump both high temperature and low temperature heat.
@@ -114,7 +121,19 @@ results = asset.optimize(
 )
 ```
 
-## Examples
+## Uses Cases & Examples
+
+### Assets
+
+Examples for each of the assets exist in `./examples`:
+
+```shell
+$ ls ./examples
+./examples
+├── battery.py
+├── chp.py
+└── evs.py
+```
 
 ### Price vs. Carbon Optimization
 
@@ -131,7 +150,6 @@ results = asset.optimize(
   electricity_carbon_intensities = [0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01],
   objective='carbon'
 )
-print(results.simulation)
 ```
 
 We can compare the results above with a simulation that optimizes for price.
@@ -183,7 +201,7 @@ print(-variance.cost / variance.emissions)
 
 Our optimization for price has a high negative cost.  The optimization for carbon has lower emissions, but at a higher cost.
 
-### Actuals vs. Forecasts
+### Dispatch for Actuals vs. Dispatch for Forecasts
 
 The same primitives can be used to model the variance in performance of an asset optimized for actual prices versus forecast prices.
 
@@ -203,7 +221,8 @@ actual = asset.optimize(electricity_prices=electricity_prices)
 #  optimize to the forecast
 forecast = asset.optimize(electricity_prices=forecasts)
 
-# get accounts - note in the forecast we use the actual interval_data
+# create accounts for the two scenarios 
+# in the forecast we use the actual interval_data, not the forecast interval_data
 perfect_foresight = epl.get_accounts(actual.interval_data, actual.simulation)
 forecast = epl.get_accounts(actual.interval_data, forecast.simulation)
 

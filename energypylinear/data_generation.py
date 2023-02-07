@@ -1,8 +1,5 @@
-import hypothesis
+"""Utilites for generating interval data"""
 import numpy as np
-import pandas as pd
-
-import energypylinear as epl
 
 
 def generate_random_ev_input_data(
@@ -17,6 +14,7 @@ def generate_random_ev_input_data(
     prices_mu: float = 100,
     prices_std: float = 20,
 ) -> dict:
+    """Create interval data for the `epl.evs.EVs` smart electric charging asset."""
     np.random.seed(2)
     electricity_prices = np.random.normal(prices_mu, prices_std, idx_length)
     charger_mws = np.random.randint(10, 100, n_chargers)
@@ -28,6 +26,7 @@ def generate_random_ev_input_data(
         length = int(np.random.randint(1, charge_length, 1))
         start = int(np.random.randint(0, charge_events.shape[1] - length - 1, 1))
         charge_events[step, start : start + length] = 1
+
     charge_event_mwh = np.random.normal(
         normal_mu, normal_std, n_charge_events
     ) + np.random.uniform(uniform_min, uniform_max, n_charge_events)

@@ -1,4 +1,4 @@
-"""A set of tools for mixed-integer linear optimization of energy systems."""
+"""A library for mixed-integer linear optimization of energy assets."""
 from energypylinear import (
     accounting,
     assets,
@@ -7,10 +7,9 @@ from energypylinear import (
     interval_data,
     plot,
     results,
-    site,
 )
 from energypylinear.accounting import get_accounts
-from energypylinear.assets import battery, chp, evs, spill, valve
+from energypylinear.assets import battery, chp, evs, site, spill, valve
 from energypylinear.assets.battery import Battery
 from energypylinear.interval_data import IntervalData
 from energypylinear.objectives import objectives

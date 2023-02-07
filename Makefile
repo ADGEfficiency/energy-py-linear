@@ -1,4 +1,5 @@
 .PHONY: all clean
+
 all: test
 
 #  SETUP
@@ -17,8 +18,9 @@ setup-check: setup
 #  TEST
 .PHONY: test test-ci
 test: setup-test
+	rm -f ./tests/test_readme.py
 	python -m phmdoctest README.md --outfile tests/test_readme.py
-	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes
+	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon
 test-ci: setup-test
 	coverage run -m pytest tests --tb=short --show-capture=no
 	coverage report -m
@@ -30,6 +32,7 @@ static: setup-static
 	mypy --config-file ./mypy.ini --pretty ./energypylinear
 	mypy --config-file ./mypy.ini --pretty ./tests
 
+#  LINTING
 .PHONY: check check
 lint: setup-check
 	flake8 --extend-ignore E501
@@ -37,13 +40,16 @@ lint: setup-check
 	black --check **/*.py
 	poetry lock --check
 
+#  FORMATTING
 format: setup-check
 	isort **/*.py --profile black
 	black **/*.py
 	poetry lock --no-update
 
+#  CHECK
 check: lint static
 
+#  PUBLISH
 -include .env.secret
 publish: setup
 	poetry build

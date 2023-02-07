@@ -3,6 +3,7 @@ name: test
 on:
   push:
     branches: [main]
+
   pull_request:
     branches: [main]
 
@@ -12,14 +13,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Get Python Version from Poetry `pyproject.toml`
         run: |
           PYTHONVERSION=$(cat pyproject.toml | sed -En "s/^python =//p" | tr -d '" ^')
           echo "PYTHONVERSION=$PYTHONVERSION" >> $GITHUB_ENV
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHONVERSION }}
+
       - name: Run Tests
         run: |
           make test-ci
@@ -29,14 +33,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Get Python Version from Poetry `pyproject.toml`
         run: |
           PYTHONVERSION=$(cat pyproject.toml | sed -En "s/^python =//p" | tr -d '" ^')
           echo "PYTHONVERSION=$PYTHONVERSION" >> $GITHUB_ENV
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHONVERSION }}
+
       - name: Static Typing
         run: |
           make static

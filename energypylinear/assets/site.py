@@ -1,3 +1,4 @@
+"""Site asset for optimizing dispatch of combined heat and power (CHP) generators."""
 import numpy as np
 import pulp
 import pydantic
@@ -8,11 +9,15 @@ from energypylinear.optimizer import Optimizer
 
 
 class SiteConfig(pydantic.BaseModel):
+    """Site configuration."""
+
     import_limit_mw: float = 10000
     export_limit_mw: float = 10000
 
 
 class SiteOneInterval(pydantic.BaseModel):
+    """Site data for a single interval."""
+
     import_power_mwh: pulp.LpVariable
     export_power_mwh: pulp.LpVariable
     import_power_bin: pulp.LpVariable
@@ -28,6 +33,7 @@ class SiteOneInterval(pydantic.BaseModel):
 def site_one_interval(
     optimizer: Optimizer, site: SiteConfig, i: int, freq: Freq
 ) -> SiteOneInterval:
+    """Create Site asset data for a single interval."""
     return SiteOneInterval(
         import_power_mwh=optimizer.continuous(
             f"import_power_mw-{i}", up=freq.mw_to_mwh(site.import_limit_mw)
@@ -43,7 +49,8 @@ def site_one_interval(
 
 
 def constrain_site_electricity_balance(optimizer: Optimizer, vars: dict) -> None:
-    """
+    """Constrain site electricity balance.
+
     in = out + accumulation
     import + generation = (export + load) + (charge - discharge)
     import + generation - (export + load) - (charge - discharge) = 0
@@ -66,6 +73,7 @@ def constrain_site_electricity_balance(optimizer: Optimizer, vars: dict) -> None
 
 
 def constrain_site_import_export(optimizer: Optimizer, vars: dict) -> None:
+    """Constrain to only do one of import and export electricity in an interval."""
     site = vars["sites"][-1]
     optimizer.constrain(
         site.import_power_mwh - site.import_limit_mwh * site.import_power_bin <= 0
@@ -82,7 +90,8 @@ def constrain_site_high_temperature_heat_balance(
     interval_data: "epl.interval_data.IntervalData",
     i: int,
 ) -> None:
-    """
+    """Constrain high temperature energy balance.
+
     in = out + accumulation
     generation = load
     generation - load = 0
@@ -107,7 +116,8 @@ def constrain_site_low_temperature_heat_balance(
     interval_data: "epl.interval_data.IntervalData",
     i: int,
 ) -> None:
-    """
+    """Constrain low temperature energy balance.
+
     in = out + accumulation
     generation = load
     generation - load = 0
@@ -132,6 +142,7 @@ def constrain_within_interval(
     interval_data: "epl.interval_data.IntervalData",
     i: int,
 ) -> None:
+    """Constrain site within a single interval."""
     constrain_site_electricity_balance(optimizer, vars)
     constrain_site_import_export(optimizer, vars)
     constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i)

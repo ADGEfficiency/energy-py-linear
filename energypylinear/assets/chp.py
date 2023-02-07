@@ -3,7 +3,6 @@ import collections
 import pathlib
 import typing
 
-import pandas as pd
 import pulp
 import pydantic
 
@@ -24,15 +23,6 @@ class BoilerConfig(AssetOneInterval):
     high_temperature_efficiency_pct: float = 0
 
 
-class BoilerOneInterval(AssetOneInterval):
-    """Boiler asset in a single interval."""
-
-    cfg: BoilerConfig
-    high_temperature_generation_mwh: pulp.LpVariable
-    gas_consumption_mwh: pulp.LpVariable
-    binary: pulp.LpVariable
-
-
 class GeneratorConfig(pydantic.BaseModel):
     """CHP generator configuration."""
 
@@ -51,8 +41,17 @@ class GeneratorConfig(pydantic.BaseModel):
         return name
 
 
+class BoilerOneInterval(AssetOneInterval):
+    """Boiler data for a single interval."""
+
+    cfg: BoilerConfig
+    high_temperature_generation_mwh: pulp.LpVariable
+    gas_consumption_mwh: pulp.LpVariable
+    binary: pulp.LpVariable
+
+
 class GeneratorOneInterval(AssetOneInterval):
-    """CHP generator in a single interval."""
+    """CHP generator data for a single interval."""
 
     electric_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
@@ -65,6 +64,7 @@ class GeneratorOneInterval(AssetOneInterval):
 def boiler_one_interval(
     optimizer: Optimizer, cfg: BoilerConfig, i: int, freq: Freq
 ) -> BoilerOneInterval:
+    """Create Boiler asset data for a single interval."""
     return BoilerOneInterval(
         high_temperature_generation_mwh=optimizer.continuous(
             f"{cfg.name}-high_temperature_generation_mwh-{i}",
@@ -77,29 +77,6 @@ def boiler_one_interval(
         gas_consumption_mwh=optimizer.continuous(f"{cfg.name}-gas_consumption_mwh-{i}"),
         cfg=cfg,
     )
-
-
-def constrain_within_interval_boilers(
-    optimizer: Optimizer, vars: dict, freq: Freq
-) -> None:
-    """Constrain boiler upper and lower bounds for generating high & low temperature heat."""
-    for asset in vars["boilers"][-1]:
-        optimizer.constrain(
-            asset.gas_consumption_mwh
-            == asset.high_temperature_generation_mwh
-            * (1 / asset.cfg.high_temperature_efficiency_pct)
-        )
-
-        optimizer.constrain_max(
-            asset.high_temperature_generation_mwh,
-            asset.binary,
-            freq.mw_to_mwh(asset.cfg.high_temperature_generation_max_mw),
-        )
-        optimizer.constrain_min(
-            asset.high_temperature_generation_mwh,
-            asset.binary,
-            freq.mw_to_mwh(asset.cfg.high_temperature_generation_min_mw),
-        )
 
 
 def generator_one_interval(
@@ -126,6 +103,29 @@ def generator_one_interval(
         ),
         cfg=cfg,
     )
+
+
+def constrain_within_interval_boilers(
+    optimizer: Optimizer, vars: dict, freq: Freq
+) -> None:
+    """Constrain boiler upper and lower bounds for generating high & low temperature heat."""
+    for asset in vars["boilers"][-1]:
+        optimizer.constrain(
+            asset.gas_consumption_mwh
+            == asset.high_temperature_generation_mwh
+            * (1 / asset.cfg.high_temperature_efficiency_pct)
+        )
+
+        optimizer.constrain_max(
+            asset.high_temperature_generation_mwh,
+            asset.binary,
+            freq.mw_to_mwh(asset.cfg.high_temperature_generation_max_mw),
+        )
+        optimizer.constrain_min(
+            asset.high_temperature_generation_mwh,
+            asset.binary,
+            freq.mw_to_mwh(asset.cfg.high_temperature_generation_min_mw),
+        )
 
 
 def constrain_within_interval_generators(
@@ -160,6 +160,18 @@ def constrain_within_interval_generators(
 
 
 class Generator:
+    """CHP generator asset class - handles optimization and plotting of results over many intervals.
+
+    Args:
+        electric_power_max_mw - maximum electric power output of the generator in mega-watts.
+        electric_power_min_mw - minimum electric power output of the generator in mega-watts.
+        electric_efficiency_pct - electric efficiency of the generator, measured in percentage.
+        high_temperature_efficiency_pct - high temperature efficiency of the generator, measured in percentage.
+        low_temperature_efficiency_pct - the low temperature efficiency of the generator, measured in percentage.
+
+    Make sure to get your efficiencies and gas prices on the same basis (HHV or LHV).
+    """
+
     def __init__(
         self,
         electric_power_max_mw: float = 0.0,
@@ -168,18 +180,6 @@ class Generator:
         high_temperature_efficiency_pct: float = 0.0,
         low_temperature_efficiency_pct: float = 0.0,
     ):
-        """
-        CHP generator asset class - handles optimization and plotting of results over many intervals.
-
-        Args:
-            electric_power_max_mw - maximum electric power output of the generator in mega-watts.
-            electric_power_min_mw - minimum electric power output of the generator in mega-watts.
-            electric_efficiency_pct - electric efficiency of the generator, measured in percentage.
-            high_temperature_efficiency_pct - high temperature efficiency of the generator, measured in percentage.
-            low_temperature_efficiency_pct - the low temperature efficiency of the generator, measured in percentage.
-
-        Make sure to get your efficiencies and gas prices on the same basis (HHV or LHV).
-        """
         self.cfg = GeneratorConfig(
             name="generator",
             electric_power_min_mw=electric_power_min_mw,
@@ -210,6 +210,9 @@ class Generator:
             low_temperature_load_mwh - low temperature load of the site in mega-watt hours.
             freq_mins - the size of an interval in minutes.
             objective - the optimization objective - either "price" or "carbon".
+
+        Returns:
+            epl.results.SimulationResult
         """
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
@@ -220,7 +223,7 @@ class Generator:
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
-        self.site_cfg = epl.site.SiteConfig()
+        self.site_cfg = epl.assets.site.SiteConfig()
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
@@ -270,10 +273,11 @@ class Generator:
             == len(vars["boilers"])
         )
 
-        objective_fn = objectives[objective]
+        objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
-        self.optimizer.solve()
-        return epl.results.extract_results(interval_data, vars)
+        _, feasible = self.optimizer.solve()
+        self.interval_data = interval_data
+        return epl.results.extract_results(interval_data, vars, feasible=feasible)
 
     def plot(
         self,

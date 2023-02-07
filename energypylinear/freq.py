@@ -1,3 +1,6 @@
+"""Handles conversion of power (MW) to energy (MWh) at different interval frequencies."""
+
+
 class Freq:
     def __init__(self, mins: int) -> None:
         self.mins = mins

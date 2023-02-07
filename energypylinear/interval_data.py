@@ -1,7 +1,4 @@
-"""
-Models for interval data for electricity & gas prices,
-thermal loads and carbon intensities.
-"""
+"""Models for interval data for electricity & gas prices, thermal loads and carbon intensities."""
 import typing
 
 import numpy as np
@@ -61,7 +58,7 @@ class EVIntervalData(pydantic.BaseModel):
 
 class IntervalData(pydantic.BaseModel):
     """
-    Interval data for simulation.
+    Interval data input into a simulation.
 
     `electricity_prices` must always be given - it acts as the source of truth
     for the number of intervals in the interval data.  It can be supplied
@@ -162,3 +159,15 @@ class IntervalData(pydantic.BaseModel):
     @pydantic.validator("idx", always=True)
     def setup_idx(cls, value: list, values: dict) -> list:
         return list(range(len(values["electricity_prices"])))
+
+    def to_dataframe(self):
+        data = self.dict()
+
+        expected_len = len(data["idx"])
+
+        df = {}
+        for name, data in data.items():
+            if data is not None:
+                if len(data) == expected_len:
+                    df[name] = data
+        return pd.DataFrame(df)

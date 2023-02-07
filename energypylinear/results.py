@@ -1,3 +1,4 @@
+"""Extract results from a solved linear program."""
 import collections
 
 import numpy as np
@@ -15,14 +16,27 @@ flags = Flags()
 
 
 class SimulationResult(pydantic.BaseModel):
+    """The output of a simulation."""
+
     simulation: pd.DataFrame
     interval_data: IntervalData
+    feasible: bool
+    spill: bool
 
     class Config:
         arbitrary_types_allowed: bool = True
 
 
-def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult:
+def extract_results(
+    interval_data: IntervalData, vars: dict, feasible: bool
+) -> SimulationResult:
+    """Creates a simulation result from interval data and a solved linear program.
+
+    Args:
+        interval_data: input interval data to the simulation.
+        vars: linear program variables.
+        feasible: whether this linear program solution is feasible.
+    """
     results = collections.defaultdict(list)
     for i in interval_data.idx:
         site = vars["sites"][i]
@@ -156,21 +170,19 @@ def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult
     if spill_occured and flags.fail_on_spill_asset_use:
         spill_message = f"""
         Spill Occurred!
-        {len(spills)} of {spill_results.shape[0]} spill columns
+        {len(spills)} of {spill_results.shape[1]} spill columns
         {spills}
         """
         raise ValueError(spill_message)
     elif spill_occured:
         spill_message = f"""
         [red]Spill Occurred![/]
-        {len(spills)} of {spill_results.shape[0]} spill columns
+        {len(spills)} of {spill_results.shape[1]} spill columns
         {spills}
         """
         print(spill_message)
-    else:
-        pass
 
-    #  include interval data in results
+    #  include some interval data in simulation results
     assert isinstance(interval_data.electricity_prices, np.ndarray)
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
     simulation["electricity_prices"] = interval_data.electricity_prices
@@ -178,15 +190,20 @@ def extract_results(interval_data: IntervalData, vars: dict) -> SimulationResult
         "electricity_carbon_intensities"
     ] = interval_data.electricity_carbon_intensities
 
-    return SimulationResult(simulation=simulation, interval_data=interval_data)
+    return SimulationResult(
+        simulation=simulation,
+        interval_data=interval_data,
+        feasible=feasible,
+        spill=spill_occured,
+    )
 
 
-def validate_results(interval_data: IntervalData, results: pd.DataFrame) -> None:
-    """
-    validations TODO
-    - don't import / export in same interval
-    - column names (types?)
-    - validate against interval data - lengths
+def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> None:
+    """Check that our simulation results make sense.
+
+    Args:
+        interval_data: input interval data to the simulation.
+        simulation: simulation results.
     """
 
     cols = [
@@ -194,14 +211,14 @@ def validate_results(interval_data: IntervalData, results: pd.DataFrame) -> None
         "export_power_mwh",
     ]
     for c in cols:
-        assert c in results.columns
+        assert c in simulation.columns
 
     if interval_data.evs:
         for charge_event_idx, charge_event_mwh in enumerate(
             interval_data.evs.charge_event_mwh
         ):
             np.testing.assert_almost_equal(
-                results[f"charge-event-{charge_event_idx}-total-charge_mwh"].sum(),
+                simulation[f"charge-event-{charge_event_idx}-total-charge_mwh"].sum(),
                 charge_event_mwh,
                 decimal=5,
             )
@@ -211,10 +228,10 @@ def validate_results(interval_data: IntervalData, results: pd.DataFrame) -> None
         """
         cols = [
             c
-            for c in results.columns
+            for c in simulation.columns
             if c.startswith("charger-")
             and c.endswith("-charge_binary")
             and "spill" not in c
         ]
-        subset = results[cols]
+        subset = simulation[cols]
         assert (subset <= 1).all().all()

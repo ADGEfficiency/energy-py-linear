@@ -1,7 +1,9 @@
+"""Tests for `epl.freq`."""
 import energypylinear as epl
 
 
 def test_freq() -> None:
+    """Check our power and energy conversions are correct."""
 
     freq = epl.freq.Freq(60)
     assert 100 == freq.mw_to_mwh(100)

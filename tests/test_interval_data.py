@@ -1,3 +1,4 @@
+"""Tests for `epl.interval_data`."""
 import numpy as np
 import pytest
 
@@ -5,6 +6,7 @@ import energypylinear as epl
 
 
 def test_interval_data() -> None:
+    """Test we can load prices and carbon intensities correctly."""
     electricity_prices = [20, 40, -100, 50]
     gas_prices = [20, 40, -100, 50]
     carbon_intensities = [0.1, 0.4, 0.3, 0.9]
@@ -31,6 +33,7 @@ def test_interval_data() -> None:
 
 
 def test_interval_data_numpy_arrays() -> None:
+    """Test we can load data from numpy"""
     electricity_prices = np.array([20, 40, -100, 50])
     gas_prices = np.array([20, 40, -100, 50])
     carbon_intensities = np.array([0.1, 0.4, 0.3, 0.9])
@@ -43,9 +46,10 @@ def test_interval_data_numpy_arrays() -> None:
 
 
 def test_interval_data_no_electricity_prices() -> None:
+    """Test we fail when we don't supply electricity prices."""
     carbon_intensities = [0.1, 0.4, 0.3, 0.9]
 
-    with pytest.raises(Exception) as err:
-        id = epl.interval_data.IntervalData(
+    with pytest.raises(Exception):
+        epl.interval_data.IntervalData(
             electricity_carbon_intensities=carbon_intensities,
         )

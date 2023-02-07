@@ -1,4 +1,7 @@
-"""these tests don't test the plot contents - only that we can plot & save something"""
+"""Tests for `epl.plots`.
+
+These tests don't test the plot contents - only that we can plot & save something.
+"""
 import numpy as np
 import pytest
 

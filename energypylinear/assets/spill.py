@@ -1,3 +1,8 @@
+"""Spill asset for allowing addition electric or thermal generation or consumption.
+
+This allows infeasible simulations to become feasible.  If a spill asset is used,
+then a warning is raised.
+"""
 import pulp
 import pydantic
 
@@ -6,6 +11,8 @@ from energypylinear.assets.asset import AssetOneInterval
 
 
 class SpillConfig(AssetOneInterval):
+    """Spill configuration."""
+
     name: str = "spill-default"
 
     @pydantic.validator("name")
@@ -15,6 +22,8 @@ class SpillConfig(AssetOneInterval):
 
 
 class SpillOneInterval(AssetOneInterval):
+    """Spill asset data for a single interval."""
+
     cfg: SpillConfig = SpillConfig()
     electric_generation_mwh: pulp.LpVariable
     electric_load_mwh: pulp.LpVariable
@@ -25,6 +34,7 @@ class SpillOneInterval(AssetOneInterval):
 def spill_one_interval(
     optimizer: epl.optimizer.Optimizer, cfg: SpillConfig, i: int, freq: epl.freq.Freq
 ) -> SpillOneInterval:
+    """Create Spill asset data for a single interval."""
     return SpillOneInterval(
         cfg=cfg,
         electric_generation_mwh=optimizer.continuous(

@@ -1,3 +1,4 @@
+"""Linear programming objective cost functions for price and carbon."""
 import numpy as np
 import pulp
 
@@ -10,6 +11,20 @@ def price_objective(
     vars: dict,
     interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
+    """
+    Linear programming objective for cost minimization.  Equivilant to profit maximization.
+
+    The objective is expressed as a linear combination of the costs for site import/export of power,
+    spillage, charge for spillage EVs, gas consumption by generators and boilers.
+
+    Inputs:
+        optimizer: an instance of `epl.optimizer.Optimizer` class.
+        vars: a dictionary of linear programming variables in the optimization problem.
+        interval_data: interaval data used in the simulation.
+
+    Returns:
+        A linear programming objective as an instance of `pulp.LpAffineExpression` class.
+    """
 
     sites = vars["sites"]
     spills = vars["spills"]
@@ -57,6 +72,20 @@ def carbon_objective(
     vars: dict,
     interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
+    """
+    Linear programming objective for carbon emission minimization.
+
+    The objective is expressed as a linear combination of the costs for site import/export of power,
+    spillage, charge for spillage EVs, gas consumption by generators and boilers.
+
+    Inputs:
+        optimizer: an instance of `epl.optimizer.Optimizer` class.
+        vars: a dictionary of linear programming variables in the optimization problem.
+        interval_data: interaval data used in the simulation.
+
+    Returns:
+        A linear programming objective as an instance of `pulp.LpAffineExpression` class.
+    """
 
     sites = vars["sites"]
     spills = vars["spills"]
@@ -67,6 +96,7 @@ def carbon_objective(
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_carbon_intensities[i]
         - sites[i].export_power_mwh * interval_data.electricity_carbon_intensities[i]
+        #  could turn this off TODO
         + spills[i].electric_generation_mwh * defaults.spill_objective_penalty
         + spills[i].high_temperature_generation_mwh * defaults.spill_objective_penalty
         + spills[i].electric_load_mwh * defaults.spill_objective_penalty
