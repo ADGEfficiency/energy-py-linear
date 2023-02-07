@@ -190,12 +190,12 @@ class Battery:
 
     def optimize(
         self,
-        electricity_prices,
-        gas_prices=None,
-        electricity_carbon_intensities=None,
+        electricity_prices: np.ndarray,
+        gas_prices: typing.Union[None, np.ndarray] = None,
+        electricity_carbon_intensities: typing.Union[None, np.ndarray] = None,
         #  should these go in here?  TODO
-        high_temperature_load_mwh=None,
-        low_temperature_load_mwh=None,
+        high_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
+        low_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,

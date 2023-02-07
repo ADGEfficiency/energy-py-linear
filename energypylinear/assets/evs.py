@@ -139,13 +139,13 @@ def constrain_within_interval(
         #  sum across all chargers for one charge event <= 1
         for charge_event_idx in range(n_charge_events):
             optimizer.constrain(
-                optimizer.sum(evs.charge_binary[0, charge_event_idx, :]) <= 1
+                optimizer.sum(evs.charge_binary[0, charge_event_idx, :].tolist()) <= 1
             )
         #  constrain to only one charge event per charger
         #  sum across all charge events for one charger <= 1
         for charger_idx in range(n_chargers):
             optimizer.constrain(
-                optimizer.sum(evs.charge_binary[0, :, charger_idx]) <= 1
+                optimizer.sum(evs.charge_binary[0, :, charger_idx].tolist()) <= 1
             )
 
 
@@ -221,9 +221,11 @@ class EVs:
         self,
         charge_events: typing.Union[list[list[int]], np.ndarray],
         charge_event_mwh: typing.Union[list[int], np.ndarray],
-        electricity_prices,
-        electricity_carbon_intensities=None,
-        gas_prices=None,
+        electricity_prices: np.ndarray,
+        gas_prices: typing.Union[None, np.ndarray] = None,
+        electricity_carbon_intensities: typing.Union[None, np.ndarray] = None,
+        high_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
+        low_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
     ) -> "epl.results.SimulationResult":
@@ -295,6 +297,7 @@ class EVs:
                 epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
 
+            assert isinstance(interval_data.evs.charge_events, np.ndarray)
             evs, evs_array = evs_one_interval(
                 self.optimizer,
                 self.charger_cfgs,

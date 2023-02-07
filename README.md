@@ -2,13 +2,13 @@
 
 A Python library for optimizing the dispatch of energy assets with mixed-integer linear programming.
 
-`energy-py-linear` has optimization models for:
+Has optimization models for:
 
 - electric batteries,
 - combined heat & power (CHP) generators,
 - electric vehicle smart charging.
 
-All of these optimization models can be dispatched to maximize profit or minimize carbon emissions.
+All of these models can be dispatched to either maximize profit or minimize carbon emissions.
 
 ## Setup
 

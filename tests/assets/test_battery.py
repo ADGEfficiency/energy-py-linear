@@ -18,7 +18,9 @@ tol = 1e-5
     ],
 )
 def test_battery_optimization_price(
-    electricity_prices, initial_charge_mwh, expected_dispatch
+    electricity_prices: list[float],
+    initial_charge_mwh: float,
+    expected_dispatch: list[float],
 ) -> None:
     power_mw = 4
     capacity_mwh = 6
@@ -28,14 +30,14 @@ def test_battery_optimization_price(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
     results = asset.optimize(
-        electricity_prices=electricity_prices,
+        electricity_prices=np.array(electricity_prices),
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=0,
     )
-    results = results.simulation
-    charge = results["battery-charge_mwh"].values
-    discharge = results["battery-discharge_mwh"].values
+    simulation = results.simulation
+    charge = simulation["battery-charge_mwh"].values
+    discharge = simulation["battery-discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
@@ -49,8 +51,10 @@ def test_battery_optimization_price(
     ],
 )
 def test_battery_optimization_carbon(
-    carbon_intensities, initial_charge_mwh, expected_dispatch
-):
+    carbon_intensities: list[float],
+    initial_charge_mwh: float,
+    expected_dispatch: list[float],
+) -> None:
     power_mw = 4
     capacity_mwh = 6
     efficiency = 1.0
@@ -61,14 +65,14 @@ def test_battery_optimization_carbon(
     )
     results = asset.optimize(
         electricity_prices=prices,
-        electricity_carbon_intensities=carbon_intensities,
+        electricity_carbon_intensities=np.array(carbon_intensities),
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         objective="carbon",
     )
-    results = results.simulation
-    charge = results["battery-charge_mwh"].values
-    discharge = results["battery-discharge_mwh"].values
+    simulation = results.simulation
+    charge = simulation["battery-charge_mwh"].values
+    discharge = simulation["battery-discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
@@ -84,7 +88,6 @@ def test_battery_optimization_carbon(
     power_mw=hypothesis.strategies.floats(min_value=0.1, max_value=100),
     capacity_mwh=hypothesis.strategies.floats(min_value=0.1, max_value=100),
     initial_charge_mwh=hypothesis.strategies.floats(min_value=0.0, max_value=100),
-    final_charge_mwh=hypothesis.strategies.floats(min_value=0.0, max_value=100),
     efficiency=hypothesis.strategies.floats(min_value=0.5, max_value=1.0),
     prices_mu=hypothesis.strategies.floats(min_value=-1000, max_value=1000),
     prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=25),
@@ -95,7 +98,6 @@ def test_battery_hypothesis(
     capacity_mwh: float,
     efficiency: float,
     initial_charge_mwh: float,
-    final_charge_mwh: float,
     prices_mu: float,
     prices_std: float,
 ) -> None:
@@ -117,56 +119,56 @@ def test_battery_hypothesis(
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=final_charge_mwh,
     )
-    results = results.simulation
+    simulation = results.simulation
 
     freq = epl.freq.Freq(freq_mins)
 
     #  check we don't exceed the battery rating
-    assert all(results["battery-charge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
-    assert all(results["battery-discharge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
+    assert all(simulation["battery-charge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
+    assert all(simulation["battery-discharge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
 
     #  check charge & discharge are always positive
-    assert all(results["battery-charge_mwh"] >= 0 - tol)
-    assert all(results["battery-discharge_mwh"] >= 0 - tol)
+    assert all(simulation["battery-charge_mwh"] >= 0 - tol)
+    assert all(simulation["battery-discharge_mwh"] >= 0 - tol)
 
     #  check we don't exceed battery capacity
     name = "battery"
     for var in ["initial_charge_mwh", "final_charge_mwh"]:
-        assert all(results[f"{name}-{var}"] <= capacity_mwh + tol)
-        assert all(results[f"{name}-{var}"] >= 0 - tol)
+        assert all(simulation[f"{name}-{var}"] <= capacity_mwh + tol)
+        assert all(simulation[f"{name}-{var}"] >= 0 - tol)
 
     #  check we set initial and final charge correctly
     np.testing.assert_almost_equal(
-        results[f"{name}-initial_charge_mwh"].iloc[0],
+        simulation[f"{name}-initial_charge_mwh"].iloc[0],
         asset.cfg.initial_charge_mwh,
         decimal=4,
     )
     np.testing.assert_almost_equal(
-        results[f"{name}-final_charge_mwh"].iloc[-1],
+        simulation[f"{name}-final_charge_mwh"].iloc[-1],
         asset.cfg.final_charge_mwh,
         decimal=4,
     )
 
     #  check losses are a percentage of our charge
-    mask = results[f"{name}-charge_mwh"] > 0
-    subset = results[mask]
+    mask = simulation[f"{name}-charge_mwh"] > 0
+    subset = simulation[mask]
     np.testing.assert_almost_equal(
         subset[f"{name}-losses_mwh"].values,
         (1 - efficiency) * subset[f"{name}-charge_mwh"].values,
         decimal=4,
     )
     #  check losses are always zero when we discharge
-    mask = results[f"{name}-discharge_mwh"] > 0
-    subset = results[mask]
+    mask = simulation[f"{name}-discharge_mwh"] > 0
+    subset = simulation[mask]
 
     #  temporaray debugging dataframe
     temp = pd.DataFrame(
         {
-            "charge": results[f"{name}-charge_mwh"],
-            "charge_bin": results[f"{name}-charge_binary"],
-            "discharge": results[f"{name}-discharge_mwh"],
-            "discharge_bin": results[f"{name}-discharge_binary"],
-            "losses": results[f"{name}-losses_mwh"],
+            "charge": simulation[f"{name}-charge_mwh"],
+            "charge_bin": simulation[f"{name}-charge_binary"],
+            "discharge": simulation[f"{name}-discharge_mwh"],
+            "discharge_bin": simulation[f"{name}-discharge_binary"],
+            "losses": simulation[f"{name}-losses_mwh"],
         }
     )
     """

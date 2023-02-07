@@ -161,18 +161,6 @@ def constrain_within_interval_generators(
 
 
 class Generator:
-    """CHP generator asset class - handles optimization and plotting of results over many intervals.
-
-    Args:
-        electric_power_max_mw - maximum electric power output of the generator in mega-watts.
-        electric_power_min_mw - minimum electric power output of the generator in mega-watts.
-        electric_efficiency_pct - electric efficiency of the generator, measured in percentage.
-        high_temperature_efficiency_pct - high temperature efficiency of the generator, measured in percentage.
-        low_temperature_efficiency_pct - the low temperature efficiency of the generator, measured in percentage.
-
-    Make sure to get your efficiencies and gas prices on the same basis (HHV or LHV).
-    """
-
     def __init__(
         self,
         electric_power_max_mw: float = 0.0,
@@ -181,6 +169,18 @@ class Generator:
         high_temperature_efficiency_pct: float = 0.0,
         low_temperature_efficiency_pct: float = 0.0,
     ):
+        """
+        CHP generator asset class - handles optimization and plotting of results over many intervals.
+
+        Args:
+            electric_power_max_mw - maximum electric power output of the generator in mega-watts.
+            electric_power_min_mw - minimum electric power output of the generator in mega-watts.
+            electric_efficiency_pct - electric efficiency of the generator, measured in percentage.
+            high_temperature_efficiency_pct - high temperature efficiency of the generator, measured in percentage.
+            low_temperature_efficiency_pct - the low temperature efficiency of the generator, measured in percentage.
+
+        Make sure to get your efficiencies and gas prices on the same basis (HHV or LHV).
+        """
         self.cfg = GeneratorConfig(
             name="generator",
             electric_power_min_mw=electric_power_min_mw,
@@ -195,6 +195,7 @@ class Generator:
         electricity_prices: np.ndarray,
         gas_prices: typing.Union[None, np.ndarray] = None,
         electricity_carbon_intensities: typing.Union[None, np.ndarray] = None,
+        #  should these go in here?  TODO
         high_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
         low_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
         freq_mins: int = defaults.freq_mins,
@@ -211,9 +212,6 @@ class Generator:
             low_temperature_load_mwh - low temperature load of the site in mega-watt hours.
             freq_mins - the size of an interval in minutes.
             objective - the optimization objective - either "price" or "carbon".
-
-        Returns:
-            epl.results.SimulationResult
         """
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
@@ -224,7 +222,7 @@ class Generator:
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
-        self.site_cfg = epl.assets.site.SiteConfig()
+        self.site_cfg = epl.site.SiteConfig()
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
