@@ -9,7 +9,6 @@ on:
 
 jobs:
   publish:
-    if: contains(github.event.issue.labels.*.name, 'publish')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
