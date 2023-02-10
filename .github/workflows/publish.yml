@@ -24,14 +24,13 @@ jobs:
         with:
           python-version: ${{ env.PYTHONVERSION }}
 
-      # GITHUB_PR_LABEL_TEST_FLIMBOMBLE was set by pr-labels-action
-      - run: |
-          bin/run_normal_tests
+      - name: Publish to PyPi
+        run: |
           if [ -n "$GITHUB_PR_LABEL_PUBLISH" ]; then
             echo "publish"
           fi
 
-      - name: Publish to PyPi
+      - name:
         run: |
           # make publish PYPI_TOKEN=${{ secrets.PYPI_TOKEN }}
           echo "no-op"
