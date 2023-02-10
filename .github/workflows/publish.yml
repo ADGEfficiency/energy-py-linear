@@ -28,8 +28,4 @@ jobs:
       - name: Publish to PyPi
         run: |
           echo "publish"
-
-      # - name:
-      #   run: |
       #     # make publish PYPI_TOKEN=${{ secrets.PYPI_TOKEN }}
-      #     echo "no-op"
