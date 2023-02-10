@@ -10,6 +10,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'publish')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -26,9 +27,7 @@ jobs:
 
       - name: Publish to PyPi
         run: |
-          if [ -n "$GITHUB_PR_LABEL_PUBLISH" ]; then
-            echo "publish"
-          fi
+          echo "publish"
 
       # - name:
       #   run: |
