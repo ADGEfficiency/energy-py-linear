@@ -47,3 +47,7 @@ jobs:
       - name: Static Typing
         run: |
           make static
+
+      - name: Linting
+        run: |
+          make lint -o setup -o setup-check
