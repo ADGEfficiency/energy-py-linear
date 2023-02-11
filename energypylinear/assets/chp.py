@@ -10,6 +10,7 @@ import pydantic
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
+from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
@@ -201,18 +202,20 @@ class Generator:
         low_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
+        flags: Flags = Flags(),
     ) -> "epl.results.SimulationResult":
         """
         Optimize the CHP generator's dispatch using a mixed-integer linear program.
 
         Args:
-            electricity_prices - the price of electricity in each interval.
-            gas_prices - the prices of natural gas, used in CHP and boilers in each interval.
-            electricity_carbon_intensities - carbon intensity of electricity in each interval.
-            high_temperature_load_mwh - high temperature load of the site in mega-watt hours.
-            low_temperature_load_mwh - low temperature load of the site in mega-watt hours.
-            freq_mins - the size of an interval in minutes.
-            objective - the optimization objective - either "price" or "carbon".
+            electricity_prices: the price of electricity in each interval.
+            gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
+            electricity_carbon_intensities: carbon intensity of electricity in each interval.
+            high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
+            low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
+            freq_mins: the size of an interval in minutes.
+            objective: the optimization objective - either "price" or "carbon".
+            flags: boolean flags to change simulation and results behaviour.
         """
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
@@ -277,7 +280,9 @@ class Generator:
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
         _, feasible = self.optimizer.solve()
         self.interval_data = interval_data
-        return epl.results.extract_results(interval_data, vars, feasible=feasible)
+        return epl.results.extract_results(
+            interval_data, vars, feasible=feasible, flags=flags
+        )
 
     def plot(
         self,

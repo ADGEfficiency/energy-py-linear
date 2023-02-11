@@ -27,6 +27,7 @@ import energypylinear as epl
 
 #  2.0 MW, 4.0 MWh battery
 asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
+
 results = asset.optimize(
   electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
   freq_mins=60,
@@ -79,6 +80,7 @@ asset = epl.chp.Generator(
     high_temperature_efficiency_pct=0.2,
     low_temperature_efficiency_pct=0.2,
 )
+
 results = asset.optimize(
   electricity_prices=[100, 50, 200, -100, 0, 200, 100, -100],
   high_temperature_load_mwh=[100, 50, 200, 40, 0, 200, 100, 100],
@@ -120,7 +122,7 @@ results = asset.optimize(
 )
 ```
 
-## Uses Cases & Examples
+## Examples & Use Cases
 
 ### Assets
 
@@ -144,6 +146,7 @@ We can dispatch a battery to minimize carbon emissions by passing in `objective=
 import energypylinear as epl
 
 asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
+
 results = asset.optimize(
   electricity_prices=[100, 50, 200, -100, 0, 200, 100, -100],
   electricity_carbon_intensities = [0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01],
@@ -182,6 +185,7 @@ carbon = epl.get_accounts(
   carbon.interval_data,
   carbon.simulation,
 )
+
 print(price)
 # cost=-1057.777778 emissions=0.08222222199999996 profit=1057.777778
 
@@ -219,8 +223,9 @@ actual = asset.optimize(electricity_prices=electricity_prices)
 forecast = asset.optimize(electricity_prices=forecasts)
 
 # create accounts for the two scenarios 
-# in the forecast we use the actual interval_data, not the forecast interval_data
 perfect_foresight = epl.get_accounts(actual.interval_data, actual.simulation)
+
+# in the forecast we use the actual interval_data, not the forecast interval_data
 forecast = epl.get_accounts(actual.interval_data, forecast.simulation)
 
 variance = perfect_foresight - forecast

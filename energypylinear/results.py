@@ -12,7 +12,6 @@ from energypylinear.interval_data import IntervalData
 from energypylinear.optimizer import Optimizer
 
 optimizer = Optimizer()
-flags = Flags()
 
 
 class SimulationResult(pydantic.BaseModel):
@@ -30,7 +29,7 @@ class SimulationResult(pydantic.BaseModel):
 
 
 def extract_results(
-    interval_data: IntervalData, vars: dict, feasible: bool
+    interval_data: IntervalData, vars: dict, feasible: bool, flags: Flags = Flags()
 ) -> SimulationResult:
     """Creates a simulation result from interval data and a solved linear program.
 

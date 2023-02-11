@@ -5,12 +5,14 @@ import pytest
 from _pytest.capture import CaptureFixture
 
 import energypylinear as epl
+from energypylinear.flags import Flags
 
 
 def test_spill_validation() -> None:
     """Check we fail for incorrectly named spill asset."""
     with pytest.raises(pydantic.ValidationError):
         epl.assets.spill.SpillConfig(name="not-valid")
+    epl.assets.spill.SpillConfig(name="valid-spill")
 
 
 def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
@@ -36,9 +38,24 @@ def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
         freq_mins=60,
     )
     simulation = results.simulation
-    #  https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
     capture = capsys.readouterr()
     assert "Spill Occurred" in capture.out
+
+    # now check we fail when we want to
+    with pytest.raises(ValueError):
+        flags = Flags(fail_on_spill_asset_use=True)
+        results = asset.optimize(
+            electricity_prices=[
+                1000,
+            ],
+            gas_prices=20,
+            high_temperature_load_mwh=[
+                20,
+            ],
+            freq_mins=60,
+            flags=flags,
+        )
+
     row = simulation.iloc[0, :]
     assert row["generator-electric_generation_mwh"] == 100
 

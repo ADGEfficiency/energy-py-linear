@@ -15,8 +15,6 @@ from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
-flags = Flags()
-
 
 class BatteryConfig(pydantic.BaseModel):
     """Battery asset configuration."""
@@ -50,7 +48,7 @@ class BatteryOneInterval(AssetOneInterval):
 
 
 def battery_one_interval(
-    optimizer: Optimizer, cfg: BatteryConfig, i: int, freq: Freq
+    optimizer: Optimizer, cfg: BatteryConfig, i: int, freq: Freq, flags: Flags
 ) -> BatteryOneInterval:
     """Create Battery asset data for a single interval."""
 
@@ -80,16 +78,22 @@ def battery_one_interval(
 
 
 def constrain_within_interval(
-    optimizer: Optimizer, vars: collections.defaultdict, configs: list[BatteryConfig]
+    optimizer: Optimizer,
+    vars: collections.defaultdict,
+    configs: list[BatteryConfig],
+    flags: Flags,
 ) -> None:
     """Constrain battery dispatch within a single interval"""
-    constrain_only_charge_or_discharge(optimizer, vars, configs)
+    constrain_only_charge_or_discharge(optimizer, vars, configs, flags)
     constrain_battery_electricity_balance(optimizer, vars)
     constrain_connection_batteries_between_intervals(optimizer, vars)
 
 
 def constrain_only_charge_or_discharge(
-    optimizer: Optimizer, vars: collections.defaultdict, configs: list[BatteryConfig]
+    optimizer: Optimizer,
+    vars: collections.defaultdict,
+    configs: list[BatteryConfig],
+    flags: Flags,
 ) -> None:
     """Constrain battery to only charge or discharge.
 
@@ -202,6 +206,8 @@ class Battery:
         final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
         allow_infeasible: bool = False,
+        flags: Flags = Flags(),
+        verbose: int = 0,
     ) -> "epl.results.SimulationResult":
         """Optimize the battery's dispatch using a mixed-integer linear program.
 
@@ -216,6 +222,8 @@ class Battery:
             final_charge_mwh: final charge state of the battery in mega-watt hours.
             objective: the optimization objective - either "price" or "carbon".
             allow_infeasible: whether to fail on infeasible linear programs.
+            flags: boolean flags to change simulation and results behaviour.
+            verbose: level of printing.
 
         Returns:
             epl.results.SimulationResult
@@ -254,12 +262,12 @@ class Battery:
             vars["valves"].append(
                 epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
-            batteries = [battery_one_interval(self.optimizer, self.cfg, i, freq)]
+            batteries = [battery_one_interval(self.optimizer, self.cfg, i, freq, flags)]
             vars["batteries"].append(batteries)
             vars["assets"].append(batteries)
 
             site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-            constrain_within_interval(self.optimizer, vars, [self.cfg])
+            constrain_within_interval(self.optimizer, vars, [self.cfg], flags)
 
         constrain_after_intervals(self.optimizer, vars, [self.cfg])
 
@@ -272,7 +280,7 @@ class Battery:
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
-        _, feasible = self.optimizer.solve()
+        _, feasible = self.optimizer.solve(verbose=verbose)
         self.interval_data = interval_data
         return epl.results.extract_results(interval_data, vars, feasible=feasible)
 

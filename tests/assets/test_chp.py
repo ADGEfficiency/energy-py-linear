@@ -49,6 +49,9 @@ def test_chp_gas_turbine_price() -> None:
         decimal=defaults.decimal_tolerance,
     )
 
+    #  TODO - should be done elsewhere - just for coverage
+    asset.optimizer.constraints()
+
 
 def test_chp_gas_turbine_carbon() -> None:
     asset = epl.chp.Generator(
