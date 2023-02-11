@@ -149,6 +149,17 @@ python-versions = ">=3.7"
 toml = ["tomli"]
 
 [[package]]
+name = "coverage-badge"
+version = "1.1.0"
+description = "Generate coverage badges for Coverage.py."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+coverage = "*"
+
+[[package]]
 name = "cycler"
 version = "0.11.0"
 description = "Composable style cycles"
@@ -1064,7 +1075,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "ffacd542b4c4a8739bbac952b566e3c5a44b6989a97acee47573c2a4ae8a9a81"
+content-hash = "244834fb629b49e99f81b76de0fbdd12c1549d42a918fb4f39b042d17a505352"
 
 [metadata.files]
 appnope = [
@@ -1287,6 +1298,10 @@ coverage = [
     {file = "coverage-6.5.0-cp39-cp39-win_amd64.whl", hash = "sha256:fc2af30ed0d5ae0b1abdb4ebdce598eafd5b35397d4d75deb341a614d333d987"},
     {file = "coverage-6.5.0-pp36.pp37.pp38-none-any.whl", hash = "sha256:1431986dac3923c5945271f169f59c45b8802a114c8f548d611f2015133df77a"},
     {file = "coverage-6.5.0.tar.gz", hash = "sha256:f642e90754ee3e06b0e7e51bce3379590e76b7f76b708e1a71ff043f87025c84"},
+]
+coverage-badge = [
+    {file = "coverage-badge-1.1.0.tar.gz", hash = "sha256:c824a106503e981c02821e7d32f008fb3984b2338aa8c3800ec9357e33345b78"},
+    {file = "coverage_badge-1.1.0-py2.py3-none-any.whl", hash = "sha256:e365d56e5202e923d1b237f82defd628a02d1d645a147f867ac85c58c81d7997"},
 ]
 cycler = [
     {file = "cycler-0.11.0-py3-none-any.whl", hash = "sha256:3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3"},

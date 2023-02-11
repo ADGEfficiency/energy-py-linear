@@ -1,5 +1,7 @@
 # energy-py-linear
 
+<img src="./static/coverage.svg"> [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+
 A Python library for optimizing the dispatch of energy assets with mixed-integer linear programming:
 
 - electric batteries,
