@@ -6,7 +6,7 @@ A Python library for optimizing the dispatch of energy assets with mixed-integer
 - combined heat & power (CHP) generators,
 - electric vehicle smart charging.
 
-Any model can be optimized to maximize profit or minimize carbon emissions.
+Models can be optimized to either maximize profit or minimize carbon emissions.
 
 ## Setup
 
@@ -37,9 +37,9 @@ results = asset.optimize(
 
 ### CHP
 
-Dispatch a CHP unit to generate high price electricity from natural gas.
+Dispatch a CHP unit to generate electricity and heat from natural gas.
 
-The `epl.Generator` model can be setup with electric, high and low temperature thermal efficiencies. 
+The `epl.Generator` model can be configured with electric, high and low temperature thermal efficiencies. 
 
 This allows modelling both gas engines and gas turbines:
 
@@ -64,8 +64,9 @@ asset = epl.chp.Generator(
 )
 ```
 
-When optimizing, we can input data for both the high and low temperature loads - both will be met by gas boilers if the CHP chooses not to generate.
+When optimizing, we can use interval data for the high and low temperature loads.  These thermal loads will be met by gas boilers if the CHP chooses not to generate.  The `epl.chp.Generator` is allowed to dump both high temperature and low temperature heat.
 
+To dispatch a CHP generator:
 
 ```python
 import energypylinear as epl
@@ -85,8 +86,6 @@ results = asset.optimize(
 )
 ```
 
-The `epl.chp.Generator` is allowed to dump both high temperature and low temperature heat.
-
 ### EVs
 
 Control a number of EV chargers to charge a number of charge events.  
@@ -95,7 +94,9 @@ A `charge_event` is a period of time where an EV can be charged.  This is given 
 
 Each charge event has a required amount of electricity `charge_event_mwh`, that can be delivered anytime the `charge_event` is 1.
 
-Chargers are configured by `charger_mws`.  Below we model two 100 MWe chargers:
+Chargers are configured by `charger_mws`.  
+
+Optimize two 100 MWe chargers for 4 charge events over 5 intervals:
 
 ```python
 import energypylinear as epl
@@ -123,7 +124,7 @@ results = asset.optimize(
 
 ### Assets
 
-Examples for each of the assets exist in `./examples`:
+Further examples for each asset exist in `./examples`:
 
 ```shell
 $ ls ./examples
@@ -135,9 +136,9 @@ $ ls ./examples
 
 ### Price vs. Carbon Optimization
 
-A key feature of `energypylinear` is the ability to optimize for both price and carbon as a first class feature of the library.
+A key feature of `energypylinear` is the ability to optimize for both price and carbon.
 
-We can dispatch a battery for carbon by passing in `objective='carbon'`:
+We can dispatch a battery to minimize carbon emissions by passing in `objective='carbon'`:
 
 ```python
 import energypylinear as epl
@@ -150,9 +151,7 @@ results = asset.optimize(
 )
 ```
 
-We can compare the results above with a simulation that optimizes for price.
-
-We can use an `energypylinear.accounting.Account` to compare both simulations.  The accounting API is in it's first iteration - expect it to change in the future.
+We can compare these results above with a simulation that optimizes for price, using a `energypylinear.accounting.Account` to compare both simulations.  The accounting API is in it's first iteration - expect it to change in the future.
 
 ```python
 import energypylinear as epl
@@ -201,7 +200,7 @@ Our optimization for price has a high negative cost.  The optimization for carbo
 
 ### Dispatch for Actuals vs. Dispatch for Forecasts
 
-The same primitives can be used to model the variance in performance of an asset optimized for actual prices versus forecast prices.
+The same primitives can be used to model the variance in performance of an asset optimized for actual prices versus forecast prices:
 
 ```python
 import energypylinear as epl
@@ -228,7 +227,6 @@ variance = perfect_foresight - forecast
 print(variance)
 # cost=-1197.777778 emissions=0.002222221999999996
 ```
-
 
 ## Test
 
