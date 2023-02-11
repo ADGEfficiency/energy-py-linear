@@ -27,6 +27,8 @@ class SiteOneInterval(pydantic.BaseModel):
     export_limit_mwh: float
 
     class Config:
+        """pydantic.BaseModel configuration."""
+
         arbitrary_types_allowed: bool = True
 
 

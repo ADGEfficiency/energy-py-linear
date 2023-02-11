@@ -1,3 +1,4 @@
+"""Test electric vehicle asset."""
 import hypothesis
 import numpy as np
 
@@ -5,6 +6,7 @@ import energypylinear as epl
 
 
 def test_evs_optimization_price() -> None:
+    """Test EV optimization for price."""
     evs = epl.evs.EVs(
         charger_mws=[100, 100],
     )
@@ -32,6 +34,7 @@ def test_evs_optimization_price() -> None:
 
 
 def test_evs_optimization_carbon() -> None:
+    """Test EV optimization for carbon."""
     evs = epl.evs.EVs(
         charger_mws=[100, 100],
     )
@@ -84,7 +87,7 @@ def test_evs_hypothesis(
     prices_mu: float,
     prices_std: float,
 ) -> None:
-    #  TODO add given for electricity_prices mean + stdev
+    """Test EV optimization using hypothesis."""
     ds = epl.data_generation.generate_random_ev_input_data(
         idx_length,
         n_chargers,

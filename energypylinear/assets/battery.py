@@ -170,7 +170,7 @@ def constrain_initial_final_charge(
 
 
 class Battery:
-    """Battery asset class - handles optimization and plotting of results over many intervals.
+    """Battery asset - handles optimization and plotting of results over many intervals.
 
     Args:
         power_mw - the maximum power output of the battery in mega-watts, used for both charge and discharge.
@@ -186,6 +186,7 @@ class Battery:
         efficiency: float = 0.9,
         battery_name: str = "battery",
     ):
+        """Initialize a Battery asset model."""
         self.cfg = BatteryConfig(
             name=battery_name,
             power_mw=power_mw,
@@ -289,4 +290,5 @@ class Battery:
         results: "epl.results.SimulationResult",
         path: typing.Union[pathlib.Path, str],
     ) -> None:
+        """Plot simulation results."""
         return epl.plot.plot_battery(results, pathlib.Path(path))

@@ -17,6 +17,7 @@ class ValveConfig(pydantic.BaseModel):
 
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
+        """Ensure we can identify this asset correctly."""
         assert "valve" in name
         return name
 

@@ -32,6 +32,8 @@ class EVOneInterval(AssetOneInterval):
     charge_binary: pulp.LpVariable
 
     class Config:
+        """pydantic.BaseModel configuration."""
+
         arbitrary_types_allowed = True
 
 
@@ -45,6 +47,8 @@ class EVsArrayOneInterval(AssetOneInterval):
     charger_cfgs: np.ndarray
 
     class Config:
+        """pydantic.BaseModel configuration."""
+
         arbitrary_types_allowed = True
 
 
@@ -188,13 +192,15 @@ def constrain_after_intervals(
 
 
 class EVs:
-    def __init__(self, charger_mws: list[float], charger_turndown: float = 0.1):
-        """EV asset class - handles optimization and plotting of results over many intervals.
+    """EV asset class - handles optimization and plotting of results over many intervals.
 
-        Args:
-            charger_mws - size of EV chargers in mega-watts.
-            charger_turndown - minimum charger output defined by the charger_turndown as a percent of the charger size in mega-watts.
-        """
+    Args:
+        charger_mws - size of EV chargers in mega-watts.
+        charger_turndown - minimum charger output defined by the charger_turndown as a percent of the charger size in mega-watts.
+    """
+
+    def __init__(self, charger_mws: list[float], charger_turndown: float = 0.1):
+        """Initialize an electric vehicle asset model."""
 
         self.charger_cfgs = np.array(
             [
@@ -360,4 +366,5 @@ class EVs:
         results: "epl.results.SimulationResult",
         path: typing.Union[pathlib.Path, str],
     ) -> None:
+        """Plot simulation results."""
         return epl.plot.plot_evs(results, pathlib.Path(path))

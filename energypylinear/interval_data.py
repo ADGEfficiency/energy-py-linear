@@ -30,14 +30,18 @@ class EVIntervalData(pydantic.BaseModel):
     charge_event_mwh: typing.Union[list[int], np.ndarray]
 
     class Config:
+        """pydantic.BaseModel configuration."""
+
         arbitrary_types_allowed = True
 
     @pydantic.validator("idx", always=True, pre=True)
     def setup_idx(cls, value: list, values: dict) -> np.ndarray:
+        """Create an integer index."""
         return np.arange(values["charge_events"].shape[0])
 
     @pydantic.root_validator()
     def validate_all_things(cls, values: dict) -> dict:
+        """Validate all input data in a single step."""
         #  only_positive or zero charge_event_mwh
         assert all(
             values["charge_event_mwh"] >= 0
@@ -110,17 +114,21 @@ class IntervalData(pydantic.BaseModel):
     evs: typing.Union[EVIntervalData, None] = None
 
     class Config:
+        """pydantic.BaseModel configuration."""
+
         arbitrary_types_allowed = True
 
     @pydantic.validator("evs")
     def validate_evs(
         cls, evs: "epl.interval_data.EVIntervalData", values: dict
     ) -> "epl.interval_data.EVIntervalData":
+        """Validate our indexes are the same with our parent index."""
         assert all(evs.idx == values["idx"])
         return evs
 
     @pydantic.root_validator(pre=True)
     def validate_all_things(cls, values: dict) -> dict:
+        """Validate all input data in a single step."""
         base_field = "electricity_prices"
         prices = values[base_field]
 
@@ -158,9 +166,11 @@ class IntervalData(pydantic.BaseModel):
 
     @pydantic.validator("idx", always=True)
     def setup_idx(cls, value: list, values: dict) -> list:
+        """Create an integer index."""
         return list(range(len(values["electricity_prices"])))
 
     def to_dataframe(self) -> pd.DataFrame:
+        """Save all interval data to a pandas DataFrame."""
         data = self.dict()
 
         expected_len = len(data["idx"])

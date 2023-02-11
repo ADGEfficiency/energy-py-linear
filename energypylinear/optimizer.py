@@ -10,7 +10,7 @@ import pulp
 
 class Optimizer:
     """
-    Interface for solving linear programming problems using `pulp`.
+    Solver for linear programs. Interfaces with `pulp`.
 
     Attributes:
         prob: problem to be optimized.
@@ -18,6 +18,7 @@ class Optimizer:
     """
 
     def __init__(self) -> None:
+        """Initialize an Optimizer."""
         self.prob = pulp.LpProblem("prob", pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=0)
 

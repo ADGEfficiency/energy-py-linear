@@ -37,7 +37,8 @@ class GeneratorConfig(pydantic.BaseModel):
     #  add cooling efficieny here TODO
 
     @pydantic.validator("name")
-    def ensure_generator_in_name(cls, name: str) -> str:
+    def check_name(cls, name: str) -> str:
+        """Ensure we can identify this asset correctly."""
         assert "generator" in name
         return name
 
@@ -161,6 +162,18 @@ def constrain_within_interval_generators(
 
 
 class Generator:
+    """CHP generator asset - handles optimization and plotting of results over many intervals.
+
+    Args:
+        electric_power_max_mw - maximum electric power output of the generator in mega-watts.
+        electric_power_min_mw - minimum electric power output of the generator in mega-watts.
+        electric_efficiency_pct - electric efficiency of the generator, measured in percentage.
+        high_temperature_efficiency_pct - high temperature efficiency of the generator, measured in percentage.
+        low_temperature_efficiency_pct - the low temperature efficiency of the generator, measured in percentage.
+
+    Make sure to get your efficiencies and gas prices on the same basis (HHV or LHV).
+    """
+
     def __init__(
         self,
         electric_power_max_mw: float = 0.0,
@@ -169,18 +182,7 @@ class Generator:
         high_temperature_efficiency_pct: float = 0.0,
         low_temperature_efficiency_pct: float = 0.0,
     ):
-        """
-        CHP generator asset class - handles optimization and plotting of results over many intervals.
-
-        Args:
-            electric_power_max_mw - maximum electric power output of the generator in mega-watts.
-            electric_power_min_mw - minimum electric power output of the generator in mega-watts.
-            electric_efficiency_pct - electric efficiency of the generator, measured in percentage.
-            high_temperature_efficiency_pct - high temperature efficiency of the generator, measured in percentage.
-            low_temperature_efficiency_pct - the low temperature efficiency of the generator, measured in percentage.
-
-        Make sure to get your efficiencies and gas prices on the same basis (HHV or LHV).
-        """
+        """Initialize a Battery asset model."""
         self.cfg = GeneratorConfig(
             name="generator",
             electric_power_min_mw=electric_power_min_mw,
@@ -289,4 +291,5 @@ class Generator:
         results: "epl.results.SimulationResult",
         path: typing.Union[pathlib.Path, str],
     ) -> None:
+        """Plot simulation results."""
         return epl.plot.plot_chp(results, pathlib.Path(path))

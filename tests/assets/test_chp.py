@@ -1,3 +1,4 @@
+"""Test CHP generator asset."""
 import numpy as np
 
 import energypylinear as epl
@@ -5,6 +6,7 @@ from energypylinear.defaults import defaults
 
 
 def test_chp_gas_turbine_price() -> None:
+    """Test gas turbine optimization for price."""
     asset = epl.chp.Generator(
         electric_power_max_mw=100,
         electric_power_min_mw=50,
@@ -54,6 +56,7 @@ def test_chp_gas_turbine_price() -> None:
 
 
 def test_chp_gas_turbine_carbon() -> None:
+    """Test gas turbine optimization for carbon."""
     asset = epl.chp.Generator(
         electric_power_max_mw=100,
         electric_power_min_mw=50,
@@ -102,6 +105,7 @@ def test_chp_gas_turbine_carbon() -> None:
 
 
 def test_chp_gas_engine_price() -> None:
+    """Test gas engine optimization for price."""
     asset = epl.chp.Generator(
         electric_power_max_mw=100,
         electric_power_min_mw=10,
@@ -137,6 +141,7 @@ def test_chp_gas_engine_price() -> None:
 
 
 def test_chp_gas_engine_carbon() -> None:
+    """Test gas engine optimization for carbon."""
     asset = epl.chp.Generator(
         electric_power_max_mw=100,
         electric_power_min_mw=10,
