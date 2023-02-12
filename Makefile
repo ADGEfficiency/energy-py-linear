@@ -1,26 +1,60 @@
-.PHONY: test
+.PHONY: all clean
 
-./energypylinear.egg-info/PKG-INFO: setup.py
-	pip install -qr requirements.txt
-	pip install -e .
+all: test
 
-test: ./energypylinear.egg-info/PKG-INFO
-	pip install -qr requirements-test.txt
-	pytest tests
+#  SETUP
+.PHONY: setup setup-test setup-static setup-check
+setup:
+	pip install --upgrade pip -q
+	pip install poetry -c ./constraints.txt -q
+	poetry install --with main -q
+setup-test: setup
+	poetry install --with test -q
+setup-static: setup
+	poetry install --with static -q
+setup-check: setup
+	poetry install --with check -q
 
-pushs3:
-	aws s3 sync notebooks/results s3://adgefficiency-public/space-between/results
+#  TEST
+.PHONY: test test-ci
+test: setup-test
+	rm -f ./tests/test_readme.py
+	python -m phmdoctest README.md --outfile tests/test_readme.py
+	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon
+test-ci: setup-test
+	coverage run -m pytest tests --tb=short --show-capture=no
+	coverage report -m
 
-space-between: ./energypylinear.egg-info/PKG-INFO ./nem-data/setup.py ~/nem-data/data/TRADINGPRICE/2020-12/clean.parquet ~/nem-data/data/nemde/2020-12-31/clean.parquet
+#  STATIC TYPING
+.PHONY: static
+static: setup-static
+	rm -rf ./tests/test_readme.py
+	mypy --config-file ./mypy.ini --pretty ./energypylinear
+	mypy --config-file ./mypy.ini --pretty ./tests
 
-./nem-data/setup.py:
-	rm -rf ./nem-data
-	git clone git@github.com:ADGEfficiency/nem-data
-	pip3 install nem-data/.
-	pip3 install -q -r nem-data/requirements.txt
+#  LINTING
+.PHONY: lint
+lint: setup-check
+	flake8 --extend-ignore E501 --exclude=__init__.py,poc
+	isort --check **/*.py --profile black
+	black --check **/*.py
+	poetry lock --check
 
-~/nem-data/data/TRADINGPRICE/2020-12/clean.parquet: ./nem-data/setup.py
-	nem -s 2014-01 -e 2020-12 -r trading-price
+#  FORMATTING
+.PHONY: format
+format: setup-check
+	isort **/*.py --profile black
+	black **/*.py
+	poetry lock --no-update
 
-~/nem-data/data/nemde/2020-12-31/clean.parquet: ./nem-data/setup.py
-	nem -s 2014-01 -e 2020-12 -r nemde
+#  CHECK
+.PHONY: check
+check: lint static
+
+#  PUBLISH
+-include .env.secret
+.PHONY: publish
+publish: setup
+	poetry build
+	@poetry config pypi-token.pypi $(PYPI_TOKEN)
+	poetry publish

@@ -1,16 +1,2 @@
-#  generic
-*.ipynb_checkpoints/
-*.swp
-*todo.md
-*__pycache__
-*.log
-.python-version
-
-dist* 
-build*
-*.egg*
-
-#  project specific
-*.lp
-notebooks/results
-nem-data
+#  automatically generated
+tests/test_readme.py
