@@ -6,22 +6,13 @@ on:
 
 jobs:
   publish:
+    if: ${{ contains(github.event.pull_request.title, '[RELEASE]') }}
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'publish')
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Get Python Version from `pyproject.toml`
-        run: |
-          PYTHONVERSION=$(cat pyproject.toml | sed -En "s/^python =//p" | tr -d '" ^')
-          echo "PYTHONVERSION=$PYTHONVERSION" >> $GITHUB_ENV
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHONVERSION }}
+          python-version: 3.10.6
 
-      - name: Publish to PyPi
-        run: |
-          make publish PYPI_TOKEN=${{ secrets.PYPI_TOKEN }}
+      - run: make publish PYPI_TOKEN=${{ secrets.PYPI_TOKEN }}
