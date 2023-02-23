@@ -67,9 +67,11 @@ asset = epl.chp.Generator(
 )
 ```
 
-When optimizing, we can use interval data for the high and low temperature loads.  These thermal loads will be met by gas boilers if the CHP chooses not to generate.  The `epl.chp.Generator` is allowed to dump both high temperature and low temperature heat.
+When optimizing, we can use interval data for the high and low temperature loads.  These thermal loads will be met by gas boilers if the CHP chooses not to generate.  
 
-To dispatch a CHP generator:
+The `epl.chp.Generator` is allowed to dump both high temperature and low temperature heat.
+
+Dispatch a CHP generator:
 
 ```python
 import energypylinear as epl
@@ -124,19 +126,20 @@ results = asset.optimize(
 )
 ```
 
-## Examples & Use Cases
+## Examples
 
-### Assets
-
-Further examples for each asset exist in `./examples`:
+Examples for exist in `./examples`:
 
 ```shell
 $ ls ./examples
 ./examples
 ├── battery.py
 ├── chp.py
-└── evs.py
+├── evs.py
+└── forecast-accuracy.py
 ```
+
+## Use Cases
 
 ### Price vs. Carbon Optimization
 
@@ -234,6 +237,8 @@ variance = perfect_foresight - forecast
 print(variance)
 # cost=-1197.777778 emissions=0.002222221999999996
 ```
+
+This idea is also modelled in [examples/forecast-accuracy.py](https://github.com/ADGEfficiency/energy-py-linear/blob/main/examples/forecast-accuracy.py).
 
 ## Test
 
