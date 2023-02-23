@@ -6,8 +6,8 @@ on:
 
 jobs:
   publish:
+    if: ${{ contains(github.event.pull_request.title, '[RELEASE]') }}
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'publish')
     steps:
       - uses: actions/checkout@v3
 
