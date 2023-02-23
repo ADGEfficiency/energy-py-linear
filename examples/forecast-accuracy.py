@@ -1,6 +1,8 @@
 """How to calculate forecast accuracy using epl.Battery."""
-import pandas as pd
 import io
+
+import pandas as pd
+
 import energypylinear as epl
 
 if __name__ == "__main__":
@@ -44,20 +46,16 @@ if __name__ == "__main__":
     data = pd.read_csv(io.StringIO(data))
 
     #  battery model
-    asset = epl.battery.Battery(
-        power_mw=2,
-        capacity_mwh=4,
-        efficiency=0.9
-    )
+    asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
 
     #  optimize for actuals
     actuals = asset.optimize(
-        electricity_prices=data['Trading Price [$/MWh]'],
+        electricity_prices=data["Trading Price [$/MWh]"],
         freq_mins=30,
     )
     #  optimize for forecasts
     forecasts = asset.optimize(
-        electricity_prices=data['Predispatch Forecast [$/MWh]'],
+        electricity_prices=data["Predispatch Forecast [$/MWh]"],
         freq_mins=30,
     )
 
@@ -69,4 +67,6 @@ if __name__ == "__main__":
     print(f"actuals: {actual_account}")
     print(f"forecasts: {forecast_account}")
     print(f"variance: {variance}")
-    print(f"\nforecast error: $ {-1 * variance.cost:2.2f} pct: {100 * variance.cost / actual_account.cost:2.1f} %")
+    print(
+        f"\nforecast error: $ {-1 * variance.cost:2.2f} pct: {100 * variance.cost / actual_account.cost:2.1f} %"
+    )
