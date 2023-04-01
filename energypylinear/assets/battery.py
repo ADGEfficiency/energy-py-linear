@@ -277,7 +277,6 @@ class Battery:
                 epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
             batteries = [self.one_interval(self.optimizer, i, freq, flags)]
-            vars["batteries"].append(batteries)
             vars["assets"].append(batteries)
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
@@ -285,12 +284,7 @@ class Battery:
 
         self.constrain_after_intervals(self.optimizer, vars)
 
-        assert (
-            len(interval_data.idx)
-            == len(vars["assets"])
-            == len(vars["batteries"])
-            == len(vars["sites"])
-        )
+        assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))

@@ -91,7 +91,6 @@ def constrain_within_interval_boilers(
             == asset.high_temperature_generation_mwh
             * (1 / asset.cfg.high_temperature_efficiency_pct)
         )
-
         optimizer.constrain_max(
             asset.high_temperature_generation_mwh,
             asset.binary,
@@ -183,7 +182,6 @@ class Generator:
                 == asset.gas_consumption_mwh * asset.cfg.low_temperature_efficiency_pct
             )
             #  add cooling constraint here TODO
-
             optimizer.constrain_max(
                 asset.electric_generation_mwh,
                 asset.binary,
@@ -253,7 +251,7 @@ class Generator:
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
-                epl.site.site_one_interval(self.optimizer, self.site_cfg, i, freq)
+                epl.site.site_one_interval(self.optimizer, self.site.cfg, i, freq)
             )
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
@@ -265,11 +263,12 @@ class Generator:
             generators = [
                 self.one_interval(self.optimizer, i, freq),
             ]
+            vars["generators"].append(generators)
             boilers = [
                 boiler_one_interval(self.optimizer, self.default_boiler_cfg, i, freq),
             ]
-            vars["generators"].append(generators)
             vars["boilers"].append(boilers)
+
             vars["assets"].append([*generators, *boilers])
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
