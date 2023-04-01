@@ -47,52 +47,9 @@ class BatteryOneInterval(AssetOneInterval):
     efficiency_pct: float
 
 
-def battery_one_interval(
-    optimizer: Optimizer, cfg: BatteryConfig, i: int, freq: Freq, flags: Flags
-) -> BatteryOneInterval:
-    """Create Battery asset data for a single interval."""
-
-    return BatteryOneInterval(
-        cfg=cfg,
-        charge_mwh=optimizer.continuous(
-            f"charge_mwh-{i}", up=freq.mw_to_mwh(cfg.power_mw)
-        ),
-        discharge_mwh=optimizer.continuous(
-            f"discharge_mwh-{i}", up=freq.mw_to_mwh(cfg.power_mw)
-        ),
-        charge_binary=optimizer.binary(f"charge_binary-{i}")
-        if flags.include_charge_discharge_binary_variables
-        else 0,
-        discharge_binary=optimizer.binary(f"discharge_binary-{i}")
-        if flags.include_charge_discharge_binary_variables
-        else 0,
-        losses_mwh=optimizer.continuous(f"losses_mwh-{i}"),
-        initial_charge_mwh=optimizer.continuous(
-            f"initial_charge_mwh-{i}", low=0, up=cfg.capacity_mwh
-        ),
-        final_charge_mwh=optimizer.continuous(
-            f"final_charge_mwh-{i}", low=0, up=cfg.capacity_mwh
-        ),
-        efficiency_pct=cfg.efficiency_pct,
-    )
-
-
-def constrain_within_interval(
-    optimizer: Optimizer,
-    vars: collections.defaultdict,
-    configs: list[BatteryConfig],
-    flags: Flags,
-) -> None:
-    """Constrain battery dispatch within a single interval"""
-    constrain_only_charge_or_discharge(optimizer, vars, configs, flags)
-    constrain_battery_electricity_balance(optimizer, vars)
-    constrain_connection_batteries_between_intervals(optimizer, vars)
-
-
 def constrain_only_charge_or_discharge(
     optimizer: Optimizer,
     vars: collections.defaultdict,
-    configs: list[BatteryConfig],
     flags: Flags,
 ) -> None:
     """Constrain battery to only charge or discharge.
@@ -100,12 +57,14 @@ def constrain_only_charge_or_discharge(
     Usually flagged off - slows things down a lot (~2x as slow).
     """
     if flags.include_charge_discharge_binary_variables:
-        for battery, cfg in zip(vars["batteries"][-1], configs, strict=True):
+        for battery in vars["batteries"][-1]:
             optimizer.constrain_max(
-                battery.charge_mwh, battery.charge_binary, cfg.capacity_mwh
+                battery.charge_mwh, battery.charge_binary, battery.cfg.capacity_mwh
             )
             optimizer.constrain_max(
-                battery.discharge_mwh, battery.discharge_binary, cfg.capacity_mwh
+                battery.discharge_mwh,
+                battery.discharge_binary,
+                battery.cfg.capacity_mwh,
             )
             optimizer.constrain(battery.charge_binary + battery.discharge_binary <= 1)
 
@@ -114,7 +73,11 @@ def constrain_battery_electricity_balance(
     optimizer: Optimizer, vars: collections.defaultdict
 ) -> None:
     """Constrain energy balance in a single interval - also calculates losses."""
-    for battery in vars["batteries"][-1]:
+
+    assets = vars["assets"][-1]
+    batteries = [a for a in assets if isinstance(a, epl.battery.BatteryOneInterval)]
+
+    for battery in batteries:
         optimizer.constrain(
             battery.initial_charge_mwh
             + battery.charge_mwh
@@ -145,13 +108,6 @@ def constrain_connection_batteries_between_intervals(
             optimizer.constrain(alt.final_charge_mwh == neu.initial_charge_mwh)
 
 
-def constrain_after_intervals(
-    optimizer: Optimizer, vars: collections.defaultdict, configs: list[BatteryConfig]
-) -> None:
-    """Constrain battery dispatch after all interval asset models are created."""
-    constrain_initial_final_charge(optimizer, vars, configs)
-
-
 def constrain_initial_final_charge(
     optimizer: Optimizer,
     vars: collections.defaultdict,
@@ -159,14 +115,17 @@ def constrain_initial_final_charge(
 ) -> None:
     """Constrain the battery state of charge at the start and end of the simulation."""
 
-    batteries = vars["batteries"]
-    first = batteries[0]
-    for battery, cfg in zip(first, battery_cfgs, strict=True):
-        optimizer.constrain(battery.initial_charge_mwh == cfg.initial_charge_mwh)
+    assets = vars["assets"][0]
+    first = [a for a in assets if isinstance(a, epl.battery.BatteryOneInterval)]
+    for battery in first:
+        optimizer.constrain(
+            battery.initial_charge_mwh == battery.cfg.initial_charge_mwh
+        )
 
-    last = batteries[-1]
-    for battery, cfg in zip(last, battery_cfgs, strict=True):
-        optimizer.constrain(battery.final_charge_mwh == cfg.final_charge_mwh)
+    assets = vars["assets"][-1]
+    last = [a for a in assets if isinstance(a, epl.battery.BatteryOneInterval)]
+    for battery in last:
+        optimizer.constrain(battery.final_charge_mwh == battery.cfg.final_charge_mwh)
 
 
 class Battery:
@@ -193,6 +152,66 @@ class Battery:
             capacity_mwh=capacity_mwh,
             efficiency_pct=efficiency,
         )
+
+    def setup_initial_final_charge(
+        self, initial_charge_mwh: float, final_charge_mwh: float
+    ):
+        self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)
+        self.cfg.final_charge_mwh = (
+            self.cfg.initial_charge_mwh
+            if final_charge_mwh is None
+            else min(final_charge_mwh, self.cfg.capacity_mwh)
+        )
+
+    def one_interval(
+        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags
+    ) -> BatteryOneInterval:
+        """Create Battery asset data for a single interval."""
+        return BatteryOneInterval(
+            cfg=self.cfg,
+            charge_mwh=optimizer.continuous(
+                f"charge_mwh-{i}", up=freq.mw_to_mwh(self.cfg.power_mw)
+            ),
+            discharge_mwh=optimizer.continuous(
+                f"discharge_mwh-{i}", up=freq.mw_to_mwh(self.cfg.power_mw)
+            ),
+            charge_binary=optimizer.binary(f"charge_binary-{i}")
+            if flags.include_charge_discharge_binary_variables
+            else 0,
+            discharge_binary=optimizer.binary(f"discharge_binary-{i}")
+            if flags.include_charge_discharge_binary_variables
+            else 0,
+            losses_mwh=optimizer.continuous(f"losses_mwh-{i}"),
+            initial_charge_mwh=optimizer.continuous(
+                f"initial_charge_mwh-{i}", low=0, up=self.cfg.capacity_mwh
+            ),
+            final_charge_mwh=optimizer.continuous(
+                f"final_charge_mwh-{i}", low=0, up=self.cfg.capacity_mwh
+            ),
+            efficiency_pct=self.cfg.efficiency_pct,
+        )
+
+    def constrain_within_interval(
+        self,
+        optimizer: Optimizer,
+        vars: collections.defaultdict,
+        flags: Flags,
+        #  for freq
+        **kwargs,
+    ) -> None:
+        """Constrain battery dispatch within a single interval"""
+        constrain_only_charge_or_discharge(optimizer, vars, flags)
+        constrain_battery_electricity_balance(optimizer, vars)
+        constrain_connection_batteries_between_intervals(optimizer, vars)
+
+    def constrain_after_intervals(
+        self,
+        optimizer: Optimizer,
+        vars: collections.defaultdict,
+        configs: list[BatteryConfig],
+    ) -> None:
+        """Constrain battery dispatch after all interval asset models are created."""
+        constrain_initial_final_charge(optimizer, vars, configs)
 
     def optimize(
         self,
@@ -242,18 +261,12 @@ class Battery:
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
-        self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)
-        self.cfg.final_charge_mwh = (
-            self.cfg.initial_charge_mwh
-            if final_charge_mwh is None
-            else min(final_charge_mwh, self.cfg.capacity_mwh)
-        )
+        self.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
 
         #  TODO - difficult to type the list of list thing
         #  maybe sign something should be reworked with this `vars` dict
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
-
             vars["sites"].append(
                 site.site_one_interval(self.optimizer, self.site_cfg, i, freq)
             )
@@ -263,12 +276,12 @@ class Battery:
             vars["valves"].append(
                 epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
-            batteries = [battery_one_interval(self.optimizer, self.cfg, i, freq, flags)]
+            batteries = [self.one_interval(i, freq, flags)]
             vars["batteries"].append(batteries)
             vars["assets"].append(batteries)
 
             site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-            constrain_within_interval(self.optimizer, vars, [self.cfg], flags)
+            self.constrain_within_interval(self.optimizer, vars, flags=flags)
 
         constrain_after_intervals(self.optimizer, vars, [self.cfg])
 

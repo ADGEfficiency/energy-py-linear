@@ -1,9 +1,14 @@
 """Site asset for optimizing dispatch of combined heat and power (CHP) generators."""
+import collections
+import typing
+
 import numpy as np
 import pulp
 import pydantic
 
 import energypylinear as epl
+from energypylinear.defaults import defaults
+from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
@@ -138,14 +143,84 @@ def constrain_site_low_temperature_heat_balance(
     )
 
 
-def constrain_within_interval(
-    optimizer: Optimizer,
-    vars: dict,
-    interval_data: "epl.interval_data.IntervalData",
-    i: int,
-) -> None:
-    """Constrain site within a single interval."""
-    constrain_site_electricity_balance(optimizer, vars)
-    constrain_site_import_export(optimizer, vars)
-    constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i)
-    constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, i)
+class Site:
+    def __init__(
+        self,
+        assets: list,
+        cfg: SiteConfig = SiteConfig(),
+    ):
+        self.assets = assets
+        self.site_cfg = cfg
+
+    def constrain_within_interval(
+        self,
+        vars: dict,
+        interval_data: "epl.interval_data.IntervalData",
+        i: int,
+    ) -> None:
+        """Constrain site within a single interval."""
+        constrain_site_electricity_balance(self.optimizer, vars)
+        constrain_site_import_export(self.optimizer, vars)
+        constrain_site_high_temperature_heat_balance(
+            self.optimizer, vars, interval_data, i
+        )
+        constrain_site_low_temperature_heat_balance(
+            self.optimizer, vars, interval_data, i
+        )
+
+    def optimize(
+        self,
+        electricity_prices: np.ndarray,
+        freq_mins: int = defaults.freq_mins,
+        initial_charge_mwh: float = 0.0,
+        final_charge_mwh: typing.Union[float, None] = None,
+        flags: Flags = Flags(),
+    ):
+        for asset in self.assets:
+            if isinstance(asset, epl.Battery):
+                asset.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
+
+        self.optimizer = Optimizer()
+        freq = Freq(freq_mins)
+
+        interval_data = epl.interval_data.IntervalData(
+            electricity_prices=electricity_prices,
+            # gas_prices=gas_prices,
+            # electricity_carbon_intensities=electricity_carbon_intensities,
+            # high_temperature_load_mwh=high_temperature_load_mwh,
+            # low_temperature_load_mwh=low_temperature_load_mwh,
+        )
+
+        self.spill_cfg = epl.spill.SpillConfig()
+        self.valve_cfg = epl.valve.ValveConfig(name="valve")
+
+        vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
+        for i in interval_data.idx:
+            assets = []
+
+            vars["sites"].append(
+                #  TODO self.one_interval
+                site_one_interval(self.optimizer, self.site_cfg, i, freq)
+            )
+            vars["spills"].append(
+                epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
+            )
+            vars["valves"].append(
+                epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
+            )
+            for asset in self.assets:
+                assets.extend([asset.one_interval(self.optimizer, i, freq, flags)])
+
+            vars["assets"].append(assets)
+            self.constrain_within_interval(vars, interval_data, i)
+
+            for asset in self.assets:
+                asset.constrain_within_interval(
+                    self.optimizer, vars, flags=flags, freq=freq
+                )
+
+        for asset in self.assets:
+            asset.constrain_after_intervals(self.optimizer, vars, asset.cfg)
+
+        assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
+        breakpoint()  # fmt: skip

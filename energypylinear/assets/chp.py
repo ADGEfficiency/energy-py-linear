@@ -81,32 +81,6 @@ def boiler_one_interval(
     )
 
 
-def generator_one_interval(
-    optimizer: Optimizer, cfg: GeneratorConfig, i: int, freq: Freq
-) -> GeneratorOneInterval:
-    """Create a Generator asset model for one interval."""
-    return GeneratorOneInterval(
-        electric_generation_mwh=optimizer.continuous(
-            f"{cfg.name}-electric_generation_mwh-{i}",
-            low=0,
-            up=freq.mw_to_mwh(cfg.electric_power_max_mw),
-        ),
-        binary=optimizer.binary(
-            f"{cfg.name}-binary_mwh-{i}",
-        ),
-        gas_consumption_mwh=optimizer.continuous(f"{cfg.name}-gas_consumption_mwh-{i}"),
-        high_temperature_generation_mwh=optimizer.continuous(
-            f"{cfg.name}-high_temperature_generation_mwh-{i}",
-            low=0,
-        ),
-        low_temperature_generation_mwh=optimizer.continuous(
-            f"{cfg.name}-low_temperature_generation_mwh-{i}",
-            low=0,
-        ),
-        cfg=cfg,
-    )
-
-
 def constrain_within_interval_boilers(
     optimizer: Optimizer, vars: dict, freq: Freq
 ) -> None:
@@ -127,37 +101,6 @@ def constrain_within_interval_boilers(
             asset.high_temperature_generation_mwh,
             asset.binary,
             freq.mw_to_mwh(asset.cfg.high_temperature_generation_min_mw),
-        )
-
-
-def constrain_within_interval_generators(
-    optimizer: Optimizer, vars: dict, freq: Freq
-) -> None:
-    """Constrain generator upper and lower bounds for generating electricity, high & low temperature heat."""
-    for asset in vars["generators"][-1]:
-        optimizer.constrain(
-            asset.gas_consumption_mwh
-            == asset.electric_generation_mwh * (1 / asset.cfg.electric_efficiency_pct)
-        )
-        optimizer.constrain(
-            asset.high_temperature_generation_mwh
-            == asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
-        )
-        optimizer.constrain(
-            asset.low_temperature_generation_mwh
-            == asset.gas_consumption_mwh * asset.cfg.low_temperature_efficiency_pct
-        )
-        #  add cooling constraint here TODO
-
-        optimizer.constrain_max(
-            asset.electric_generation_mwh,
-            asset.binary,
-            freq.mw_to_mwh(asset.cfg.electric_power_max_mw),
-        )
-        optimizer.constrain_min(
-            asset.electric_generation_mwh,
-            asset.binary,
-            freq.mw_to_mwh(asset.cfg.electric_power_min_mw),
         )
 
 
@@ -191,6 +134,69 @@ class Generator:
             high_temperature_efficiency_pct=high_temperature_efficiency_pct,
             low_temperature_efficiency_pct=low_temperature_efficiency_pct,
         )
+
+    def one_interval(
+        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
+    ) -> GeneratorOneInterval:
+        """Create a Generator asset model for one interval."""
+        return GeneratorOneInterval(
+            electric_generation_mwh=optimizer.continuous(
+                f"{self.cfg.name}-electric_generation_mwh-{i}",
+                low=0,
+                up=freq.mw_to_mwh(self.cfg.electric_power_max_mw),
+            ),
+            binary=optimizer.binary(
+                f"{self.cfg.name}-binary_mwh-{i}",
+            ),
+            gas_consumption_mwh=optimizer.continuous(
+                f"{self.cfg.name}-gas_consumption_mwh-{i}"
+            ),
+            high_temperature_generation_mwh=optimizer.continuous(
+                f"{self.cfg.name}-high_temperature_generation_mwh-{i}",
+                low=0,
+            ),
+            low_temperature_generation_mwh=optimizer.continuous(
+                f"{self.cfg.name}-low_temperature_generation_mwh-{i}",
+                low=0,
+            ),
+            cfg=self.cfg,
+        )
+
+    def constrain_within_interval(
+        self, optimizer: Optimizer, vars: dict, freq: Freq, flags: Flags = Flags()
+    ) -> None:
+        """Constrain generator upper and lower bounds for generating electricity, high & low temperature heat."""
+        assets = vars["assets"][-1]
+        generators = [a for a in assets if isinstance(a, epl.chp.GeneratorOneInterval)]
+        for asset in generators:
+            optimizer.constrain(
+                asset.gas_consumption_mwh
+                == asset.electric_generation_mwh
+                * (1 / asset.cfg.electric_efficiency_pct)
+            )
+            optimizer.constrain(
+                asset.high_temperature_generation_mwh
+                == asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
+            )
+            optimizer.constrain(
+                asset.low_temperature_generation_mwh
+                == asset.gas_consumption_mwh * asset.cfg.low_temperature_efficiency_pct
+            )
+            #  add cooling constraint here TODO
+
+            optimizer.constrain_max(
+                asset.electric_generation_mwh,
+                asset.binary,
+                freq.mw_to_mwh(asset.cfg.electric_power_max_mw),
+            )
+            optimizer.constrain_min(
+                asset.electric_generation_mwh,
+                asset.binary,
+                freq.mw_to_mwh(asset.cfg.electric_power_min_mw),
+            )
+
+    def constrain_after_intervals(self, *args, **kwargs):
+        pass
 
     def optimize(
         self,
@@ -257,7 +263,7 @@ class Generator:
             )
 
             generators = [
-                generator_one_interval(self.optimizer, self.cfg, i, freq),
+                self.one_interval(self.optimizer, i, freq),
             ]
             boilers = [
                 boiler_one_interval(self.optimizer, self.default_boiler_cfg, i, freq),
@@ -267,7 +273,7 @@ class Generator:
             vars["assets"].append([*generators, *boilers])
 
             epl.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-            constrain_within_interval_generators(self.optimizer, vars, freq)
+            self.constrain_within_interval(self.optimizer, vars, freq)
             constrain_within_interval_boilers(self.optimizer, vars, freq)
             epl.valve.constrain_within_interval_valve(self.optimizer, vars)
 
