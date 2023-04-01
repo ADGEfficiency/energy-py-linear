@@ -174,7 +174,9 @@ class Site:
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,
+        objective: str = "price",
         flags: Flags = Flags(),
+        verbose: int = 0,
     ):
         for asset in self.assets:
             if isinstance(asset, epl.Battery):
@@ -193,6 +195,11 @@ class Site:
 
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
+
+        names = [asset.cfg.name for asset in self.assets]
+        assert len(names) == len(
+            set(names)
+        ), f"Asset names must be unique, your assets are called {names}"
 
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
@@ -223,4 +230,9 @@ class Site:
             asset.constrain_after_intervals(self.optimizer, vars, asset.cfg)
 
         assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
-        breakpoint()  # fmt: skip
+
+        objective_fn = epl.objectives[objective]
+        self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
+        _, feasible = self.optimizer.solve(verbose=verbose)
+        self.interval_data = interval_data
+        return epl.results.extract_results(interval_data, vars, feasible=feasible)

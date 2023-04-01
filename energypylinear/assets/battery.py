@@ -143,11 +143,11 @@ class Battery:
         power_mw: float,
         capacity_mwh: float,
         efficiency: float = 0.9,
-        battery_name: str = "battery",
+        name: str = "battery",
     ):
         """Initialize a Battery asset model."""
         self.cfg = BatteryConfig(
-            name=battery_name,
+            name=name,
             power_mw=power_mw,
             capacity_mwh=capacity_mwh,
             efficiency_pct=efficiency,
@@ -170,23 +170,26 @@ class Battery:
         return BatteryOneInterval(
             cfg=self.cfg,
             charge_mwh=optimizer.continuous(
-                f"charge_mwh-{i}", up=freq.mw_to_mwh(self.cfg.power_mw)
+                f"{self.cfg.name}-charge_mwh-{i}", up=freq.mw_to_mwh(self.cfg.power_mw)
             ),
             discharge_mwh=optimizer.continuous(
-                f"discharge_mwh-{i}", up=freq.mw_to_mwh(self.cfg.power_mw)
+                f"{self.cfg.name}-discharge_mwh-{i}",
+                up=freq.mw_to_mwh(self.cfg.power_mw),
             ),
-            charge_binary=optimizer.binary(f"charge_binary-{i}")
+            charge_binary=optimizer.binary(f"{self.cfg.name}-charge_binary-{i}")
             if flags.include_charge_discharge_binary_variables
             else 0,
-            discharge_binary=optimizer.binary(f"discharge_binary-{i}")
+            discharge_binary=optimizer.binary(f"{self.cfg.name}-discharge_binary-{i}")
             if flags.include_charge_discharge_binary_variables
             else 0,
-            losses_mwh=optimizer.continuous(f"losses_mwh-{i}"),
+            losses_mwh=optimizer.continuous(f"{self.cfg.name}-losses_mwh-{i}"),
             initial_charge_mwh=optimizer.continuous(
-                f"initial_charge_mwh-{i}", low=0, up=self.cfg.capacity_mwh
+                f"{self.cfg.name}-initial_charge_mwh-{i}",
+                low=0,
+                up=self.cfg.capacity_mwh,
             ),
             final_charge_mwh=optimizer.continuous(
-                f"final_charge_mwh-{i}", low=0, up=self.cfg.capacity_mwh
+                f"{self.cfg.name}-final_charge_mwh-{i}", low=0, up=self.cfg.capacity_mwh
             ),
             efficiency_pct=self.cfg.efficiency_pct,
         )
