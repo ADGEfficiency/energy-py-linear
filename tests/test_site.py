@@ -7,7 +7,7 @@ assets = [
         efficiency=0.9,
     ),
     epl.Battery(power_mw=40, capacity_mwh=10, efficiency=0.8, name="battery-2"),
-    epl.chp.Generator(
+    epl.Generator(
         electric_power_max_mw=100,
         electric_power_min_mw=50,
         electric_efficiency_pct=0.3,

@@ -262,7 +262,6 @@ class EVs:
             electricity_carbon_intensities - carbon intensity of electricity in each interval.
             freq_mins - the size of an interval in minutes.
             objective - the optimization objective - either "price" or "carbon".
-            allow_infeasible: whether to fail on infeasible linear programs.
 
         Returns:
             epl.results.SimulationResult
@@ -286,7 +285,7 @@ class EVs:
             ),
         )
         assert interval_data.evs
-        self.site_cfg = epl.assets.site.SiteConfig()
+        self.site = epl.assets.site.Site()
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
@@ -295,7 +294,7 @@ class EVs:
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
-                site.site_one_interval(self.optimizer, self.site_cfg, i, freq)
+                site.site_one_interval(self.optimizer, self.site.cfg, i, freq)
             )
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
@@ -325,7 +324,7 @@ class EVs:
             vars["spill-evs-array"].append(spill_evs_array)
             vars["assets"].append([*evs, *spill_evs])
 
-            site.constrain_within_interval(self.optimizer, vars, interval_data, i)
+            self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             constrain_within_interval(
                 self.optimizer,
                 evs_array,

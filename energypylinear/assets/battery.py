@@ -111,7 +111,6 @@ def constrain_connection_batteries_between_intervals(
 def constrain_initial_final_charge(
     optimizer: Optimizer,
     vars: collections.defaultdict,
-    battery_cfgs: list[BatteryConfig],
 ) -> None:
     """Constrain the battery state of charge at the start and end of the simulation."""
 
@@ -211,10 +210,9 @@ class Battery:
         self,
         optimizer: Optimizer,
         vars: collections.defaultdict,
-        configs: list[BatteryConfig],
     ) -> None:
         """Constrain battery dispatch after all interval asset models are created."""
-        constrain_initial_final_charge(optimizer, vars, configs)
+        constrain_initial_final_charge(optimizer, vars)
 
     def optimize(
         self,
@@ -228,7 +226,6 @@ class Battery:
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
-        allow_infeasible: bool = False,
         flags: Flags = Flags(),
         verbose: int = 0,
     ) -> "epl.results.SimulationResult":
@@ -244,7 +241,6 @@ class Battery:
             initial_charge_mwh: initial charge state of the battery in mega-watt hours.
             final_charge_mwh: final charge state of the battery in mega-watt hours.
             objective: the optimization objective - either "price" or "carbon".
-            allow_infeasible: whether to fail on infeasible linear programs.
             flags: boolean flags to change simulation and results behaviour.
             verbose: level of printing.
 
@@ -260,7 +256,8 @@ class Battery:
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
-        self.site_cfg = epl.assets.site.SiteConfig()
+        self.site = epl.assets.site.Site()
+
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
@@ -271,7 +268,7 @@ class Battery:
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
-                site.site_one_interval(self.optimizer, self.site_cfg, i, freq)
+                site.site_one_interval(self.optimizer, self.site.cfg, i, freq)
             )
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
@@ -279,14 +276,14 @@ class Battery:
             vars["valves"].append(
                 epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
-            batteries = [self.one_interval(i, freq, flags)]
+            batteries = [self.one_interval(self.optimizer, i, freq, flags)]
             vars["batteries"].append(batteries)
             vars["assets"].append(batteries)
 
-            site.constrain_within_interval(self.optimizer, vars, interval_data, i)
+            self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             self.constrain_within_interval(self.optimizer, vars, flags=flags)
 
-        constrain_after_intervals(self.optimizer, vars, [self.cfg])
+        self.constrain_after_intervals(self.optimizer, vars)
 
         assert (
             len(interval_data.idx)

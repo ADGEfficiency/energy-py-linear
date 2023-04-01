@@ -234,7 +234,7 @@ class Generator:
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
-        self.site_cfg = epl.site.SiteConfig()
+        self.site = epl.site.Site()
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
@@ -272,7 +272,7 @@ class Generator:
             vars["boilers"].append(boilers)
             vars["assets"].append([*generators, *boilers])
 
-            epl.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
+            self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             self.constrain_within_interval(self.optimizer, vars, freq)
             constrain_within_interval_boilers(self.optimizer, vars, freq)
             epl.valve.constrain_within_interval_valve(self.optimizer, vars)

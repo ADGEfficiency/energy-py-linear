@@ -146,27 +146,24 @@ def constrain_site_low_temperature_heat_balance(
 class Site:
     def __init__(
         self,
-        assets: list,
+        assets: typing.Optional[list] = None,
         cfg: SiteConfig = SiteConfig(),
     ):
         self.assets = assets
-        self.site_cfg = cfg
+        self.cfg = cfg
 
     def constrain_within_interval(
         self,
+        optimizer: Optimizer,
         vars: dict,
         interval_data: "epl.interval_data.IntervalData",
         i: int,
     ) -> None:
         """Constrain site within a single interval."""
-        constrain_site_electricity_balance(self.optimizer, vars)
-        constrain_site_import_export(self.optimizer, vars)
-        constrain_site_high_temperature_heat_balance(
-            self.optimizer, vars, interval_data, i
-        )
-        constrain_site_low_temperature_heat_balance(
-            self.optimizer, vars, interval_data, i
-        )
+        constrain_site_electricity_balance(optimizer, vars)
+        constrain_site_import_export(optimizer, vars)
+        constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i)
+        constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, i)
 
     def optimize(
         self,
@@ -207,7 +204,7 @@ class Site:
 
             vars["sites"].append(
                 #  TODO self.one_interval
-                site_one_interval(self.optimizer, self.site_cfg, i, freq)
+                site_one_interval(self.optimizer, self.cfg, i, freq)
             )
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
@@ -219,7 +216,7 @@ class Site:
                 assets.extend([asset.one_interval(self.optimizer, i, freq, flags)])
 
             vars["assets"].append(assets)
-            self.constrain_within_interval(vars, interval_data, i)
+            self.constrain_within_interval(self.optimizer, vars, interval_data, i)
 
             for asset in self.assets:
                 asset.constrain_within_interval(
@@ -227,7 +224,8 @@ class Site:
                 )
 
         for asset in self.assets:
-            asset.constrain_after_intervals(self.optimizer, vars, asset.cfg)
+            #  TODO think I'm overconstraning here
+            asset.constrain_after_intervals(self.optimizer, vars)
 
         assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
 
