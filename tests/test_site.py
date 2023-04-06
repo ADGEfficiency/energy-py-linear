@@ -50,6 +50,11 @@ class Tariff(pydantic.BaseModel):
     quantity: str
     rate: np.ndarray
 
+    output_unit: str = "$"
+
+    #  -1.0 = cost, 0.0 = off, 1.0 = revenue
+    cost: int = -1.0
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -62,23 +67,32 @@ class Participant(pydantic.BaseModel):
         arbitrary_types_allowed = True
 
 
-def get_participants():
+def get_participants(n=268):
     return {
         "site": Participant(
             name="site",
             tariffs=[
                 Tariff(
-                    asset="site", quantity="import_power_mwh", rate=np.array([1, 2])
+                    asset="site",
+                    quantity="import_power_mwh",
+                    rate=np.random.uniform(-1000, 1000, n),
                 ),
                 Tariff(
-                    asset="site", quantity="export_power_mwh", rate=np.array([1, 2])
+                    asset="site",
+                    quantity="export_power_mwh",
+                    rate=np.random.uniform(-1000, 1000, n),
                 ),
             ],
         ),
         "planet": Participant(
             name="planet",
             tariffs=[
-                Tariff(asset="site", quantity="import_power_mwh", rate=np.array([1, 2]))
+                Tariff(
+                    asset="site",
+                    quantity="import_power_mwh",
+                    rate=np.random.uniform(-1, 1, n),
+                    output_unit="tC",
+                )
             ],
         ),
     }
@@ -254,4 +268,78 @@ def test_multi_asset_site():
     assert results.simulation["electric_generation_mwh"].sum() > 0
 
     #  TODO participant optimization
-    participants = get_participants()
+    participants = get_participants(n=268)
+    site = epl.Site(assets=assets)
+    results = site.optimize(
+        electricity_prices=interval_data.electricity_prices,
+        objective_fn=create_objective_from_tariffs,
+        participants=participants,
+        objective="site",
+    )
+    assert results.simulation["electric_generation_mwh"].sum() > 0
+
+    """
+
+    """
+
+    class Account(pydantic.BaseModel):
+        items: int
+        cost: float
+        revenue: float
+        profit: float
+        emissions: float
+
+    def get_accounts_for_participants(
+        interval_data, simulation, participants
+    ) -> dict[str, Account]:
+        epl.results.validate_results(interval_data, simulation)
+
+        out = {}
+        for p_name, participant in participants.items():
+            account_items = {}
+            for tariff in participant.tariffs:
+                name = f"{tariff.asset}-{tariff.quantity}"
+                name = "_".join(name.split("_")[:-1]) + f"_{tariff.output_unit}"
+                account_items[name] = (
+                    simulation[tariff.quantity] * tariff.rate * tariff.cost
+                ).sum()
+
+            out[p_name] = account_items
+            cost = -sum(
+                [
+                    a
+                    for name, a in account_items.items()
+                    if (a < 0) and (name.endswith("_$"))
+                ]
+            )
+            revenue = sum(
+                [
+                    a
+                    for name, a in account_items.items()
+                    if (a > 0) and (name.endswith("_$"))
+                ]
+            )
+            emissions = sum(
+                [a for name, a in account_items.items() if name.endswith("_tC")]
+            )
+            print(p_name, cost, revenue, emissions)
+
+            out[p_name] = Account(
+                items=len(account_items),
+                cost=cost,
+                revenue=revenue,
+                profit=revenue - cost,
+                emissions=emissions,
+            )
+
+        return out
+
+    accounts = get_accounts_for_participants(
+        results.interval_data, results.simulation, participants
+    )
+    breakpoint()  # fmt: skip
+
+    """
+    will need to redo the __sub__
+    how to have costs and revenues?
+    """

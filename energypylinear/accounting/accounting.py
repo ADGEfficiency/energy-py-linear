@@ -92,9 +92,6 @@ def get_one_electricity_account(
         interval_data.electricity_carbon_intensities * results["export_power_mwh"]
     ).sum()
 
-    # id = interval_data.electricity_carbon_intensities
-    # pr = results["import_power_mwh"].values
-    # breakpoint()  # fmt: skip
     return ElectricityAccount(
         import_cost=import_cost,
         export_cost=export_cost,
