@@ -105,10 +105,11 @@ class IntervalData(pydantic.BaseModel):
     """
 
     electricity_prices: np.ndarray
-    electricity_carbon_intensities: typing.Union[np.ndarray, None]
-    gas_prices: np.ndarray
-    high_temperature_load_mwh: np.ndarray
-    low_temperature_load_mwh: np.ndarray
+    electricity_carbon_intensities: typing.Optional[np.ndarray] = None
+    gas_prices: typing.Optional[np.ndarray] = None
+    high_temperature_load_mwh: typing.Optional[np.ndarray] = None
+    low_temperature_load_mwh: typing.Optional[np.ndarray] = None
+    electricity_load_mwh: typing.Optional[np.ndarray] = None
     idx: list[int] = []
 
     evs: typing.Union[EVIntervalData, None] = None
@@ -143,6 +144,7 @@ class IntervalData(pydantic.BaseModel):
             "electricity_carbon_intensities",
             "high_temperature_load_mwh",
             "low_temperature_load_mwh",
+            "electricity_load_mwh",
         ]
         for field in fields:
             value = values.get(field)
@@ -165,16 +167,14 @@ class IntervalData(pydantic.BaseModel):
         return values
 
     @pydantic.validator("idx", always=True)
-    def setup_idx(cls, value: list, values: dict) -> list:
+    def setup_idx(cls, _: list, values: dict) -> list:
         """Create an integer index."""
         return list(range(len(values["electricity_prices"])))
 
     def to_dataframe(self) -> pd.DataFrame:
         """Save all interval data to a pandas DataFrame."""
         data = self.dict()
-
         expected_len = len(data["idx"])
-
         df = {}
         for name, data in data.items():
             if data is not None:

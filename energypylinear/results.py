@@ -1,4 +1,4 @@
-"""Extract results from a solved linear program."""
+"""Extract results from a solved linear program to pd.DataFrame's."""
 import collections
 
 import numpy as np
@@ -45,16 +45,18 @@ def extract_results(
         results["import_power_mwh"].append(site.import_power_mwh.value())
         results["export_power_mwh"].append(site.export_power_mwh.value())
 
-        spill = vars["spills"][i]
-        for attr in [
-            "electric_generation_mwh",
-            "high_temperature_generation_mwh",
-            "electric_load_mwh",
-            "low_temperature_load_mwh",
-        ]:
-            name = f"{spill.cfg.name}"
-            results[f"{name}-{attr}"].append(getattr(spill, attr).value())
+        if "spills" in vars:
+            spill = vars["spills"][i]
+            for attr in [
+                "electric_generation_mwh",
+                "high_temperature_generation_mwh",
+                "electric_load_mwh",
+                "low_temperature_load_mwh",
+            ]:
+                name = f"{spill.cfg.name}"
+                results[f"{name}-{attr}"].append(getattr(spill, attr).value())
 
+        #  needs to change
         if len(vars["batteries"]) > 0:
             for battery in vars["batteries"][i]:
                 name = f"{battery.cfg.name}"

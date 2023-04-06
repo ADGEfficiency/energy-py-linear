@@ -139,8 +139,8 @@ class Battery:
 
     def __init__(
         self,
-        power_mw: float,
-        capacity_mwh: float,
+        power_mw: float = 2.0,
+        capacity_mwh: float = 4.0,
         efficiency: float = 0.9,
         name: str = "battery",
     ):

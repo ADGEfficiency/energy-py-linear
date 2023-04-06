@@ -10,6 +10,7 @@ def price_objective(
     optimizer: epl.optimizer.Optimizer,
     vars: dict,
     interval_data: "epl.interval_data.IntervalData",
+    tariffs: None = None,
 ) -> pulp.LpAffineExpression:
     """
     Linear programming objective for cost minimization.  Equivilant to profit maximization.
@@ -71,6 +72,7 @@ def carbon_objective(
     optimizer: epl.optimizer.Optimizer,
     vars: dict,
     interval_data: "epl.interval_data.IntervalData",
+    tariffs: None = None,
 ) -> pulp.LpAffineExpression:
     """
     Linear programming objective for carbon emission minimization.

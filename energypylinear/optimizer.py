@@ -3,9 +3,16 @@ Interface to the `pulp` optimization library to solve linear programming problem
 
 The `Optimizer` allows creating linear constraints, variables, and objectives, along with a linear program solver.
 """
+import dataclasses
 import typing
 
 import pulp
+
+
+@dataclasses.dataclass
+class OptimizationStatus:
+    status: str
+    feasible: bool
 
 
 class Optimizer:
@@ -21,6 +28,9 @@ class Optimizer:
         """Initialize an Optimizer."""
         self.prob = pulp.LpProblem("prob", pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=0)
+
+    def __repr__(self) -> str:
+        return f"<energypylinear.Optimizer variables: {len(self.variables())} constraints: {len(self.constraints())}>"
 
     def continuous(
         self, name: str, low: float = 0, up: typing.Optional[float] = None
@@ -71,16 +81,12 @@ class Optimizer:
 
     def solve(
         self, verbose: int = 0, allow_infeasible: bool = False
-    ) -> tuple[str, bool]:
+    ) -> OptimizationStatus:
         """Solve the optimization problem.
 
         Args:
             verbose: a flag indicating how verbose the output should be.  0 for no output.
             allow_infeasible: whether an infeasible solution should raise an error.
-
-        Returns:
-            status: optimization status like `Optimial` or `Infeasible`
-            feasible: whether optimization was feasible or not.
         """
         self.assert_no_duplicate_variables()
         self.solver.solve(self.prob)
@@ -93,7 +99,7 @@ class Optimizer:
         if not allow_infeasible:
             assert feasible
 
-        return status, feasible
+        return OptimizationStatus(status=status, feasible=feasible)
 
     def assert_no_duplicate_variables(self) -> None:
         """Check there are no duplicate variable names in the optimization problem."""

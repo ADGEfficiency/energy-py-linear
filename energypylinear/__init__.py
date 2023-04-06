@@ -8,11 +8,15 @@ from energypylinear.assets.chp import Generator
 from energypylinear.assets.site import Site
 from energypylinear.interval_data import IntervalData
 from energypylinear.objectives import objectives
+from energypylinear.optimizer import Optimizer
+from energypylinear.freq import Freq
 
 __all__ = [
     "Battery",
     "Generator",
     "Site",
+    "Optimizer",
+    "Freq",
     "IntervalData",
     "get_accounts",
 ]
