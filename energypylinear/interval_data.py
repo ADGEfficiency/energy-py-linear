@@ -119,6 +119,9 @@ class IntervalData(pydantic.BaseModel):
 
         arbitrary_types_allowed = True
 
+    def __repr__(self) -> str:
+        return f"<epl.IntervalData n: {self.electricity_prices.shape[0]} electricity_prices: {self.electricity_prices.mean():2.1f}>"
+
     @pydantic.validator("evs")
     def validate_evs(
         cls, evs: "epl.interval_data.EVIntervalData", values: dict

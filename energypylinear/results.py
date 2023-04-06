@@ -56,9 +56,10 @@ def extract_results(
                 name = f"{spill.cfg.name}"
                 results[f"{name}-{attr}"].append(getattr(spill, attr).value())
 
-        #  needs to change
-        if len(vars["batteries"]) > 0:
-            for battery in vars["batteries"][i]:
+        #  needs to change with the removal of the batteries flag
+        batteries = epl.utils.filter_assets(vars, "battery", i=i)
+        if len(batteries) > 0:
+            for battery in batteries:
                 name = f"{battery.cfg.name}"
                 for attr in [
                     "charge_mwh",
@@ -74,8 +75,9 @@ def extract_results(
                         optimizer.value(getattr(battery, attr))
                     )
 
-        if len(vars["generators"]) > 0:
-            for generator in vars["generators"][i]:
+        generators = epl.utils.filter_assets(vars, "generator", i=i)
+        if generators:
+            for generator in generators:
                 name = f"{generator.cfg.name}"
                 for attr in [
                     "electric_generation_mwh",
@@ -118,6 +120,7 @@ def extract_results(
                     results[f"{charger_cfg.name}-{attr}"].append(
                         sum([x.value() for x in getattr(evs, attr)[0, :, charger_idx]])
                     )
+
             for charge_event_idx, _ in enumerate(evs.charger_cfgs[0, :, 0]):
                 for attr in ["charge_mwh"]:
                     results[f"spill-charge-event-{charge_event_idx}-{attr}"].append(
@@ -151,6 +154,7 @@ def extract_results(
     #  can I do this without pandas??
     for col in [
         "electric_generation_mwh",
+        "electric_load_mwh",
         "gas_consumption_mwh",
         "high_temperature_generation_mwh",
     ]:
@@ -208,6 +212,37 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
         interval_data: input interval data to the simulation.
         simulation: simulation results.
     """
+    #  energy balance
+
+    inp = simulation["import_power_mwh"] + simulation["electric_generation_mwh"]
+    out = simulation["export_power_mwh"] + simulation["electric_load_mwh"]
+
+    charge = simulation[[c for c in simulation.columns if "-charge_mwh" in c]].sum(
+        axis=1
+    )
+    discharge = simulation[
+        [c for c in simulation.columns if "-discharge_mwh" in c]
+    ].sum(axis=1)
+
+    balance = inp + discharge == out + charge
+
+    spills = simulation[[c for c in simulation.columns if "spill" in c]]
+    losses = simulation[[c for c in simulation.columns if "-losses_mwh" in c]]
+    data = pd.DataFrame(
+        {
+            "import": simulation["import_power_mwh"],
+            "generation": simulation["electric_generation_mwh"],
+            "export": simulation["export_power_mwh"],
+            "load": simulation["electric_load_mwh"],
+            "charge": charge,
+            "discharge": discharge,
+            "balance": balance,
+            "loss": losses.sum(axis=1),
+            "spills": spills.sum(axis=1),
+        }
+    )
+
+    assert balance.all()
 
     cols = [
         "import_power_mwh",

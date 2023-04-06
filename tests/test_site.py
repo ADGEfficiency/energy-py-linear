@@ -3,90 +3,14 @@ import collections
 import energypylinear as epl
 from energypylinear.defaults import defaults
 
-
-def wip():
-    assets = [
-        epl.Battery(
-            power_mw=20,
-            capacity_mwh=40,
-            efficiency=0.9,
-        ),
-        epl.Battery(power_mw=40, capacity_mwh=10, efficiency=0.8, name="battery-2"),
-        epl.Generator(
-            electric_power_max_mw=100,
-            electric_power_min_mw=50,
-            electric_efficiency_pct=0.3,
-            high_temperature_efficiency_pct=0.5,
-        ),
-    ]
-
-    site = epl.Site()
-
-    participant = epl.Participant(
-        name="retailer",
-        tariffs=[
-            Tariff(asset="site", quantity="import_power_mwh", rate=np.array([1, 2])),
-            Tariff(asset="site", quantity="export_power_mwh", rate=np.array([1, 2])),
-        ],
-    )
-
-    planet = epl.Participant(
-        name="planet",
-        tariffs=[
-            Tariff(
-                quantity="import_power_mwh", rate=np.array([1, 2]), name="grid_carbon"
-            )
-        ],
-    )
-
-    participants = [participant, planet]
-
-    #  TODO
-    """
-    how to do this?
-    - do I want multiple loads - hmmmmm
-
-    I think load can just be another asset
-
-    """
-    loads = None
-
-    #  accounts for all participants
-
-    #  TODO think about interval data stuff
-    accounts = site.optimize(
-        assets=assets, participants=participants, objective="retailer"
-    )
-
-
 """
-## What the Site API Doesn't Do
-
-- scenarios
-- baselines
-- complex tariffs - leave til later
-- inflation / future stuff
-
-## How to make the objective function work
-
-Participants -> tariffs -> objective function
-
-Need to make the objective function from a list of tariffs
-
-objective = create_objective(
-    participant.tariffs, vars
-)
-
-- a tariff applies to one asset
-- the tariff attaches a rate to a quantity
-- quantity comes from the OneInterval stuff
-- the site asset serves as the sum / balance of all assets
-
 ## How to make `asset.optimize` work
 
-participant level optimization only enabled for the site API - for any smaller asset, it just uses the data that goes in
+participant level optimization only enabled for the site API - for any smaller asset, it just uses the data that goes in.
 
-- currently those assets get electricity_prices, gas prices, electricity_carbon_intensities as inputs
+- currently those assets get electricity_prices, gas prices, electricity_carbon_intensities as inputs - reasoning is to keep this interface for those who don't want to worry about concepts like participants, assets or tariffs
+
+If you want to do participant level optimization for a single asset, you can create a site with one asset
 
 asset knows about the site & participant api, and can implement it during it's `optimize` function
 
@@ -101,10 +25,6 @@ asset.optimize(electricity_prices)
     participant = Participant(flows=tariffs, name="global")
 
     objective = make_objective(tariffs)
-
-This allows the public interface of `electricity_prices` to integrate with the `Tariff` or `Flow` API
-
-it's up to the Asset.__init__ to implement ways for costs to be assigned to attirbutes of the one_interval class
 
 - do manually
 - maybe need a automatic way as well - something like `quantity=power_generation_mwh, rate=rate` which get automatically propagated into the objective function
@@ -154,11 +74,17 @@ def get_participants():
                     asset="site", quantity="export_power_mwh", rate=np.array([1, 2])
                 ),
             ],
-        )
+        ),
+        "planet": Participant(
+            name="planet",
+            tariffs=[
+                Tariff(asset="site", quantity="import_power_mwh", rate=np.array([1, 2]))
+            ],
+        ),
     }
 
 
-def create_objective(optimizer, vars, interval_data, tariffs):
+def create_objective_from_tariffs(optimizer, vars, interval_data, tariffs):
     """
     the list of tariffs fully specifies the objective function
 
@@ -252,7 +178,9 @@ def test_create_objective():
     assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
 
     #  create simple objective
-    objective = create_objective(optimizer, vars, interval_data, participant.tariffs)
+    objective = create_objective_from_tariffs(
+        optimizer, vars, interval_data, participant.tariffs
+    )
     optimizer.objective(objective)
     status = optimizer.solve(allow_infeasible=False)
     results = epl.results.extract_results(interval_data, vars, feasible=status.feasible)
@@ -269,7 +197,6 @@ def test_create_objective():
     interval_data = epl.interval_data.IntervalData(
         electricity_prices=np.random.uniform(-1000, 1000, 268)
     )
-    participant = participants["site"]
 
     battery = epl.Battery()
 
@@ -283,7 +210,7 @@ def test_create_objective():
     results_right = site.optimize(
         electricity_prices=interval_data.electricity_prices,
         objective="site",
-        objective_fn=create_objective,
+        objective_fn=create_objective_from_tariffs,
         participants=participants,
     )
     np.testing.assert_allclose(
@@ -295,3 +222,36 @@ def test_create_objective():
         results_right.simulation["export_power_mwh"],
     )
     assert results_left.simulation["export_power_mwh"].sum() > 0
+
+
+def test_multi_asset_site():
+    assets = [
+        epl.Battery(
+            power_mw=20,
+            capacity_mwh=40,
+            efficiency=0.9,
+        ),
+        epl.Battery(power_mw=40, capacity_mwh=10, efficiency=0.8, name="battery-2"),
+        epl.Generator(
+            electric_power_max_mw=100,
+            electric_power_min_mw=50,
+            electric_efficiency_pct=0.3,
+            high_temperature_efficiency_pct=0.5,
+        ),
+        epl.Boiler(),
+    ]
+
+    site = epl.Site()
+
+    interval_data = epl.interval_data.IntervalData(
+        electricity_prices=np.random.uniform(-1000, 1000, 268), gas_prices=0.0
+    )
+    site = epl.Site(assets=assets)
+    results = site.optimize(
+        electricity_prices=interval_data.electricity_prices,
+        objective="price",
+    )
+    assert results.simulation["electric_generation_mwh"].sum() > 0
+
+    #  TODO participant optimization
+    participants = get_participants()

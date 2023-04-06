@@ -15,15 +15,6 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
-class BoilerConfig(AssetOneInterval):
-    """Gas boiler configuration."""
-
-    name: str
-    high_temperature_generation_max_mw: float = 0
-    high_temperature_generation_min_mw: float = 0
-    high_temperature_efficiency_pct: float = 0
-
-
 class GeneratorConfig(pydantic.BaseModel):
     """CHP generator configuration."""
 
@@ -43,15 +34,6 @@ class GeneratorConfig(pydantic.BaseModel):
         return name
 
 
-class BoilerOneInterval(AssetOneInterval):
-    """Boiler data for a single interval."""
-
-    cfg: BoilerConfig
-    high_temperature_generation_mwh: pulp.LpVariable
-    gas_consumption_mwh: pulp.LpVariable
-    binary: pulp.LpVariable
-
-
 class GeneratorOneInterval(AssetOneInterval):
     """CHP generator data for a single interval."""
 
@@ -61,46 +43,6 @@ class GeneratorOneInterval(AssetOneInterval):
     low_temperature_generation_mwh: pulp.LpVariable
     binary: pulp.LpVariable
     cfg: GeneratorConfig
-
-
-def boiler_one_interval(
-    optimizer: Optimizer, cfg: BoilerConfig, i: int, freq: Freq
-) -> BoilerOneInterval:
-    """Create Boiler asset data for a single interval."""
-    return BoilerOneInterval(
-        high_temperature_generation_mwh=optimizer.continuous(
-            f"{cfg.name}-high_temperature_generation_mwh-{i}",
-            low=freq.mw_to_mwh(cfg.high_temperature_generation_min_mw),
-            up=freq.mw_to_mwh(cfg.high_temperature_generation_max_mw),
-        ),
-        binary=optimizer.binary(
-            f"{cfg.name}-binary_mwh-{i}",
-        ),
-        gas_consumption_mwh=optimizer.continuous(f"{cfg.name}-gas_consumption_mwh-{i}"),
-        cfg=cfg,
-    )
-
-
-def constrain_within_interval_boilers(
-    optimizer: Optimizer, vars: dict, freq: Freq
-) -> None:
-    """Constrain boiler upper and lower bounds for generating high & low temperature heat."""
-    for asset in vars["boilers"][-1]:
-        optimizer.constrain(
-            asset.gas_consumption_mwh
-            == asset.high_temperature_generation_mwh
-            * (1 / asset.cfg.high_temperature_efficiency_pct)
-        )
-        optimizer.constrain_max(
-            asset.high_temperature_generation_mwh,
-            asset.binary,
-            freq.mw_to_mwh(asset.cfg.high_temperature_generation_max_mw),
-        )
-        optimizer.constrain_min(
-            asset.high_temperature_generation_mwh,
-            asset.binary,
-            freq.mw_to_mwh(asset.cfg.high_temperature_generation_min_mw),
-        )
 
 
 class Generator:
@@ -123,10 +65,11 @@ class Generator:
         electric_efficiency_pct: float = 0.0,
         high_temperature_efficiency_pct: float = 0.0,
         low_temperature_efficiency_pct: float = 0.0,
+        name: str = "generator",
     ):
         """Initialize a Battery asset model."""
         self.cfg = GeneratorConfig(
-            name="generator",
+            name=name,
             electric_power_min_mw=electric_power_min_mw,
             electric_power_max_mw=electric_power_max_mw,
             electric_efficiency_pct=electric_efficiency_pct,
@@ -263,11 +206,11 @@ class Generator:
             generators = [
                 self.one_interval(self.optimizer, i, freq),
             ]
-            vars["generators"].append(generators)
+            # vars["generators"].append(generators)
             boilers = [
                 boiler_one_interval(self.optimizer, self.default_boiler_cfg, i, freq),
             ]
-            vars["boilers"].append(boilers)
+            # vars["boilers"].append(boilers)
 
             vars["assets"].append([*generators, *boilers])
 

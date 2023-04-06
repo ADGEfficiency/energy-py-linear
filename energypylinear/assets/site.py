@@ -54,15 +54,17 @@ def constrain_site_electricity_balance(
     spills = vars.get("spills")
 
     optimizer.constrain(
-        site.import_power_mwh
-        - site.export_power_mwh
-        - interval_data.electricity_load_mwh[i]
-        + optimizer.sum([a.electric_generation_mwh for a in assets])
-        - optimizer.sum([a.electric_load_mwh for a in assets])
-        - optimizer.sum([a.charge_mwh for a in assets])
-        + optimizer.sum([a.discharge_mwh for a in assets])
-        + (spills[-1].electric_generation_mwh if spills else 0)
-        - (spills[-1].electric_load_mwh if spills else 0)
+        (
+            site.import_power_mwh
+            - site.export_power_mwh
+            - interval_data.electricity_load_mwh[i]
+            + optimizer.sum([a.electric_generation_mwh for a in assets])
+            - optimizer.sum([a.electric_load_mwh for a in assets])
+            - optimizer.sum([a.charge_mwh for a in assets])
+            + optimizer.sum([a.discharge_mwh for a in assets])
+            + (spills[-1].electric_generation_mwh if spills else 0)
+            - (spills[-1].electric_load_mwh if spills else 0)
+        )
         == 0
     )
 
@@ -142,6 +144,9 @@ class Site:
     ):
         self.assets = assets
         self.cfg = cfg
+
+    def __repr__(self) -> str:
+        return f"<energypylinear.Site assets: {len(self.assets)}>"
 
     def one_interval(
         self, optimizer: Optimizer, site: SiteConfig, i: int, freq: Freq
@@ -229,6 +234,8 @@ class Site:
                 asset.constrain_within_interval(
                     self.optimizer, vars, flags=flags, freq=freq
                 )
+
+            #  TODO valves, boilers
 
         for asset in self.assets:
             #  TODO think I'm overconstraning here - ???
