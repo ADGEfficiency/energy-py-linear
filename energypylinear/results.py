@@ -86,8 +86,8 @@ def extract_results(
                 ]:
                     results[f"{name}-{attr}"].append(getattr(generator, attr).value())
 
-        if len(vars["boilers"]):
-            boilers = vars["boilers"][i]
+        boilers = epl.utils.filter_assets(vars, "boiler", i=i)
+        if boilers:
             for boiler in boilers:
                 name = f"{boiler.cfg.name}"
                 for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
@@ -217,14 +217,21 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
     inp = simulation["import_power_mwh"] + simulation["electric_generation_mwh"]
     out = simulation["export_power_mwh"] + simulation["electric_load_mwh"]
 
-    charge = simulation[[c for c in simulation.columns if "-charge_mwh" in c]].sum(
-        axis=1
-    )
+    """
+    very messy
+    - ev chargers are double counted
+    """
+    cols = [
+        c
+        for c in simulation.columns
+        if ("-charge_mwh" in c) and ("total" not in c) and ("event" not in c)
+    ]
+    charge = simulation[cols].sum(axis=1)
     discharge = simulation[
         [c for c in simulation.columns if "-discharge_mwh" in c]
     ].sum(axis=1)
 
-    balance = inp + discharge == out + charge
+    balance = abs(inp + discharge - out - charge) < 1e-4
 
     spills = simulation[[c for c in simulation.columns if "spill" in c]]
     losses = simulation[[c for c in simulation.columns if "-losses_mwh" in c]]
@@ -241,7 +248,6 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
             "spills": spills.sum(axis=1),
         }
     )
-
     assert balance.all()
 
     cols = [

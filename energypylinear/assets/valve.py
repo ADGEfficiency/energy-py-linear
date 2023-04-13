@@ -30,29 +30,36 @@ class ValveOneInterval(AssetOneInterval):
     low_temperature_generation_mwh: pulp.LpVariable
 
 
-def valve_one_interval(
-    optimizer: "epl.optimizer.Optimizer",
-    cfg: ValveConfig,
-    i: int,
-    freq: "epl.freq.Freq",
-) -> ValveOneInterval:
-    """Create Valve asset data for a single interval."""
-    return ValveOneInterval(
-        cfg=cfg,
-        high_temperature_load_mwh=optimizer.continuous(
-            f"{cfg.name}-high_temperature_load_mwh-{i}", low=0
-        ),
-        low_temperature_generation_mwh=optimizer.continuous(
-            f"{cfg.name}-low_temperature_generation_mwh-{i}", low=0
-        ),
-    )
+class Valve:
+    def __init__(self, name: str = "valve"):
+        self.cfg = ValveConfig(name=name)
 
+    def __repr__(self) -> str:
+        return f"<energypylinear.Valve>"
 
-def constrain_within_interval_valve(
-    optimizer: "epl.optimizer.Optimizer", vars: dict
-) -> None:
-    """Constrain thermal balance across the valve."""
-    valve = vars["valves"][-1]
-    optimizer.constrain(
-        valve.high_temperature_load_mwh == valve.low_temperature_generation_mwh
-    )
+    def one_interval(
+        self,
+        optimizer: "epl.optimizer.Optimizer",
+        i: int,
+        freq: "epl.freq.Freq",
+    ) -> ValveOneInterval:
+        """Create Valve asset data for a single interval."""
+        return ValveOneInterval(
+            cfg=self.cfg,
+            high_temperature_load_mwh=optimizer.continuous(
+                f"{self.cfg.name}-high_temperature_load_mwh-{i}", low=0
+            ),
+            low_temperature_generation_mwh=optimizer.continuous(
+                f"{self.cfg.name}-low_temperature_generation_mwh-{i}", low=0
+            ),
+        )
+
+    def constrain_within_interval(
+        self, optimizer: "epl.optimizer.Optimizer", vars: dict,
+        freq: "epl.freq.Freq",
+    ) -> None:
+        """Constrain thermal balance across the valve."""
+        valve = epl.utils.filter_assets(vars, "valve")[-1]
+        optimizer.constrain(
+            valve.high_temperature_load_mwh == valve.low_temperature_generation_mwh
+        )

@@ -30,8 +30,8 @@ def price_objective(
     sites = vars["sites"]
     spills = vars["spills"]
     spill_evs = vars["spill-evs"]
-    generators = vars.get("generators", [])
-    boilers = vars.get("boilers", [])
+    boilers = epl.utils.filter_all_assets(vars, "boiler")
+    generators = epl.utils.filter_all_assets(vars, "generator")
 
     if len(generators) == 0:
         generators = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
@@ -91,8 +91,8 @@ def carbon_objective(
 
     sites = vars["sites"]
     spills = vars["spills"]
-    generators = vars.get("generators", [])
-    boilers = vars.get("boilers", [])
+    boilers = epl.utils.filter_all_assets(vars, "boiler")
+    generators = epl.utils.filter_all_assets(vars, "generator")
 
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
     obj = [

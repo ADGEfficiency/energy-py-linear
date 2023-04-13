@@ -94,7 +94,7 @@ def constrain_connection_batteries_between_intervals(
     optimizer: Optimizer, vars: collections.defaultdict
 ) -> None:
     """Constrain battery dispatch between two adjacent intervals."""
-    batteries = vars["batteries"]
+    batteries = epl.utils.filter_all_assets(vars, "battery")
 
     #  if in first interval, do nothing
     #  could also do something based on `i` here...
@@ -258,7 +258,6 @@ class Battery:
         )
         self.site = epl.Site()
         self.spill_cfg = epl.spill.SpillConfig()
-        self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
         self.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
 
@@ -272,11 +271,7 @@ class Battery:
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
             )
-            vars["valves"].append(
-                epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
-            )
-            batteries = [self.one_interval(self.optimizer, i, freq, flags)]
-            vars["assets"].append(batteries)
+            vars["assets"].append([self.one_interval(self.optimizer, i, freq, flags)])
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             self.constrain_within_interval(self.optimizer, vars, flags=flags)

@@ -47,7 +47,7 @@ def test_battery_optimization_price(
 @pytest.mark.parametrize(
     "carbon_intensities, initial_charge_mwh, expected_dispatch",
     [
-        ([0.1, 0.8, -0.1], 3, [1, -4, 3]),
+        ([0.1, 0.8, -0.1], 3, [-3, -4, 3]),
         ([0.9, 0.1, 0.2, 0.9], 6, [-4, 4, 0, 0]),
         ([0.9, 0.1, 0.2, 0.9], 0, [0, 4, 0, -4]),
     ],

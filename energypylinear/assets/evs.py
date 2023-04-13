@@ -286,10 +286,7 @@ class EVs:
         assert interval_data.evs
         self.site = epl.Site()
         self.spill_cfg = epl.spill.SpillConfig()
-        self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
-        #  TODO - difficult to type the list of list thing
-        #  maybe sign something should be reworked
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
@@ -297,9 +294,6 @@ class EVs:
             )
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
-            )
-            vars["valves"].append(
-                epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
             )
 
             assert isinstance(interval_data.evs.charge_events, np.ndarray)

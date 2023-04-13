@@ -9,6 +9,7 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
+from energypylinear.assets.boiler import BoilerConfig
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
@@ -175,63 +176,48 @@ class Generator:
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
-        self.site = epl.site.Site()
+        self.site = epl.Site()
         self.spill_cfg = epl.spill.SpillConfig()
-        self.valve_cfg = epl.valve.ValveConfig(name="valve")
+        self.valve = epl.valve.Valve()
 
         default_boiler_size = freq.mw_to_mwh(
             max(interval_data.high_temperature_load_mwh)
             + max(interval_data.low_temperature_load_mwh)
         )
-        self.default_boiler_cfg = BoilerConfig(
-            name="boiler",
+        self.boiler = epl.Boiler(
             high_temperature_generation_max_mw=default_boiler_size,
             high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
         )
 
-        #  TODO - difficult to type the list of list thing
-        #  maybe sign something should be reworked
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
-                epl.site.site_one_interval(self.optimizer, self.site.cfg, i, freq)
+                self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
             )
-            vars["valves"].append(
-                epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
+            vars["assets"].append(
+                [
+                    self.one_interval(self.optimizer, i, freq),
+                    self.boiler.one_interval(self.optimizer, i, freq),
+                    self.valve.one_interval(self.optimizer, i, freq),
+                ]
             )
-
-            generators = [
-                self.one_interval(self.optimizer, i, freq),
-            ]
-            # vars["generators"].append(generators)
-            boilers = [
-                boiler_one_interval(self.optimizer, self.default_boiler_cfg, i, freq),
-            ]
-            # vars["boilers"].append(boilers)
-
-            vars["assets"].append([*generators, *boilers])
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             self.constrain_within_interval(self.optimizer, vars, freq)
-            constrain_within_interval_boilers(self.optimizer, vars, freq)
-            epl.valve.constrain_within_interval_valve(self.optimizer, vars)
+            self.boiler.constrain_within_interval(self.optimizer, vars, freq)
+            self.valve.constrain_within_interval(self.optimizer, vars, freq)
 
-        assert (
-            len(interval_data.idx)
-            == len(vars["assets"])
-            == len(vars["generators"])
-            == len(vars["boilers"])
-        )
+        assert len(interval_data.idx) == len(vars["assets"])
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
-        _, feasible = self.optimizer.solve()
+        status = self.optimizer.solve()
         self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, vars, feasible=feasible, flags=flags
+            interval_data, vars, feasible=status.feasible, flags=flags
         )
 
     def plot(

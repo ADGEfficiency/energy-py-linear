@@ -34,14 +34,25 @@ class BoilerOneInterval(AssetOneInterval):
 
 
 class Boiler:
-    def __init__(self, name: str = "boiler"):
-        self.cfg = BoilerConfig(name=name)
+    def __init__(
+        self,
+        name: str = "boiler",
+        high_temperature_generation_max_mw: float = 0,
+        high_temperature_generation_min_mw: float = 0,
+        high_temperature_efficiency_pct: float = 0.8,
+    ):
+        self.cfg = BoilerConfig(
+            name=name,
+            high_temperature_generation_max_mw=high_temperature_generation_max_mw,
+            high_temperature_generation_min_mw=high_temperature_generation_min_mw,
+            high_temperature_efficiency_pct=high_temperature_efficiency_pct,
+        )
 
     def __repr__(self) -> str:
         return f"<energypylinear.Boiler>"
 
     def one_interval(
-        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags
+        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> BoilerOneInterval:
         """Create Boiler asset data for a single interval."""
         return BoilerOneInterval(
@@ -60,7 +71,7 @@ class Boiler:
         )
 
     def constrain_within_interval(
-        self, optimizer: Optimizer, vars: list, freq: Freq, flags: Flags
+        self, optimizer: Optimizer, vars: dict, freq: Freq, flags: Flags = Flags()
     ) -> None:
         """Constrain boiler upper and lower bounds for generating high & low temperature heat."""
         boilers = epl.utils.filter_assets(vars, "boiler")
