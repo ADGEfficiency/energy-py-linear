@@ -1,8 +1,3 @@
-import collections
-
-import energypylinear as epl
-from energypylinear.defaults import defaults
-
 """
 ## How to make `asset.optimize` work
 
@@ -40,9 +35,67 @@ asset.optimize(electricity_prices)
 ### How to implement a classic retailer / customer / network thing
 
 """
+import collections
 
 import numpy as np
 import pydantic
+
+import energypylinear as epl
+from energypylinear.defaults import defaults
+
+
+class Account(pydantic.BaseModel):
+    items: int
+    cost: float
+    revenue: float
+    profit: float
+    emissions: float
+
+
+def get_accounts_for_participants(
+    interval_data, simulation, participants
+) -> dict[str, Account]:
+    epl.results.validate_results(interval_data, simulation)
+
+    out = {}
+    for p_name, participant in participants.items():
+        account_items = {}
+        for tariff in participant.tariffs:
+            name = f"{tariff.asset}-{tariff.quantity}"
+            name = "_".join(name.split("_")[:-1]) + f"_{tariff.output_unit}"
+            account_items[name] = (
+                simulation[tariff.quantity] * tariff.rate * tariff.cost
+            ).sum()
+
+        out[p_name] = account_items
+        cost = -sum(
+            [
+                a
+                for name, a in account_items.items()
+                if (a < 0) and (name.endswith("_$"))
+            ]
+        )
+        revenue = sum(
+            [
+                a
+                for name, a in account_items.items()
+                if (a > 0) and (name.endswith("_$"))
+            ]
+        )
+        emissions = sum(
+            [a for name, a in account_items.items() if name.endswith("_tC")]
+        )
+        print(p_name, cost, revenue, emissions)
+
+        out[p_name] = Account(
+            items=len(account_items),
+            cost=cost,
+            revenue=revenue,
+            profit=revenue - cost,
+            emissions=emissions,
+        )
+
+    return out
 
 
 class Tariff(pydantic.BaseModel):
@@ -245,17 +298,19 @@ def test_multi_asset_site():
             capacity_mwh=40,
             efficiency=0.9,
         ),
-        epl.Battery(power_mw=40, capacity_mwh=10, efficiency=0.8, name="battery-2"),
+        epl.Battery(
+            power_mw=40, capacity_mwh=10, efficiency=0.8, name="high-power-battery"
+        ),
         epl.Generator(
             electric_power_max_mw=100,
             electric_power_min_mw=50,
             electric_efficiency_pct=0.3,
             high_temperature_efficiency_pct=0.5,
+            name="gas-turbine-generator",
         ),
         epl.Boiler(),
+        #  TODO evs
     ]
-
-    site = epl.Site()
 
     interval_data = epl.interval_data.IntervalData(
         electricity_prices=np.random.uniform(-1000, 1000, 268), gas_prices=0.0
@@ -267,9 +322,8 @@ def test_multi_asset_site():
     )
     assert results.simulation["electric_generation_mwh"].sum() > 0
 
-    #  TODO participant optimization
+    #  participant optimization
     participants = get_participants(n=268)
-    site = epl.Site(assets=assets)
     results = site.optimize(
         electricity_prices=interval_data.electricity_prices,
         objective_fn=create_objective_from_tariffs,
@@ -278,68 +332,30 @@ def test_multi_asset_site():
     )
     assert results.simulation["electric_generation_mwh"].sum() > 0
 
-    """
-
-    """
-
-    class Account(pydantic.BaseModel):
-        items: int
-        cost: float
-        revenue: float
-        profit: float
-        emissions: float
-
-    def get_accounts_for_participants(
-        interval_data, simulation, participants
-    ) -> dict[str, Account]:
-        epl.results.validate_results(interval_data, simulation)
-
-        out = {}
-        for p_name, participant in participants.items():
-            account_items = {}
-            for tariff in participant.tariffs:
-                name = f"{tariff.asset}-{tariff.quantity}"
-                name = "_".join(name.split("_")[:-1]) + f"_{tariff.output_unit}"
-                account_items[name] = (
-                    simulation[tariff.quantity] * tariff.rate * tariff.cost
-                ).sum()
-
-            out[p_name] = account_items
-            cost = -sum(
-                [
-                    a
-                    for name, a in account_items.items()
-                    if (a < 0) and (name.endswith("_$"))
-                ]
-            )
-            revenue = sum(
-                [
-                    a
-                    for name, a in account_items.items()
-                    if (a > 0) and (name.endswith("_$"))
-                ]
-            )
-            emissions = sum(
-                [a for name, a in account_items.items() if name.endswith("_tC")]
-            )
-            print(p_name, cost, revenue, emissions)
-
-            out[p_name] = Account(
-                items=len(account_items),
-                cost=cost,
-                revenue=revenue,
-                profit=revenue - cost,
-                emissions=emissions,
-            )
-
-        return out
-
     accounts = get_accounts_for_participants(
         results.interval_data, results.simulation, participants
     )
-    breakpoint()  # fmt: skip
 
     """
     will need to redo the __sub__
-    how to have costs and revenues?
     """
+
+    """
+    how to do multi-subsite
+
+    `top-level` sites attach to the grid - site import = grid
+
+    `sub-level` sites attach to other sites - site import = is coming from other site
+
+    also have this idea of generation / load - is that different from site import / export?  not really
+
+    want to rewrite it so that
+
+    1. site import / export is handled by adding a grid connection as an asset to a site?
+
+    asset = [epl.GridConnection()]
+
+    """
+
+    site = epl.Site(assets=[epl.GridConnection(), epl.Battery()])
+    breakpoint()  # fmt: skip

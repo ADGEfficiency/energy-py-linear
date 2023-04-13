@@ -13,30 +13,6 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
-class SiteConfig(pydantic.BaseModel):
-    """Site configuration."""
-
-    import_limit_mw: float = 10000
-    export_limit_mw: float = 10000
-
-
-class SiteOneInterval(pydantic.BaseModel):
-    """Site data for a single interval."""
-
-    import_power_mwh: pulp.LpVariable
-    export_power_mwh: pulp.LpVariable
-    import_power_bin: pulp.LpVariable
-    export_power_bin: pulp.LpVariable
-
-    import_limit_mwh: float
-    export_limit_mwh: float
-
-    class Config:
-        """pydantic.BaseModel configuration."""
-
-        arbitrary_types_allowed: bool = True
-
-
 def constrain_site_electricity_balance(
     optimizer: Optimizer,
     vars: dict,
