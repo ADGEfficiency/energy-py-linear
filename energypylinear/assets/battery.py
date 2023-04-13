@@ -155,6 +155,7 @@ class Battery:
     def setup_initial_final_charge(
         self, initial_charge_mwh: float, final_charge_mwh: float
     ):
+        """Processes the options for initial and final charge."""
         self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)
         self.cfg.final_charge_mwh = (
             self.cfg.initial_charge_mwh

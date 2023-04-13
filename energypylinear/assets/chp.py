@@ -9,7 +9,6 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
-from energypylinear.assets.boiler import BoilerConfig
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq

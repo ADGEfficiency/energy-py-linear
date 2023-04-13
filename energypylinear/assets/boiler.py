@@ -1,15 +1,9 @@
 """Boiler asset for optimizing dispatch of gas fired boilers"""
-import collections
-import pathlib
-import typing
-
-import numpy as np
 import pulp
 import pydantic
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
-from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
@@ -34,6 +28,8 @@ class BoilerOneInterval(AssetOneInterval):
 
 
 class Boiler:
+    """Battery asset - generates high temperature heat."""
+
     def __init__(
         self,
         name: str = "boiler",
@@ -49,7 +45,7 @@ class Boiler:
         )
 
     def __repr__(self) -> str:
-        return f"<energypylinear.Boiler>"
+        return "<energypylinear.Boiler>"
 
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
