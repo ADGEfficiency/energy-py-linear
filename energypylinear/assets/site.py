@@ -13,6 +13,30 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
+class SiteConfig(pydantic.BaseModel):
+    """Site configuration."""
+
+    import_limit_mw: float = 10000
+    export_limit_mw: float = 10000
+
+
+class SiteOneInterval(pydantic.BaseModel):
+    """Site data for a single interval."""
+
+    import_power_mwh: pulp.LpVariable
+    export_power_mwh: pulp.LpVariable
+    import_power_bin: pulp.LpVariable
+    export_power_bin: pulp.LpVariable
+
+    import_limit_mwh: float
+    export_limit_mwh: float
+
+    class Config:
+        """pydantic.BaseModel configuration."""
+
+        arbitrary_types_allowed: bool = True
+
+
 def constrain_site_electricity_balance(
     optimizer: Optimizer,
     vars: dict,
@@ -29,6 +53,7 @@ def constrain_site_electricity_balance(
     site = vars["sites"][-1]
     spills = vars.get("spills")
 
+    assert interval_data.electricity_load_mwh is not None
     optimizer.constrain(
         (
             site.import_power_mwh
@@ -73,7 +98,7 @@ def constrain_site_high_temperature_heat_balance(
     spills = vars.get("spills")
     valves = vars.get("valves")
 
-    assert isinstance(interval_data.high_temperature_load_mwh, np.ndarray)
+    assert interval_data.high_temperature_load_mwh is not None
     optimizer.constrain(
         optimizer.sum([a.high_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.high_temperature_load_mwh for a in assets])
@@ -101,7 +126,7 @@ def constrain_site_low_temperature_heat_balance(
     valves: typing.Union[list[epl.assets.valve.ValveOneInterval], None] = vars.get(
         "valves"
     )
-    assert isinstance(interval_data.low_temperature_load_mwh, np.ndarray)
+    assert interval_data.low_temperature_load_mwh is not None
     optimizer.constrain(
         optimizer.sum([a.low_temperature_generation_mwh for a in assets])
         + (valves[-1].low_temperature_generation_mwh if valves else 0)
@@ -118,6 +143,8 @@ class Site:
         assets: typing.Optional[list] = None,
         cfg: SiteConfig = SiteConfig(),
     ):
+        if assets is None:
+            assets = []
         self.assets = assets
         self.cfg = cfg
 
@@ -130,10 +157,10 @@ class Site:
         """Create Site asset data for a single interval."""
         return SiteOneInterval(
             import_power_mwh=optimizer.continuous(
-                f"import_power_mw-{i}", up=freq.mw_to_mwh(site.import_limit_mw)
+                f"import_power_mw-{i}", up=freq.mw_to_mwh(self.cfg.import_limit_mw)
             ),
             export_power_mwh=optimizer.continuous(
-                f"export_power_mw-{i}", up=freq.mw_to_mwh(site.import_limit_mw)
+                f"export_power_mw-{i}", up=freq.mw_to_mwh(self.cfg.import_limit_mw)
             ),
             import_power_bin=optimizer.binary(f"import_power_bin-{i}"),
             export_power_bin=optimizer.binary(f"export_power_bin-{i}"),
@@ -163,8 +190,6 @@ class Site:
         objective: str = "price",
         flags: Flags = Flags(),
         verbose: int = 0,
-        participants=None,
-        objective_fn=None,
     ):
         for asset in self.assets:
             if isinstance(asset, epl.Battery):
@@ -214,26 +239,16 @@ class Site:
             #  TODO valves, boilers
 
         for asset in self.assets:
-            #  TODO think I'm overconstraning here - ???
             asset.constrain_after_intervals(self.optimizer, vars)
 
         assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
 
-        if objective_fn is None:
-            objective_fn = epl.objectives[objective]
-            tariffs = []
-
-        else:
-            objective_fn = objective_fn
-            assert objective in participants
-            tariffs = participants[objective].tariffs
-
+        objective_fn = epl.objectives[objective]
         self.optimizer.objective(
             objective_fn(
                 self.optimizer,
                 vars,
                 interval_data,
-                tariffs=tariffs,
             )
         )
 

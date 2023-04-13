@@ -1,4 +1,19 @@
 """
+
+   was in site.py
+   if objective_fn is None:
+            objective_fn = epl.objectives[objective]
+            tariffs = []
+
+        else:
+            objective_fn = objective_fn
+            assert objective in participants
+            tariffs = participants[objective].tariffs
+
+
+
+"""
+"""
 ## How to make `asset.optimize` work
 
 participant level optimization only enabled for the site API - for any smaller asset, it just uses the data that goes in.

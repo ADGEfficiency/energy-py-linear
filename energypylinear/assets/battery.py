@@ -8,7 +8,6 @@ import pulp
 import pydantic
 
 import energypylinear as epl
-from energypylinear.assets import site
 from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
@@ -57,7 +56,8 @@ def constrain_only_charge_or_discharge(
     Usually flagged off - slows things down a lot (~2x as slow).
     """
     if flags.include_charge_discharge_binary_variables:
-        for battery in vars["batteries"][-1]:
+        batteries = epl.utils.filter_assets(vars, "battery")
+        for battery in batteries:
             optimizer.constrain_max(
                 battery.charge_mwh, battery.charge_binary, battery.cfg.capacity_mwh
             )
@@ -256,8 +256,7 @@ class Battery:
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
-        self.site = epl.assets.site.Site()
-
+        self.site = epl.Site()
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
@@ -268,7 +267,7 @@ class Battery:
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
-                site.site_one_interval(self.optimizer, self.site.cfg, i, freq)
+                self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
@@ -288,9 +287,11 @@ class Battery:
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
-        _, feasible = self.optimizer.solve(verbose=verbose)
+        status = self.optimizer.solve(verbose=verbose)
         self.interval_data = interval_data
-        return epl.results.extract_results(interval_data, vars, feasible=feasible)
+        return epl.results.extract_results(
+            interval_data, vars, feasible=status.feasible
+        )
 
     def plot(
         self,

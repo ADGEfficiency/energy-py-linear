@@ -8,7 +8,6 @@ import pulp
 import pydantic
 
 import energypylinear as epl
-from energypylinear.assets import site
 from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.freq import Freq
@@ -231,10 +230,9 @@ class EVs:
         electricity_carbon_intensities: typing.Union[
             None, np.ndarray, list[float], float
         ] = None,
-        high_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
-        low_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
+        verbose: int = 0,
     ) -> "epl.results.SimulationResult":
         """Optimize the EVs's dispatch using a mixed-integer linear program.
 
@@ -262,6 +260,7 @@ class EVs:
             electricity_carbon_intensities - carbon intensity of electricity in each interval.
             freq_mins - the size of an interval in minutes.
             objective - the optimization objective - either "price" or "carbon".
+            verbose: level of printing.
 
         Returns:
             epl.results.SimulationResult
@@ -285,7 +284,7 @@ class EVs:
             ),
         )
         assert interval_data.evs
-        self.site = epl.assets.site.Site()
+        self.site = epl.Site()
         self.spill_cfg = epl.spill.SpillConfig()
         self.valve_cfg = epl.valve.ValveConfig(name="valve")
 
@@ -294,7 +293,7 @@ class EVs:
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
-                site.site_one_interval(self.optimizer, self.site.cfg, i, freq)
+                self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
             vars["spills"].append(
                 epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
@@ -356,9 +355,11 @@ class EVs:
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
-        _, feasible = self.optimizer.solve()
+        status = self.optimizer.solve(verbose=verbose)
         self.interval_data = interval_data
-        return epl.results.extract_results(interval_data, vars, feasible=feasible)
+        return epl.results.extract_results(
+            interval_data, vars, feasible=status.feasible
+        )
 
     def plot(
         self,
