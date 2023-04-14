@@ -37,6 +37,7 @@ class Boiler:
         high_temperature_generation_min_mw: float = 0,
         high_temperature_efficiency_pct: float = 0.8,
     ):
+        """Initialize a Boiler asset model."""
         self.cfg = BoilerConfig(
             name=name,
             high_temperature_generation_max_mw=high_temperature_generation_max_mw,
@@ -89,4 +90,5 @@ class Boiler:
             )
 
     def constrain_after_intervals(self, optimizer: Optimizer, vars: list) -> None:
+        """Constrain asset after all interval asset models are created."""
         return

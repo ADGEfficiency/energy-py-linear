@@ -34,10 +34,14 @@ class SpillOneInterval(AssetOneInterval):
 
 
 class Spill:
+    """Spill asset - allows excess or insufficient balances to be filled in."""
+
     def __init__(self, name: str = "spill"):
+        """Initialize a Spill asset model."""
         self.cfg = SpillConfig(name=name)
 
     def __repr__(self) -> str:
+        """A string representation of self."""
         return f"<energypylinear.Valve>"
 
     def one_interval(
@@ -67,9 +71,11 @@ class Spill:
     def constrain_within_interval(
         self, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
+        """Constrain asset within a single interval"""
         return
 
     def constrain_after_intervals(
         self, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
+        """Constrain asset after all interval asset models are created."""
         return

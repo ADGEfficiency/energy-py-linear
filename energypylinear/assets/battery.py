@@ -152,6 +152,10 @@ class Battery:
             efficiency_pct=efficiency,
         )
 
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return "<energypylinear.Battery>"
+
     def setup_initial_final_charge(
         self, initial_charge_mwh: float, final_charge_mwh: typing.Optional[float]
     ) -> None:

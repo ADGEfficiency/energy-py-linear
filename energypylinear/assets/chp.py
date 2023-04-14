@@ -141,6 +141,7 @@ class Generator:
     def constrain_after_intervals(
         self, *args: typing.Tuple[typing.Any], **kwargs: typing.Any
     ) -> None:
+        """Constrain asset after all interval asset models are created."""
         return
 
     def optimize(

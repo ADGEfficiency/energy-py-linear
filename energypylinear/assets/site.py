@@ -2,7 +2,6 @@
 import collections
 import typing
 
-import numpy as np
 import pulp
 import pydantic
 
@@ -127,17 +126,30 @@ def constrain_site_low_temperature_heat_balance(
 
 
 class Site:
+    """Site asset - handles optimization and plotting of many assets over many intervals.
+
+    All assets are connected to the same site electricity, high and low temperature networks.
+
+    All assets are optimized as a single linear program.
+
+    Args:
+        assets: list[Asset] - a list of energypylinear assets to optimize together.
+        cfg: SiteConfig - configuration for the site.
+    """
+
     def __init__(
         self,
         assets: typing.Optional[list] = None,
         cfg: SiteConfig = SiteConfig(),
     ):
+        """Initialize a Site asset model."""
         if assets is None:
             assets = []
         self.assets = assets
         self.cfg = cfg
 
     def __repr__(self) -> str:
+        """A string representation of self."""
         return f"<energypylinear.Site assets: {len(self.assets)}>"
 
     def one_interval(
@@ -190,6 +202,24 @@ class Site:
         flags: Flags = Flags(),
         verbose: int = 0,
     ) -> "epl.results.SimulationResult":
+        """Optimize sites dispatch using a mixed-integer linear program.
+
+        Args:
+            electricity_prices: the price of electricity in each interval.
+            gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
+            electricity_carbon_intensities: carbon intensity of electricity in each interval.
+            high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
+            low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
+            freq_mins: the size of an interval in minutes.
+            initial_charge_mwh: initial charge state of the battery in mega-watt hours.
+            final_charge_mwh: final charge state of the battery in mega-watt hours.
+            objective: the optimization objective - either "price" or "carbon".
+            flags: boolean flags to change simulation and results behaviour.
+            verbose: level of printing.
+
+        Returns:
+            epl.results.SimulationResult
+        """
         for asset in self.assets:
             if isinstance(asset, epl.Battery):
                 asset.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
