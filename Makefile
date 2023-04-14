@@ -3,7 +3,7 @@
 all: test
 
 #  SETUP
-.PHONY: setup setup-test setup-static setup-check
+.PHONY: setup setup-test setup-static setup-check setup-docs
 setup:
 	pip install --upgrade pip -q
 	pip install poetry -c ./constraints.txt -q
@@ -14,6 +14,8 @@ setup-static: setup
 	poetry install --with static -q
 setup-check: setup
 	poetry install --with check -q
+setup-docs: setup
+	poetry install --with docs -q
 
 #  TEST
 .PHONY: test test-ci
@@ -64,5 +66,5 @@ publish: setup
 docs:
 	cd docs; mkdocs serve
 
-docs-build:
+docs-build: setup setup-docs
 	cd docs; mkdocs build
