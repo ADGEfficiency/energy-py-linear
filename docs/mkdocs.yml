@@ -1,3 +1,6 @@
 site_name: energy-py-linear Documentation
 theme:
   name: material
+
+plugins:
+- mkdocstrings

@@ -61,10 +61,9 @@ publish: setup
 	@poetry config pypi-token.pypi $(PYPI_TOKEN)
 	poetry publish
 
-
-.PHONY: docs
-docs: setup-docs
-	cd docs; mkdocs serve; cd ..
+# .PHONY: docs
+# docs: setup-docs
+# 	cd docs; mkdocs serve; cd ..
 
 docs-build: setup-docs
 	cd docs; mkdocs build; cd ..

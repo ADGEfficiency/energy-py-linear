@@ -1,1 +1,2 @@
 mkdocs-material==9.1.6
+mkdocstrings[python]

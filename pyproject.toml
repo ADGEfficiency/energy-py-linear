@@ -43,6 +43,11 @@ ipython = "^8.7.0"
 mypy = "^0.991"
 
 
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.1.6"
+mkdocstrings = {extras = ["python"], version = "^0.21.2"}
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
