@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all
 
 all: test
 
@@ -58,3 +58,11 @@ publish: setup
 	poetry build
 	@poetry config pypi-token.pypi $(PYPI_TOKEN)
 	poetry publish
+
+
+.PHONY: docs
+docs:
+	cd docs; mkdocs serve
+
+docs-build:
+	cd docs; mkdocs build
