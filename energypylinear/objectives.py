@@ -51,11 +51,9 @@ def price_objective(
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
             + spill.electric_load_mwh * defaults.spill_objective_penalty
             #  don't think I need this - this is dumping of HT heat - was in here - TODO test
-            + spill.high_temperature_load_mwh
+            # + spill.high_temperature_load_mwh
             for spill in spills[i]
         ]
-        # + spills[i].high_temperature_load_mwh
-        #  dumping heat has no penalty
         + [
             spill_ev.charge_mwh * defaults.spill_objective_penalty
             for spill_ev in spill_evs[i]
@@ -103,12 +101,15 @@ def carbon_objective(
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_carbon_intensities[i]
         - sites[i].export_power_mwh * interval_data.electricity_carbon_intensities[i]
-        #  could turn this off TODO
-        + spills[i].electric_generation_mwh * defaults.spill_objective_penalty
-        + spills[i].high_temperature_generation_mwh * defaults.spill_objective_penalty
-        + spills[i].electric_load_mwh * defaults.spill_objective_penalty
-        #  dumping heat has no penalty
-        + spills[i].high_temperature_load_mwh
+        + [
+            spill.electric_generation_mwh * defaults.spill_objective_penalty
+            + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
+            + spill.electric_load_mwh * defaults.spill_objective_penalty
+            #  dumping heat has no penalty
+            #  so high_temperature_load_mwh and low_temperature_load_mwh
+            #  are not included here
+            for spill in spills[i]
+        ]
         for i in interval_data.idx
     ]
     if generators:

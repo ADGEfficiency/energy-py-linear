@@ -31,7 +31,6 @@ def test_chp_gas_turbine_price() -> None:
         [c for c in simulation.columns if "spill" in c]
         + ["generator-electric_generation_mwh"]
     ]
-    breakpoint()  # fmt: skip
     np.testing.assert_almost_equal(
         row["spill-low_temperature_load_mwh"],
         (100 / 0.3) * 0.5 - 20,

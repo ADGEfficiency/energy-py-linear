@@ -68,9 +68,9 @@ def get_one_gas_account(
 ) -> GasAccount:
     """Calculate a single gas account from interval data and results."""
     return GasAccount(
-        cost=(interval_data.gas_prices * results["gas_consumption_mwh"]).sum(),
+        cost=(interval_data.gas_prices * results["total-gas_consumption_mwh"]).sum(),
         emissions=(
-            defaults.gas_carbon_intensity * results["gas_consumption_mwh"]
+            defaults.gas_carbon_intensity * results["total-gas_consumption_mwh"]
         ).sum(),
     )
 
@@ -80,16 +80,18 @@ def get_one_electricity_account(
     results: pd.DataFrame,
 ) -> ElectricityAccount:
     """Calculate a single electricity account from interval data and results."""
-    import_cost = (interval_data.electricity_prices * results["import_power_mwh"]).sum()
+    import_cost = (
+        interval_data.electricity_prices * results["site-import_power_mwh"]
+    ).sum()
     export_cost = -(
-        interval_data.electricity_prices * results["export_power_mwh"]
+        interval_data.electricity_prices * results["site-export_power_mwh"]
     ).sum()
 
     import_emissions = (
-        interval_data.electricity_carbon_intensities * results["import_power_mwh"]
+        interval_data.electricity_carbon_intensities * results["site-import_power_mwh"]
     ).sum()
     export_emissions = -(
-        interval_data.electricity_carbon_intensities * results["export_power_mwh"]
+        interval_data.electricity_carbon_intensities * results["site-export_power_mwh"]
     ).sum()
 
     return ElectricityAccount(

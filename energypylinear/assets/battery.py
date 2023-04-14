@@ -262,8 +262,12 @@ class Battery:
             vars["sites"].append(
                 self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
-            vars["spills"].append(self.spill.one_interval(self.optimizer, i, freq))
-            vars["assets"].append([self.one_interval(self.optimizer, i, freq, flags)])
+            vars["assets"].append(
+                [
+                    self.one_interval(self.optimizer, i, freq, flags),
+                    self.spill.one_interval(self.optimizer, i, freq),
+                ]
+            )
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             self.constrain_within_interval(self.optimizer, vars, flags=flags)

@@ -8,13 +8,14 @@ from energypylinear.defaults import defaults
 
 def test_accounting_actuals() -> None:
     """Check calculation of electricity and gas costs and emissions."""
+
     results = pd.DataFrame(
         {
-            "import_power_mwh": [100, 50, 0],
-            "export_power_mwh": [0, 0, 20],
-            "gas_consumption_mwh": [20, 30, 40],
-            "electric_generation_mwh": [20, 30, 40],
-            "electric_load_mwh": [20, 30, 40],
+            "site-import_power_mwh": [100, 50, 0],
+            "site-export_power_mwh": [0, 0, 20],
+            "total-gas_consumption_mwh": [20, 30, 40],
+            "total-electric_generation_mwh": [20, 30, 40],
+            "total-electric_load_mwh": [20, 30, 40],
         }
     )
     actuals_data = epl.interval_data.IntervalData(
@@ -53,11 +54,11 @@ def test_accounting_forecasts() -> None:
     """Check calculation of forecast electricity and gas costs and emissions."""
     results = pd.DataFrame(
         {
-            "import_power_mwh": [100, 50, 0],
-            "export_power_mwh": [0, 0, 20],
-            "gas_consumption_mwh": [20, 30, 40],
-            "electric_generation_mwh": [20, 30, 40],
-            "electric_load_mwh": [20, 30, 40],
+            "site-import_power_mwh": [100, 50, 0],
+            "site-export_power_mwh": [0, 0, 20],
+            "total-gas_consumption_mwh": [20, 30, 40],
+            "total-electric_generation_mwh": [20, 30, 40],
+            "total-electric_load_mwh": [20, 30, 40],
         }
     )
     actuals_data = epl.interval_data.IntervalData(

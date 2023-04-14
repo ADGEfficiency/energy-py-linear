@@ -309,10 +309,11 @@ class EVs:
             )
 
             #  should get rid of all these and just use `assets`
-            vars["evs"].append(evs)
+            # vars["evs"].append(evs)
             vars["evs-array"].append(evs_array)
-            vars["spill-evs"].append(spill_evs)
+            # vars["spill-evs"].append(spill_evs)
             vars["spill-evs-array"].append(spill_evs_array)
+
             vars["assets"].append(
                 [self.spill.one_interval(self.optimizer, i, freq), *evs, *spill_evs]
             )
