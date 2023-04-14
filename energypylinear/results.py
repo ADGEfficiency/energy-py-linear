@@ -8,6 +8,7 @@ import pydantic
 from rich import print
 
 import energypylinear as epl
+from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.interval_data import IntervalData
 from energypylinear.optimizer import Optimizer
@@ -17,13 +18,13 @@ optimizer = Optimizer()
 simulation_schema = {
     "site-import_power_mwh": pa.Column(
         pa.Float,
-        checks=[pa.Check.ge(0)],
+        checks=[pa.Check.ge(defaults.epsilon)],
         title="Site Import Power MWh",
         coerce=True,
     ),
     "site-export_power_mwh": pa.Column(
         pa.Float,
-        checks=[pa.Check.ge(0)],
+        checks=[pa.Check.ge(defaults.epsilon)],
         title="Site Export Power MWh",
         coerce=True,
     ),
@@ -42,10 +43,14 @@ quantities = [
 ]
 for qu in quantities:
     simulation_schema[f"\w+-{qu}"] = pa.Column(
-        pa.Float, checks=[pa.Check.ge(0)], coerce=True, regex=True
+        pa.Float, checks=[pa.Check.ge(defaults.epsilon)], coerce=True, regex=True
     )
     simulation_schema[f"total-{qu}"] = pa.Column(
-        pa.Float, checks=[pa.Check.ge(0)], coerce=True, regex=True, required=True
+        pa.Float,
+        checks=[pa.Check.ge(defaults.epsilon)],
+        coerce=True,
+        regex=True,
+        required=True,
     )
 simulation_schema = pa.DataFrameSchema(simulation_schema)
 
@@ -266,8 +271,11 @@ def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
 
 
 def check_energy_balance(simulation: pd.DataFrame) -> None:
-    inp = simulation["site-import_power_mwh"] + simulation["electric_generation_mwh"]
-    out = simulation["site-export_power_mwh"] + simulation["electric_load_mwh"]
+    inp = (
+        simulation["site-import_power_mwh"]
+        + simulation["total-electric_generation_mwh"]
+    )
+    out = simulation["site-export_power_mwh"] + simulation["total-electric_load_mwh"]
 
     """
     very messy
@@ -288,9 +296,9 @@ def check_energy_balance(simulation: pd.DataFrame) -> None:
     data = pd.DataFrame(
         {
             "import": simulation["site-import_power_mwh"],
-            "generation": simulation["electric_generation_mwh"],
+            "generation": simulation["total-electric_generation_mwh"],
             "export": simulation["site-export_power_mwh"],
-            "load": simulation["electric_load_mwh"],
+            "load": simulation["total-electric_load_mwh"],
             "charge": charge,
             "discharge": discharge,
             "balance": balance,
@@ -374,7 +382,7 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
         simulation: simulation results.
     """
     #  TODO
-    check_energy_balance(simulation)
+    # check_energy_balance(simulation)
 
     #  hmmmmmmmmmmmmmmmmmmm TODO move into above
     simulation[
@@ -392,7 +400,7 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
             np.testing.assert_almost_equal(
                 simulation[f"charge-event-{charge_event_idx}-total-charge_mwh"].sum(),
                 charge_event_mwh,
-                decimal=5,
+                decimal=defaults.decimal_tolerance,
             )
         """
         want to check

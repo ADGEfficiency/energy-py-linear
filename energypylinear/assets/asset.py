@@ -20,7 +20,7 @@ class AssetOneInterval(pydantic.BaseModel):
 
     These quantities are considered as both generation and consumption (load).
 
-    Charge and discharge are handled as accumulation terms.
+    Charge and discharge are handled as explicit accumulation terms.
     """
 
     electric_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
