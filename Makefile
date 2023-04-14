@@ -15,7 +15,7 @@ setup-static: setup
 setup-check: setup
 	poetry install --with check -q
 setup-docs:
-	cd docs; pip install -r requirements.txt -q
+	pip install -r ./docs/requirements.txt -q
 
 #  TEST
 .PHONY: test test-ci
@@ -64,7 +64,7 @@ publish: setup
 
 .PHONY: docs
 docs: setup-docs
-	cd docs; mkdocs serve
+	cd docs; mkdocs serve; cd ..
 
 docs-build: setup-docs
-	cd docs; mkdocs build
+	cd docs; mkdocs build; cd ..
