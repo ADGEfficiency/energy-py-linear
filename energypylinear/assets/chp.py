@@ -182,6 +182,8 @@ class Generator:
         self.spill = epl.spill.Spill()
         self.valve = epl.valve.Valve()
 
+        assert interval_data.high_temperature_load_mwh is not None
+        assert interval_data.low_temperature_load_mwh is not None
         default_boiler_size = freq.mw_to_mwh(
             max(interval_data.high_temperature_load_mwh)
             + max(interval_data.low_temperature_load_mwh)

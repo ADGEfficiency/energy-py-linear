@@ -172,13 +172,17 @@ class Site:
 
     def optimize(
         self,
-        electricity_prices: np.ndarray,
-        gas_prices: typing.Union[None, np.ndarray, float] = None,
-        electricity_carbon_intensities: typing.Union[
-            None, np.ndarray, list[float], float
+        electricity_prices: typing.Union[float, typing.Iterable[float]],
+        gas_prices: typing.Optional[typing.Union[float, typing.Iterable[float]]] = None,
+        electricity_carbon_intensities: typing.Optional[
+            typing.Union[float, typing.Iterable[float]]
         ] = None,
-        high_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
-        low_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
+        high_temperature_load_mwh: typing.Optional[
+            typing.Union[float, typing.Iterable[float]]
+        ] = None,
+        low_temperature_load_mwh: typing.Optional[
+            typing.Union[float, typing.Iterable[float]]
+        ] = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,

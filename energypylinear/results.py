@@ -15,7 +15,7 @@ from energypylinear.optimizer import Optimizer
 
 optimizer = Optimizer()
 
-simulation_schema = {
+schema = {
     "site-import_power_mwh": pa.Column(
         pa.Float,
         checks=[pa.Check.ge(defaults.epsilon)],
@@ -42,17 +42,17 @@ quantities = [
     "discharge_mwh",
 ]
 for qu in quantities:
-    simulation_schema[f"\w+-{qu}"] = pa.Column(
+    schema[f"\w+-{qu}"] = pa.Column(
         pa.Float, checks=[pa.Check.ge(defaults.epsilon)], coerce=True, regex=True
     )
-    simulation_schema[f"total-{qu}"] = pa.Column(
+    schema[f"total-{qu}"] = pa.Column(
         pa.Float,
         checks=[pa.Check.ge(defaults.epsilon)],
         coerce=True,
         regex=True,
         required=True,
     )
-simulation_schema = pa.DataFrameSchema(simulation_schema)
+simulation_schema = pa.DataFrameSchema(schema)
 
 
 class SimulationResult(pydantic.BaseModel):
@@ -311,7 +311,7 @@ def check_energy_balance(simulation: pd.DataFrame) -> None:
     assert balance.all()
 
 
-def check_high_temperature_heat_balance(simulation):
+def check_high_temperature_heat_balance(simulation: pd.DataFrame) -> None:
     inp = simulation[["total-high_temperature_generation_mwh"]].sum(axis=1)
     out = simulation[
         [
@@ -336,7 +336,7 @@ def check_high_temperature_heat_balance(simulation):
     assert balance.all()
 
 
-def check_low_temperature_heat_balance(simulation):
+def check_low_temperature_heat_balance(simulation: pd.DataFrame) -> None:
     inp = simulation[
         [
             "total-low_temperature_generation_mwh",
