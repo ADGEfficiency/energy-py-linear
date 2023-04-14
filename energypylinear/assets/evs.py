@@ -285,17 +285,13 @@ class EVs:
         )
         assert interval_data.evs
         self.site = epl.Site()
-        self.spill_cfg = epl.spill.SpillConfig()
+        self.spill = epl.spill.Spill()
 
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
                 self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
-            vars["spills"].append(
-                epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
-            )
-
             assert isinstance(interval_data.evs.charge_events, np.ndarray)
             evs, evs_array = evs_one_interval(
                 self.optimizer,
@@ -311,11 +307,15 @@ class EVs:
                 i,
                 freq,
             )
+
+            #  should get rid of all these and just use `assets`
             vars["evs"].append(evs)
             vars["evs-array"].append(evs_array)
             vars["spill-evs"].append(spill_evs)
             vars["spill-evs-array"].append(spill_evs_array)
-            vars["assets"].append([*evs, *spill_evs])
+            vars["assets"].append(
+                [self.spill.one_interval(self.optimizer, i, freq), *evs, *spill_evs]
+            )
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
             constrain_within_interval(

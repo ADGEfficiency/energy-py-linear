@@ -28,7 +28,7 @@ def price_objective(
     """
 
     sites = vars["sites"]
-    spills = vars["spills"]
+    spills = epl.utils.filter_all_assets(vars, "spill")
     spill_evs = vars["spill-evs"]
     boilers = epl.utils.filter_all_assets(vars, "boiler")
     generators = epl.utils.filter_all_assets(vars, "generator")
@@ -46,11 +46,16 @@ def price_objective(
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_prices[i]
         - sites[i].export_power_mwh * interval_data.electricity_prices[i]
-        + spills[i].electric_generation_mwh * defaults.spill_objective_penalty
-        + spills[i].high_temperature_generation_mwh * defaults.spill_objective_penalty
-        + spills[i].electric_load_mwh * defaults.spill_objective_penalty
+        + [
+            spill.electric_generation_mwh * defaults.spill_objective_penalty
+            + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
+            + spill.electric_load_mwh * defaults.spill_objective_penalty
+            #  don't think I need this - this is dumping of HT heat - was in here - TODO test
+            + spill.high_temperature_load_mwh
+            for spill in spills[i]
+        ]
+        # + spills[i].high_temperature_load_mwh
         #  dumping heat has no penalty
-        + spills[i].high_temperature_load_mwh
         + [
             spill_ev.charge_mwh * defaults.spill_objective_penalty
             for spill_ev in spill_evs[i]
@@ -90,7 +95,7 @@ def carbon_objective(
     """
 
     sites = vars["sites"]
-    spills = vars["spills"]
+    spills = epl.utils.filter_all_assets(vars, "spill")
     boilers = epl.utils.filter_all_assets(vars, "boiler")
     generators = epl.utils.filter_all_assets(vars, "generator")
 

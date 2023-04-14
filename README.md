@@ -128,7 +128,7 @@ results = asset.optimize(
 
 ## Examples
 
-Examples for exist in `./examples`:
+Examples are in `./examples`:
 
 ```shell
 $ ls ./examples
@@ -143,7 +143,7 @@ $ ls ./examples
 
 ### Price vs. Carbon Optimization
 
-A key feature of `energypylinear` is the ability to optimize for both price and carbon.
+`energypylinear` has the ability to optimize for both price and carbon.
 
 We can dispatch a battery to minimize carbon emissions by passing in `objective='carbon'`:
 
@@ -159,7 +159,9 @@ results = asset.optimize(
 )
 ```
 
-We can compare these results above with a simulation that optimizes for price, using a `energypylinear.accounting.Account` to compare both simulations.  The accounting API is in it's first iteration - expect it to change in the future.
+We can compare these results above with a simulation that optimizes for price, using a `energypylinear.accounting.Account` to compare both simulations.  
+
+Our optimization for price has a high negative cost.  The optimization for carbon has lower emissions, but at a higher cost:
 
 ```python
 import energypylinear as epl
@@ -205,9 +207,11 @@ print(-variance.cost / variance.emissions)
 # 391.9811322845319
 ```
 
-Our optimization for price has a high negative cost.  The optimization for carbon has lower emissions, but at a higher cost.
+The accounting API is in it's first iteration - expect it to change in the future.
 
 ### Dispatch for Actuals vs. Dispatch for Forecasts
+
+`energypylinear` has the ability to optimize for both actuals and forecasts.
 
 The same primitives can be used to model the variance in performance of an asset optimized for actual prices versus forecast prices:
 
@@ -234,11 +238,10 @@ perfect_foresight = epl.get_accounts(actual.interval_data, actual.simulation)
 forecast = epl.get_accounts(actual.interval_data, forecast.simulation)
 
 variance = perfect_foresight - forecast
-print(variance)
 # cost=-1197.777778 emissions=0.002222221999999996
 ```
 
-This idea is also modelled in [examples/forecast-accuracy.py](https://github.com/ADGEfficiency/energy-py-linear/blob/main/examples/forecast-accuracy.py).
+See also [examples/forecast-accuracy.py](https://github.com/ADGEfficiency/energy-py-linear/blob/main/examples/forecast-accuracy.py).
 
 ## Test
 

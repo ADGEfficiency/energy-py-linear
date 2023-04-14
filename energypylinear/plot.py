@@ -27,7 +27,7 @@ def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path) ->
     simulation["Index"] = np.arange(simulation.shape[0]).tolist()
 
     simulation["import-export-balance"] = (
-        simulation["import_power_mwh"] - simulation["export_power_mwh"]
+        simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
     )
     simulation.plot(
         ax=axes[0],
@@ -164,7 +164,7 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     simulation["Index"] = np.arange(simulation.shape[0]).tolist()
 
     simulation["import-export-balance"] = (
-        simulation["import_power_mwh"] - simulation["export_power_mwh"]
+        simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
     )
     simulation.plot(
         ax=axes[0],
@@ -183,7 +183,7 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     simulation.plot(
         ax=axes[2],
         x="Index",
-        y="spill-default-low_temperature_load_mwh",
+        y="spill-low_temperature_load_mwh",
     )
     axes[2].set_ylabel("MWh")
     axes[2].set_title("Low Temperature Heat Dump MWh")

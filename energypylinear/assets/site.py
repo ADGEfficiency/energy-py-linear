@@ -51,7 +51,7 @@ def constrain_site_electricity_balance(
     """
     assets = vars["assets"][-1]
     site = vars["sites"][-1]
-    spills = vars.get("spills")
+    spills = epl.utils.filter_assets(vars, "spill")
 
     assert interval_data.electricity_load_mwh is not None
     optimizer.constrain(
@@ -95,16 +95,11 @@ def constrain_site_high_temperature_heat_balance(
     generation - load = 0
     """
     assets = vars["assets"][-1]
-    spills = vars.get("spills")
-    valves = vars.get("valves")
-
     assert interval_data.high_temperature_load_mwh is not None
     optimizer.constrain(
         optimizer.sum([a.high_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.high_temperature_load_mwh for a in assets])
         - interval_data.high_temperature_load_mwh[i]
-        + (spills[-1].high_temperature_generation_mwh if spills else 0)
-        - (valves[-1].high_temperature_load_mwh if valves else 0)
         == 0
     )
 
@@ -122,16 +117,10 @@ def constrain_site_low_temperature_heat_balance(
     generation - load = 0
     """
     assets = vars["assets"][-1]
-    spills = vars.get("spills")
-    valves: typing.Union[list[epl.assets.valve.ValveOneInterval], None] = vars.get(
-        "valves"
-    )
     assert interval_data.low_temperature_load_mwh is not None
     optimizer.constrain(
         optimizer.sum([a.low_temperature_generation_mwh for a in assets])
-        + (valves[-1].low_temperature_generation_mwh if valves else 0)
         - optimizer.sum([a.low_temperature_load_mwh for a in assets])
-        - (spills[-1].low_temperature_load_mwh if spills else 0)
         - interval_data.low_temperature_load_mwh[i]
         == 0
     )
@@ -184,13 +173,19 @@ class Site:
     def optimize(
         self,
         electricity_prices: np.ndarray,
+        gas_prices: typing.Union[None, np.ndarray, float] = None,
+        electricity_carbon_intensities: typing.Union[
+            None, np.ndarray, list[float], float
+        ] = None,
+        high_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
+        low_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
         flags: Flags = Flags(),
         verbose: int = 0,
-    ):
+    ) -> "epl.results.SimulationResult":
         for asset in self.assets:
             if isinstance(asset, epl.Battery):
                 asset.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
@@ -200,43 +195,40 @@ class Site:
 
         interval_data = epl.interval_data.IntervalData(
             electricity_prices=electricity_prices,
-            # gas_prices=gas_prices,
-            # electricity_carbon_intensities=electricity_carbon_intensities,
-            # high_temperature_load_mwh=high_temperature_load_mwh,
-            # low_temperature_load_mwh=low_temperature_load_mwh,
+            gas_prices=gas_prices,
+            electricity_carbon_intensities=electricity_carbon_intensities,
+            high_temperature_load_mwh=high_temperature_load_mwh,
+            low_temperature_load_mwh=low_temperature_load_mwh,
         )
 
-        self.spill_cfg = epl.spill.SpillConfig()
-        self.valve_cfg = epl.valve.ValveConfig(name="valve")
+        self.spill = epl.spill.Spill()
+        self.valve = epl.valve.Valve()
+
+        self.assets.append(self.spill)
+        self.assets.append(self.valve)
 
         names = [asset.cfg.name for asset in self.assets]
         assert len(names) == len(
             set(names)
         ), f"Asset names must be unique, your assets are called {names}"
 
+        #  warn about sites without boilers?  warn sites without valve / spill?
+
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
-            assets = []
 
             vars["sites"].append(self.one_interval(self.optimizer, self.cfg, i, freq))
-            vars["spills"].append(
-                epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
-            )
-            vars["valves"].append(
-                epl.valve.valve_one_interval(self.optimizer, self.valve_cfg, i, freq)
-            )
+
+            assets = []
             for asset in self.assets:
                 assets.extend([asset.one_interval(self.optimizer, i, freq, flags)])
-
             vars["assets"].append(assets)
-            self.constrain_within_interval(self.optimizer, vars, interval_data, i)
 
+            self.constrain_within_interval(self.optimizer, vars, interval_data, i)
             for asset in self.assets:
                 asset.constrain_within_interval(
                     self.optimizer, vars, flags=flags, freq=freq
                 )
-
-            #  TODO valves, boilers
 
         for asset in self.assets:
             asset.constrain_after_intervals(self.optimizer, vars)

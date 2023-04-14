@@ -5,10 +5,12 @@ typs = {
     "battery": epl.assets.battery.BatteryOneInterval,
     "generator": epl.assets.chp.GeneratorOneInterval,
     "valve": epl.assets.valve.ValveOneInterval,
+    "spill": epl.assets.spill.SpillOneInterval,
+    "evs-array": epl.assets.evs.EVsArrayOneInterval,
 }
 
 
-def filter_assets(vars: dict, asset: str, i: str = -1) -> list:
+def filter_assets(vars: dict, asset: str, i: int = -1) -> list:
     assets = vars["assets"][i]
     return [a for a in assets if isinstance(a, typs[asset])]
 

@@ -3,6 +3,7 @@ import collections
 
 import numpy as np
 import pandas as pd
+import pandera as pa
 import pydantic
 from rich import print
 
@@ -13,9 +14,52 @@ from energypylinear.optimizer import Optimizer
 
 optimizer = Optimizer()
 
+simulation_schema = {
+    "site-import_power_mwh": pa.Column(
+        pa.Float,
+        checks=[pa.Check.ge(0)],
+        title="Site Import Power MWh",
+        coerce=True,
+    ),
+    "site-export_power_mwh": pa.Column(
+        pa.Float,
+        checks=[pa.Check.ge(0)],
+        title="Site Export Power MWh",
+        coerce=True,
+    ),
+}
+#  maybe could get this from epl.assets.AssetOneInterval ?
+quantities = [
+    "electric_generation_mwh",
+    "electric_load_mwh",
+    "high_temperature_generation_mwh",
+    "low_temperature_generation_mwh",
+    "high_temperature_load_mwh",
+    "low_temperature_load_mwh",
+    "gas_consumption_mwh",
+]
+for qu in quantities:
+    simulation_schema[f"\w+-{qu}"] = pa.Column(
+        pa.Float, checks=[pa.Check.ge(0)], coerce=True, regex=True
+    )
+    simulation_schema[f"total-{qu}"] = pa.Column(
+        pa.Float, checks=[pa.Check.ge(0)], coerce=True, regex=True, required=True
+    )
+simulation_schema = pa.DataFrameSchema(simulation_schema)
+
 
 class SimulationResult(pydantic.BaseModel):
-    """The output of a simulation."""
+    """The output of a simulation.
+
+    Attributes:
+        simulation: pd.DataFrame
+            Simulation outputs, validated with `simulation_schema`.
+
+        interval_data: IntervalData
+            Input interval data to the simulation. EV data structures can be
+            multi-dimensional, so we store as a collection of arrays,
+            rather than a single DataFrame like `simulation`.
+    """
 
     simulation: pd.DataFrame
     interval_data: IntervalData
@@ -42,19 +86,16 @@ def extract_results(
     for i in interval_data.idx:
         site = vars["sites"][i]
 
-        results["import_power_mwh"].append(site.import_power_mwh.value())
-        results["export_power_mwh"].append(site.export_power_mwh.value())
+        results["site-import_power_mwh"].append(site.import_power_mwh.value())
+        results["site-export_power_mwh"].append(site.export_power_mwh.value())
 
-        if "spills" in vars:
-            spill = vars["spills"][i]
-            for attr in [
-                "electric_generation_mwh",
-                "high_temperature_generation_mwh",
-                "electric_load_mwh",
-                "low_temperature_load_mwh",
-            ]:
-                name = f"{spill.cfg.name}"
-                results[f"{name}-{attr}"].append(getattr(spill, attr).value())
+        spills = epl.utils.filter_assets(vars, "spill", i=i)
+        if len(spills) > 0:
+            for spill in spills:
+                for attr in quantities:
+                    results[f"{spill.cfg.name}-{attr}"].append(
+                        optimizer.value(getattr(spill, attr))
+                    )
 
         #  needs to change with the removal of the batteries flag
         batteries = epl.utils.filter_assets(vars, "battery", i=i)
@@ -93,7 +134,20 @@ def extract_results(
                 for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
                     results[f"{name}-{attr}"].append(getattr(boiler, attr).value())
 
-        if len(vars["evs-array"]):
+        #  add results from the valve
+        valves = epl.utils.filter_assets(vars, "valve", i=i)
+        if len(valves) > 0:
+            for valve in valves:
+                for attr in [
+                    "high_temperature_load_mwh",
+                    "low_temperature_generation_mwh",
+                ]:
+                    results[f"{valve.cfg.name}-{attr}"].append(
+                        optimizer.value(getattr(valve, attr))
+                    )
+
+        evs = epl.utils.filter_assets(vars, "evs-array", i=i)
+        if len(evs) > 0:
             evs = vars["evs-array"][i]
 
             for charger_idx, charger_cfg in enumerate(evs.charger_cfgs[0, 0, :]):
@@ -150,20 +204,35 @@ def extract_results(
                 axis=1
             )
 
+    #  include some interval data in simulation results
+    assert isinstance(interval_data.electricity_prices, np.ndarray)
+    assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
+    simulation["electricity_prices"] = interval_data.electricity_prices
+    simulation[
+        "electricity_carbon_intensities"
+    ] = interval_data.electricity_carbon_intensities
+
     #  add totals
-    #  can I do this without pandas??
-    for col in [
-        "electric_generation_mwh",
-        "electric_load_mwh",
-        "gas_consumption_mwh",
-        "high_temperature_generation_mwh",
-    ]:
+    total_mapper = {}
+    for col in quantities:
         cols = [c for c in simulation.columns if (col in c)]
-        simulation[col] = simulation[cols].sum(axis=1)
+        simulation[f"total-" + col] = simulation[cols].sum(axis=1)
+        total_mapper[col] = cols
+    print(total_mapper)
 
-    #  add balances + check them - TODO
+    simulation_schema.validate(simulation)
     validate_results(interval_data, simulation)
+    spill_occured = warn_spills(simulation, flags)
 
+    return SimulationResult(
+        simulation=simulation,
+        interval_data=interval_data,
+        feasible=feasible,
+        spill=spill_occured,
+    )
+
+
+def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
     #  add warnings on the use of any spill asset
     spill_columns = [c for c in simulation.columns if "spill" in c]
     #  filter out binary columns - TODO separate loop while dev
@@ -188,34 +257,14 @@ def extract_results(
         {spills}
         """
         print(spill_message)
-
-    #  include some interval data in simulation results
-    assert isinstance(interval_data.electricity_prices, np.ndarray)
-    assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
-    simulation["electricity_prices"] = interval_data.electricity_prices
-    simulation[
-        "electricity_carbon_intensities"
-    ] = interval_data.electricity_carbon_intensities
-
-    return SimulationResult(
-        simulation=simulation,
-        interval_data=interval_data,
-        feasible=feasible,
-        spill=spill_occured,
-    )
+    return spill_occured
 
 
-def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> None:
-    """Check that our simulation results make sense.
-
-    Args:
-        interval_data: input interval data to the simulation.
-        simulation: simulation results.
-    """
+def check_energy_balance(simulation: pd.DataFrame) -> None:
     #  energy balance
 
-    inp = simulation["import_power_mwh"] + simulation["electric_generation_mwh"]
-    out = simulation["export_power_mwh"] + simulation["electric_load_mwh"]
+    inp = simulation["site-import_power_mwh"] + simulation["electric_generation_mwh"]
+    out = simulation["site-export_power_mwh"] + simulation["electric_load_mwh"]
 
     """
     very messy
@@ -230,16 +279,14 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
     discharge = simulation[
         [c for c in simulation.columns if "-discharge_mwh" in c]
     ].sum(axis=1)
-
     balance = abs(inp + discharge - out - charge) < 1e-4
-
     spills = simulation[[c for c in simulation.columns if "spill" in c]]
     losses = simulation[[c for c in simulation.columns if "-losses_mwh" in c]]
     data = pd.DataFrame(
         {
-            "import": simulation["import_power_mwh"],
+            "import": simulation["site-import_power_mwh"],
             "generation": simulation["electric_generation_mwh"],
-            "export": simulation["export_power_mwh"],
+            "export": simulation["site-export_power_mwh"],
             "load": simulation["electric_load_mwh"],
             "charge": charge,
             "discharge": discharge,
@@ -250,12 +297,76 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
     )
     assert balance.all()
 
-    cols = [
-        "import_power_mwh",
-        "export_power_mwh",
-    ]
-    for c in cols:
-        assert c in simulation.columns
+
+def check_high_temperature_heat_balance(simulation):
+    inp = simulation[["total-high_temperature_generation_mwh"]].sum(axis=1)
+    out = simulation[
+        [
+            "total-high_temperature_load_mwh",
+            "load-high_temperature_load_mwh",
+            #  valve naming - hmmmmmmmmmmmmmmmmmmmmmm
+        ]
+    ].sum(axis=1)
+    balance = abs(inp - out) < 1e-4
+    data = pd.DataFrame(
+        {
+            "in": inp,
+            "out": out,
+            "balance": balance,
+        }
+    )
+    col = "valve-high_temperature_load_mwh"
+    if col in simulation.columns:
+        simulation["valve"] = simulation[col]
+    print("High Temperature Heat Balance")
+    print(data)
+    assert balance.all()
+
+
+def check_low_temperature_heat_balance(simulation):
+    inp = simulation[
+        [
+            "total-low_temperature_generation_mwh",
+        ]
+    ].sum(axis=1)
+    out = simulation[
+        [
+            "total-low_temperature_load_mwh",
+            "load-low_temperature_load_mwh",
+        ]
+    ].sum(axis=1)
+    balance = abs(inp - out) < 1e-4
+    #  used for debug
+    data = pd.DataFrame(
+        {
+            "in": inp,
+            "out": out,
+            "balance": balance,
+        }
+    )
+    print("Low Temperature Heat Balance")
+    print(data)
+    assert balance.all()
+
+
+def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> None:
+    """Check that our simulation results make sense.
+
+    Args:
+        interval_data: input interval data to the simulation.
+        simulation: simulation results.
+    """
+    #  TODO
+    # check_energy_balance(simulation)
+
+    #  hmmmmmmmmmmmmmmmmmmm
+    simulation[
+        "load-high_temperature_load_mwh"
+    ] = interval_data.high_temperature_load_mwh
+    simulation["load-low_temperature_load_mwh"] = interval_data.low_temperature_load_mwh
+
+    check_high_temperature_heat_balance(simulation)
+    check_low_temperature_heat_balance(simulation)
 
     if interval_data.evs:
         for charge_event_idx, charge_event_mwh in enumerate(

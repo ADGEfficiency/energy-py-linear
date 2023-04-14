@@ -111,11 +111,13 @@ class Generator:
         assets = vars["assets"][-1]
         generators = [a for a in assets if isinstance(a, epl.chp.GeneratorOneInterval)]
         for asset in generators:
-            optimizer.constrain(
-                asset.gas_consumption_mwh
-                == asset.electric_generation_mwh
-                * (1 / asset.cfg.electric_efficiency_pct)
-            )
+            if asset.cfg.electric_efficiency_pct > 0:
+                optimizer.constrain(
+                    asset.gas_consumption_mwh
+                    == asset.electric_generation_mwh
+                    * (1 / asset.cfg.electric_efficiency_pct)
+                )
+
             optimizer.constrain(
                 asset.high_temperature_generation_mwh
                 == asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
@@ -136,8 +138,10 @@ class Generator:
                 freq.mw_to_mwh(asset.cfg.electric_power_min_mw),
             )
 
-    def constrain_after_intervals(self, *args, **kwargs):
-        pass
+    def constrain_after_intervals(
+        self, *args: typing.Tuple[typing.Any], **kwargs: typing.Any
+    ) -> None:
+        return
 
     def optimize(
         self,
@@ -146,7 +150,6 @@ class Generator:
         electricity_carbon_intensities: typing.Union[
             None, np.ndarray, list[float], float
         ] = None,
-        #  should these go in here?  TODO
         high_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
         low_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
         freq_mins: int = defaults.freq_mins,
@@ -176,7 +179,7 @@ class Generator:
             low_temperature_load_mwh=low_temperature_load_mwh,
         )
         self.site = epl.Site()
-        self.spill_cfg = epl.spill.SpillConfig()
+        self.spill = epl.spill.Spill()
         self.valve = epl.valve.Valve()
 
         default_boiler_size = freq.mw_to_mwh(
@@ -193,14 +196,12 @@ class Generator:
             vars["sites"].append(
                 self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
-            vars["spills"].append(
-                epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
-            )
             vars["assets"].append(
                 [
                     self.one_interval(self.optimizer, i, freq),
                     self.boiler.one_interval(self.optimizer, i, freq),
                     self.valve.one_interval(self.optimizer, i, freq),
+                    self.spill.one_interval(self.optimizer, i, freq),
                 ]
             )
 
@@ -208,6 +209,7 @@ class Generator:
             self.constrain_within_interval(self.optimizer, vars, freq)
             self.boiler.constrain_within_interval(self.optimizer, vars, freq)
             self.valve.constrain_within_interval(self.optimizer, vars, freq)
+            self.spill.constrain_within_interval(self.optimizer, vars, freq)
 
         assert len(interval_data.idx) == len(vars["assets"])
 

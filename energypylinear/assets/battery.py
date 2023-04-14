@@ -153,8 +153,8 @@ class Battery:
         )
 
     def setup_initial_final_charge(
-        self, initial_charge_mwh: float, final_charge_mwh: float
-    ):
+        self, initial_charge_mwh: float, final_charge_mwh: typing.Optional[float]
+    ) -> None:
         """Processes the options for initial and final charge."""
         self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)
         self.cfg.final_charge_mwh = (
@@ -199,8 +199,8 @@ class Battery:
         optimizer: Optimizer,
         vars: collections.defaultdict,
         flags: Flags,
-        #  for freq
-        **kwargs,
+        #  for freq - maybe better to have the freq here - idk...
+        **kwargs: typing.Any,
     ) -> None:
         """Constrain battery dispatch within a single interval"""
         constrain_only_charge_or_discharge(optimizer, vars, flags)
@@ -220,9 +220,6 @@ class Battery:
         electricity_prices: np.ndarray,
         gas_prices: typing.Union[None, np.ndarray] = None,
         electricity_carbon_intensities: typing.Union[None, np.ndarray] = None,
-        #  should these go in here?  TODO
-        high_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
-        low_temperature_load_mwh: typing.Union[None, np.ndarray] = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,
@@ -254,24 +251,18 @@ class Battery:
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
             electricity_carbon_intensities=electricity_carbon_intensities,
-            high_temperature_load_mwh=high_temperature_load_mwh,
-            low_temperature_load_mwh=low_temperature_load_mwh,
         )
         self.site = epl.Site()
-        self.spill_cfg = epl.spill.SpillConfig()
+        self.spill = epl.spill.Spill()
 
         self.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
 
-        #  TODO - difficult to type the list of list thing
-        #  maybe sign something should be reworked with this `vars` dict
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
                 self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
-            vars["spills"].append(
-                epl.spill.spill_one_interval(self.optimizer, self.spill_cfg, i, freq)
-            )
+            vars["spills"].append(self.spill.one_interval(self.optimizer, i, freq))
             vars["assets"].append([self.one_interval(self.optimizer, i, freq, flags)])
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
@@ -284,6 +275,7 @@ class Battery:
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
         status = self.optimizer.solve(verbose=verbose)
+
         self.interval_data = interval_data
         return epl.results.extract_results(
             interval_data, vars, feasible=status.feasible

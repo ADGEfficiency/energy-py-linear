@@ -2,6 +2,8 @@
 
 This allows infeasible simulations to become feasible. If a spill asset is used, then a warning is raised.
 """
+import typing
+
 import pulp
 import pydantic
 
@@ -12,7 +14,7 @@ from energypylinear.assets.asset import AssetOneInterval
 class SpillConfig(AssetOneInterval):
     """Spill configuration."""
 
-    name: str = "spill-default"
+    name: str = "spill"
 
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
@@ -31,22 +33,43 @@ class SpillOneInterval(AssetOneInterval):
     low_temperature_load_mwh: pulp.LpVariable
 
 
-def spill_one_interval(
-    optimizer: epl.optimizer.Optimizer, cfg: SpillConfig, i: int, freq: epl.freq.Freq
-) -> SpillOneInterval:
-    """Create Spill asset data for a single interval."""
-    return SpillOneInterval(
-        cfg=cfg,
-        electric_generation_mwh=optimizer.continuous(
-            f"{cfg.name}-electric_generation_mwh-{i}", low=0
-        ),
-        high_temperature_generation_mwh=optimizer.continuous(
-            f"{cfg.name}-high_temperature_generation_mwh-{i}", low=0
-        ),
-        electric_load_mwh=optimizer.continuous(
-            f"{cfg.name}-electric_load_mwh-{i}", low=0
-        ),
-        low_temperature_load_mwh=optimizer.continuous(
-            f"{cfg.name}-low_temperature_load_mwh-{i}", low=0
-        ),
-    )
+class Spill:
+    def __init__(self, name: str = "spill"):
+        self.cfg = SpillConfig(name=name)
+
+    def __repr__(self) -> str:
+        return f"<energypylinear.Valve>"
+
+    def one_interval(
+        self,
+        optimizer: epl.optimizer.Optimizer,
+        i: int,
+        freq: epl.freq.Freq,
+        flags: epl.flags.Flags = epl.flags.Flags(),
+    ) -> SpillOneInterval:
+        """Create Spill asset data for a single interval."""
+        return SpillOneInterval(
+            cfg=self.cfg,
+            electric_generation_mwh=optimizer.continuous(
+                f"{self.cfg.name}-electric_generation_mwh-{i}", low=0
+            ),
+            high_temperature_generation_mwh=optimizer.continuous(
+                f"{self.cfg.name}-high_temperature_generation_mwh-{i}", low=0
+            ),
+            electric_load_mwh=optimizer.continuous(
+                f"{self.cfg.name}-electric_load_mwh-{i}", low=0
+            ),
+            low_temperature_load_mwh=optimizer.continuous(
+                f"{self.cfg.name}-low_temperature_load_mwh-{i}", low=0
+            ),
+        )
+
+    def constrain_within_interval(
+        self, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
+        return
+
+    def constrain_after_intervals(
+        self, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
+        return
