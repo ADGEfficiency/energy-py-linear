@@ -27,10 +27,10 @@ def test_chp_gas_turbine_price() -> None:
     row = simulation.iloc[0, :]
     assert row["generator-electric_generation_mwh"] == 100
 
-    data = simulation[
-        [c for c in simulation.columns if "spill" in c]
-        + ["generator-electric_generation_mwh"]
-    ]
+    # data = simulation[
+    #     [c for c in simulation.columns if "spill" in c]
+    #     + ["generator-electric_generation_mwh"]
+    # ]
     np.testing.assert_almost_equal(
         row["spill-low_temperature_load_mwh"],
         (100 / 0.3) * 0.5 - 20,

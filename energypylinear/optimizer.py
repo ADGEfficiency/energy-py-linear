@@ -11,6 +11,8 @@ import pulp
 
 @dataclasses.dataclass
 class OptimizationStatus:
+    """Result of a linear program optimization."""
+
     status: str
     feasible: bool
 
@@ -30,6 +32,7 @@ class Optimizer:
         self.solver = pulp.PULP_CBC_CMD(msg=0)
 
     def __repr__(self) -> str:
+        """A string representation of self."""
         return f"<energypylinear.Optimizer variables: {len(self.variables())} constraints: {len(self.constraints())}>"
 
     def continuous(

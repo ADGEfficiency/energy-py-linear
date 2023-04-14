@@ -42,7 +42,7 @@ quantities = [
     "discharge_mwh",
 ]
 for qu in quantities:
-    schema[f"\w+-{qu}"] = pa.Column(
+    schema[rf"\w+-{qu}"] = pa.Column(
         pa.Float, checks=[pa.Check.ge(defaults.epsilon)], coerce=True, regex=True
     )
     schema[f"total-{qu}"] = pa.Column(
@@ -225,7 +225,7 @@ def extract_results(
     total_mapper = {}
     for col in quantities:
         cols = [c for c in simulation.columns if (col in c)]
-        simulation[f"total-" + col] = simulation[cols].sum(axis=1)
+        simulation[f"total-{col}"] = simulation[cols].sum(axis=1)
         total_mapper[col] = cols
     print("Total Mapper")
     print(total_mapper)
@@ -243,6 +243,7 @@ def extract_results(
 
 
 def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
+    """Prints warnings if we have spilled."""
     #  add warnings on the use of any spill asset
     spill_columns = [c for c in simulation.columns if "spill" in c]
     #  filter out binary columns - TODO separate loop while dev
@@ -271,6 +272,7 @@ def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
 
 
 def check_energy_balance(simulation: pd.DataFrame) -> None:
+    """Checks the electricity balance."""
     inp = (
         simulation["site-import_power_mwh"]
         + simulation["total-electric_generation_mwh"]
@@ -312,6 +314,7 @@ def check_energy_balance(simulation: pd.DataFrame) -> None:
 
 
 def check_high_temperature_heat_balance(simulation: pd.DataFrame) -> None:
+    """Checks the high temperature heat balance."""
     inp = simulation[["total-high_temperature_generation_mwh"]].sum(axis=1)
     out = simulation[
         [
@@ -337,6 +340,7 @@ def check_high_temperature_heat_balance(simulation: pd.DataFrame) -> None:
 
 
 def check_low_temperature_heat_balance(simulation: pd.DataFrame) -> None:
+    """Checks the low temperature heat balance."""
     inp = simulation[
         [
             "total-low_temperature_generation_mwh",

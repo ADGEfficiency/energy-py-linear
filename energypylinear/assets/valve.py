@@ -33,11 +33,15 @@ class ValveOneInterval(AssetOneInterval):
 
 
 class Valve:
+    """Spill asset - allows heat to flow from high to low temperature."""
+
     def __init__(self, name: str = "valve"):
+        """Initialize a Valve asset model."""
         self.cfg = ValveConfig(name=name)
 
     def __repr__(self) -> str:
-        return f"<energypylinear.Valve>"
+        """A string representation of self."""
+        return "<energypylinear.Valve>"
 
     def one_interval(
         self,
@@ -73,4 +77,5 @@ class Valve:
     def constrain_after_intervals(
         self, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
+        """Constrain asset after all interval asset models are created."""
         return
