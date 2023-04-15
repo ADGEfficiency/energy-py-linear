@@ -13,6 +13,7 @@ from energypylinear.accounting import get_accounts
 from energypylinear.assets import battery, chp, evs, site, spill, valve
 from energypylinear.assets.battery import Battery
 from energypylinear.assets.boiler import Boiler
+from energypylinear.assets.evs import EVs
 from energypylinear.assets.chp import Generator
 from energypylinear.assets.site import Site
 from energypylinear.freq import Freq
@@ -26,6 +27,7 @@ __all__ = [
     "Boiler",
     "Site",
     "Optimizer",
+    "EVs",
     "Freq",
     "IntervalData",
     "get_accounts",

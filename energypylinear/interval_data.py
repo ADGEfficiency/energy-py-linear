@@ -128,8 +128,9 @@ class IntervalData(pydantic.BaseModel):
         cls, evs: "epl.interval_data.EVIntervalData", values: dict
     ) -> "epl.interval_data.EVIntervalData":
         """Validate our indexes are the same with our parent index."""
-        assert all(evs.idx == values["idx"])
-        return evs
+        if evs:
+            assert all(evs.idx == values["idx"])
+            return evs
 
     @pydantic.root_validator(pre=True)
     def validate_all_things(cls, values: dict) -> dict:

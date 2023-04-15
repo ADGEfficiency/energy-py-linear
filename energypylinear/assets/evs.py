@@ -2,6 +2,8 @@
 import collections
 import pathlib
 import typing
+from energypylinear.defaults import defaults
+from energypylinear.flags import Flags
 
 import numpy as np
 import pulp
@@ -15,11 +17,23 @@ from energypylinear.optimizer import Optimizer
 
 
 class ChargerConfig(pydantic.BaseModel):
-    """Electric vehicle (EV) charger asset configuration."""
+    """Electric vehicle (EV) single charger asset configuration."""
 
     name: str
     power_max_mw: float
     power_min_mw: float
+
+
+class EVsConfig(pydantic.BaseModel):
+    """Electric vehicle (EV) asset configuration."""
+
+    name: str
+
+    @pydantic.validator("name")
+    def check_name(cls, name: str) -> str:
+        """Ensure we can identify this asset correctly."""
+        assert "evs" in name
+        return name
 
 
 class EVOneInterval(AssetOneInterval):
@@ -198,8 +212,15 @@ class EVs:
         charger_turndown - minimum charger output defined by the charger_turndown as a percent of the charger size in mega-watts.
     """
 
-    def __init__(self, charger_mws: list[float], charger_turndown: float = 0.1):
+    def __init__(
+        self,
+        charger_mws: list[float],
+        charger_turndown: float = 0.1,
+        name: str = "evs",
+    ):
         """Initialize an electric vehicle asset model."""
+
+        self.cfg = EVsConfig(name=name)
 
         self.charger_cfgs = np.array(
             [
@@ -220,6 +241,32 @@ class EVs:
                 )
             ]
         )
+
+    def one_interval(
+        self,
+        optimizer: Optimizer,
+        i: int,
+        freq: Freq,
+        flags: Flags = Flags()
+    ) -> tuple:
+        assert self.interval_data.evs is not None
+        assert self.interval_data.evs.charge_events is not None
+
+        evs, evs_array = evs_one_interval(
+            optimizer,
+            self.charger_cfgs,
+            self.interval_data.evs.charge_events,
+            i,
+            freq,
+        )
+        spill_evs, spill_evs_array = evs_one_interval(
+            optimizer,
+            self.spill_charger_config,
+            self.interval_data.evs.charge_events,
+            i,
+            freq,
+        )
+        return evs, evs_array, spill_evs, spill_evs_array
 
     def optimize(
         self,
@@ -287,35 +334,32 @@ class EVs:
         self.site = epl.Site()
         self.spill = epl.spill.Spill()
 
+        #  needed in self.one_interval
+        self.interval_data = interval_data
+
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
             vars["sites"].append(
                 self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
             assert isinstance(interval_data.evs.charge_events, np.ndarray)
-            evs, evs_array = evs_one_interval(
+            evs, evs_array, spill_evs, spill_evs_array = self.one_interval(
                 self.optimizer,
-                self.charger_cfgs,
-                interval_data.evs.charge_events,
-                i,
-                freq,
-            )
-            spill_evs, spill_evs_array = evs_one_interval(
-                self.optimizer,
-                self.spill_charger_config,
-                interval_data.evs.charge_events,
                 i,
                 freq,
             )
 
             #  should get rid of all these and just use `assets`
-            # vars["evs"].append(evs)
+            #  reason to use the separate keys is that we don't want
+            #  both evs_array and evs in assets for epl.Site
             vars["evs-array"].append(evs_array)
-            # vars["spill-evs"].append(spill_evs)
             vars["spill-evs-array"].append(spill_evs_array)
-
             vars["assets"].append(
-                [self.spill.one_interval(self.optimizer, i, freq), *evs, *spill_evs]
+                [
+                    *evs,
+                    *spill_evs,
+                    self.spill.one_interval(self.optimizer, i, freq),
+                ]
             )
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)

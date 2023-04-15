@@ -2,6 +2,7 @@
 import collections
 import typing
 
+import numpy as np
 import pulp
 import pydantic
 
@@ -195,6 +196,8 @@ class Site:
         low_temperature_load_mwh: typing.Optional[
             typing.Union[float, typing.Iterable[float]]
         ] = None,
+        charge_events: typing.Union[list[list[int]], typing.Iterable[int], None] = None,
+        charge_event_mwh: typing.Union[list[int], typing.Iterable[float], None] = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,
@@ -210,6 +213,24 @@ class Site:
             electricity_carbon_intensities: carbon intensity of electricity in each interval.
             high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
             low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
+            charge_events: 2D matrix representing when a charge event is active.
+                Shape is (n_charge_events, n_timesteps).
+                A charge events matrix for 4 charge events over 5 intervals.
+                ```
+                charge_events = [
+                    [1, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 0],
+                    [0, 0, 0, 1, 1],
+                    [0, 1, 0, 0, 0],
+                ]
+                ```
+
+            charge_event_mwh: 1D array of the total charge energy required for each charge event - total across all intervals in mega-watts.
+                Length is the number of charge events.
+                ```
+                charge_event_mwh = [50, 100, 30, 40]
+                ```
+
             freq_mins: the size of an interval in minutes.
             initial_charge_mwh: initial charge state of the battery in mega-watt hours.
             final_charge_mwh: final charge state of the battery in mega-watt hours.
@@ -227,12 +248,23 @@ class Site:
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
 
+        if charge_events is not None:
+            charge_events = np.array(charge_events).T
+            charge_event_mwh = np.array(charge_event_mwh)
+            evs = epl.interval_data.EVIntervalData(
+                charge_events=charge_events,
+                charge_event_mwh=charge_event_mwh,
+            )
+        else:
+            evs = None
+
         interval_data = epl.interval_data.IntervalData(
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
             electricity_carbon_intensities=electricity_carbon_intensities,
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
+            evs=evs,
         )
 
         self.spill = epl.spill.Spill()
@@ -251,13 +283,14 @@ class Site:
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
 
+            #  setup blocks / data for site and assets
             vars["sites"].append(self.one_interval(self.optimizer, self.cfg, i, freq))
-
             assets = []
             for asset in self.assets:
-                assets.extend([asset.one_interval(self.optimizer, i, freq, flags)])
+                assets.extend(asset.one_interval(self.optimizer, i, freq, flags))
             vars["assets"].append(assets)
 
+            #  constrain within interval
             self.constrain_within_interval(self.optimizer, vars, interval_data, i)
             for asset in self.assets:
                 asset.constrain_within_interval(
