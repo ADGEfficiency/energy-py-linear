@@ -207,7 +207,7 @@ class Battery:
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
-        """Constrain battery dispatch within a single interval"""
+        """Constrain Battery dispatch within a single interval"""
         constrain_only_charge_or_discharge(optimizer, vars, flags)
         constrain_battery_electricity_balance(optimizer, vars)
         constrain_connection_batteries_between_intervals(optimizer, vars)

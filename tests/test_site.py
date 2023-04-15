@@ -1,8 +1,8 @@
 """Test the site API."""
 import numpy as np
 
-from energypylinear.data_generation import generate_random_ev_input_data
 import energypylinear as epl
+from energypylinear.data_generation import generate_random_ev_input_data
 from energypylinear.defaults import defaults
 
 
@@ -21,7 +21,7 @@ def test_site() -> None:
                 electric_power_max_mw=50,
                 electric_efficiency_pct=0.4,
                 high_temperature_efficiency_pct=0.4,
-                name="gas-engine-generator"
+                name="gas-engine-generator",
             ),
         ]
     )

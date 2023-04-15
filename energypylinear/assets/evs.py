@@ -244,20 +244,21 @@ class EVs:
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> tuple:
+        """Create EV asset data for a single interval."""
         assert self.interval_data.evs is not None
         assert self.interval_data.evs.charge_events is not None
 
         evs, evs_array = evs_one_interval(
             optimizer,
             self.charger_cfgs,
-            self.interval_data.evs.charge_events,
+            np.array(self.interval_data.evs.charge_events),
             i,
             freq,
         )
         spill_evs, spill_evs_array = evs_one_interval(
             optimizer,
             self.spill_charger_config,
-            self.interval_data.evs.charge_events,
+            np.array(self.interval_data.evs.charge_events),
             i,
             freq,
         )
@@ -272,7 +273,9 @@ class EVs:
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
+        """Constrain EVs dispatch within a single interval"""
         evs_array = vars["evs-array"][i]
+        assert self.interval_data.evs is not None
         constrain_within_interval(
             optimizer,
             evs_array,

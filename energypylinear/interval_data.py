@@ -25,7 +25,7 @@ class EVIntervalData(pydantic.BaseModel):
         validate_all_things: validates the input data
     """
 
-    charge_events: typing.Union[list[list[int]], np.ndarray]
+    charge_events: np.ndarray
     idx: typing.Any = []
     charge_event_mwh: typing.Union[list[int], np.ndarray]
 
@@ -126,7 +126,7 @@ class IntervalData(pydantic.BaseModel):
     @pydantic.validator("evs")
     def validate_evs(
         cls, evs: "epl.interval_data.EVIntervalData", values: dict
-    ) -> "epl.interval_data.EVIntervalData":
+    ) -> typing.Optional["epl.interval_data.EVIntervalData"]:
         """Validate our indexes are the same with our parent index."""
         if evs:
             assert all(evs.idx == values["idx"])
