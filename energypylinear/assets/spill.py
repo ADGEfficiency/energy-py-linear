@@ -42,7 +42,7 @@ class Spill:
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        return "<energypylinear.Valve>"
+        return "<energypylinear.Spill>"
 
     def one_interval(
         self,

@@ -10,7 +10,6 @@ def price_objective(
     optimizer: epl.optimizer.Optimizer,
     vars: dict,
     interval_data: "epl.interval_data.IntervalData",
-    tariffs: None = None,
 ) -> pulp.LpAffineExpression:
     """
     Linear programming objective for cost minimization.  Equivilant to profit maximization.
@@ -33,10 +32,6 @@ def price_objective(
     boilers = epl.utils.filter_all_assets(vars, "boiler")
     generators = epl.utils.filter_all_assets(vars, "generator")
 
-    if len(generators) == 0:
-        generators = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
-    if len(boilers) == 0:
-        boilers = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
     if len(spill_evs) == 0:
         spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
 
@@ -75,7 +70,6 @@ def carbon_objective(
     optimizer: epl.optimizer.Optimizer,
     vars: dict,
     interval_data: "epl.interval_data.IntervalData",
-    tariffs: None = None,
 ) -> pulp.LpAffineExpression:
     """
     Linear programming objective for carbon emission minimization.
