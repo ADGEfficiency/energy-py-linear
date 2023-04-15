@@ -68,7 +68,13 @@ class Boiler:
         )
 
     def constrain_within_interval(
-        self, optimizer: Optimizer, vars: dict, freq: Freq, flags: Flags = Flags()
+        self,
+        optimizer: Optimizer,
+        vars: dict,
+        interval_data: "epl.IntervalData",
+        i: int,
+        freq: Freq,
+        flags: Flags = Flags(),
     ) -> None:
         """Constrain boiler upper and lower bounds for generating high & low temperature heat."""
         boilers = epl.utils.filter_assets(vars, "boiler")

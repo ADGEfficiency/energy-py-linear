@@ -280,6 +280,10 @@ class Site:
 
         #  warn about sites without boilers?  warn sites without valve / spill?
 
+        #  this is needed for evs_one_interval
+        for asset in self.assets:
+            asset.interval_data = interval_data
+
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
 
@@ -287,18 +291,44 @@ class Site:
             vars["sites"].append(self.one_interval(self.optimizer, self.cfg, i, freq))
             assets = []
             for asset in self.assets:
-                assets.extend(asset.one_interval(self.optimizer, i, freq, flags))
+                neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
+
+                #  tech debt TODO
+                #  EV is special beacuse it returns many blocks per step
+                if isinstance(asset, epl.EVs):
+                    #  evs and spill_evs - NOT the arrays
+                    assets.extend(neu_assets[0])
+                    assets.extend(neu_assets[2])
+                    vars["evs-array"].append(neu_assets[1])
+                    vars["spill-evs-array"].append(neu_assets[3])
+                else:
+                    assets.append(neu_assets)
+
             vars["assets"].append(assets)
 
             #  constrain within interval
-            self.constrain_within_interval(self.optimizer, vars, interval_data, i)
+            self.constrain_within_interval(
+                self.optimizer,
+                vars,
+                interval_data,
+                i
+            )
             for asset in self.assets:
                 asset.constrain_within_interval(
-                    self.optimizer, vars, flags=flags, freq=freq
+                    self.optimizer,
+                    vars,
+                    interval_data,
+                    i,
+                    flags=flags,
+                    freq=freq
                 )
 
         for asset in self.assets:
-            asset.constrain_after_intervals(self.optimizer, vars)
+            asset.constrain_after_intervals(
+                self.optimizer,
+                vars,
+                interval_data,
+            )
 
         assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
 

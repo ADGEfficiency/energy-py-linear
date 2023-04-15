@@ -374,7 +374,7 @@ def check_low_temperature_heat_balance(simulation: pd.DataFrame) -> None:
 
     print("Low Temperature Heat Balance")
     print(data)
-    print(simulation[[c for c in simulation.columns if "low_temperature" in c]])
+    # print(simulation[[c for c in simulation.columns if "low_temperature" in c]])
     assert balance.all()
 
 

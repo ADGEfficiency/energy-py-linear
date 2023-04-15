@@ -105,7 +105,13 @@ class Generator:
         )
 
     def constrain_within_interval(
-        self, optimizer: Optimizer, vars: dict, freq: Freq, flags: Flags = Flags()
+        self,
+        optimizer: Optimizer,
+        vars: dict,
+        interval_data: "epl.IntervalData",
+        i: int,
+        freq: Freq,
+        flags: Flags = Flags(),
     ) -> None:
         """Constrain generator upper and lower bounds for generating electricity, high & low temperature heat."""
         assets = vars["assets"][-1]
@@ -209,10 +215,16 @@ class Generator:
             )
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-            self.constrain_within_interval(self.optimizer, vars, freq)
-            self.boiler.constrain_within_interval(self.optimizer, vars, freq)
-            self.valve.constrain_within_interval(self.optimizer, vars, freq)
-            self.spill.constrain_within_interval(self.optimizer, vars, freq)
+            self.constrain_within_interval(self.optimizer, vars, interval_data, i, freq)
+            self.boiler.constrain_within_interval(
+                self.optimizer, vars, interval_data, i, freq
+            )
+            self.valve.constrain_within_interval(
+                self.optimizer, vars, interval_data, i, freq
+            )
+            self.spill.constrain_within_interval(
+                self.optimizer, vars, interval_data, i, freq
+            )
 
         assert len(interval_data.idx) == len(vars["assets"])
 

@@ -2,8 +2,6 @@
 import collections
 import pathlib
 import typing
-from energypylinear.defaults import defaults
-from energypylinear.flags import Flags
 
 import numpy as np
 import pulp
@@ -12,6 +10,7 @@ import pydantic
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
+from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
@@ -243,11 +242,7 @@ class EVs:
         )
 
     def one_interval(
-        self,
-        optimizer: Optimizer,
-        i: int,
-        freq: Freq,
-        flags: Flags = Flags()
+        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> tuple:
         assert self.interval_data.evs is not None
         assert self.interval_data.evs.charge_events is not None
@@ -267,6 +262,46 @@ class EVs:
             freq,
         )
         return evs, evs_array, spill_evs, spill_evs_array
+
+    def constrain_within_interval(
+        self,
+        optimizer: Optimizer,
+        vars: collections.defaultdict,
+        interval_data: "epl.IntervalData",
+        i: int,
+        freq: Freq,
+        flags: Flags = Flags(),
+    ) -> None:
+        evs_array = vars["evs-array"][i]
+        constrain_within_interval(
+            optimizer,
+            evs_array,
+            self.interval_data.evs.charge_events,
+            freq,
+            self.charger_cfgs,
+            i,
+        )
+        spill_evs_array = vars["spill-evs-array"][i]
+        constrain_within_interval(
+            optimizer,
+            spill_evs_array,
+            self.interval_data.evs.charge_events,
+            freq,
+            self.spill_charger_config,
+            i,
+            add_single_charger_or_event_constraints=False,
+        )
+
+    def constrain_after_intervals(
+        self,
+        optimizer: Optimizer,
+        vars: collections.defaultdict,
+        interval_data: "epl.IntervalData",
+    ) -> None:
+        """Constrain EVs after all interval asset models are created."""
+        constrain_after_intervals(
+            optimizer, vars, interval_data, self.charger_cfgs, self.spill_charger_config
+        )
 
     def optimize(
         self,
@@ -363,33 +398,20 @@ class EVs:
             )
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-            constrain_within_interval(
-                self.optimizer,
-                evs_array,
-                interval_data.evs.charge_events,
-                freq,
-                self.charger_cfgs,
-                i,
-            )
-            constrain_within_interval(
-                self.optimizer,
-                spill_evs_array,
-                interval_data.evs.charge_events,
-                freq,
-                self.spill_charger_config,
-                i,
-                add_single_charger_or_event_constraints=False,
+
+            self.constrain_within_interval(
+                self.optimizer, vars, interval_data, i, freq=freq
             )
 
         assert isinstance(interval_data.evs.charge_events, np.ndarray)
         assert isinstance(self.charger_cfgs, np.ndarray)
         assert isinstance(self.spill_charger_config, np.ndarray)
-        constrain_after_intervals(
+        self.constrain_after_intervals(
             self.optimizer,
             vars,
             interval_data,
-            self.charger_cfgs,
-            self.spill_charger_config,
+            # self.charger_cfgs,
+            # self.spill_charger_config,
         )
 
         objective_fn = epl.objectives[objective]

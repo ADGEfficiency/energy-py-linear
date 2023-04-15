@@ -65,6 +65,8 @@ class Valve:
         self,
         optimizer: "epl.optimizer.Optimizer",
         vars: dict,
+        interval_data: "epl.IntervalData",
+        i:int,
         freq: "epl.freq.Freq",
         flags: epl.flags.Flags = epl.flags.Flags(),
     ) -> None:

@@ -202,9 +202,10 @@ class Battery:
         self,
         optimizer: Optimizer,
         vars: collections.defaultdict,
-        flags: Flags,
-        #  for freq - maybe better to have the freq here - idk...
-        **kwargs: typing.Any,
+        interval_data: "epl.IntervalData",
+        i: int,
+        freq: Freq,
+        flags: Flags = Flags(),
     ) -> None:
         """Constrain battery dispatch within a single interval"""
         constrain_only_charge_or_discharge(optimizer, vars, flags)
@@ -215,6 +216,7 @@ class Battery:
         self,
         optimizer: Optimizer,
         vars: collections.defaultdict,
+        interval_data: "epl.IntervalData",
     ) -> None:
         """Constrain battery dispatch after all interval asset models are created."""
         constrain_initial_final_charge(optimizer, vars)
@@ -274,9 +276,11 @@ class Battery:
             )
 
             self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-            self.constrain_within_interval(self.optimizer, vars, flags=flags)
+            self.constrain_within_interval(
+                self.optimizer, vars, interval_data, i, freq, flags=flags
+            )
 
-        self.constrain_after_intervals(self.optimizer, vars)
+        self.constrain_after_intervals(self.optimizer, vars, interval_data)
 
         assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
 

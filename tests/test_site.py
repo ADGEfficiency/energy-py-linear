@@ -21,6 +21,7 @@ def test_site() -> None:
                 electric_power_max_mw=50,
                 electric_efficiency_pct=0.4,
                 high_temperature_efficiency_pct=0.4,
+                name="gas-engine-generator"
             ),
         ]
     )
