@@ -131,6 +131,7 @@ class IntervalData(pydantic.BaseModel):
         if evs:
             assert all(evs.idx == values["idx"])
             return evs
+        return None
 
     @pydantic.root_validator(pre=True)
     def validate_all_things(cls, values: dict) -> dict:

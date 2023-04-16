@@ -1,4 +1,6 @@
 """Boiler asset for optimizing dispatch of gas fired boilers"""
+import typing
+
 import pulp
 import pydantic
 
@@ -95,6 +97,8 @@ class Boiler:
                 freq.mw_to_mwh(asset.cfg.high_temperature_generation_min_mw),
             )
 
-    def constrain_after_intervals(self, optimizer: Optimizer, vars: list) -> None:
+    def constrain_after_intervals(
+        self, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Constrain asset after all interval asset models are created."""
         return

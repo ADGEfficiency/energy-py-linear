@@ -22,7 +22,7 @@ setup-docs:
 test: setup-test
 	rm -f ./tests/test_readme.py
 	python -m phmdoctest README.md --outfile tests/test_readme.py
-	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon
+	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon --pdb
 test-ci: setup-test
 	coverage run -m pytest tests --tb=short --show-capture=no
 	coverage report -m

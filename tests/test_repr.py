@@ -9,7 +9,9 @@ def test_repr() -> None:
         epl.Site(),
         epl.assets.spill.Spill(),
         epl.assets.valve.Valve(),
+        epl.assets.boiler.Boiler(),
         epl.interval_data.IntervalData(electricity_prices=[10]),
+        epl.Optimizer(),
     ]
     for th in things:
         print(th)

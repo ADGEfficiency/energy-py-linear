@@ -23,6 +23,7 @@ def test_site() -> None:
                 high_temperature_efficiency_pct=0.4,
                 name="gas-engine-generator",
             ),
+            epl.Boiler(high_temperature_generation_max_mw=100),
         ]
     )
 

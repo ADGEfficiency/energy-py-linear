@@ -224,9 +224,32 @@ def extract_results(
     #  add totals
     total_mapper = {}
     for col in quantities:
-        cols = [c for c in simulation.columns if (col in c)]
+
+        """
+        #  across all non-spill chargers
+        charge-event-0-charge_mwh
+
+        # across all chargers, including spill
+        charge-event-0-total-charge_mwh
+
+        # across spill charger for each event
+        # don't have the equivilant for each other charger
+        spill-charge-event-0-charge_mwh
+        """
+        cols = [
+            c
+            for c in simulation.columns
+            if ("-" + col in c) and ("charge-event" not in c)
+        ]
         simulation[f"total-{col}"] = simulation[cols].sum(axis=1)
         total_mapper[col] = cols
+
+    total_mapper["spills"] = [c for c in simulation.columns if "spill" in c]
+    simulation["total-spills_mwh"] = simulation[total_mapper["spills"]].sum(axis=1)
+
+    total_mapper["losses"] = [c for c in simulation.columns if "-losses_mwh" in c]
+    simulation["total-losses_mwh"] = simulation[total_mapper["losses"]].sum(axis=1)
+
     print("Total Mapper")
     print(total_mapper)
 
@@ -278,34 +301,24 @@ def check_energy_balance(simulation: pd.DataFrame) -> None:
         + simulation["total-electric_generation_mwh"]
     )
     out = simulation["site-export_power_mwh"] + simulation["total-electric_load_mwh"]
+    accumulation = simulation["total-discharge_mwh"] - simulation["total-charge_mwh"]
 
     """
     very messy
     - ev chargers are double counted
     """
-    cols = [
-        c
-        for c in simulation.columns
-        if ("-charge_mwh" in c) and ("total" not in c) and ("event" not in c)
-    ]
-    charge = simulation[cols].sum(axis=1)
-    discharge = simulation[
-        [c for c in simulation.columns if "-discharge_mwh" in c]
-    ].sum(axis=1)
-    balance = abs(inp + discharge - out - charge) < 1e-4
-    spills = simulation[[c for c in simulation.columns if "spill" in c]]
-    losses = simulation[[c for c in simulation.columns if "-losses_mwh" in c]]
+    balance = abs(inp + accumulation - out) < 1e-4
     data = pd.DataFrame(
         {
             "import": simulation["site-import_power_mwh"],
             "generation": simulation["total-electric_generation_mwh"],
             "export": simulation["site-export_power_mwh"],
             "load": simulation["total-electric_load_mwh"],
-            "charge": charge,
-            "discharge": discharge,
+            "charge": simulation["total-charge_mwh"],
+            "discharge": simulation["total-discharge_mwh"],
             "balance": balance,
-            "loss": losses.sum(axis=1),
-            "spills": spills.sum(axis=1),
+            "loss": simulation["total-losses_mwh"],
+            "spills": simulation["total-spills_mwh"],
         }
     )
     print("Electricity Balance")
@@ -386,7 +399,7 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
         simulation: simulation results.
     """
     #  TODO
-    # check_energy_balance(simulation)
+    check_energy_balance(simulation)
 
     #  hmmmmmmmmmmmmmmmmmmm TODO move into above
     simulation[
