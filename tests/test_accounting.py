@@ -20,6 +20,10 @@ def test_accounting_actuals() -> None:
             "total-high_temperature_load_mwh": [0, 0, 0],
             "total-low_temperature_generation_mwh": [0, 0, 0],
             "total-low_temperature_load_mwh": [0, 0, 0],
+            "total-charge_mwh": [0, 0, 0],
+            "total-discharge_mwh": [0, 0, 0],
+            "total-losses_mwh": [0, 0, 0],
+            "total-spills_mwh": [0, 0, 0],
         }
     )
     actuals_data = epl.interval_data.IntervalData(
