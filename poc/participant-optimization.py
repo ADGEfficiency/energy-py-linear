@@ -1,5 +1,23 @@
 """
 
+# was in log.md
+### Participants, Tariffs and Objective Functions
+
+Participants -> tariffs -> objective function
+
+Need to make the objective function from a list of tariffs
+
+objective = create_objective(
+    participant.tariffs, vars
+)
+
+- a tariff applies to one asset
+- the tariff attaches a rate to a quantity
+- quantity comes from the OneInterval stuff
+- the site asset serves as the sum / balance of all assets
+
+
+
    was in site.py
    if objective_fn is None:
             objective_fn = epl.objectives[objective]
@@ -304,3 +322,5 @@ def test_create_objective():
         results_right.simulation["export_power_mwh"],
     )
     assert results_left.simulation["export_power_mwh"].sum() > 0
+
+

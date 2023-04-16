@@ -1,6 +1,7 @@
-site_name: energy-py-linear Documentation
+site_name: energy-py-linear
+repo_url: https://github.com/ADGEfficiency/energy-py-linear
+repo_name: energy-py-linear
 theme:
   name: material
-
 plugins:
 - mkdocstrings

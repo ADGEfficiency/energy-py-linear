@@ -62,8 +62,8 @@ publish: setup
 	poetry publish
 
 # .PHONY: docs
-# docs: setup-docs
-# 	cd docs; mkdocs serve; cd ..
+docs: setup-docs
+	cd docs; mkdocs serve; cd ..
 
 docs-build: setup-docs
 	cd docs; mkdocs build; cd ..

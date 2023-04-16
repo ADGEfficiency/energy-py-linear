@@ -119,7 +119,7 @@ class IntervalData(pydantic.BaseModel):
 
         arbitrary_types_allowed = True
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         """A string representation of self."""
         return f"<epl.IntervalData n: {self.electricity_prices.shape[0]} electricity_prices: {self.electricity_prices.mean():2.1f}>"
 
