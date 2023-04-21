@@ -39,7 +39,7 @@ class EVOneInterval(AssetOneInterval):
     """EV asset data for a single interval"""
 
     #  could use `electric_charge_mwh`
-    #  or event electric_load_mwh
+    #  or even electric_load_mwh
     charge_mwh: pulp.LpVariable
     charge_binary: pulp.LpVariable
 
@@ -53,7 +53,7 @@ class EVsArrayOneInterval(AssetOneInterval):
     """EV asset for a single interval as a 2D array.."""
 
     #  could use `electric_charge_mwh`
-    #  or event electric_load_mwh
+    #  or even electric_load_mwh
     charge_mwh: np.ndarray
     charge_binary: np.ndarray
     charger_cfgs: np.ndarray

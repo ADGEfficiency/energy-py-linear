@@ -3,5 +3,41 @@ repo_url: https://github.com/ADGEfficiency/energy-py-linear
 repo_name: energy-py-linear
 theme:
   name: material
+  features:
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+  icon:
+    repo: fontawesome/brands/github
 plugins:
-- mkdocstrings
+  - search
+markdown_extensions:
+  - markdown_include.include:
+      base_path: docs
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+nav:
+  - Home: index.md
+  - Tutorials:
+    - Optimizing a Generator with the Asset API: index.md
+    - Optimizing a Battery & Electric Vehicle Fleet with the Site API: index.md
+    - Optimizing for Carbon: index.md
+
+  - How To:
+    - Dispatch for Forecasts: how-to/dispatch-forecast.md
+    - Measure Forecast Quality: index.md
+    - Price & Carbon Optimization: how-to/price-carbon.md
+
+  - Reference:
+    - Results: reference/results.md
+    - Asset API: reference/asset-api.md
+    - Site API: reference/site-api.md
+    - Accounting API: index.md
+
+  - Explanation:
+    - Blocks: index.md
+    - Spills: index.md
+    - Valves: index.md
