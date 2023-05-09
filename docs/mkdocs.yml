@@ -21,15 +21,17 @@ markdown_extensions:
   - pymdownx.superfences
 nav:
   - Home: index.md
-  - Tutorials:
-    - Optimizing a Generator with the Asset API: index.md
-    - Optimizing a Battery & Electric Vehicle Fleet with the Site API: index.md
-    - Optimizing for Carbon: index.md
+  - Quality Assurance: validation.md
 
-  - How To:
-    - Dispatch for Forecasts: how-to/dispatch-forecast.md
-    - Measure Forecast Quality: index.md
-    - Price & Carbon Optimization: how-to/price-carbon.md
+  # - Tutorials:
+  #   - Optimizing a Generator with the Asset API: index.md
+  #   - Optimizing a Battery & Electric Vehicle Fleet with the Site API: index.md
+  #   - Optimizing for Carbon: index.md
+
+  - Dispatch Multiple Assets: how-to/site-api.md
+  - Carbon Optimization: how-to/price-carbon.md
+  - Dispatch for Forecasts: how-to/dispatch-forecast.md
+  # - Measure Forecast Quality: index.md
 
   - Reference:
     - Results: reference/results.md
@@ -37,7 +39,7 @@ nav:
     - Site API: reference/site-api.md
     - Accounting API: index.md
 
-  - Explanation:
-    - Blocks: index.md
-    - Spills: index.md
-    - Valves: index.md
+  # - Explanation:
+  #   - Blocks: index.md
+  #   - Spills: index.md
+  #   - Valves: index.md

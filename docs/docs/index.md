@@ -1,4 +1,3 @@
+# energy-py-linear
 
-# Welcome
-
-{!../../README.md!lines=10-72}
+{!../../README.md!lines=14-75}
