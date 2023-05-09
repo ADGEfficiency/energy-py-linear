@@ -135,7 +135,6 @@ def constrain_within_interval(
             #  add the connection between the contiunous and binary variables
             continuous = evs.charge_mwh[0, charge_event_idx, charger_idx]
             binary = evs.charge_binary[0, charge_event_idx, charger_idx]
-
             optimizer.constrain_max(
                 continuous, binary, freq.mw_to_mwh(charger.power_max_mw)
             )
@@ -147,7 +146,7 @@ def constrain_within_interval(
             optimizer.constrain(binary <= charge_event[i, charge_event_idx])
 
     #  required to handle the spill charger case
-    #  where we don't want to limit it
+    #  where we don't want to limit the matching of chargers and charge events
     if add_single_charger_or_event_constraints is True:
 
         #  constrain to only one charger per charging event
@@ -177,7 +176,6 @@ def constrain_after_intervals(
     stacked_charge_mwh = stack_ev(vars, "charge_mwh")
 
     #  check the stack worked correctly
-    #  TODO move after interval data refactor
     stacked_charge_mwh = stack_ev(vars, "charge_mwh")
     assert stacked_charge_mwh.shape[0] == len(interval_data.idx)
     assert isinstance(interval_data.evs.charge_events, np.ndarray)

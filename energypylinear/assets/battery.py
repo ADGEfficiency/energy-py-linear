@@ -154,7 +154,7 @@ class Battery:
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        return "<energypylinear.Battery>"
+        return f"<energypylinear.Battery, power: {self.cfg.power_mw} MW, capacity: {self.cfg.capacity_mwh} MWh>"
 
     def setup_initial_final_charge(
         self, initial_charge_mwh: float, final_charge_mwh: typing.Optional[float]

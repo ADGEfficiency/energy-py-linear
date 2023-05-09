@@ -1,3 +1,7 @@
+where can i talk about spills
+
+balances of heat and power
+
 # energy-py-linear
 
 <img src="./static/coverage.svg"> [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
@@ -88,3 +92,7 @@ $ ls ./examples
 ```shell
 $ make test
 ```
+
+## Documentation
+
+https://docs.adgefficiency.com/energy-py-linear

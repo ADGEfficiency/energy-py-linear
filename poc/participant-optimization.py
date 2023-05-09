@@ -1,6 +1,4 @@
 """
-
-# was in log.md
 ### Participants, Tariffs and Objective Functions
 
 Participants -> tariffs -> objective function
@@ -16,8 +14,6 @@ objective = create_objective(
 - quantity comes from the OneInterval stuff
 - the site asset serves as the sum / balance of all assets
 
-
-
    was in site.py
    if objective_fn is None:
             objective_fn = epl.objectives[objective]
@@ -29,9 +25,13 @@ objective = create_objective(
             tariffs = participants[objective].tariffs
 
 
+### Participant Accounting
 
-"""
-"""
+#  TODO
+get_accounts_for_participants(interval_data, simulation, participants)
+
+
+
 ## How to make `asset.optimize` work
 
 participant level optimization only enabled for the site API - for any smaller asset, it just uses the data that goes in.
@@ -40,11 +40,10 @@ participant level optimization only enabled for the site API - for any smaller a
 
 If you want to do participant level optimization for a single asset, you can create a site with one asset
 
-asset knows about the site & participant api, and can implement it during it's `optimize` function
-
-asset also knows about the objective function api, and can implement it
+asset knows about the site, participant & objective function api, implements them during it's `optimize` function, but does it in an unconfigurable way
 
 asset.optimize(electricity_prices)
+
     tariffs = [
         Tariff(asset="site", quantity="import_power_mwh", rate=electricity_prices),
         Tariff(asset="site", quantity="export_power_mwh", rate=electricity_prices),
@@ -57,15 +56,20 @@ asset.optimize(electricity_prices)
 - do manually
 - maybe need a automatic way as well - something like `quantity=power_generation_mwh, rate=rate` which get automatically propagated into the objective function
 
-
 ## Examples
 
 ### How to implement a PPA
 
-- virtual PPA = just swap cashflows
-- on site ppa, off site etc
+retailer purchases all export electricity at fixed price, sells at wholesale
+
+site pays import power & wholesale and recieves export at fixed price
+
+could also do just purchase of the gross output of a generator
+- this could be tested by asserting that generator always runs
+- then introduce exposure to gas cost -> test less generation
 
 ### How to implement a classic retailer / customer / network thing
+
 
 """
 import collections
@@ -206,8 +210,9 @@ def create_objective_from_tariffs(optimizer, vars, interval_data, tariffs):
             ]
         )
 
-    #  TODO rewrite to one loop
+    #  TODO rewrite to one loop for i in idx
 
+    #  TODO extract this out as a function
     spill_evs = vars.get("spill_evs")
     if spill_evs:
         for i in interval_data.idx:
@@ -322,5 +327,3 @@ def test_create_objective():
         results_right.simulation["export_power_mwh"],
     )
     assert results_left.simulation["export_power_mwh"].sum() > 0
-
-
