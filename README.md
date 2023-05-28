@@ -8,7 +8,7 @@ balances of heat and power
 
 ---
 
-Documentation: https://docs.adgefficiency.com/energy-py-linear
+Documentation: [docs.adgefficiency.com/energy-py-linear](https://docs.adgefficiency.com/energy-py-linear)
 
 ---
 
@@ -18,7 +18,9 @@ A Python library for optimizing energy assets with mixed-integer linear programm
 - combined heat & power (CHP) generators,
 - electric vehicle smart charging.
 
-Assets can be optimized to either maximize profit or minimize carbon emissions.
+Assets can be optimized to either maximize profit or minimize carbon emissions.  
+
+Energy balances are performed on electricity, high temperature and low temperature heat generation & load.
 
 ## Setup
 
@@ -50,6 +52,8 @@ results = asset.optimize(
 )
 ```
 
+You can find documentation of how to optimize other assets in [how-to/dispatch-assets](), and examples in [energy-py-linear/examples/examples]().
+
 ### Site API
 
 The site API allows optimizing multiple assets at once:
@@ -63,20 +67,32 @@ site = epl.Site(assets=[
     electric_power_max_mw=100,
     electric_power_min_mw=30,
     electric_efficiency_pct=0.4
-  )
+  ),
+  epl.evs.EVs(charger_mws=[100, 100])
 ])
 
 results = site.optimize(
-  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
+  electricity_prices=[100, 50, 200, -100, 0],
+  high_temperature_load_mwh=[105, 110, 120, 110, 105],
+  low_temperature_load_mwh=[105, 110, 120, 110, 105],
   freq_mins=60,
   initial_charge_mwh=1,
-  final_charge_mwh=3
+  final_charge_mwh=3,
+  charge_events=[
+      [1, 0, 0, 0, 0],
+      [0, 1, 1, 1, 0],
+      [0, 0, 0, 1, 1],
+      [0, 1, 0, 0, 0],
+  ],
+  charge_event_mwh=[50, 100, 30, 40]
 )
 ```
 
-## Examples
+The site API will optimize the assets together, and return the results for each asset. 
 
-Examples are in `./examples`:
+### Examples
+
+Examples are given as independent scripts in `./examples`:
 
 ```shell
 $ ls ./examples
@@ -95,4 +111,4 @@ $ make test
 
 ## Documentation
 
-https://docs.adgefficiency.com/energy-py-linear
+Our documentation is hosted at [docs.adgefficiency.com/energy-py-linear](https://docs.adgefficiency.com/energy-py-linear).

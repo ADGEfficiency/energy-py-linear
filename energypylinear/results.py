@@ -250,6 +250,10 @@ def extract_results(
     total_mapper["losses"] = [c for c in simulation.columns if "-losses_mwh" in c]
     simulation["total-losses_mwh"] = simulation[total_mapper["losses"]].sum(axis=1)
 
+    simulation["site-electricity_balance_mwh"] = (
+        simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
+    )
+
     print("Total Mapper")
     print(total_mapper)
 
@@ -294,7 +298,7 @@ def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
     return spill_occured
 
 
-def check_energy_balance(simulation: pd.DataFrame) -> None:
+def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
     """Checks the electricity balance."""
     inp = (
         simulation["site-import_power_mwh"]
@@ -302,11 +306,6 @@ def check_energy_balance(simulation: pd.DataFrame) -> None:
     )
     out = simulation["site-export_power_mwh"] + simulation["total-electric_load_mwh"]
     accumulation = simulation["total-discharge_mwh"] - simulation["total-charge_mwh"]
-
-    """
-    very messy
-    - ev chargers are double counted
-    """
     balance = abs(inp + accumulation - out) < 1e-4
     data = pd.DataFrame(
         {
@@ -324,6 +323,7 @@ def check_energy_balance(simulation: pd.DataFrame) -> None:
     print("Electricity Balance")
     print(data)
     assert balance.all()
+    return data
 
 
 def check_high_temperature_heat_balance(simulation: pd.DataFrame) -> None:
@@ -399,7 +399,7 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
         simulation: simulation results.
     """
     #  TODO
-    check_energy_balance(simulation)
+    check_electricity_balance(simulation)
 
     #  hmmmmmmmmmmmmmmmmmmm TODO move into above
     simulation[

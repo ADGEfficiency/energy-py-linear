@@ -11,6 +11,15 @@ theme:
     - navigation.top
   icon:
     repo: fontawesome/brands/github
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 plugins:
   - search
 markdown_extensions:
@@ -20,24 +29,26 @@ markdown_extensions:
       anchor_linenums: true
   - pymdownx.superfences
 nav:
-  - Home: index.md
-  - Quality Assurance: validation.md
+  - Getting Started: index.md
+  - How To:
+    - Dispatch Assets: how-to/dispatch-assets.md
+    - Dispatch a Site: how-to/dispatch-site.md
+    - Optimize for Carbon: how-to/price-carbon.md
+    - Dispatch for a Forecast: how-to/dispatch-forecast.md
+  - Explanation:
+    - Validation: validation.md
+
+  # - Measure Forecast Quality: index.md
+
+  # - Results: reference/results.md
+  # - Asset API: reference/asset-api.md
+  # - Site API: reference/site-api.md
+  # - Accounting API: index.md
 
   # - Tutorials:
   #   - Optimizing a Generator with the Asset API: index.md
   #   - Optimizing a Battery & Electric Vehicle Fleet with the Site API: index.md
   #   - Optimizing for Carbon: index.md
-
-  - Dispatch Multiple Assets: how-to/site-api.md
-  - Carbon Optimization: how-to/price-carbon.md
-  - Dispatch for Forecasts: how-to/dispatch-forecast.md
-  # - Measure Forecast Quality: index.md
-
-  - Reference:
-    - Results: reference/results.md
-    - Asset API: reference/asset-api.md
-    - Site API: reference/site-api.md
-    - Accounting API: index.md
 
   # - Explanation:
   #   - Blocks: index.md

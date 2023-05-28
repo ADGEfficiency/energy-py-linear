@@ -1,2 +1,2 @@
 #  automatically generated
-tests/test_readme.py
+tests/phmdoctest/**/*

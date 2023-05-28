@@ -8,24 +8,39 @@ setup:
 	pip install --upgrade pip -q
 	pip install poetry -c ./constraints.txt -q
 	poetry install --with main -q
+
 setup-test: setup
 	poetry install --with test -q
+
 setup-static: setup
 	poetry install --with static -q
+
 setup-check: setup
 	poetry install --with check -q
+
 setup-docs:
 	pip install -r ./docs/requirements.txt -q
 
 #  TEST
-.PHONY: test test-ci
+.PHONY: test test-ci test-validate
 test: setup-test
-	rm -f ./tests/test_readme.py
-	python -m phmdoctest README.md --outfile tests/test_readme.py
+	rm -rf ./tests/phmdoctest
+	mkdir ./tests/phmdoctest
+	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
+	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
 	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon --pdb
+
 test-ci: setup-test
 	coverage run -m pytest tests --tb=short --show-capture=no
 	coverage report -m
+
+test-validate:
+	python -m phmdoctest ./docs/docs/validation.md --outfile tests/test_validate.py
+	pytest tests/test_validate.py --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon
+
+#  CHECK
+.PHONY: check
+check: lint static
 
 #  STATIC TYPING
 .PHONY: static
@@ -49,11 +64,7 @@ format: setup-check
 	black **/*.py
 	poetry lock --no-update
 
-#  CHECK
-.PHONY: check
-check: lint static
-
-#  PUBLISH
+#  PUBLISH TO PYPI
 -include .env.secret
 .PHONY: publish
 publish: setup
@@ -61,7 +72,8 @@ publish: setup
 	@poetry config pypi-token.pypi $(PYPI_TOKEN)
 	poetry publish
 
-.PHONY: docs
+#  DOCS
+.PHONY: docs docs-build
 docs: setup-docs
 	cd docs; mkdocs serve; cd ..
 
