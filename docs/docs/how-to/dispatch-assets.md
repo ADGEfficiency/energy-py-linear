@@ -49,11 +49,11 @@ asset = epl.chp.Generator(
 )
 ```
 
-When optimizing, we can use interval data for the high and low temperature loads.  These thermal loads will be met by gas boilers if the CHP chooses not to generate.  
+When optimizing, we can use interval data for the high and low temperature loads.  These thermal loads will be met by gas boilers if the CHP chooses not to generate.
 
-The `epl.chp.Generator` is allowed to dump both high temperature and low temperature heat.
+The `epl.Generator` is allowed to dump both high temperature and low temperature heat.
 
-Dispatch a CHP generator:
+The high and low temperature heat demands are supplied alongside the electricity prices when optimizing:
 
 ```python
 import energypylinear as epl

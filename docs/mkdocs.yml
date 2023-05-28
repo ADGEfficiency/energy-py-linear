@@ -31,10 +31,10 @@ markdown_extensions:
 nav:
   - Getting Started: index.md
   - How To:
-    - Dispatch Assets: how-to/dispatch-assets.md
-    - Dispatch a Site: how-to/dispatch-site.md
+    - Optimize Assets: how-to/dispatch-assets.md
+    - Optimize a Site: how-to/dispatch-site.md
     - Optimize for Carbon: how-to/price-carbon.md
-    - Dispatch for a Forecast: how-to/dispatch-forecast.md
+    - Optimize for a Forecast: how-to/dispatch-forecast.md
   - Explanation:
     - Validation: validation.md
 
