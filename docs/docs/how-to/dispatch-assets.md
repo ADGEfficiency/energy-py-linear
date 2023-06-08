@@ -1,4 +1,4 @@
-# Dispatching Assets with the Asset API
+# Dispatching A Single Asset with the Asset API
 
 The asset API allows optimizing a single asset at once.
 
@@ -20,6 +20,8 @@ results = asset.optimize(
 )
 ```
 
+The battery will charge with electricity at low prices, and discharge at high prices.  An efficiency penalty is applied to the battery charge energy (energy is lost during charging).
+
 ## Generator
 
 Dispatch a CHP (combined heat & power) generator to generate electricity, high & low temperature heat from natural gas.
@@ -31,7 +33,7 @@ This allows modelling both gas engines and gas turbines:
 ```python
 import energypylinear as epl
 
-#  100 MWe gas engine
+#  gas engine
 asset = epl.chp.Generator(
     electric_power_max_mw=100,
     electric_power_min_mw=30,
@@ -40,7 +42,7 @@ asset = epl.chp.Generator(
     low_temperature_efficiency_pct=0.2,
 )
 
-#  100 MWe gas turbine
+#  gas turbine
 asset = epl.chp.Generator(
     electric_power_max_mw=100,
     electric_power_min_mw=50,
@@ -49,7 +51,7 @@ asset = epl.chp.Generator(
 )
 ```
 
-When optimizing, we can use interval data for the high and low temperature loads.  These thermal loads will be met by gas boilers if the CHP chooses not to generate.
+When optimizing, we can use interval data for the high and low temperature loads.  These thermal loads will be met by gas boilers if the CHP chooses not to generate, or cannot meet thermal demands.  High temperature heat can be let-down into low temperature heat.
 
 The `epl.Generator` is allowed to dump both high temperature and low temperature heat.
 
@@ -78,13 +80,13 @@ results = asset.optimize(
 
 Control a number of EV chargers to charge a number of charge events.  
 
-A `charge_event` is a period of time where an EV can be charged.  This is given as a boolean 2D array, with one binary digit for each pair of charge events and intervals.
+Chargers are configured by their size given in `charger_mws`.  
 
-Each charge event has a required amount of electricity `charge_event_mwh`, that can be delivered anytime the `charge_event` is 1.
+A `charge_event` is a time interval where an EV can be charged.  This is given as a boolean 2D array, with one binary digit for each charge events, interval pairs.
 
-Chargers are configured by `charger_mws`.  
+Each charge event has a required amount of electricity `charge_event_mwh`, that can be delivered when the `charge_event` is 1.  The model is constrained so that each charge event receives all of it's `charge_event_mwh`.
 
-Optimize two 100 MWe chargers for 4 charge events over 5 intervals:
+To optimize two 100 MWe chargers for 4 charge events over 5 intervals:
 
 ```python
 import energypylinear as epl
@@ -108,27 +110,3 @@ results = asset.optimize(
 )
 ```
 
-
-# Site API
-
-The site API allows optimizing multiple assets at once:
-
-```python
-import energypylinear as epl
-
-site = epl.Site(assets=[
-  epl.Battery(power_mw=2.0, capacity_mwh=4.0),
-  epl.Generator(
-    electric_power_max_mw=100,
-    electric_power_min_mw=30,
-    electric_efficiency_pct=0.4
-  )
-])
-
-results = site.optimize(
-  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
-  freq_mins=60,
-  initial_charge_mwh=1,
-  final_charge_mwh=3
-)
-```
