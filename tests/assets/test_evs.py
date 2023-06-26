@@ -22,10 +22,15 @@ def test_evs_optimization_price() -> None:
             [0, 0, 0, 1, 1],
             [0, 1, 0, 0, 0],
         ],
-        flags=Flags(allow_evs_discharge=False, fail_on_spill_asset_use=False),
+        flags=Flags(
+            allow_evs_discharge=False,
+            fail_on_spill_asset_use=True,
+            allow_infeasible=False,
+        ),
         freq_mins=60,
     )
     simulation = results.simulation
+    print(simulation[[c for c in simulation.columns if "soc" in c]])
     breakpoint()  # fmt: skip
 
     #  test total import power equal to total charge event mwh

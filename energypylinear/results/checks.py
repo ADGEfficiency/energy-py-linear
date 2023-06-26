@@ -23,7 +23,10 @@ def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
         + simulation["total-electric_generation_mwh"]
     )
     out = simulation["site-export_power_mwh"] + simulation["total-electric_load_mwh"]
-    accumulation = simulation["total-discharge_mwh"] - simulation["total-charge_mwh"]
+    accumulation = (
+        simulation["total-electric_discharge_mwh"]
+        - simulation["total-electric_charge_mwh"]
+    )
     balance = abs(inp + accumulation - out) < 1e-4
     data = pd.DataFrame(
         {
@@ -31,8 +34,8 @@ def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
             "generation": simulation["total-electric_generation_mwh"],
             "export": simulation["site-export_power_mwh"],
             "load": simulation["total-electric_load_mwh"],
-            "charge": simulation["total-charge_mwh"],
-            "discharge": simulation["total-discharge_mwh"],
+            "charge": simulation["total-electric_charge_mwh"],
+            "discharge": simulation["total-electric_discharge_mwh"],
             "balance": balance,
             "loss": simulation["total-losses_mwh"],
             "spills": simulation["total-spills_mwh"],
@@ -107,3 +110,49 @@ def check_low_temperature_heat_balance(simulation: pd.DataFrame) -> None:
     print(data)
     # print(simulation[[c for c in simulation.columns if "low_temperature" in c]])
     assert balance.all()
+
+
+def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> None:
+    """Check that our simulation results make sense.
+
+    Args:
+        interval_data: input interval data to the simulation.
+        simulation: simulation results.
+    """
+    #  TODO
+    check_electricity_balance(simulation)
+
+    #  hmmmmmmmmmmmmmmmmmmm TODO move into above
+    simulation[
+        "load-high_temperature_load_mwh"
+    ] = interval_data.high_temperature_load_mwh
+    simulation["load-low_temperature_load_mwh"] = interval_data.low_temperature_load_mwh
+
+    check_high_temperature_heat_balance(simulation)
+    check_low_temperature_heat_balance(simulation)
+
+    if interval_data.evs:
+
+        #  TODO replace with a check on SOC
+
+        # for charge_event_idx, charge_event_mwh in enumerate(
+        #     interval_data.evs.charge_event_mwh
+        # ):
+        #     np.testing.assert_almost_equal(
+        #         simulation[f"charge-event-{charge_event_idx}-total-charge_mwh"].sum(),
+        #         charge_event_mwh,
+        #         decimal=defaults.decimal_tolerance,
+        #     )
+        """
+        want to check
+        - only one charger -> one charge event each interval
+        """
+        cols = [
+            c
+            for c in simulation.columns
+            if c.startswith("charger-")
+            and c.endswith("-charge_binary")
+            and "spill" not in c
+        ]
+        subset = simulation[cols]
+        assert (subset <= 1).all().all()

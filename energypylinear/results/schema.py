@@ -53,3 +53,14 @@ for qu in quantities:
         required=True,
     )
 simulation_schema = pa.DataFrameSchema(schema)
+
+
+spill_quantities = [
+    "electric_generation_mwh",
+    "electric_load_mwh",
+    "high_temperature_generation_mwh",
+    "low_temperature_generation_mwh",
+    "high_temperature_load_mwh",
+    "low_temperature_load_mwh",
+    "gas_consumption_mwh",
+]

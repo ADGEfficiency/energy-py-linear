@@ -1,4 +1,4 @@
-from energypylinear.results.main import extract_results
+from energypylinear.results.results import extract_results
 
 __all__ = [
     "extract_results"
