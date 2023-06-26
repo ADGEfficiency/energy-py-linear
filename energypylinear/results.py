@@ -156,17 +156,26 @@ def extract_results(
 
         #  hmmm - works a bit different
         ev_arrays = vars.get("evs-array")
+        ev_cols = [
+            "electric_charge_mwh",
+            "electric_charge_binary",
+            "electric_discharge_mwh",
+            "electric_discharge_binary",
+        ]
         if ev_arrays:
             evs = ev_arrays[i]
             for charger_idx, charger_cfg in enumerate(evs.charger_cfgs[0, 0, :]):
-                for attr in ["charge_mwh", "charge_binary"]:
+                for attr in ev_cols:
                     results[f"{charger_cfg.name}-{attr}"].append(
                         sum([x.value() for x in getattr(evs, attr)[0, :, charger_idx]])
                     )
 
             #  want to grab all the charge_mwh for each charge event
             for charge_event_idx, _ in enumerate(evs.charger_cfgs[0, :, 0]):
-                for attr in ["charge_mwh"]:
+                for attr in [
+                    "electric_charge_mwh",
+                    "electric_discharge_mwh",
+                ]:
                     results[f"charge-event-{charge_event_idx}-{attr}"].append(
                         sum(
                             [
@@ -178,13 +187,13 @@ def extract_results(
 
             evs = vars["spill-evs-array"][i]
             for charger_idx, charger_cfg in enumerate(evs.charger_cfgs[0, 0, :]):
-                for attr in ["charge_mwh", "charge_binary"]:
+                for attr in ev_cols:
                     results[f"{charger_cfg.name}-{attr}"].append(
                         sum([x.value() for x in getattr(evs, attr)[0, :, charger_idx]])
                     )
 
             for charge_event_idx, _ in enumerate(evs.charger_cfgs[0, :, 0]):
-                for attr in ["charge_mwh"]:
+                for attr in ["electric_charge_mwh", "electric_discharge_mwh"]:
                     results[f"spill-charge-event-{charge_event_idx}-{attr}"].append(
                         sum(
                             [
@@ -196,22 +205,24 @@ def extract_results(
 
     simulation = pd.DataFrame(results)
 
-    #  add totals for charge events across both the spill and normal chargers
-    ev_arrays = vars.get("evs-array")
-    if ev_arrays:
-        assert isinstance(interval_data.evs, epl.interval_data.EVIntervalData)
-        assert interval_data.evs is not None
-        for charge_event_idx, _ in enumerate(interval_data.evs.charge_event_mwh):
-            simulation[
-                f"charge-event-{charge_event_idx}-total-charge_mwh"
-            ] = simulation[
-                [
-                    f"charge-event-{charge_event_idx}-charge_mwh",
-                    f"spill-charge-event-{charge_event_idx}-charge_mwh",
-                ]
-            ].sum(
-                axis=1
-            )
+    # #  add totals for charge events across both the spill and normal chargers
+    # ev_arrays = vars.get("evs-array")
+    # if ev_arrays:
+    #     assert isinstance(interval_data.evs, epl.interval_data.EVIntervalData)
+    #     assert interval_data.evs is not None
+    #     for charge_event_idx, _ in enumerate(
+    #         interval_data.evs.charge_event_mwh
+    #     ):
+    #         simulation[
+    #             f"charge-event-{charge_event_idx}-total-charge_mwh"
+    #         ] = simulation[
+    #             [
+    #                 f"charge-event-{charge_event_idx}-charge_mwh",
+    #                 f"spill-charge-event-{charge_event_idx}-charge_mwh",
+    #             ]
+    #         ].sum(
+    #             axis=1
+    #         )
 
     #  include some interval data in simulation results
     assert isinstance(interval_data.electricity_prices, np.ndarray)
@@ -244,7 +255,9 @@ def extract_results(
         simulation[f"total-{col}"] = simulation[cols].sum(axis=1)
         total_mapper[col] = cols
 
-    total_mapper["spills"] = [c for c in simulation.columns if "spill" in c]
+    total_mapper["spills"] = [
+        c for c in simulation.columns if ("spill" in c) and ("binary") not in c
+    ]
     simulation["total-spills_mwh"] = simulation[total_mapper["spills"]].sum(axis=1)
 
     total_mapper["losses"] = [c for c in simulation.columns if "-losses_mwh" in c]
@@ -411,14 +424,17 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
     check_low_temperature_heat_balance(simulation)
 
     if interval_data.evs:
-        for charge_event_idx, charge_event_mwh in enumerate(
-            interval_data.evs.charge_event_mwh
-        ):
-            np.testing.assert_almost_equal(
-                simulation[f"charge-event-{charge_event_idx}-total-charge_mwh"].sum(),
-                charge_event_mwh,
-                decimal=defaults.decimal_tolerance,
-            )
+
+        #  TODO replace with a check on SOC
+
+        # for charge_event_idx, charge_event_mwh in enumerate(
+        #     interval_data.evs.charge_event_mwh
+        # ):
+        #     np.testing.assert_almost_equal(
+        #         simulation[f"charge-event-{charge_event_idx}-total-charge_mwh"].sum(),
+        #         charge_event_mwh,
+        #         decimal=defaults.decimal_tolerance,
+        #     )
         """
         want to check
         - only one charger -> one charge event each interval

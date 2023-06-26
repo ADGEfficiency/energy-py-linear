@@ -3,14 +3,17 @@ import hypothesis
 import numpy as np
 
 import energypylinear as epl
+from energypylinear.flags import Flags
 
 
 def test_evs_optimization_price() -> None:
     """Test EV optimization for price."""
+
+    charge_events_capacity_mwh = [50, 100, 30, 40]
     evs = epl.evs.EVs(
-        charger_mws=[100, 100],
+        chargers_power_mw=[100, 100],
+        charge_events_capacity_mwh=charge_events_capacity_mwh,
     )
-    charge_event_mwh = [50, 100, 30, 40]
     results = evs.optimize(
         electricity_prices=[-100, 50, 30, 50, 40],
         charge_events=[
@@ -19,13 +22,16 @@ def test_evs_optimization_price() -> None:
             [0, 0, 0, 1, 1],
             [0, 1, 0, 0, 0],
         ],
-        charge_event_mwh=charge_event_mwh,
+        flags=Flags(allow_evs_discharge=False, fail_on_spill_asset_use=False),
+        freq_mins=60,
     )
     simulation = results.simulation
+    breakpoint()  # fmt: skip
+
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
     np.testing.assert_equal(
-        simulation["site-import_power_mwh"].sum(), sum(charge_event_mwh)
+        simulation["site-import_power_mwh"].sum(), sum(charge_events_capacity_mwh)
     )
 
     #  no exporting at all

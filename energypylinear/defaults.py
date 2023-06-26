@@ -22,6 +22,7 @@ class Defaults(pydantic.BaseModel):
     gas_carbon_intensity: float = 0.185
 
     spill_charge_max_mw: float = 1e4
+    spill_capacity_mwh: float = 1e4
 
     decimal_tolerance: int = 4
 

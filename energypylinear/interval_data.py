@@ -18,7 +18,7 @@ class EVIntervalData(pydantic.BaseModel):
     Attributes:
         charge_events: a list or numpy array of charge events for each time step
         idx: index of the time steps (default is an empty list)
-        charge_event_mwh: total energy consumption in each time step
+        charge_events_capacity_mwh:
 
     Methods:
         setup_idx: sets up the index of the time steps based on the shape of `charge_events`
@@ -26,8 +26,8 @@ class EVIntervalData(pydantic.BaseModel):
     """
 
     charge_events: np.ndarray
+    charge_events_capacity_mwh: list
     idx: typing.Any = []
-    charge_event_mwh: typing.Union[list[int], np.ndarray]
 
     class Config:
         """pydantic.BaseModel configuration."""
@@ -42,11 +42,6 @@ class EVIntervalData(pydantic.BaseModel):
     @pydantic.root_validator()
     def validate_all_things(cls, values: dict) -> dict:
         """Validate all input data in a single step."""
-        #  only_positive or zero charge_event_mwh
-        assert all(
-            values["charge_event_mwh"] >= 0
-        ), "charge_event_mwh has negative values"
-
         assert all(
             np.array(values["charge_events"]).sum(axis=0) > 0
         ), "sum across axis=0"
@@ -54,9 +49,6 @@ class EVIntervalData(pydantic.BaseModel):
         assert (
             values["idx"].shape[0] == values["charge_events"].shape[0]
         ), "charge_event_mwh not equal to length of electricitiy prices."
-        assert (
-            values["charge_events"].shape[1] == values["charge_event_mwh"].shape[0]
-        ), "charge_events not equal to charge_event_mwh"
         return values
 
 

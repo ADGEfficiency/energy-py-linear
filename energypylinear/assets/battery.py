@@ -53,7 +53,8 @@ def constrain_only_charge_or_discharge(
 ) -> None:
     """Constrain battery to only charge or discharge.
 
-    Usually flagged off - slows things down a lot (~2x as slow).
+    Usually flagged off - slows things down a lot (~2x as slow).  Instead of forcing only charge or
+    discharge, the objective function just takes the difference to calculate net charge.
     """
     if flags.include_charge_discharge_binary_variables:
         batteries = epl.utils.filter_assets(vars, "battery")
