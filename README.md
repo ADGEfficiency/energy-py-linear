@@ -1,7 +1,3 @@
-where can i talk about spills
-
-balances of heat and power
-
 # energy-py-linear
 
 <img src="./static/coverage.svg"> [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
@@ -20,7 +16,7 @@ A Python library for optimizing energy assets with mixed-integer linear programm
 
 Assets can be optimized to either maximize profit or minimize carbon emissions.  
 
-Energy balances are performed on electricity, high temperature and low temperature heat generation & load.
+Energy balances are performed on electricity, high & low temperature heat.
 
 ## Setup
 
