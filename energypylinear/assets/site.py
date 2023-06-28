@@ -61,8 +61,11 @@ def constrain_site_electricity_balance(
             - interval_data.electricity_load_mwh[i]
             + optimizer.sum([a.electric_generation_mwh for a in assets])
             - optimizer.sum([a.electric_load_mwh for a in assets])
-            - optimizer.sum([a.charge_mwh for a in assets])
-            + optimizer.sum([a.discharge_mwh for a in assets])
+            #  TODO - remove `charge_mwh` from battery
+            # - optimizer.sum([a.charge_mwh for a in assets])
+            # + optimizer.sum([a.discharge_mwh for a in assets])
+            - optimizer.sum([a.electric_charge_mwh for a in assets])
+            + optimizer.sum([a.electric_discharge_mwh for a in assets])
             + (spills[-1].electric_generation_mwh if spills else 0)
             - (spills[-1].electric_load_mwh if spills else 0)
         )

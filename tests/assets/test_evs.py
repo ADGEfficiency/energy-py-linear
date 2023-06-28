@@ -13,6 +13,7 @@ def test_evs_optimization_price() -> None:
     evs = epl.evs.EVs(
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
+        charger_turndown=0.0,
     )
     results = evs.optimize(
         electricity_prices=[-100, 50, 30, 50, 40],
