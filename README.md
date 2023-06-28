@@ -88,7 +88,7 @@ The site API will optimize the assets together, and return the results for each 
 
 ### Examples
 
-Examples are given as independent scripts in `./examples`:
+Examples as independent scripts are `./examples`:
 
 ```shell
 $ ls ./examples
@@ -107,4 +107,4 @@ $ make test
 
 ## Documentation 
 
-[energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com)
+Documentation is hosted at [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com).

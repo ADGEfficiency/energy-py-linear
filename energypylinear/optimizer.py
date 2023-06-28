@@ -36,7 +36,7 @@ class Optimizer:
         return f"<energypylinear.Optimizer variables: {len(self.variables())} constraints: {len(self.constraints())}>"
 
     def continuous(
-        self, name: str, low: float = 0, up: typing.Optional[float] = None
+        self, name: str, low: float = 0, up: float | None = None
     ) -> pulp.LpVariable:
         """Creates a new continuous linear programming variable.
 
@@ -64,7 +64,7 @@ class Optimizer:
         return pulp.lpSum(vector)
 
     def constrain(
-        self, constraint: pulp.LpConstraint, name: typing.Optional[str] = None
+        self, constraint: pulp.LpConstraint, name: str | None = None
     ) -> pulp.LpConstraint:
         """Create a linear program constrain.
 

@@ -140,7 +140,7 @@ class Site:
 
     def __init__(
         self,
-        assets: typing.Optional[list] = None,
+        assets: list | None = None,
         cfg: SiteConfig = SiteConfig(),
     ):
         """Initialize a Site asset model."""
@@ -307,20 +307,10 @@ class Site:
             vars["assets"].append(assets)
 
             #  constrain within interval
-            self.constrain_within_interval(
-                self.optimizer,
-                vars,
-                interval_data,
-                i
-            )
+            self.constrain_within_interval(self.optimizer, vars, interval_data, i)
             for asset in self.assets:
                 asset.constrain_within_interval(
-                    self.optimizer,
-                    vars,
-                    interval_data,
-                    i,
-                    flags=flags,
-                    freq=freq
+                    self.optimizer, vars, interval_data, i, flags=flags, freq=freq
                 )
 
         for asset in self.assets:

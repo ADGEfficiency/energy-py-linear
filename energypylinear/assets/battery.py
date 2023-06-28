@@ -157,7 +157,7 @@ class Battery:
         return f"<energypylinear.Battery, power: {self.cfg.power_mw} MW, capacity: {self.cfg.capacity_mwh} MWh>"
 
     def setup_initial_final_charge(
-        self, initial_charge_mwh: float, final_charge_mwh: typing.Optional[float]
+        self, initial_charge_mwh: float, final_charge_mwh: float | None
     ) -> None:
         """Processes the options for initial and final charge."""
         self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)

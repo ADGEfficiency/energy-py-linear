@@ -47,7 +47,7 @@ check: lint static
 #  STATIC TYPING
 .PHONY: static
 static: setup-static
-	rm -rf ./tests/test_readme.py
+	rm -rf ./tests/phmdoctest
 	mypy --config-file ./mypy.ini --pretty ./energypylinear
 	mypy --config-file ./mypy.ini --pretty ./tests
 
@@ -55,6 +55,7 @@ static: setup-static
 .PHONY: lint
 lint: setup-check
 	flake8 --extend-ignore E501 --exclude=__init__.py,poc
+	ruff check .
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
@@ -62,6 +63,7 @@ lint: setup-check
 #  FORMATTING
 .PHONY: format
 format: setup-check
+	ruff check . --format
 	isort **/*.py --profile black
 	black **/*.py
 	poetry lock --no-update
