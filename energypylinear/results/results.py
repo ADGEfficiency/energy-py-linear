@@ -56,7 +56,7 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
     for charger_idx, charger_cfg in enumerate(evs.charger_cfgs):
         for attr in ev_cols:
             results[f"{charger_cfg.name}-{attr}"].append(
-                sum([x.value() for x in getattr(evs, attr)[0, :, charger_idx]])
+                sum([optimizer.value(x) for x in getattr(evs, attr)[0, :, charger_idx]])
             )
 
     #  charge events (non-spill) are summed across each charger
@@ -67,7 +67,12 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
             "electric_discharge_mwh",
         ]:
             results[f"charge-event-{charge_event_idx}-{attr}"].append(
-                sum([x.value() for x in getattr(evs, attr)[0, charge_event_idx, :]])
+                sum(
+                    [
+                        optimizer.value(x)
+                        for x in getattr(evs, attr)[0, charge_event_idx, :]
+                    ]
+                )
             )
 
     for attr in [
@@ -83,21 +88,39 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
             print(soc, soc.value())
 
     # not sure TODO
-    evs = vars["spill-evs-array"][i]
-    for charger_idx, charger_cfg in enumerate(evs.charger_cfgs):
+    spill_evs = vars["spill-evs-array"][i]
+    for charger_idx, charger_cfg in enumerate(spill_evs.charger_cfgs):
         for attr in ev_cols:
             results[f"{charger_cfg.name}-{attr}"].append(
-                sum([x.value() for x in getattr(evs, attr)[0, :, charger_idx]])
+                sum(
+                    [
+                        optimizer.value(x)
+                        for x in getattr(spill_evs, attr)[0, :, charger_idx]
+                    ]
+                )
             )
 
     #  spill charge event charge & discharge
-    for charge_event_idx, _ in enumerate(evs.charger_cfgs):
+    for charge_event_idx, _ in enumerate(spill_evs.charger_cfgs):
         for attr in ["electric_charge_mwh", "electric_discharge_mwh"]:
             results[f"spill-charge-event-{charge_event_idx}-{attr}"].append(
-                sum([x.value() for x in getattr(evs, attr)[0, charge_event_idx, :]])
+                sum(
+                    [
+                        optimizer.value(x)
+                        for x in getattr(spill_evs, attr)[0, charge_event_idx, :]
+                    ]
+                )
             )
 
     #  charge event state of charges
+    # for attr in [
+    #     "initial_soc_mwh",
+    #     "final_soc_mwh",
+    # ]:
+    #     breakpoint()  # fmt: skip
+    #     results[f"spill-charge-event-{attr}"].append(
+    #         optimizer.value(getattr(spill_evs, attr)[0, charge_event_idx, :])
+    #     )
 
 
 def extract_results(
@@ -232,7 +255,10 @@ def extract_results(
         total_mapper[col] = cols
 
     total_mapper["spills"] = [
-        c for c in simulation.columns if ("spill" in c) and ("binary") not in c
+        c
+        for c in simulation.columns
+        #  not charger- is because charger + charge event are duped
+        if ("spill" in c) and ("binary") not in c and ("charger-" in c)
     ]
     simulation["total-spills_mwh"] = simulation[total_mapper["spills"]].sum(axis=1)
 

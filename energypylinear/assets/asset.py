@@ -33,9 +33,8 @@ class AssetOneInterval(pydantic.BaseModel):
     low_temperature_load_mwh: typing.Union[pulp.LpVariable, float] = 0
     #  add cooling load here TODO
 
-    #  maybe should c be electric charge TODO
-    charge_mwh: typing.Union[pulp.LpVariable, float] = 0
-    discharge_mwh: typing.Union[pulp.LpVariable, float] = 0
+    electric_charge_mwh: typing.Union[pulp.LpVariable, float] = 0
+    electric_discharge_mwh: typing.Union[pulp.LpVariable, float] = 0
 
     gas_consumption_mwh: typing.Union[pulp.LpVariable, float] = 0
 

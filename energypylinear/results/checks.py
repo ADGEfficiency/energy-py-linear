@@ -43,6 +43,14 @@ def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
     )
     print("Electricity Balance")
     print(data)
+    """
+    debug = [
+        "charger-0-electric_charge_mwh",
+        "charger-1-electric_charge_mwh",
+        "charger-spill-electric_charge_mwh",
+    ]
+    print(simulation[debug])
+    """
     assert balance.all()
     return data
 

@@ -191,7 +191,8 @@ def evs_one_interval(
             loss_mwh = optimizer.continuous(
                 f"electric_losses_mwh,{name}",
                 low=0,
-                up=freq.mw_to_mwh(charger_cfg.power_max_mw),
+                #  TODO
+                up=0
             )
 
             evs.append(
@@ -602,6 +603,7 @@ class EVs:
             #  reason to use the separate keys is that we don't want
             #  both evs_array and evs in assets for epl.Site
             vars["evs-array"].append(evs_array)
+            vars["spill-evs"].append(spill_evs)
             vars["spill-evs-array"].append(spill_evs_array)
             vars["assets"].append(
                 [

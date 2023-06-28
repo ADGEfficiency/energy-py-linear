@@ -14,6 +14,7 @@ def test_evs_optimization_price() -> None:
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
         charger_turndown=0.0,
+        charge_event_efficiency=1.0,
     )
     results = evs.optimize(
         electricity_prices=[-100, 50, 30, 50, 40],
@@ -32,6 +33,27 @@ def test_evs_optimization_price() -> None:
     )
     simulation = results.simulation
     print(simulation[[c for c in simulation.columns if "soc" in c]])
+
+    def debug_simulation(simulation):
+        from rich import print
+
+        print("[red]DEBUG[/red]")
+        debug = [
+            "site-import_power_mwh",
+            "site-export_power_mwh",
+        ]
+        print(simulation[debug])
+
+        debug = [
+            "charger-0-electric_charge_mwh",
+            "charger-1-electric_charge_mwh",
+            "charger-spill-electric_charge_mwh",
+        ]
+        print(simulation[debug])
+        print(simulation[[c for c in simulation.columns if "initial_soc" in c]])
+        print(simulation[[c for c in simulation.columns if "final_soc" in c]])
+
+    debug_simulation(simulation)
     breakpoint()  # fmt: skip
 
     #  test total import power equal to total charge event mwh

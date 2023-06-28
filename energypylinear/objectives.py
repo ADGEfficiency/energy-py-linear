@@ -50,7 +50,7 @@ def price_objective(
             for spill in spills[i]
         ]
         + [
-            spill_ev.charge_mwh * defaults.spill_objective_penalty
+            spill_ev.electric_charge_mwh * defaults.spill_objective_penalty
             for spill_ev in spill_evs[i]
         ]
         + [
