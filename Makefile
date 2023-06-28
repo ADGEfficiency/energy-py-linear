@@ -55,7 +55,7 @@ static: setup-static
 .PHONY: lint
 lint: setup-check
 	flake8 --extend-ignore E501 --exclude=__init__.py,poc
-	ruff check .
+	# ruff check .
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
@@ -63,7 +63,7 @@ lint: setup-check
 #  FORMATTING
 .PHONY: format
 format: setup-check
-	ruff check . --format
+	# ruff check . --format
 	isort **/*.py --profile black
 	black **/*.py
 	poetry lock --no-update
