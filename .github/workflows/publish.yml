@@ -1,12 +1,11 @@
 name: publish
 
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
 
 jobs:
   publish:
-    if: ${{ contains(github.event.pull_request.title, '[RELEASE]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

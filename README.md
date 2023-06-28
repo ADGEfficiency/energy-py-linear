@@ -8,7 +8,7 @@ balances of heat and power
 
 ---
 
-Documentation: [docs.adgefficiency.com/energy-py-linear](https://docs.adgefficiency.com/energy-py-linear)
+Documentation: [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com)
 
 ---
 
@@ -109,6 +109,6 @@ $ ls ./examples
 $ make test
 ```
 
-## Documentation
+## Documentation 
 
-Our documentation is hosted at [docs.adgefficiency.com/energy-py-linear](https://docs.adgefficiency.com/energy-py-linear).
+[energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com)
