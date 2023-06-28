@@ -31,4 +31,3 @@ variance = perfect_foresight - forecast
 ```
 
 See also [examples/forecast-accuracy.py](https://github.com/ADGEfficiency/energy-py-linear/blob/main/examples/forecast-accuracy.py).
-

@@ -1,6 +1,6 @@
-A natural response when you get access to a new modelling framework or tool *is does this work correctly?*
+A natural response when you get access to something someone else build is to wonder - **does this work correctly?**
 
-The purpose of this section is to give you confidence in the implementation of the energy modelling.
+This section will give you confidence in the implementation of underlying energy models.
 
 ## Battery Model Validation
 
@@ -76,25 +76,89 @@ In the first interval, we charge the battery with `0.444444 MWh` - `0.4 MWh` goe
 
 ### Battery Efficiency
 
-- check that when efficiency change, dispatch changes, losses change
+We can validate the performance of the battery efficiency by checking the losses across different battery efficiencies:
 
 ```python
+import numpy as np
+import pandas as pd
 import energypylinear as epl
 
-asset = epl.Battery()
-results = asset.optimize(electricity_prices=[10, -50, 200, -50, 200])
-print(results.simulation[["electricity_prices", "site-electricity_balance_mwh"]])
+out = []
+np.random.seed(42)
+prices = (np.random.uniform(-100, 100, 12) + 100).tolist()
+for efficiency_pct in [1.0, 0.9, 0.8]:
+    asset = epl.battery.Battery(
+        power_mw=4,
+        capacity_mwh=10,
+        efficiency=efficiency_pct
+    )
+    results = asset.optimize(
+        electricity_prices=prices,
+        objective="price",
+    )
+    out.append(
+        {
+            "eff_pct": efficiency_pct,
+            "charge_mwh": results.simulation["battery-charge_mwh"].sum(),
+            "discharge_mwh": results.simulation["battery-discharge_mwh"].sum(),
+            "loss_mwh": results.simulation["battery-losses_mwh"].sum(),
+            "prices_$_mwh": results.simulation["electricity_prices"].mean(),
+            "import_mwh": results.simulation["site-import_power_mwh"].sum(),
+            "objective": (results.simulation["site-import_power_mwh"] - results.simulation["site-export_power_mwh"] * results.simulation["electricity_prices"]).sum(),
+        }
+    )
+
+print(pd.DataFrame(out))
 """
-   electricity_prices  site-electricity_balance_mwh
-0                  10                      0.444444
-1                 -50                      2.000000
-2                 200                     -2.000000
-3                 -50                      2.000000
-4                 200                     -2.000000
+eff_pct  charge_mwh  discharge_mwh  loss_mwh  prices_$_mwh  import_mwh    objective
+    1.0   18.000000           18.0  0.000000    103.197695   18.000000 -3018.344310
+    0.9   19.111111           17.2  1.911111    103.197695   19.111111 -2893.086854
+    0.8   20.000000           16.0  4.000000    103.197695   20.000000 -2719.962419
 """
 ```
 
+From the above we observe the following as efficiency decreases:
+
+- an increase in battery losses,
+- a reduction in the amount charged and discharged,
+- a increase in the objective function, which represents an increase in cost or decrease in value of the battery arbitrage.
+
 ### State of Charge & Power Ratings
+
+We can demonstrate the state of charge and battery power settings by first optimizing a battery and showing it's plot:
+
+```python
+import pathlib
+import numpy as np
+import energypylinear as epl
+np.random.seed(42)
+electricity_prices = np.random.normal(100, 10, 10).tolist()
+asset = epl.battery.Battery(power_mw=2, capacity_mwh=4)
+results = asset.optimize(electricity_prices=electricity_prices)
+asset.plot(results, path=pathlib.Path("battery.png"))
+
+
+import pathlib
+import numpy as np
+import energypylinear as epl
+np.random.seed(42)
+electricity_prices = np.random.normal(100, 10, 10).tolist()
+asset = epl.battery.Battery(
+    power_mw=4,
+    capacity_mwh=8,
+)
+results = asset.optimize(
+    electricity_prices=electricity_prices,
+    initial_charge_mwh=1.0,
+    final_charge_mwh=3.0
+)
+asset.plot(results, path=pathlib.Path("battery-fast.png"))
+```
 
 - check capacity limits?  check power rating?
 - initial and final state of charge, how charge calculated
+
+```python
+```
+
+- different inital and final charger

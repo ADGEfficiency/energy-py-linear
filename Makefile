@@ -27,7 +27,9 @@ test: setup-test
 	rm -rf ./tests/phmdoctest
 	mkdir ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
+	#  TODO add all the docs
 	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
+	python -m phmdoctest ./docs/docs/how-to/dispatch-assets.md --outfile tests/phmdoctest/test_dispatch_assets.py
 	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon --pdb
 
 test-ci: setup-test

@@ -30,13 +30,12 @@ markdown_extensions:
   - pymdownx.superfences
 nav:
   - Getting Started: index.md
-  - How To:
-    - Optimize Assets: how-to/dispatch-assets.md
-    - Optimize a Site: how-to/dispatch-site.md
-    - Optimize for Carbon: how-to/price-carbon.md
-    - Optimize for a Forecast: how-to/dispatch-forecast.md
-  - Explanation:
-    - Validation: validation.md
+  - Optimize Assets: how-to/dispatch-assets.md
+  - Optimize a Site: how-to/dispatch-site.md
+  - Optimize for Carbon: how-to/price-carbon.md
+  - Optimize for a Forecast: how-to/dispatch-forecast.md
+  # - Explanation:
+  - Validation: validation.md
 
   # - Measure Forecast Quality: index.md
 

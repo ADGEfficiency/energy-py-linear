@@ -36,7 +36,7 @@ $ pip install energypylinear
 
 The asset API allows optimizing a single asset at once.
 
-We can dispatch an electric battery operating in wholesale price arbitrage using `epl.Battery`:
+We can optimize an electric battery operating in wholesale price arbitrage using `epl.Battery`:
 
 ```python
 import energypylinear as epl
@@ -52,7 +52,7 @@ results = asset.optimize(
 )
 ```
 
-You can find documentation of how to optimize other assets in [how-to/dispatch-assets](), and examples in [energy-py-linear/examples/examples]().
+You can find documentation of how to optimize other assets in [how-to/optimize-assets](https://docs.adgefficiency.com/energy-py-linear/how-to/dispach-assets), and Python examples in [energy-py-linear/examples/examples](https://github.com/ADGEfficiency/energy-py-linear/tree/main/examples).
 
 ### Site API
 

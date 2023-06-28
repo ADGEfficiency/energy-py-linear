@@ -1,6 +1,9 @@
 `energypylinear` has the ability to optimize for both price and carbon as optimization objectives.
 
-The assets models will maintain accounts (either in money or carbon) for both cases, allowing calculation of the financial impact of optimizing for carbon (and vice versa).
+This ability comes from two things:
+
+- an objective function, which can be either for price or carbon,
+- accounting of both price and carbon emissions.
 
 We can dispatch a battery to minimize carbon emissions by passing in `objective='carbon'`:
 
@@ -18,7 +21,9 @@ results = asset.optimize(
 
 We can compare these results above with a simulation that optimizes for price, using a `energypylinear.accounting.Account` to compare both simulations.  
 
-Our optimization for price has a high negative cost.  The optimization for carbon has lower emissions, but at a higher cost:
+Our optimization for price has a high negative cost.  
+
+The optimization for carbon has lower emissions, but at a higher cost:
 
 ```python
 import energypylinear as epl
@@ -65,4 +70,3 @@ print(-variance.cost / variance.emissions)
 ```
 
 The accounting API is in it's first iteration - expect it to change in the future.
-

@@ -62,13 +62,12 @@ def test_battery_optimization_carbon(
     capacity_mwh = 6
     efficiency = 1.0
     freq_mins = 60
-    prices = np.random.uniform(-100, 100, len(carbon_intensities)).tolist()
+    prices = np.random.uniform(-100, 100, 12).tolist()
     asset = epl.battery.Battery(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
     results = asset.optimize(
         electricity_prices=prices,
-        electricity_carbon_intensities=np.array(carbon_intensities),
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         objective="carbon",
