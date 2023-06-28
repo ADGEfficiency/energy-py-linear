@@ -101,7 +101,7 @@ class EVsArrayOneInterval(AssetOneInterval):
     electric_charge_binary: np.ndarray
     electric_discharge_mwh: np.ndarray
     electric_discharge_binary: np.ndarray
-    electric_losses_mwh: np.ndarray
+    electric_loss_mwh: np.ndarray
 
     class Config:
         """pydantic.BaseModel configuration."""
@@ -189,10 +189,8 @@ def evs_one_interval(
                 else 0
             )
             loss_mwh = optimizer.continuous(
-                f"electric_losses_mwh,{name}",
+                f"electric_loss_mwh,{name}",
                 low=0,
-                #  TODO
-                up=0
             )
 
             evs.append(
@@ -221,7 +219,7 @@ def evs_one_interval(
         charge_event_cfgs=charge_event_cfgs,
         initial_soc_mwh=initial_socs_mwh,
         final_soc_mwh=final_socs_mwh,
-        electric_losses_mwh=losses_mwh,
+        electric_loss_mwh=losses_mwh,
     )
 
     return evs, evs_array
@@ -259,7 +257,7 @@ def constrain_charge_discharge_min_max(
                 ]
 
             for continuous, binary in variables:
-                print(f"constraining min & max: {continuous} {binary}")
+                # print(f"constraining min & max: {continuous} {binary}")
                 optimizer.constrain_max(
                     continuous, binary, freq.mw_to_mwh(charger_cfg.power_max_mw)
                 )
@@ -311,23 +309,32 @@ def constrain_charge_event_electricity_balance(
 
     This constrant is applied once per interval."""
     evs_array = vars["evs-array"][i]
-    for charge_event_idx, _ in enumerate(evs_array.charge_event_cfgs):
+    for charge_event_idx, charge_event_cfg in enumerate(evs_array.charge_event_cfgs):
         optimizer.constrain(
             evs_array.initial_soc_mwh[0, charge_event_idx]
             + optimizer.sum(evs_array.electric_charge_mwh[0, charge_event_idx].tolist())
             - optimizer.sum(
                 evs_array.electric_discharge_mwh[0, charge_event_idx].tolist()
             )
-            - optimizer.sum(evs_array.electric_losses_mwh[0, charge_event_idx].tolist())
+            - optimizer.sum(evs_array.electric_loss_mwh[0, charge_event_idx].tolist())
             == evs_array.final_soc_mwh[0, charge_event_idx]
         )
 
-        #  losses - turned off for now during debug
-        # optimizer.constrain(
-        #     optimizer.sum(evs_array.electric_charge_mwh[0, charge_event_idx])
-        #     * (1 - charge_event_cfg.efficiency_pct)
-        #     == optimizer.sum(evs_array.electric_losses_mwh[0, charge_event_idx])
-        # )
+        #  losses
+        """
+        used to not do the iteration over chargers here and just take the sum
+        means less constraints
+        """
+        for charger_idx, _ in enumerate(evs_array.charger_cfgs):
+            optimizer.constrain(
+                optimizer.sum(
+                    evs_array.electric_charge_mwh[0, charge_event_idx, charger_idx]
+                )
+                * (1 - charge_event_cfg.efficiency_pct)
+                == optimizer.sum(
+                    evs_array.electric_loss_mwh[0, charge_event_idx, charger_idx]
+                )
+            )
 
 
 def constrain_connection_charge_events_between_intervals(
@@ -395,6 +402,7 @@ class EVs:
         chargers_power_mw: list[float],
         charge_events_capacity_mwh: list[float],
         charge_event_efficiency: float = 0.9,
+        #  TODO charger efficiency
         charger_turndown: float = 0.1,
         name: str = "evs",
     ):
@@ -633,7 +641,7 @@ class EVs:
         status = self.optimizer.solve(verbose=verbose)
         self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, vars, feasible=status.feasible, flags=flags
+            interval_data, vars, feasible=status.feasible, flags=flags, verbose=verbose
         )
 
     def plot(

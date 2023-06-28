@@ -61,10 +61,11 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
 
     #  charge events (non-spill) are summed across each charger
     #  one charge event, multiple chargers
-    for charge_event_idx, _ in enumerate(evs.charger_cfgs):
+    for charge_event_idx, _ in enumerate(evs.charge_event_cfgs):
         for attr in [
             "electric_charge_mwh",
             "electric_discharge_mwh",
+            "electric_loss_mwh",
         ]:
             results[f"charge-event-{charge_event_idx}-{attr}"].append(
                 sum(
@@ -85,7 +86,7 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
 
         for charge_event_idx, soc in enumerate(socs):
             results[f"charge-event-{charge_event_idx}-{attr}"].append(soc.value())
-            print(soc, soc.value())
+            # print(soc, soc.value())
 
     # not sure TODO
     spill_evs = vars["spill-evs-array"][i]
@@ -124,7 +125,11 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
 
 
 def extract_results(
-    interval_data: IntervalData, vars: dict, feasible: bool, flags: Flags = Flags()
+    interval_data: IntervalData,
+    vars: dict,
+    feasible: bool,
+    flags: Flags = Flags(),
+    verbose: bool = True,
 ) -> SimulationResult:
     """Creates a simulation result from interval data and a solved linear program.
 
@@ -235,17 +240,6 @@ def extract_results(
     #  add totals
     total_mapper = {}
     for col in quantities:
-        """
-        #  across all non-spill chargers
-        charge-event-0-charge_mwh
-
-        # across all chargers, including spill
-        charge-event-0-total-charge_mwh
-
-        # across spill charger for each event
-        # don't have the equivilant for each other charger
-        spill-charge-event-0-charge_mwh
-        """
         cols = [
             c
             for c in simulation.columns
@@ -262,7 +256,7 @@ def extract_results(
     ]
     simulation["total-spills_mwh"] = simulation[total_mapper["spills"]].sum(axis=1)
 
-    total_mapper["losses"] = [c for c in simulation.columns if "-losses_mwh" in c]
+    total_mapper["losses"] = [c for c in simulation.columns if "electric_loss_mwh" in c]
     simulation["total-losses_mwh"] = simulation[total_mapper["losses"]].sum(axis=1)
 
     simulation["site-electricity_balance_mwh"] = (

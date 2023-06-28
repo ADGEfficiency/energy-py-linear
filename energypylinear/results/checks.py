@@ -1,15 +1,8 @@
 """Extract results from a solved linear program to pd.DataFrame's."""
-import collections
 
-import numpy as np
 import pandas as pd
-import pandera as pa
-import pydantic
 from rich import print
 
-import energypylinear as epl
-from energypylinear.defaults import defaults
-from energypylinear.flags import Flags
 from energypylinear.interval_data import IntervalData
 from energypylinear.optimizer import Optimizer
 
@@ -28,29 +21,27 @@ def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
         - simulation["total-electric_charge_mwh"]
     )
     balance = abs(inp + accumulation - out) < 1e-4
+
+    soc = simulation[[c for c in simulation.columns if "final_soc" in c]].sum(axis=1)
     data = pd.DataFrame(
         {
+            "input": inp,
+            "accumulation": accumulation,
+            "output": out,
+            "balance": balance,
             "import": simulation["site-import_power_mwh"],
             "generation": simulation["total-electric_generation_mwh"],
             "export": simulation["site-export_power_mwh"],
             "load": simulation["total-electric_load_mwh"],
             "charge": simulation["total-electric_charge_mwh"],
             "discharge": simulation["total-electric_discharge_mwh"],
-            "balance": balance,
             "loss": simulation["total-losses_mwh"],
             "spills": simulation["total-spills_mwh"],
+            "soc": soc,
         }
     )
     print("Electricity Balance")
     print(data)
-    """
-    debug = [
-        "charger-0-electric_charge_mwh",
-        "charger-1-electric_charge_mwh",
-        "charger-spill-electric_charge_mwh",
-    ]
-    print(simulation[debug])
-    """
     assert balance.all()
     return data
 
@@ -116,7 +107,6 @@ def check_low_temperature_heat_balance(simulation: pd.DataFrame) -> None:
 
     print("Low Temperature Heat Balance")
     print(data)
-    # print(simulation[[c for c in simulation.columns if "low_temperature" in c]])
     assert balance.all()
 
 
