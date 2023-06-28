@@ -80,7 +80,11 @@ class SimulationResult(pydantic.BaseModel):
 
 
 def extract_results(
-    interval_data: IntervalData, vars: dict, feasible: bool, flags: Flags = Flags()
+    interval_data: IntervalData,
+    vars: dict,
+    feasible: bool,
+    flags: Flags = Flags(),
+    verbose: bool = True,
 ) -> SimulationResult:
     """Creates a simulation result from interval data and a solved linear program.
 
@@ -254,11 +258,12 @@ def extract_results(
         simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
     )
 
-    print("Total Mapper")
-    print(total_mapper)
+    if verbose:
+        print("Total Mapper")
+        print(total_mapper)
 
     simulation_schema.validate(simulation)
-    validate_results(interval_data, simulation)
+    validate_results(interval_data, simulation, verbose=verbose)
     spill_occured = warn_spills(simulation, flags)
 
     return SimulationResult(
@@ -298,7 +303,9 @@ def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
     return spill_occured
 
 
-def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
+def check_electricity_balance(
+    simulation: pd.DataFrame, verbose: bool = True
+) -> pd.DataFrame:
     """Checks the electricity balance."""
     inp = (
         simulation["site-import_power_mwh"]
@@ -320,13 +327,16 @@ def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
             "spills": simulation["total-spills_mwh"],
         }
     )
-    print("Electricity Balance")
-    print(data)
+    if verbose:
+        print("Electricity Balance")
+        print(data)
     assert balance.all()
     return data
 
 
-def check_high_temperature_heat_balance(simulation: pd.DataFrame) -> None:
+def check_high_temperature_heat_balance(
+    simulation: pd.DataFrame, verbose: bool = True
+) -> None:
     """Checks the high temperature heat balance."""
     inp = simulation[["total-high_temperature_generation_mwh"]].sum(axis=1)
     out = simulation[
@@ -347,12 +357,15 @@ def check_high_temperature_heat_balance(simulation: pd.DataFrame) -> None:
     col = "valve-high_temperature_load_mwh"
     if col in simulation.columns:
         data["valve"] = simulation[col]
-    print("High Temperature Heat Balance")
-    print(data)
+    if verbose:
+        print("High Temperature Heat Balance")
+        print(data)
     assert balance.all()
 
 
-def check_low_temperature_heat_balance(simulation: pd.DataFrame) -> None:
+def check_low_temperature_heat_balance(
+    simulation: pd.DataFrame, verbose: bool = True
+) -> None:
     """Checks the low temperature heat balance."""
     inp = simulation[
         [
@@ -385,21 +398,23 @@ def check_low_temperature_heat_balance(simulation: pd.DataFrame) -> None:
         if col in simulation.columns:
             data[name] = simulation[col]
 
-    print("Low Temperature Heat Balance")
-    print(data)
+    if verbose:
+        print("Low Temperature Heat Balance")
+        print(data)
     # print(simulation[[c for c in simulation.columns if "low_temperature" in c]])
     assert balance.all()
 
 
-def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> None:
+def validate_results(
+    interval_data: IntervalData, simulation: pd.DataFrame, verbose: bool = True
+) -> None:
     """Check that our simulation results make sense.
 
     Args:
         interval_data: input interval data to the simulation.
         simulation: simulation results.
     """
-    #  TODO
-    check_electricity_balance(simulation)
+    check_electricity_balance(simulation, verbose)
 
     #  hmmmmmmmmmmmmmmmmmmm TODO move into above
     simulation[
@@ -407,8 +422,8 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
     ] = interval_data.high_temperature_load_mwh
     simulation["load-low_temperature_load_mwh"] = interval_data.low_temperature_load_mwh
 
-    check_high_temperature_heat_balance(simulation)
-    check_low_temperature_heat_balance(simulation)
+    check_high_temperature_heat_balance(simulation, verbose)
+    check_low_temperature_heat_balance(simulation, verbose)
 
     if interval_data.evs:
         for charge_event_idx, charge_event_mwh in enumerate(

@@ -231,7 +231,7 @@ class Battery:
         final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
         flags: Flags = Flags(),
-        verbose: int = 0,
+        verbose: bool = True,
     ) -> "epl.results.SimulationResult":
         """Optimize the battery's dispatch using a mixed-integer linear program.
 
@@ -290,7 +290,7 @@ class Battery:
 
         self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, vars, feasible=status.feasible
+            interval_data, vars, feasible=status.feasible, verbose=verbose
         )
 
     def plot(

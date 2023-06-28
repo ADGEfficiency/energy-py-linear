@@ -2,7 +2,7 @@ A natural response when you get access to something someone else build is to won
 
 This section will give you confidence in the implementation of underlying energy models.
 
-## Battery Model Validation
+## Battery Validation
 
 ### Price Dispatch Behaviour
 
@@ -16,16 +16,17 @@ In `energypylinear`, a positive site electricity balance is importing, and a neg
 import energypylinear as epl
 
 asset = epl.Battery()
-results = asset.optimize(electricity_prices=[10, -50, 200, -50, 200])
+results = asset.optimize(electricity_prices=[10, -50, 200, -50, 200], verbose=False)
 print(results.simulation[["electricity_prices", "site-electricity_balance_mwh"]])
-"""
+```
+
+```
    electricity_prices  site-electricity_balance_mwh
 0                  10                      0.444444
 1                 -50                      2.000000
 2                 200                     -2.000000
 3                 -50                      2.000000
 4                 200                     -2.000000
-"""
 ```
 
 As expected, the battery charges (with a site that is positive) when prices are low and discharges (with a negative site electricity balance) when prices are high.
@@ -36,16 +37,17 @@ Now let's change the prices and see how the dispatch changes:
 import energypylinear as epl
 
 asset = epl.Battery()
-results = asset.optimize(electricity_prices=[200, -50, -50, 200, 200])
+results = asset.optimize(electricity_prices=[200, -50, -50, 200, 200], verbose=False)
 print(results.simulation[["electricity_prices", "site-electricity_balance_mwh"]])
-"""
+```
+
+```
    electricity_prices  site-electricity_balance_mwh
 0                 200                           0.0
 1                 -50                           2.0
 2                 -50                           2.0
 3                 200                          -2.0
 4                 200                          -1.6
-"""
 ```
 
 As expected, the battery continues to charge during low electricity price intervals, and discharge when electricity prices are high.
@@ -58,18 +60,19 @@ Let's return to our original set of prices and check the energy balance of the b
 import energypylinear as epl
 
 asset = epl.Battery()
-results = asset.optimize(electricity_prices=[10, -50, 200, -50, 200])
+results = asset.optimize(electricity_prices=[10, -50, 200, -50, 200], verbose=False)
 
-balance = epl.results.check_electricity_balance(results.simulation)
+balance = epl.results.check_electricity_balance(results.simulation, verbose=False)
 print(balance)
-"""
-     import  generation  export  load    charge  discharge  balance      loss  spills  initial_charge  final_charge
-0  0.444444         0.0     0.0   0.0  0.444444        0.0     True  0.044444     0.0             0.0           0.4
-1  2.000000         0.0     0.0   0.0  2.000000        0.0     True  0.200000     0.0             0.4           2.2
-2  0.000000         0.0     2.0   0.0  0.000000        2.0     True  0.000000     0.0             2.2           0.2
-3  2.000000         0.0     0.0   0.0  2.000000        0.0     True  0.200000     0.0             0.2           2.0
-4  0.000000         0.0     2.0   0.0  0.000000        2.0     True  0.000000     0.0             2.0           0.0
-"""
+```
+
+```
+     import  generation  export  load    charge  discharge  balance      loss  spills
+0  0.444444         0.0     0.0   0.0  0.444444        0.0     True  0.044444     0.0
+1  2.000000         0.0     0.0   0.0  2.000000        0.0     True  0.200000     0.0
+2  0.000000         0.0     2.0   0.0  0.000000        2.0     True  0.000000     0.0
+3  2.000000         0.0     0.0   0.0  2.000000        0.0     True  0.200000     0.0
+4  0.000000         0.0     2.0   0.0  0.000000        2.0     True  0.000000     0.0
 ```
 
 In the first interval, we charge the battery with `0.444444 MWh` - `0.4 MWh` goes into increasing the battery state of charge from `0.0 MWh` to `0.4 MWh`, with the balance `0.044444 MWh` going to battery losses.
@@ -95,6 +98,7 @@ for efficiency_pct in [1.0, 0.9, 0.8]:
     results = asset.optimize(
         electricity_prices=prices,
         objective="price",
+        verbose=False
     )
     out.append(
         {
@@ -109,12 +113,13 @@ for efficiency_pct in [1.0, 0.9, 0.8]:
     )
 
 print(pd.DataFrame(out))
-"""
-eff_pct  charge_mwh  discharge_mwh  loss_mwh  prices_$_mwh  import_mwh    objective
-    1.0   18.000000           18.0  0.000000    103.197695   18.000000 -3018.344310
-    0.9   19.111111           17.2  1.911111    103.197695   19.111111 -2893.086854
-    0.8   20.000000           16.0  4.000000    103.197695   20.000000 -2719.962419
-"""
+```
+
+```
+   eff_pct  charge_mwh  discharge_mwh  loss_mwh  prices_$_mwh  import_mwh    objective
+0      1.0   18.000000           18.0  0.000000    103.197695   18.000000 -3018.344310
+1      0.9   19.111111           17.2  1.911111    103.197695   19.111111 -2893.086854
+2      0.8   20.000000           16.0  4.000000    103.197695   20.000000 -2719.962419
 ```
 
 From the above we observe the following as efficiency decreases:
