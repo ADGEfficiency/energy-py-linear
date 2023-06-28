@@ -35,6 +35,6 @@ def generate_random_ev_input_data(
     return {
         "electricity_prices": electricity_prices.tolist(),
         "charger_mws": charger_mws,
-        "charge_event_mwh": charge_event_mwh,
+        "charge_events_capacity_mwh": charge_event_mwh,
         "charge_events": charge_events,
     }

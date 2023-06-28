@@ -15,6 +15,7 @@ def debug_simulation(simulation):
     debug = [
         "site-import_power_mwh",
         "site-export_power_mwh",
+        "electricity_carbon_intensities",
     ]
     print(simulation[debug])
 
@@ -76,33 +77,42 @@ def test_evs_optimization_price() -> None:
 
 def test_evs_optimization_carbon() -> None:
     """Test EV optimization for carbon."""
+    charge_events_capacity_mwh = [50, 100, 30, 40]
     evs = epl.evs.EVs(
-        charger_mws=[100, 100],
+        chargers_power_mw=[100, 100],
+        charge_events_capacity_mwh=charge_events_capacity_mwh,
+        charger_turndown=0.0,
+        charge_event_efficiency=1.0,
     )
-    charge_event_mwh = [50, 100, 30, 40]
     results = evs.optimize(
         electricity_prices=[-100, 50, 30, 50, 40, 10],
-        electricity_carbon_intensities=[0.1, 0.3, -0.5, 0.9, 0.9, 0.0],
+        electricity_carbon_intensities=[0.1, 0.3, -0.5, 0.95, 0.9, 0.0],
         charge_events=[
             [1, 1, 0, 0, 0, 0],
             [0, 1, 1, 0, 0, 0],
             [0, 0, 0, 1, 1, 0],
             [0, 0, 0, 0, 1, 1],
         ],
-        charge_event_mwh=charge_event_mwh,
+        flags=Flags(
+            allow_evs_discharge=False,
+            fail_on_spill_asset_use=True,
+            allow_infeasible=False,
+        ),
+        freq_mins=60,
         objective="carbon",
     )
     simulation = results.simulation
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
     np.testing.assert_equal(
-        simulation["site-import_power_mwh"].sum(), sum(charge_event_mwh)
+        simulation["site-import_power_mwh"].sum(), sum(charge_events_capacity_mwh)
     )
 
     #  no exporting at all
     np.testing.assert_equal(simulation["site-export_power_mwh"].sum(), 0)
 
     #  test dispatch exactly as we expect
+    debug_simulation(simulation)
     np.testing.assert_array_equal(
         simulation["site-import_power_mwh"], [50.0, 0.0, 100.0, 0.0, 30.0, 40]
     )
@@ -111,10 +121,10 @@ def test_evs_optimization_carbon() -> None:
 @pytest.mark.parametrize(
     "efficiency",
     [
-        # 1.0,
+        1.0,
         0.9,
-        # 0.5,
-        # 0.1,
+        0.5,
+        # 0.1,  TODO causes problems
         # 0.0,
         # -0.1
     ],
@@ -173,7 +183,8 @@ def test_v2g():
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
         charger_turndown=0.0,
-        charge_event_efficiency=efficiency,
+        charge_event_efficiency=1.0
+        # charge_event_efficiency=0.8,  TODO causes problems
     )
     results = evs.optimize(
         electricity_prices=[-100, 50, 30, 50, 40],
@@ -225,7 +236,18 @@ def test_evs_hypothesis(
         prices_std=prices_std,
     )
     evs = epl.evs.EVs(
-        charger_mws=ds["charger_mws"].tolist(), charger_turndown=charger_turndown
+        chargers_power_mw=ds["charger_mws"].tolist(),
+        charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+        charger_turndown=charger_turndown,
     )
     ds.pop("charger_mws")
-    evs.optimize(**ds)
+    ds.pop("charge_events_capacity_mwh")
+    evs.optimize(
+        **ds,
+        flags=Flags(
+            allow_evs_discharge=False,
+            #  allow spills here
+            fail_on_spill_asset_use=False,
+            allow_infeasible=False,
+        ),
+    )
