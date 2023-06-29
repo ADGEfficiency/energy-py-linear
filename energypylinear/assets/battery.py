@@ -28,6 +28,7 @@ class BatteryConfig(pydantic.BaseModel):
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
         """Check that name includes battery."""
+
         assert "battery" in name
         return name
 
@@ -223,12 +224,12 @@ class Battery:
 
     def optimize(
         self,
-        electricity_prices: np.ndarray,
-        gas_prices: typing.Union[None, np.ndarray] = None,
-        electricity_carbon_intensities: typing.Union[None, np.ndarray] = None,
+        electricity_prices: np.ndarray | list[float],
+        gas_prices: np.ndarray | list[float] | None = None,
+        electricity_carbon_intensities: np.ndarray | list[float] | None = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
-        final_charge_mwh: typing.Union[float, None] = None,
+        final_charge_mwh: float | None = None,
         objective: str = "price",
         flags: Flags = Flags(),
         verbose: bool = True,

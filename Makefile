@@ -54,6 +54,7 @@ static: setup-static
 #  LINTING
 .PHONY: lint
 lint: setup-check
+	rm -rf ./tests/phmdoctest
 	flake8 --extend-ignore E501 --exclude=__init__.py,poc
 	# ruff check .
 	isort --check **/*.py --profile black
