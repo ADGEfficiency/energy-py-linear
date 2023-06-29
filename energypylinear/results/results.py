@@ -159,11 +159,11 @@ def extract_results(
             for battery in batteries:
                 name = f"{battery.cfg.name}"
                 for attr in [
-                    "charge_mwh",
-                    "charge_binary",
-                    "discharge_mwh",
-                    "discharge_binary",
-                    "losses_mwh",
+                    "electric_charge_mwh",
+                    "electric_charge_binary",
+                    "electric_discharge_mwh",
+                    "electric_discharge_binary",
+                    "electric_loss_mwh",
                     "initial_charge_mwh",
                     "final_charge_mwh",
                     # "efficiency_pct",  TODO this is a float
@@ -257,7 +257,7 @@ def extract_results(
     simulation["total-spills_mwh"] = simulation[total_mapper["spills"]].sum(axis=1)
 
     total_mapper["losses"] = [c for c in simulation.columns if "electric_loss_mwh" in c]
-    simulation["total-losses_mwh"] = simulation[total_mapper["losses"]].sum(axis=1)
+    simulation["total-loss_mwh"] = simulation[total_mapper["losses"]].sum(axis=1)
 
     simulation["site-electricity_balance_mwh"] = (
         simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]

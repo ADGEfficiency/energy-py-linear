@@ -38,8 +38,8 @@ def test_battery_price(
         final_charge_mwh=0,
     )
     simulation = results.simulation
-    charge = simulation["battery-charge_mwh"].values
-    discharge = simulation["battery-discharge_mwh"].values
+    charge = simulation["battery-electric_charge_mwh"].values
+    discharge = simulation["battery-electric_discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
@@ -74,8 +74,8 @@ def test_battery_carbon(
         objective="carbon",
     )
     simulation = results.simulation
-    charge = simulation["battery-charge_mwh"].values
-    discharge = simulation["battery-discharge_mwh"].values
+    charge = simulation["battery-electric_charge_mwh"].values
+    discharge = simulation["battery-electric_discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
@@ -128,12 +128,16 @@ def test_battery_hypothesis(
     freq = epl.freq.Freq(freq_mins)
 
     #  check we don't exceed the battery rating
-    assert all(simulation["battery-charge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
-    assert all(simulation["battery-discharge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
+    assert all(
+        simulation["battery-electric_charge_mwh"] <= freq.mw_to_mwh(power_mw) + tol
+    )
+    assert all(
+        simulation["battery-electric_discharge_mwh"] <= freq.mw_to_mwh(power_mw) + tol
+    )
 
     #  check charge & discharge are always positive
-    assert all(simulation["battery-charge_mwh"] >= 0 - tol)
-    assert all(simulation["battery-discharge_mwh"] >= 0 - tol)
+    assert all(simulation["battery-electric_charge_mwh"] >= 0 - tol)
+    assert all(simulation["battery-electric_discharge_mwh"] >= 0 - tol)
 
     #  check we don't exceed battery capacity
     name = "battery"

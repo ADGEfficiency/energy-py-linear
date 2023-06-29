@@ -63,11 +63,7 @@ def test_evs_optimization_price() -> None:
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
     np.testing.assert_equal(
-<<<<<<< HEAD
         simulation["site-import_power_mwh"].sum(), sum(charge_events_capacity_mwh)
-=======
-        simulation["site-import_power_mwh"].sum(), sum(charge_event_mwh)
->>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47
     )
 
     #  no exporting at all
@@ -109,11 +105,7 @@ def test_evs_optimization_carbon() -> None:
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
     np.testing.assert_equal(
-<<<<<<< HEAD
         simulation["site-import_power_mwh"].sum(), sum(charge_events_capacity_mwh)
-=======
-        simulation["site-import_power_mwh"].sum(), sum(charge_event_mwh)
->>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47
     )
 
     #  no exporting at all

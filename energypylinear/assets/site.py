@@ -197,7 +197,6 @@ class Site:
             typing.Union[float, typing.Iterable[float]]
         ] = None,
         charge_events: typing.Union[list[list[int]], typing.Iterable[int], None] = None,
-        charge_event_mwh: typing.Union[list[int], typing.Iterable[float], None] = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: typing.Union[float, None] = None,
@@ -225,12 +224,6 @@ class Site:
                 ]
                 ```
 
-            charge_event_mwh: 1D array of the total charge energy required for each charge event - total across all intervals in mega-watts.
-                Length is the number of charge events.
-                ```
-                charge_event_mwh = [50, 100, 30, 40]
-                ```
-
             freq_mins: the size of an interval in minutes.
             initial_charge_mwh: initial charge state of the battery in mega-watt hours.
             final_charge_mwh: final charge state of the battery in mega-watt hours.
@@ -248,12 +241,21 @@ class Site:
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
 
+        """
+        hmmm
+
+        bit of a leaky abstraction here
+
+        why do i need to bother with this nonsense
+
+        """
         if charge_events is not None:
             charge_events = np.array(charge_events).T
-            charge_event_mwh = np.array(charge_event_mwh)
             evs = epl.interval_data.EVIntervalData(
                 charge_events=charge_events,
-                charge_event_mwh=charge_event_mwh,
+                charge_events_capacity_mwh=[
+                    cfg.capacity_mwh for cfg in self.charge_event_cfgs
+                ],
             )
         else:
             evs = None

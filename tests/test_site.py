@@ -53,7 +53,7 @@ def test_site() -> None:
 def test_sites() -> None:
     """Tests various hardcoded combinations of assets."""
 
-    interval_data = generate_random_ev_input_data(10, n_chargers=3, charge_length=3)
+    ds = generate_random_ev_input_data(10, n_chargers=3, charge_length=3)
     site = epl.Site(
         assets=[
             epl.Battery(),
@@ -62,11 +62,15 @@ def test_sites() -> None:
                 electric_efficiency_pct=0.3,
                 high_temperature_efficiency_pct=0.5,
             ),
-            epl.EVs(charger_mws=interval_data["charger_mws"]),
+            epl.EVs(
+                chargers_power_mw=ds["charger_mws"],
+                charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+            ),
         ]
     )
-    interval_data.pop("charger_mws")
-    site.optimize(**interval_data)
+    ds.pop("charger_mws")
+    ds.pop("charge_events_capacity_mwh")
+    site.optimize(**ds)
 
 
 # import hypothesis

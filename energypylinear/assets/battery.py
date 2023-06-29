@@ -37,11 +37,11 @@ class BatteryOneInterval(AssetOneInterval):
     """Battery asset data for a single interval"""
 
     cfg: BatteryConfig
-    charge_mwh: pulp.LpVariable
-    charge_binary: typing.Union[pulp.LpVariable, int]
-    discharge_mwh: pulp.LpVariable
-    discharge_binary: typing.Union[pulp.LpVariable, int]
-    losses_mwh: pulp.LpVariable
+    electric_charge_mwh: pulp.LpVariable
+    electric_charge_binary: typing.Union[pulp.LpVariable, int]
+    electric_discharge_mwh: pulp.LpVariable
+    electric_discharge_binary: typing.Union[pulp.LpVariable, int]
+    electric_loss_mwh: pulp.LpVariable
     initial_charge_mwh: pulp.LpVariable
     final_charge_mwh: pulp.LpVariable
     efficiency_pct: float
@@ -61,14 +61,18 @@ def constrain_only_charge_or_discharge(
         batteries = epl.utils.filter_assets(vars, "battery")
         for battery in batteries:
             optimizer.constrain_max(
-                battery.charge_mwh, battery.charge_binary, battery.cfg.capacity_mwh
-            )
-            optimizer.constrain_max(
-                battery.discharge_mwh,
-                battery.discharge_binary,
+                battery.electric_charge_mwh,
+                battery.electric_charge_binary,
                 battery.cfg.capacity_mwh,
             )
-            optimizer.constrain(battery.charge_binary + battery.discharge_binary <= 1)
+            optimizer.constrain_max(
+                battery.electric_discharge_mwh,
+                battery.electric_discharge_binary,
+                battery.cfg.capacity_mwh,
+            )
+            optimizer.constrain(
+                battery.electric_charge_binary + battery.electric_discharge_binary <= 1
+            )
 
 
 def constrain_battery_electricity_balance(
@@ -82,13 +86,14 @@ def constrain_battery_electricity_balance(
     for battery in batteries:
         optimizer.constrain(
             battery.initial_charge_mwh
-            + battery.charge_mwh
-            - battery.discharge_mwh
-            - battery.losses_mwh
+            + battery.electric_charge_mwh
+            - battery.electric_discharge_mwh
+            - battery.electric_loss_mwh
             == battery.final_charge_mwh
         )
         optimizer.constrain(
-            battery.losses_mwh == battery.charge_mwh * (1 - battery.efficiency_pct)
+            battery.electric_loss_mwh
+            == battery.electric_charge_mwh * (1 - battery.efficiency_pct)
         )
 
 
@@ -175,20 +180,26 @@ class Battery:
         """Create Battery asset data for a single interval."""
         return BatteryOneInterval(
             cfg=self.cfg,
-            charge_mwh=optimizer.continuous(
+            electric_charge_mwh=optimizer.continuous(
                 f"{self.cfg.name}-charge_mwh-{i}", up=freq.mw_to_mwh(self.cfg.power_mw)
             ),
-            discharge_mwh=optimizer.continuous(
+            electric_discharge_mwh=optimizer.continuous(
                 f"{self.cfg.name}-discharge_mwh-{i}",
                 up=freq.mw_to_mwh(self.cfg.power_mw),
             ),
-            charge_binary=optimizer.binary(f"{self.cfg.name}-charge_binary-{i}")
+            electric_charge_binary=optimizer.binary(
+                f"{self.cfg.name}-charge_binary-{i}"
+            )
             if flags.include_charge_discharge_binary_variables
             else 0,
-            discharge_binary=optimizer.binary(f"{self.cfg.name}-discharge_binary-{i}")
+            electric_discharge_binary=optimizer.binary(
+                f"{self.cfg.name}-discharge_binary-{i}"
+            )
             if flags.include_charge_discharge_binary_variables
             else 0,
-            losses_mwh=optimizer.continuous(f"{self.cfg.name}-losses_mwh-{i}"),
+            electric_loss_mwh=optimizer.continuous(
+                f"{self.cfg.name}-electric_loss_mwh-{i}"
+            ),
             initial_charge_mwh=optimizer.continuous(
                 f"{self.cfg.name}-initial_charge_mwh-{i}",
                 low=0,
