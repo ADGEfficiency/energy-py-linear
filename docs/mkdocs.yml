@@ -3,25 +3,33 @@ repo_url: https://github.com/ADGEfficiency/energy-py-linear
 repo_name: energy-py-linear
 theme:
   name: material
+  logo: static/logo.png
+  favicon: static/favicon.ico
   features:
     - navigation.tabs.sticky
     - navigation.sections
     - navigation.expand
     - navigation.path
     - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
   icon:
     repo: fontawesome/brands/github
   palette:
     - scheme: default
+      primary: light blue
       toggle:
-        icon: material/brightness-7
+        icon: material/lightbulb-outline
         name: Switch to dark mode
     - scheme: slate
+      primary: cyan
       toggle:
-        icon: material/brightness-4
+        icon: material/lightbulb
         name: Switch to light mode
 plugins:
   - search
+  - social
 markdown_extensions:
   - markdown_include.include:
       base_path: docs

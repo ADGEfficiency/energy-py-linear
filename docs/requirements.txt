@@ -3,3 +3,5 @@ mkdocstrings[python]
 markdown-include
 phmdoctest
 pytest
+pillow
+cairosvg
