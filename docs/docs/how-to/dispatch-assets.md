@@ -1,6 +1,6 @@
 # Dispatching A Single Asset with the Asset API
 
-The asset API allows optimizing a single asset at once.
+The asset API allows optimizing a single asset at once.  Below we show how to use each asset in isolation with `asset.optimize`.
 
 ## Battery
 
@@ -18,6 +18,45 @@ results = asset.optimize(
   initial_charge_mwh=1,
   final_charge_mwh=3
 )
+
+assert all(
+    results.simulation.columns == [
+        'site-import_power_mwh',
+        'site-export_power_mwh',
+        'spill-electric_generation_mwh',
+        'spill-electric_load_mwh',
+        'spill-high_temperature_generation_mwh',
+        'spill-low_temperature_generation_mwh',
+        'spill-high_temperature_load_mwh',
+        'spill-low_temperature_load_mwh',
+        'spill-gas_consumption_mwh',
+        'spill-charge_mwh',
+        'spill-discharge_mwh',
+        'battery-charge_mwh',
+        'battery-charge_binary',
+        'battery-discharge_mwh',
+        'battery-discharge_binary',
+        'battery-losses_mwh',
+        'battery-initial_charge_mwh',
+        'battery-final_charge_mwh',
+        'electricity_prices',
+        'electricity_carbon_intensities',
+        'total-electric_generation_mwh',
+        'total-electric_load_mwh',
+        'total-high_temperature_generation_mwh',
+        'total-low_temperature_generation_mwh',
+        'total-high_temperature_load_mwh',
+        'total-low_temperature_load_mwh',
+        'total-gas_consumption_mwh',
+        'total-charge_mwh',
+        'total-discharge_mwh',
+        'total-spills_mwh',
+        'total-losses_mwh',
+        'site-electricity_balance_mwh',
+        'load-high_temperature_load_mwh',
+        'load-low_temperature_load_mwh'
+    ]
+)
 ```
 
 The battery will charge with electricity at low prices, and discharge at high prices.  An efficiency penalty is applied to the battery charge energy (energy is lost during charging).
@@ -28,28 +67,7 @@ Dispatch a CHP (combined heat & power) generator to generate electricity, high &
 
 The `epl.Generator` model can be configured with electric, high and low temperature thermal efficiencies. 
 
-This allows modelling both gas engines and gas turbines:
-
-```python
-import energypylinear as epl
-
-#  gas engine
-asset = epl.chp.Generator(
-    electric_power_max_mw=100,
-    electric_power_min_mw=30,
-    electric_efficiency_pct=0.4,
-    high_temperature_efficiency_pct=0.2,
-    low_temperature_efficiency_pct=0.2,
-)
-
-#  gas turbine
-asset = epl.chp.Generator(
-    electric_power_max_mw=100,
-    electric_power_min_mw=50,
-    electric_efficiency_pct=0.3,
-    high_temperature_efficiency_pct=0.5,
-)
-```
+This allows modelling both gas engines and gas turbines.
 
 When optimizing, we can use interval data for the high and low temperature loads.  These thermal loads will be met by gas boilers if the CHP chooses not to generate, or cannot meet thermal demands.  High temperature heat can be let-down into low temperature heat.
 
@@ -59,6 +77,14 @@ The high and low temperature heat demands are supplied alongside the electricity
 
 ```python
 import energypylinear as epl
+
+#  100 MWe gas turbine
+asset = epl.chp.Generator(
+    electric_power_max_mw=100,
+    electric_power_min_mw=50,
+    electric_efficiency_pct=0.3,
+    high_temperature_efficiency_pct=0.5,
+)
 
 #  100 MWe gas engine
 asset = epl.chp.Generator(
@@ -73,6 +99,46 @@ results = asset.optimize(
   electricity_prices=[100, 50, 200, -100, 0, 200, 100, -100],
   high_temperature_load_mwh=[100, 50, 200, 40, 0, 200, 100, 100],
   low_temperature_load_mwh=20
+)
+
+assert all(
+    results.simulation.columns == [
+        'site-import_power_mwh',
+        'site-export_power_mwh',
+        'spill-electric_generation_mwh',
+        'spill-electric_load_mwh',
+        'spill-high_temperature_generation_mwh',
+        'spill-low_temperature_generation_mwh',
+        'spill-high_temperature_load_mwh',
+        'spill-low_temperature_load_mwh',
+        'spill-gas_consumption_mwh',
+        'spill-charge_mwh',
+        'spill-discharge_mwh',
+        'generator-electric_generation_mwh',
+        'generator-gas_consumption_mwh',
+        'generator-high_temperature_generation_mwh',
+        'generator-low_temperature_generation_mwh',
+        'boiler-high_temperature_generation_mwh',
+        'boiler-gas_consumption_mwh',
+        'valve-high_temperature_load_mwh',
+        'valve-low_temperature_generation_mwh',
+        'electricity_prices',
+        'electricity_carbon_intensities',
+        'total-electric_generation_mwh',
+        'total-electric_load_mwh',
+        'total-high_temperature_generation_mwh',
+        'total-low_temperature_generation_mwh',
+        'total-high_temperature_load_mwh',
+        'total-low_temperature_load_mwh',
+        'total-gas_consumption_mwh',
+        'total-charge_mwh',
+        'total-discharge_mwh',
+        'total-spills_mwh',
+        'total-losses_mwh',
+        'site-electricity_balance_mwh',
+        'load-high_temperature_load_mwh',
+        'load-low_temperature_load_mwh'
+    ]
 )
 ```
 
@@ -108,5 +174,54 @@ results = asset.optimize(
     charge_events=charge_events,
     charge_event_mwh=charge_event_mwh,
 )
-```
 
+assert all(
+    results.simulation.columns == [
+        'site-import_power_mwh',
+        'site-export_power_mwh',
+        'spill-electric_generation_mwh',
+        'spill-electric_load_mwh',
+        'spill-high_temperature_generation_mwh',
+        'spill-low_temperature_generation_mwh',
+        'spill-high_temperature_load_mwh',
+        'spill-low_temperature_load_mwh',
+        'spill-gas_consumption_mwh',
+        'spill-charge_mwh',
+        'spill-discharge_mwh',
+        'charger-0-charge_mwh',
+        'charger-0-charge_binary',
+        'charger-1-charge_mwh',
+        'charger-1-charge_binary',
+        'charge-event-0-charge_mwh',
+        'charge-event-1-charge_mwh',
+        'charge-event-2-charge_mwh',
+        'charge-event-3-charge_mwh',
+        'charger-spill-charge_mwh',
+        'charger-spill-charge_binary',
+        'spill-charge-event-0-charge_mwh',
+        'spill-charge-event-1-charge_mwh',
+        'spill-charge-event-2-charge_mwh',
+        'spill-charge-event-3-charge_mwh',
+        'charge-event-0-total-charge_mwh',
+        'charge-event-1-total-charge_mwh',
+        'charge-event-2-total-charge_mwh',
+        'charge-event-3-total-charge_mwh',
+        'electricity_prices',
+        'electricity_carbon_intensities',
+        'total-electric_generation_mwh',
+        'total-electric_load_mwh',
+        'total-high_temperature_generation_mwh',
+        'total-low_temperature_generation_mwh',
+        'total-high_temperature_load_mwh',
+        'total-low_temperature_load_mwh',
+        'total-gas_consumption_mwh',
+        'total-charge_mwh',
+        'total-discharge_mwh',
+        'total-spills_mwh',
+        'total-losses_mwh',
+        'site-electricity_balance_mwh',
+        'load-high_temperature_load_mwh',
+        'load-low_temperature_load_mwh'
+    ]
+)
+```

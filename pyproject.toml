@@ -22,6 +22,7 @@ markdown-include = "^0.8.1"
 black = "^22.10.0"
 isort = "^5.10.1"
 flake8-docstring-checker = "^1.1"
+ruff = "^0.0.275"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"

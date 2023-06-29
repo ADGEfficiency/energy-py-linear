@@ -8,7 +8,11 @@ balances of heat and power
 
 ---
 
+<<<<<<< HEAD
 Documentation: [docs.adgefficiency.com/energy-py-linear](https://docs.adgefficiency.com/energy-py-linear)
+=======
+Documentation: [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com)
+>>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47
 
 ---
 
@@ -20,7 +24,11 @@ A Python library for optimizing energy assets with mixed-integer linear programm
 
 Assets can be optimized to either maximize profit or minimize carbon emissions.  
 
+<<<<<<< HEAD
 Energy balances are performed on electricity, high temperature and low temperature heat generation & load.
+=======
+Energy balances are performed on electricity, high & low temperature heat.
+>>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47
 
 ## Setup
 
@@ -36,7 +44,11 @@ $ pip install energypylinear
 
 The asset API allows optimizing a single asset at once.
 
+<<<<<<< HEAD
 We can dispatch an electric battery operating in wholesale price arbitrage using `epl.Battery`:
+=======
+We can optimize an electric battery operating in wholesale price arbitrage using `epl.Battery`:
+>>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47
 
 ```python
 import energypylinear as epl
@@ -52,7 +64,11 @@ results = asset.optimize(
 )
 ```
 
+<<<<<<< HEAD
 You can find documentation of how to optimize other assets in [how-to/dispatch-assets](), and examples in [energy-py-linear/examples/examples]().
+=======
+You can find documentation of how to optimize other assets in [how-to/optimize-assets](https://docs.adgefficiency.com/energy-py-linear/how-to/dispach-assets), and Python examples in [energy-py-linear/examples/examples](https://github.com/ADGEfficiency/energy-py-linear/tree/main/examples).
+>>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47
 
 ### Site API
 
@@ -68,10 +84,14 @@ site = epl.Site(assets=[
     electric_power_min_mw=30,
     electric_efficiency_pct=0.4
   ),
+<<<<<<< HEAD
   epl.evs.EVs(
       chargers_power_mw=[100, 100],
       charge_events_capacity_mwh=[50, 100, 30, 40]
   )
+=======
+  epl.evs.EVs(charger_mws=[100, 100])
+>>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47
 ])
 
 results = site.optimize(
@@ -87,6 +107,10 @@ results = site.optimize(
       [0, 0, 0, 1, 1],
       [0, 1, 0, 0, 0],
   ],
+<<<<<<< HEAD
+=======
+  charge_event_mwh=[50, 100, 30, 40]
+>>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47
 )
 ```
 
@@ -94,7 +118,11 @@ The site API will optimize the assets together, and return the results for each 
 
 ### Examples
 
+<<<<<<< HEAD
 Examples are given as independent scripts in `./examples`:
+=======
+Examples as independent scripts are `./examples`:
+>>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47
 
 ```shell
 $ ls ./examples
@@ -111,6 +139,12 @@ $ ls ./examples
 $ make test
 ```
 
+<<<<<<< HEAD
 ## Documentation
 
 Our documentation is hosted at [docs.adgefficiency.com/energy-py-linear](https://docs.adgefficiency.com/energy-py-linear).
+=======
+## Documentation 
+
+Documentation is hosted at [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com).
+>>>>>>> 0e63030e60d10d284e00bb226000123a07c36b47

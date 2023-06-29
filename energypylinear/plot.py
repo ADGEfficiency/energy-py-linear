@@ -19,8 +19,13 @@ def find_column(df: pd.DataFrame, start: str, end: str) -> str:
     return cols[0]
 
 
-def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
+def plot_battery(
+    results: "epl.results.SimulationResult", path: pathlib.Path | str
+) -> None:
     """Plot battery simulation results."""
+    path = pathlib.Path(path)
+    path.parent.mkdir(exist_ok=True, parents=True)
+
     fig, axes = plt.subplots(nrows=5, sharex=True, figsize=(12, 8))
     simulation = results.simulation
 
@@ -34,8 +39,10 @@ def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path) ->
         x="Index",
         y="import-export-balance",
     )
+    axes[0].set_ylim()
     axes[0].set_title("Power Balance MWh (Import Positive)")
     axes[0].set_ylabel("MWh")
+
     #  TODO will need some work in a multi-battery world
     simulation["net-battery-charge"] = (
         simulation[find_column(simulation, "battery-", "-charge_mwh")]

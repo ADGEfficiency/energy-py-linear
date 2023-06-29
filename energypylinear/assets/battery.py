@@ -28,6 +28,7 @@ class BatteryConfig(pydantic.BaseModel):
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
         """Check that name includes battery."""
+
         assert "battery" in name
         return name
 
@@ -158,7 +159,7 @@ class Battery:
         return f"<energypylinear.Battery, power: {self.cfg.power_mw} MW, capacity: {self.cfg.capacity_mwh} MWh>"
 
     def setup_initial_final_charge(
-        self, initial_charge_mwh: float, final_charge_mwh: typing.Optional[float]
+        self, initial_charge_mwh: float, final_charge_mwh: float | None
     ) -> None:
         """Processes the options for initial and final charge."""
         self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)
@@ -224,15 +225,15 @@ class Battery:
 
     def optimize(
         self,
-        electricity_prices: np.ndarray,
-        gas_prices: typing.Union[None, np.ndarray] = None,
-        electricity_carbon_intensities: typing.Union[None, np.ndarray] = None,
+        electricity_prices: np.ndarray | list[float],
+        gas_prices: np.ndarray | list[float] | None = None,
+        electricity_carbon_intensities: np.ndarray | list[float] | None = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
-        final_charge_mwh: typing.Union[float, None] = None,
+        final_charge_mwh: float | None = None,
         objective: str = "price",
         flags: Flags = Flags(),
-        verbose: int = 0,
+        verbose: bool = True,
     ) -> "epl.results.SimulationResult":
         """Optimize the battery's dispatch using a mixed-integer linear program.
 
@@ -291,7 +292,7 @@ class Battery:
 
         self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, vars, feasible=status.feasible
+            interval_data, vars, feasible=status.feasible, verbose=verbose
         )
 
     def plot(

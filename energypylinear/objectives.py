@@ -90,7 +90,6 @@ def carbon_objective(
     sites = vars["sites"]
     spills = epl.utils.filter_all_assets(vars, "spill")
     spill_evs = vars["spill-evs"]
-
     boilers = epl.utils.filter_all_assets(vars, "boiler")
     generators = epl.utils.filter_all_assets(vars, "generator")
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
@@ -107,17 +106,6 @@ def carbon_objective(
             #  so high_temperature_load_mwh and low_temperature_load_mwh
             #  are not included here
             for spill in spills[i]
-        ]
-        + [
-            spill.electric_generation_mwh * defaults.spill_objective_penalty
-            + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
-            + spill.electric_load_mwh * defaults.spill_objective_penalty
-            + spill.electric_charge_mwh * defaults.spill_objective_penalty
-            + spill.electric_discharge_mwh * defaults.spill_objective_penalty
-            #  dumping heat has no penalty
-            #  so high_temperature_load_mwh and low_temperature_load_mwh
-            #  are not included here
-            for spill in spill_evs[i]
         ]
         for i in interval_data.idx
     ]

@@ -61,9 +61,6 @@ def constrain_site_electricity_balance(
             - interval_data.electricity_load_mwh[i]
             + optimizer.sum([a.electric_generation_mwh for a in assets])
             - optimizer.sum([a.electric_load_mwh for a in assets])
-            #  TODO - remove `charge_mwh` from battery
-            # - optimizer.sum([a.charge_mwh for a in assets])
-            # + optimizer.sum([a.discharge_mwh for a in assets])
             - optimizer.sum([a.electric_charge_mwh for a in assets])
             + optimizer.sum([a.electric_discharge_mwh for a in assets])
             + (spills[-1].electric_generation_mwh if spills else 0)
@@ -143,7 +140,7 @@ class Site:
 
     def __init__(
         self,
-        assets: typing.Optional[list] = None,
+        assets: list | None = None,
         cfg: SiteConfig = SiteConfig(),
     ):
         """Initialize a Site asset model."""
@@ -337,5 +334,5 @@ class Site:
         status = self.optimizer.solve(verbose=verbose)
         self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, vars, feasible=status.feasible
+            interval_data, vars, feasible=status.feasible, verbose=verbose
         )

@@ -3,40 +3,49 @@ repo_url: https://github.com/ADGEfficiency/energy-py-linear
 repo_name: energy-py-linear
 theme:
   name: material
+  logo: static/logo.png
+  favicon: static/favicon.ico
   features:
     - navigation.tabs.sticky
     - navigation.sections
     - navigation.expand
     - navigation.path
     - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
   icon:
     repo: fontawesome/brands/github
   palette:
     - scheme: default
+      primary: light blue
       toggle:
-        icon: material/brightness-7
+        icon: material/lightbulb-outline
         name: Switch to dark mode
     - scheme: slate
+      primary: cyan
       toggle:
-        icon: material/brightness-4
+        icon: material/lightbulb
         name: Switch to light mode
 plugins:
   - search
+  - social
 markdown_extensions:
   - markdown_include.include:
       base_path: docs
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.superfences
+  - attr_list
+  - md_in_html
 nav:
   - Getting Started: index.md
-  - How To:
-    - Optimize Assets: how-to/dispatch-assets.md
-    - Optimize a Site: how-to/dispatch-site.md
-    - Optimize for Carbon: how-to/price-carbon.md
-    - Optimize for a Forecast: how-to/dispatch-forecast.md
-  - Explanation:
-    - Validation: validation.md
+  - Optimize Assets: how-to/dispatch-assets.md
+  - Optimize a Site: how-to/dispatch-site.md
+  - Optimize for Carbon: how-to/price-carbon.md
+  - Optimize for a Forecast: how-to/dispatch-forecast.md
+  # - Explanation:
+  - Validation: validation.md
 
   # - Measure Forecast Quality: index.md
 

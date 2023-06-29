@@ -18,7 +18,7 @@ tol = 1e-5
         ([10, 50, 10, 5000, 10], 0, [4, -4, 4, -4, 0]),
     ],
 )
-def test_battery_optimization_price(
+def test_battery_price(
     electricity_prices: list[float],
     initial_charge_mwh: float,
     expected_dispatch: list[float],
@@ -52,7 +52,7 @@ def test_battery_optimization_price(
         ([0.9, 0.1, 0.2, 0.9], 0, [0, 4, 0, -4]),
     ],
 )
-def test_battery_optimization_carbon(
+def test_battery_carbon(
     carbon_intensities: list[float],
     initial_charge_mwh: float,
     expected_dispatch: list[float],
@@ -62,13 +62,13 @@ def test_battery_optimization_carbon(
     capacity_mwh = 6
     efficiency = 1.0
     freq_mins = 60
-    prices = np.random.uniform(-100, 100, len(carbon_intensities)).tolist()
+    prices = np.zeros_like(carbon_intensities)
     asset = epl.battery.Battery(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
     results = asset.optimize(
         electricity_prices=prices,
-        electricity_carbon_intensities=np.array(carbon_intensities),
+        electricity_carbon_intensities=carbon_intensities,
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         objective="carbon",

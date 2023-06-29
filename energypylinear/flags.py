@@ -14,5 +14,4 @@ class Flags(pydantic.BaseModel):
     #  evs
     allow_evs_discharge: bool = False
 
-    #  whether to throw a Python error on an infeasible linear program
     allow_infeasible: bool = False

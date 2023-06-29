@@ -25,9 +25,11 @@ setup-docs:
 .PHONY: test test-ci test-validate
 test: setup-test
 	rm -rf ./tests/phmdoctest
-	mkdir ./tests/phmdoctest
+	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
+	#  TODO add all the docs
 	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
+	python -m phmdoctest ./docs/docs/how-to/dispatch-assets.md --outfile tests/phmdoctest/test_dispatch_assets.py
 	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon --pdb
 
 test-ci: setup-test
@@ -45,14 +47,16 @@ check: lint static
 #  STATIC TYPING
 .PHONY: static
 static: setup-static
-	rm -rf ./tests/test_readme.py
+	rm -rf ./tests/phmdoctest
 	mypy --config-file ./mypy.ini --pretty ./energypylinear
 	mypy --config-file ./mypy.ini --pretty ./tests
 
 #  LINTING
 .PHONY: lint
 lint: setup-check
+	rm -rf ./tests/phmdoctest
 	flake8 --extend-ignore E501 --exclude=__init__.py,poc
+	# ruff check .
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
@@ -60,6 +64,7 @@ lint: setup-check
 #  FORMATTING
 .PHONY: format
 format: setup-check
+	# ruff check . --format
 	isort **/*.py --profile black
 	black **/*.py
 	poetry lock --no-update
