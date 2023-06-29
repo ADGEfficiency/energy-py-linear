@@ -25,7 +25,7 @@ setup-docs:
 .PHONY: test test-ci test-validate
 test: setup-test
 	rm -rf ./tests/phmdoctest
-	mkdir ./tests/phmdoctest
+	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
 	#  TODO add all the docs
 	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
@@ -78,8 +78,15 @@ publish: setup
 
 #  DOCS
 .PHONY: docs docs-build
-docs: setup-docs
+
+setup-doc-images:
+	#  bit hacky really
+	mkdir -p ./tests/phmdoctest
+	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
+	pytest tests/phmdoctest/test_validate.py -s -x
+
+docs: setup-docs setup-doc-images
 	cd docs; mkdocs serve; cd ..
 
-docs-build: setup-docs
+docs-build: setup-docs setup-doc-images
 	cd docs; mkdocs build; cd ..

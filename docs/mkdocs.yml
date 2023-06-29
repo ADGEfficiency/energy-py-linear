@@ -28,6 +28,8 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.superfences
+  - attr_list
+  - md_in_html
 nav:
   - Getting Started: index.md
   - Optimize Assets: how-to/dispatch-assets.md

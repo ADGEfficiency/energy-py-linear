@@ -133,19 +133,28 @@ From the above we observe the following as efficiency decreases:
 We can demonstrate the state of charge and battery power settings by first optimizing a battery and showing it's plot:
 
 ```python
-import pathlib
 import numpy as np
 import energypylinear as epl
+
 np.random.seed(42)
 electricity_prices = np.random.normal(100, 10, 10).tolist()
 asset = epl.battery.Battery(power_mw=2, capacity_mwh=4)
 results = asset.optimize(electricity_prices=electricity_prices)
-asset.plot(results, path=pathlib.Path("battery.png"))
+asset.plot(results, path="./docs/docs/static/battery.png")
+```
 
+![](static/battery.png)
 
-import pathlib
+Takeaways:
+
+- the battery state of charge is constrained between 0 and 4 MWh,
+- the battery power rating is constrained between -2 and 2 MW,
+- battery SOC starts empty and ends empty.
+
+```python
 import numpy as np
 import energypylinear as epl
+
 np.random.seed(42)
 electricity_prices = np.random.normal(100, 10, 10).tolist()
 asset = epl.battery.Battery(
@@ -157,13 +166,11 @@ results = asset.optimize(
     initial_charge_mwh=1.0,
     final_charge_mwh=3.0
 )
-asset.plot(results, path=pathlib.Path("battery-fast.png"))
+asset.plot(results, path="./docs/docs/static/battery-fast.png")
 ```
 
-- check capacity limits?  check power rating?
-- initial and final state of charge, how charge calculated
+![](static/battery-fast.png)
 
-```python
-```
+Takeaways:
 
-- different inital and final charger
+- battery SOC starts at 1 MWh and ends at 3 MWh.
