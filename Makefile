@@ -80,14 +80,8 @@ publish: setup
 #  DOCS
 .PHONY: docs docs-build
 
-setup-doc-images:
-	#  bit hacky really
-	mkdir -p ./tests/phmdoctest
-	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
-	pytest tests/phmdoctest/test_validate.py -s -x
-
-docs: setup-docs setup-doc-images
+docs: setup-docs
 	cd docs; mkdocs serve; cd ..
 
-docs-build: setup-docs setup-doc-images
+docs-build: setup-docs
 	cd docs; mkdocs build; cd ..
