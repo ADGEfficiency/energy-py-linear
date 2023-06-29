@@ -8,11 +8,22 @@ from energypylinear.defaults import defaults
 
 def test_accounting_actuals() -> None:
     """Check calculation of electricity and gas costs and emissions."""
+
     results = pd.DataFrame(
         {
-            "import_power_mwh": [100, 50, 0],
-            "export_power_mwh": [0, 0, 20],
-            "gas_consumption_mwh": [20, 30, 40],
+            "site-import_power_mwh": [100, 50, 0],
+            "site-export_power_mwh": [0, 0, 20],
+            "total-gas_consumption_mwh": [20, 30, 40],
+            "total-electric_generation_mwh": [20, 30, 40],
+            "total-electric_load_mwh": [120, 80, 20],
+            "total-high_temperature_generation_mwh": [0, 0, 0],
+            "total-high_temperature_load_mwh": [0, 0, 0],
+            "total-low_temperature_generation_mwh": [0, 0, 0],
+            "total-low_temperature_load_mwh": [0, 0, 0],
+            "total-charge_mwh": [0, 0, 0],
+            "total-discharge_mwh": [0, 0, 0],
+            "total-losses_mwh": [0, 0, 0],
+            "total-spills_mwh": [0, 0, 0],
         }
     )
     actuals_data = epl.interval_data.IntervalData(
@@ -20,7 +31,7 @@ def test_accounting_actuals() -> None:
         gas_prices=15,
         electricity_carbon_intensities=0.5,
     )
-    actuals = epl.accounting.get_accounts(actuals_data, results)
+    actuals = epl.accounting.get_accounts(actuals_data, results, validate=True)
 
     assert actuals.electricity.import_cost == 100 * 100 + 200 * 50
     assert actuals.electricity.export_cost == -20 * -300
@@ -51,9 +62,11 @@ def test_accounting_forecasts() -> None:
     """Check calculation of forecast electricity and gas costs and emissions."""
     results = pd.DataFrame(
         {
-            "import_power_mwh": [100, 50, 0],
-            "export_power_mwh": [0, 0, 20],
-            "gas_consumption_mwh": [20, 30, 40],
+            "site-import_power_mwh": [100, 50, 0],
+            "site-export_power_mwh": [0, 0, 20],
+            "total-gas_consumption_mwh": [20, 30, 40],
+            "total-electric_generation_mwh": [20, 30, 40],
+            "total-electric_load_mwh": [20, 30, 40],
         }
     )
     actuals_data = epl.interval_data.IntervalData(
@@ -66,8 +79,8 @@ def test_accounting_forecasts() -> None:
         gas_prices=10,
         electricity_carbon_intensities=0.4,
     )
-    actuals = epl.accounting.get_accounts(actuals_data, results)
-    forecasts = epl.accounting.get_accounts(forecasts_data, results)
+    actuals = epl.accounting.get_accounts(actuals_data, results, validate=False)
+    forecasts = epl.accounting.get_accounts(forecasts_data, results, validate=False)
 
     assert forecasts.electricity.import_cost == 200 * 100 + -100 * 50
     assert forecasts.electricity.export_cost == -20 * 100

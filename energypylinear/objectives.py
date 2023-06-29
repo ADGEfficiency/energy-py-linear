@@ -27,15 +27,11 @@ def price_objective(
     """
 
     sites = vars["sites"]
-    spills = vars["spills"]
+    spills = epl.utils.filter_all_assets(vars, "spill")
     spill_evs = vars["spill-evs"]
-    generators = vars.get("generators", [])
-    boilers = vars.get("boilers", [])
+    boilers = epl.utils.filter_all_assets(vars, "boiler")
+    generators = epl.utils.filter_all_assets(vars, "generator")
 
-    if len(generators) == 0:
-        generators = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
-    if len(boilers) == 0:
-        boilers = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
     if len(spill_evs) == 0:
         spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
 
@@ -45,11 +41,14 @@ def price_objective(
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_prices[i]
         - sites[i].export_power_mwh * interval_data.electricity_prices[i]
-        + spills[i].electric_generation_mwh * defaults.spill_objective_penalty
-        + spills[i].high_temperature_generation_mwh * defaults.spill_objective_penalty
-        + spills[i].electric_load_mwh * defaults.spill_objective_penalty
-        #  dumping heat has no penalty
-        + spills[i].high_temperature_load_mwh
+        + [
+            spill.electric_generation_mwh * defaults.spill_objective_penalty
+            + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
+            + spill.electric_load_mwh * defaults.spill_objective_penalty
+            #  don't think I need this - this is dumping of HT heat - was in here - TODO test
+            # + spill.high_temperature_load_mwh
+            for spill in spills[i]
+        ]
         + [
             spill_ev.charge_mwh * defaults.spill_objective_penalty
             for spill_ev in spill_evs[i]
@@ -88,20 +87,23 @@ def carbon_objective(
     """
 
     sites = vars["sites"]
-    spills = vars["spills"]
-    generators = vars.get("generators", [])
-    boilers = vars.get("boilers", [])
+    spills = epl.utils.filter_all_assets(vars, "spill")
+    boilers = epl.utils.filter_all_assets(vars, "boiler")
+    generators = epl.utils.filter_all_assets(vars, "generator")
 
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_carbon_intensities[i]
         - sites[i].export_power_mwh * interval_data.electricity_carbon_intensities[i]
-        #  could turn this off TODO
-        + spills[i].electric_generation_mwh * defaults.spill_objective_penalty
-        + spills[i].high_temperature_generation_mwh * defaults.spill_objective_penalty
-        + spills[i].electric_load_mwh * defaults.spill_objective_penalty
-        #  dumping heat has no penalty
-        + spills[i].high_temperature_load_mwh
+        + [
+            spill.electric_generation_mwh * defaults.spill_objective_penalty
+            + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
+            + spill.electric_load_mwh * defaults.spill_objective_penalty
+            #  dumping heat has no penalty
+            #  so high_temperature_load_mwh and low_temperature_load_mwh
+            #  are not included here
+            for spill in spills[i]
+        ]
         for i in interval_data.idx
     ]
     if generators:

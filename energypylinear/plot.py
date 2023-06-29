@@ -19,23 +19,30 @@ def find_column(df: pd.DataFrame, start: str, end: str) -> str:
     return cols[0]
 
 
-def plot_battery(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
+def plot_battery(
+    results: "epl.results.SimulationResult", path: pathlib.Path | str
+) -> None:
     """Plot battery simulation results."""
+    path = pathlib.Path(path)
+    path.parent.mkdir(exist_ok=True, parents=True)
+
     fig, axes = plt.subplots(nrows=5, sharex=True, figsize=(12, 8))
     simulation = results.simulation
 
     simulation["Index"] = np.arange(simulation.shape[0]).tolist()
 
     simulation["import-export-balance"] = (
-        simulation["import_power_mwh"] - simulation["export_power_mwh"]
+        simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
     )
     simulation.plot(
         ax=axes[0],
         x="Index",
         y="import-export-balance",
     )
+    axes[0].set_ylim()
     axes[0].set_title("Power Balance MWh (Import Positive)")
     axes[0].set_ylabel("MWh")
+
     #  TODO will need some work in a multi-battery world
     simulation["net-battery-charge"] = (
         simulation[find_column(simulation, "battery-", "-charge_mwh")]
@@ -164,7 +171,7 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     simulation["Index"] = np.arange(simulation.shape[0]).tolist()
 
     simulation["import-export-balance"] = (
-        simulation["import_power_mwh"] - simulation["export_power_mwh"]
+        simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
     )
     simulation.plot(
         ax=axes[0],
@@ -183,7 +190,7 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     simulation.plot(
         ax=axes[2],
         x="Index",
-        y="spill-default-low_temperature_load_mwh",
+        y="spill-low_temperature_load_mwh",
     )
     axes[2].set_ylabel("MWh")
     axes[2].set_title("Low Temperature Heat Dump MWh")

@@ -68,9 +68,9 @@ def get_one_gas_account(
 ) -> GasAccount:
     """Calculate a single gas account from interval data and results."""
     return GasAccount(
-        cost=(interval_data.gas_prices * results["gas_consumption_mwh"]).sum(),
+        cost=(interval_data.gas_prices * results["total-gas_consumption_mwh"]).sum(),
         emissions=(
-            defaults.gas_carbon_intensity * results["gas_consumption_mwh"]
+            defaults.gas_carbon_intensity * results["total-gas_consumption_mwh"]
         ).sum(),
     )
 
@@ -80,21 +80,20 @@ def get_one_electricity_account(
     results: pd.DataFrame,
 ) -> ElectricityAccount:
     """Calculate a single electricity account from interval data and results."""
-    import_cost = (interval_data.electricity_prices * results["import_power_mwh"]).sum()
+    import_cost = (
+        interval_data.electricity_prices * results["site-import_power_mwh"]
+    ).sum()
     export_cost = -(
-        interval_data.electricity_prices * results["export_power_mwh"]
+        interval_data.electricity_prices * results["site-export_power_mwh"]
     ).sum()
 
     import_emissions = (
-        interval_data.electricity_carbon_intensities * results["import_power_mwh"]
+        interval_data.electricity_carbon_intensities * results["site-import_power_mwh"]
     ).sum()
     export_emissions = -(
-        interval_data.electricity_carbon_intensities * results["export_power_mwh"]
+        interval_data.electricity_carbon_intensities * results["site-export_power_mwh"]
     ).sum()
 
-    # id = interval_data.electricity_carbon_intensities
-    # pr = results["import_power_mwh"].values
-    # breakpoint()  # fmt: skip
     return ElectricityAccount(
         import_cost=import_cost,
         export_cost=export_cost,
@@ -108,6 +107,7 @@ def get_one_electricity_account(
 def get_accounts(
     interval_data: "epl.interval_data.IntervalData",
     simulation: pd.DataFrame,
+    validate: bool = True,
 ) -> Accounts:
     """
     Create one pair of gas and electricity accounts.
@@ -123,7 +123,8 @@ def get_accounts(
         interval_data: holds prices and carbon intensities.
         simulation: simulation results.
     """
-    epl.results.validate_results(interval_data, simulation)
+    if validate:
+        epl.results.validate_results(interval_data, simulation)
     electricity = get_one_electricity_account(interval_data, simulation)
     gas = get_one_gas_account(interval_data, simulation)
 

@@ -15,13 +15,14 @@ pandas = "^1.5.2"
 matplotlib = "^3.6.2"
 rich = "^12.0.0"
 seaborn = "^0.12.2"
-
+pandera = "^0.14.5"
+markdown-include = "^0.8.1"
 
 [tool.poetry.group.check.dependencies]
 black = "^22.10.0"
 isort = "^5.10.1"
 flake8-docstring-checker = "^1.1"
-
+ruff = "^0.0.275"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
@@ -33,10 +34,8 @@ pytest-testmon = "^1.4.5"
 pytest-sugar = "^0.9.6"
 coverage-badge = "^1.1.0"
 
-
 [tool.poetry.group.develop.dependencies]
 ipython = "^8.7.0"
-
 
 [tool.poetry.group.static.dependencies]
 mypy = "^0.991"

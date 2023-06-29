@@ -26,8 +26,13 @@ def test_chp_gas_turbine_price() -> None:
     """
     row = simulation.iloc[0, :]
     assert row["generator-electric_generation_mwh"] == 100
+
+    # data = simulation[
+    #     [c for c in simulation.columns if "spill" in c]
+    #     + ["generator-electric_generation_mwh"]
+    # ]
     np.testing.assert_almost_equal(
-        row["spill-default-low_temperature_load_mwh"],
+        row["spill-low_temperature_load_mwh"],
         (100 / 0.3) * 0.5 - 20,
         decimal=defaults.decimal_tolerance,
     )
@@ -79,7 +84,7 @@ def test_chp_gas_turbine_carbon() -> None:
     row = simulation.iloc[0, :]
     assert row["generator-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
-        row["spill-default-low_temperature_load_mwh"],
+        row["spill-low_temperature_load_mwh"],
         (100 / 0.3) * 0.5 - 20,
         decimal=defaults.decimal_tolerance,
     )
@@ -134,7 +139,7 @@ def test_chp_gas_engine_price() -> None:
     row = simulation.iloc[0, :]
     assert row["generator-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
-        row["spill-default-low_temperature_load_mwh"],
+        row["spill-low_temperature_load_mwh"],
         (100 / 0.4) * 0.4 - 40,
         decimal=defaults.decimal_tolerance,
     )
@@ -166,7 +171,7 @@ def test_chp_gas_engine_carbon() -> None:
     row = simulation.iloc[0, :]
     assert row["generator-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
-        row["spill-default-low_temperature_load_mwh"],
+        row["spill-low_temperature_load_mwh"],
         (100 / 0.4) * 0.4 - 40,
         decimal=defaults.decimal_tolerance,
     )
@@ -177,7 +182,7 @@ def test_chp_gas_engine_carbon() -> None:
     row = simulation.iloc[1, :]
     assert row["generator-electric_generation_mwh"] == 0
     np.testing.assert_almost_equal(
-        row["spill-default-low_temperature_load_mwh"],
+        row["spill-low_temperature_load_mwh"],
         0,
         decimal=defaults.decimal_tolerance,
     )

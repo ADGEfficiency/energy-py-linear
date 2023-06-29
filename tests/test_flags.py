@@ -16,6 +16,5 @@ def test_flags() -> None:
         electricity_prices=np.random.normal(10, 5, 100),
         freq_mins=5,
         flags=Flags(include_charge_discharge_binary_variables=True),
-        #  TODO move verbose testing elsewhere
-        verbose=1,
+        verbose=True,
     )

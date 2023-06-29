@@ -25,7 +25,7 @@ class EVIntervalData(pydantic.BaseModel):
         validate_all_things: validates the input data
     """
 
-    charge_events: typing.Union[list[list[int]], np.ndarray]
+    charge_events: np.ndarray
     idx: typing.Any = []
     charge_event_mwh: typing.Union[list[int], np.ndarray]
 
@@ -105,10 +105,11 @@ class IntervalData(pydantic.BaseModel):
     """
 
     electricity_prices: np.ndarray
-    electricity_carbon_intensities: typing.Union[np.ndarray, None]
-    gas_prices: np.ndarray
-    high_temperature_load_mwh: np.ndarray
-    low_temperature_load_mwh: np.ndarray
+    electricity_carbon_intensities: typing.Optional[np.ndarray] = None
+    gas_prices: typing.Optional[np.ndarray] = None
+    high_temperature_load_mwh: typing.Optional[np.ndarray] = None
+    low_temperature_load_mwh: typing.Optional[np.ndarray] = None
+    electricity_load_mwh: typing.Optional[np.ndarray] = None
     idx: list[int] = []
 
     evs: typing.Union[EVIntervalData, None] = None
@@ -118,13 +119,19 @@ class IntervalData(pydantic.BaseModel):
 
         arbitrary_types_allowed = True
 
+    def __str__(self) -> str:
+        """A string representation of self."""
+        return f"<epl.IntervalData n: {self.electricity_prices.shape[0]} electricity_prices: {self.electricity_prices.mean():2.1f}>"
+
     @pydantic.validator("evs")
     def validate_evs(
         cls, evs: "epl.interval_data.EVIntervalData", values: dict
-    ) -> "epl.interval_data.EVIntervalData":
+    ) -> typing.Optional["epl.interval_data.EVIntervalData"]:
         """Validate our indexes are the same with our parent index."""
-        assert all(evs.idx == values["idx"])
-        return evs
+        if evs:
+            assert all(evs.idx == values["idx"])
+            return evs
+        return None
 
     @pydantic.root_validator(pre=True)
     def validate_all_things(cls, values: dict) -> dict:
@@ -143,6 +150,7 @@ class IntervalData(pydantic.BaseModel):
             "electricity_carbon_intensities",
             "high_temperature_load_mwh",
             "low_temperature_load_mwh",
+            "electricity_load_mwh",
         ]
         for field in fields:
             value = values.get(field)
@@ -165,16 +173,14 @@ class IntervalData(pydantic.BaseModel):
         return values
 
     @pydantic.validator("idx", always=True)
-    def setup_idx(cls, value: list, values: dict) -> list:
+    def setup_idx(cls, _: list, values: dict) -> list:
         """Create an integer index."""
         return list(range(len(values["electricity_prices"])))
 
     def to_dataframe(self) -> pd.DataFrame:
         """Save all interval data to a pandas DataFrame."""
         data = self.dict()
-
         expected_len = len(data["idx"])
-
         df = {}
         for name, data in data.items():
             if data is not None:

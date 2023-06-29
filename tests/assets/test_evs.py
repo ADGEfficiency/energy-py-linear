@@ -24,13 +24,17 @@ def test_evs_optimization_price() -> None:
     simulation = results.simulation
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
-    np.testing.assert_equal(simulation["import_power_mwh"].sum(), sum(charge_event_mwh))
+    np.testing.assert_equal(
+        simulation["site-import_power_mwh"].sum(), sum(charge_event_mwh)
+    )
 
     #  no exporting at all
-    np.testing.assert_equal(simulation["export_power_mwh"].sum(), 0)
+    np.testing.assert_equal(simulation["site-export_power_mwh"].sum(), 0)
 
     #  test dispatch exactly as we expect
-    np.testing.assert_array_equal(simulation["import_power_mwh"], [50, 40, 100, 0, 30])
+    np.testing.assert_array_equal(
+        simulation["site-import_power_mwh"], [50, 40, 100, 0, 30]
+    )
 
 
 def test_evs_optimization_carbon() -> None:
@@ -54,14 +58,16 @@ def test_evs_optimization_carbon() -> None:
     simulation = results.simulation
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
-    np.testing.assert_equal(simulation["import_power_mwh"].sum(), sum(charge_event_mwh))
+    np.testing.assert_equal(
+        simulation["site-import_power_mwh"].sum(), sum(charge_event_mwh)
+    )
 
     #  no exporting at all
-    np.testing.assert_equal(simulation["export_power_mwh"].sum(), 0)
+    np.testing.assert_equal(simulation["site-export_power_mwh"].sum(), 0)
 
     #  test dispatch exactly as we expect
     np.testing.assert_array_equal(
-        simulation["import_power_mwh"], [50.0, 0.0, 100.0, 0.0, 30.0, 40]
+        simulation["site-import_power_mwh"], [50.0, 0.0, 100.0, 0.0, 30.0, 40]
     )
 
 
