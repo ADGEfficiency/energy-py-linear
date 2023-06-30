@@ -283,7 +283,7 @@ def extract_results(
         print(total_mapper)
 
     simulation_schema.validate(simulation)
-    validate_results(interval_data, simulation)
+    validate_results(interval_data, simulation, verbose=verbose)
     spill_occured = warn_spills(simulation, flags)
 
     return SimulationResult(

@@ -7,31 +7,6 @@ import energypylinear as epl
 from energypylinear.flags import Flags
 
 
-def debug_simulation(simulation):
-    """be great to debug the balances here as well"""
-    from rich import print
-
-    print("[red]DEBUG[/red]")
-    debug = [
-        "site-import_power_mwh",
-        "site-export_power_mwh",
-        "electricity_carbon_intensities",
-    ]
-    print(simulation[debug])
-
-    def debug_column(simulation, col):
-        cols = [c for c in simulation.columns if col in c]
-        subset = simulation[cols]
-        subset.columns = [c.replace(col, "") for c in subset.columns]
-        print(col)
-        print(subset)
-
-    debug_column(simulation, "electric_charge_mwh")
-    debug_column(simulation, "initial_soc_mwh")
-    debug_column(simulation, "final_soc_mwh")
-    debug_column(simulation, "electric_loss_mwh")
-
-
 def test_evs_optimization_price() -> None:
     """Test EV optimization for price."""
 
@@ -112,7 +87,6 @@ def test_evs_optimization_carbon() -> None:
     np.testing.assert_equal(simulation["site-export_power_mwh"].sum(), 0)
 
     #  test dispatch exactly as we expect
-    debug_simulation(simulation)
     np.testing.assert_array_equal(
         simulation["site-import_power_mwh"], [50.0, 0.0, 100.0, 0.0, 30.0, 40]
     )
@@ -168,7 +142,6 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
         f'import power: {simulation["site-import_power_mwh"].sum()}, charge event {sum(charge_events_capacity_mwh)}, {losses_mwh=}'
     )
 
-    debug_simulation(simulation)
     np.testing.assert_allclose(
         simulation["total-electric_charge_mwh"] * (1 - efficiency),
         simulation["total-electric_loss_mwh"],
@@ -183,13 +156,12 @@ def test_v2g():
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
         charger_turndown=0.0,
-        charge_event_efficiency=1.0
-        # charge_event_efficiency=0.8,  TODO causes problems
+        charge_event_efficiency=1.0,
     )
     results = evs.optimize(
         electricity_prices=[-100, 50, 30, 50, 40],
         charge_events=[
-            [1, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1],
             [0, 0, 1, 0, 0],
             [0, 0, 0, 1, 1],
             [0, 1, 0, 0, 0],
@@ -202,7 +174,16 @@ def test_v2g():
         freq_mins=60,
     )
     simulation = results.simulation
-    print(simulation[[c for c in simulation.columns if "soc" in c]])
+
+    from energypylinear.debug import debug_simulation
+
+    debug_simulation(results.simulation)
+    """
+    how to actuall test this
+    - check that some of the electric_discharge_mwh is positive
+
+    """
+    breakpoint()  # fmt: skip
 
 
 @hypothesis.settings(

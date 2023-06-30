@@ -9,7 +9,9 @@ from energypylinear.optimizer import Optimizer
 optimizer = Optimizer()
 
 
-def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
+def check_electricity_balance(
+    simulation: pd.DataFrame, verbose: bool = True
+) -> pd.DataFrame:
     """Checks the electricity balance."""
     inp = (
         simulation["site-import_power_mwh"]
@@ -20,7 +22,26 @@ def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
         simulation["total-electric_discharge_mwh"]
         - simulation["total-electric_charge_mwh"]
     )
-    balance = abs(inp + accumulation - out) < 1e-4
+
+    #  TODO - bunch of debt here
+    #  have this idea of wanting to show the balance without the spill effect
+    raw_balance = abs(inp + accumulation - out) < 1e-4
+
+    #  this is the balance after spills
+    #  ignoring discharge - this is because spills can't discharge
+    #  but this isn't set in stone here - possible that asset spill is implemented differently TODO
+    spill = simulation[
+        [
+            c
+            for c in simulation.columns
+            if "spill-charger" in c and "electric_charge_mwh" in c
+        ]
+    ].values.flatten()
+
+    if len(spill) > 0:
+        balance = abs(inp + accumulation + spill - out) < 1e-4
+    else:
+        balance = abs(inp + accumulation - out) < 1e-4
 
     soc = simulation[[c for c in simulation.columns if "final_soc" in c]].sum(axis=1)
     data = pd.DataFrame(
@@ -28,6 +49,7 @@ def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
             "input": inp,
             "accumulation": accumulation,
             "output": out,
+            "raw_balance": raw_balance,
             "balance": balance,
             "import": simulation["site-import_power_mwh"],
             "generation": simulation["total-electric_generation_mwh"],
@@ -40,13 +62,16 @@ def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
             "soc": soc,
         }
     )
-    print("Electricity Balance")
-    print(data)
+    if verbose:
+        print("Electricity Balance")
+        print(data)
     assert balance.all()
     return data
 
 
-def check_high_temperature_heat_balance(simulation: pd.DataFrame) -> None:
+def check_high_temperature_heat_balance(
+    simulation: pd.DataFrame, verbose: bool = True
+) -> None:
     """Checks the high temperature heat balance."""
     inp = simulation[["total-high_temperature_generation_mwh"]].sum(axis=1)
     out = simulation[
@@ -67,12 +92,16 @@ def check_high_temperature_heat_balance(simulation: pd.DataFrame) -> None:
     col = "valve-high_temperature_load_mwh"
     if col in simulation.columns:
         data["valve"] = simulation[col]
-    print("High Temperature Heat Balance")
-    print(data)
+
+    if verbose:
+        print("High Temperature Heat Balance")
+        print(data)
     assert balance.all()
 
 
-def check_low_temperature_heat_balance(simulation: pd.DataFrame) -> None:
+def check_low_temperature_heat_balance(
+    simulation: pd.DataFrame, verbose: bool = True
+) -> None:
     """Checks the low temperature heat balance."""
     inp = simulation[
         [
@@ -105,12 +134,15 @@ def check_low_temperature_heat_balance(simulation: pd.DataFrame) -> None:
         if col in simulation.columns:
             data[name] = simulation[col]
 
-    print("Low Temperature Heat Balance")
-    print(data)
+    if verbose:
+        print("Low Temperature Heat Balance")
+        print(data)
     assert balance.all()
 
 
-def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> None:
+def validate_results(
+    interval_data: IntervalData, simulation: pd.DataFrame, verbose: bool = True
+) -> None:
     """Check that our simulation results make sense.
 
     Args:
@@ -118,7 +150,7 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
         simulation: simulation results.
     """
     #  TODO
-    check_electricity_balance(simulation)
+    check_electricity_balance(simulation, verbose)
 
     #  hmmmmmmmmmmmmmmmmmmm TODO move into above
     simulation[
@@ -126,8 +158,8 @@ def validate_results(interval_data: IntervalData, simulation: pd.DataFrame) -> N
     ] = interval_data.high_temperature_load_mwh
     simulation["load-low_temperature_load_mwh"] = interval_data.low_temperature_load_mwh
 
-    check_high_temperature_heat_balance(simulation)
-    check_low_temperature_heat_balance(simulation)
+    check_high_temperature_heat_balance(simulation, verbose)
+    check_low_temperature_heat_balance(simulation, verbose)
 
     if interval_data.evs:
 

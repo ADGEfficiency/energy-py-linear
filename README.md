@@ -64,7 +64,16 @@ site = epl.Site(assets=[
     electric_power_min_mw=30,
     electric_efficiency_pct=0.4
   ),
-  epl.evs.EVs(charger_mws=[100, 100])
+  epl.evs.EVs(
+      chargers_power_mw=[100, 100],
+      charge_events_capacity_mwh=[50, 100, 30, 40],
+      charge_events=[
+          [1, 0, 0, 0, 0],
+          [0, 1, 1, 1, 0],
+          [0, 0, 0, 1, 1],
+          [0, 1, 0, 0, 0]
+      ]
+  )
 ])
 
 results = site.optimize(
@@ -74,13 +83,6 @@ results = site.optimize(
   freq_mins=60,
   initial_charge_mwh=1,
   final_charge_mwh=3,
-  charge_events=[
-      [1, 0, 0, 0, 0],
-      [0, 1, 1, 1, 0],
-      [0, 0, 0, 1, 1],
-      [0, 1, 0, 0, 0],
-  ],
-  charge_event_mwh=[50, 100, 30, 40]
 )
 ```
 
