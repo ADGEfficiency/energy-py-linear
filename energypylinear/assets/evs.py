@@ -84,8 +84,8 @@ class EVOneInterval(AssetOneInterval):
     electric_charge_binary: pulp.LpVariable
     electric_discharge_mwh: pulp.LpVariable | int
     electric_discharge_binary: pulp.LpVariable | int
-    initial_soc_mwh: pulp.LpVariable
-    final_soc_mwh: pulp.LpVariable
+    initial_soc_mwh: pulp.LpVariable | int
+    final_soc_mwh: pulp.LpVariable | int
     electric_loss_mwh: pulp.LpVariable
 
     class Config:
@@ -120,6 +120,9 @@ class EVsArrayOneInterval(AssetOneInterval):
 
         arbitrary_types_allowed = True
 
+    def __repr__(self) -> str:
+        return f"<EVsArrayOneInterval chargers: {len(self.charger_cfgs)} charge-events: {len(self.charge_event_cfgs)}>"
+
 
 def evs_one_interval(
     optimizer: Optimizer,
@@ -128,6 +131,8 @@ def evs_one_interval(
     i: int,
     freq: Freq,
     flags: Flags = Flags(),
+    create_charge_event_soc: bool = True,
+    create_discharge_variables: bool = True,
 ) -> tuple[list[EVOneInterval], EVsArrayOneInterval]:
     """Create EV asset data for a single interval.
 
@@ -164,17 +169,22 @@ def evs_one_interval(
     """
 
     for charge_event_idx, charge_event_cfg in enumerate(charge_event_cfgs):
-        name = f"i:{i},charge_event:{charge_event_cfg.name}"
-        initial_charge = optimizer.continuous(
-            f"initial_soc_mwh,{name}",
-            low=0,
-            up=charge_event_cfg.capacity_mwh,
-        )
-        final_charge = optimizer.continuous(
-            f"final_soc_mwh,{name}",
-            low=0,
-            up=charge_event_cfg.capacity_mwh,
-        )
+        if create_charge_event_soc:
+            name = f"i:{i},charge_event:{charge_event_cfg.name}"
+            initial_charge = optimizer.continuous(
+                f"initial_soc_mwh,{name}",
+                low=0,
+                up=charge_event_cfg.capacity_mwh,
+            )
+            final_charge = optimizer.continuous(
+                f"final_soc_mwh,{name}",
+                low=0,
+                up=charge_event_cfg.capacity_mwh,
+            )
+        else:
+            initial_charge = 0
+            final_charge = 0
+
         initial_socs_mwh[0, charge_event_idx] = initial_charge
         final_socs_mwh[0, charge_event_idx] = final_charge
 
@@ -186,20 +196,25 @@ def evs_one_interval(
                 up=freq.mw_to_mwh(charger_cfg.power_max_mw),
             )
             charge_binary = optimizer.binary(f"electric_charge_binary,{name}")
-            discharge_mwh = (
-                optimizer.continuous(
-                    f"electric_discharge_mwh,{name}",
-                    low=0,
-                    up=freq.mw_to_mwh(charger_cfg.power_max_mw),
+            if create_discharge_variables:
+                discharge_mwh = (
+                    optimizer.continuous(
+                        f"electric_discharge_mwh,{name}",
+                        low=0,
+                        up=freq.mw_to_mwh(charger_cfg.power_max_mw),
+                    )
+                    if flags.allow_evs_discharge
+                    else 0
                 )
-                if flags.allow_evs_discharge
-                else 0
-            )
-            discharge_binary = (
-                optimizer.binary(f"electric_discharge_binary,{name}")
-                if flags.allow_evs_discharge
-                else 0
-            )
+                discharge_binary = (
+                    optimizer.binary(f"electric_discharge_binary,{name}")
+                    if flags.allow_evs_discharge
+                    else 0
+                )
+            else:
+                discharge_mwh = 0
+                discharge_binary = 0
+
             loss_mwh = optimizer.continuous(
                 f"electric_loss_mwh,{name}",
                 low=0,
@@ -321,12 +336,19 @@ def constrain_charge_event_electricity_balance(
 
     This constrant is applied once per interval."""
     evs_array = vars["evs-array"][i]
+    spill_evs_array = vars["spill-evs-array"][i]
     for charge_event_idx, charge_event_cfg in enumerate(evs_array.charge_event_cfgs):
         optimizer.constrain(
             evs_array.initial_soc_mwh[0, charge_event_idx]
             + optimizer.sum(evs_array.electric_charge_mwh[0, charge_event_idx].tolist())
+            + optimizer.sum(
+                spill_evs_array.electric_charge_mwh[0, charge_event_idx].tolist()
+            )
             - optimizer.sum(
                 evs_array.electric_discharge_mwh[0, charge_event_idx].tolist()
+            )
+            - optimizer.sum(
+                spill_evs_array.electric_discharge_mwh[0, charge_event_idx].tolist()
             )
             - optimizer.sum(evs_array.electric_loss_mwh[0, charge_event_idx].tolist())
             == evs_array.final_soc_mwh[0, charge_event_idx]
@@ -461,6 +483,8 @@ class EVs:
             i,
             freq,
             flags=flags,
+            create_charge_event_soc=False,
+            create_discharge_variables=False,
         )
         return evs, evs_array, spill_evs, spill_evs_array
 
@@ -496,7 +520,8 @@ class EVs:
             self.spill_charger_config,
             self.charge_event_cfgs,
             i,
-            allow_evs_discharge=flags.allow_evs_discharge,
+            # allow_evs_discharge=flags.allow_evs_discharge,
+            allow_evs_discharge=False,
         )
 
         constrain_single_charger_charge_event(
@@ -587,6 +612,12 @@ class EVs:
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
             electricity_carbon_intensities=electricity_carbon_intensities,
+            evs=epl.interval_data.EVIntervalData(
+                charge_events=self.charge_events,
+                charge_events_capacity_mwh=[
+                    cfg.capacity_mwh for cfg in self.charge_event_cfgs
+                ],
+            ),
         )
         self.site = epl.Site()
         self.spill = epl.spill.Spill()
@@ -633,6 +664,7 @@ class EVs:
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(objective_fn(self.optimizer, vars, self.interval_data))
+
         status = self.optimizer.solve(verbose=verbose)
         return epl.results.extract_results(
             self.interval_data,

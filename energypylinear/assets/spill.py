@@ -35,6 +35,7 @@ class SpillOneInterval(AssetOneInterval):
     electric_charge_mwh: float = 0.0
     electric_discharge_mwh: float = 0.0
 
+
 class Spill:
     """Spill asset - allows excess or insufficient balances to be filled in."""
 

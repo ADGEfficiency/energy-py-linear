@@ -7,7 +7,7 @@ from energypylinear.defaults import defaults
 
 
 def price_objective(
-    optimizer: epl.optimizer.Optimizer,
+    optimizer: "epl.Optimizer",
     vars: dict,
     interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
@@ -18,7 +18,7 @@ def price_objective(
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
 
     Inputs:
-        optimizer: an instance of `epl.optimizer.Optimizer` class.
+        optimizer: an instance of `epl.Optimizer` class.
         vars: a dictionary of linear programming variables in the optimization problem.
         interval_data: interaval data used in the simulation.
 
@@ -68,7 +68,7 @@ def price_objective(
 
 
 def carbon_objective(
-    optimizer: epl.optimizer.Optimizer,
+    optimizer: "epl.Optimizer",
     vars: dict,
     interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
@@ -79,7 +79,7 @@ def carbon_objective(
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
 
     Inputs:
-        optimizer: an instance of `epl.optimizer.Optimizer` class.
+        optimizer: an instance of `epl.Optimizer` class.
         vars: a dictionary of linear programming variables in the optimization problem.
         interval_data: interaval data used in the simulation.
 
@@ -89,9 +89,7 @@ def carbon_objective(
 
     sites = vars["sites"]
     spills = epl.utils.filter_all_assets(vars, "spill")
-    spill_evs = vars["spill-evs"]
-    boilers = epl.utils.filter_all_assets(vars, "boiler")
-    generators = epl.utils.filter_all_assets(vars, "generator")
+
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_carbon_intensities[i]
@@ -105,17 +103,30 @@ def carbon_objective(
             #  dumping heat has no penalty
             #  so high_temperature_load_mwh and low_temperature_load_mwh
             #  are not included here
-            for spill in spills[i] + spill_evs[i]
+            for spill in spills[i]
         ]
         for i in interval_data.idx
     ]
-    if generators:
+    #  this is a bit of a smell
+    #  i use the type of the var to filter in filter_all_assets
+    #  but i re-use the spill type between spill and ev spill
+    if spill_evs := vars["spill-evs"]:
+        obj += [
+            spill.electric_generation_mwh * defaults.spill_objective_penalty
+            + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
+            + spill.electric_load_mwh * defaults.spill_objective_penalty
+            + spill.electric_charge_mwh * defaults.spill_objective_penalty
+            + spill.electric_discharge_mwh * defaults.spill_objective_penalty
+            for i in interval_data.idx
+            for spill in spill_evs[i]
+        ]
+    if generators := epl.utils.filter_all_assets(vars, "generator"):
         obj += [
             generator.gas_consumption_mwh * defaults.gas_carbon_intensity
             for i in interval_data.idx
             for generator in generators[i]
         ]
-    if boilers:
+    if boilers := epl.utils.filter_all_assets(vars, "boiler"):
         obj += [
             boiler.gas_consumption_mwh * defaults.gas_carbon_intensity
             for i in interval_data.idx

@@ -96,7 +96,9 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
     spill_evs = vars["spill-evs-array"][i]
     for charger_idx, charger_cfg in enumerate(spill_evs.charger_cfgs):
         for attr in ev_cols:
-            results[f"{charger_cfg.name}-{attr}"].append(
+            name = f"{charger_cfg.name}-{attr}"
+            print(name)
+            results[name].append(
                 sum(
                     [
                         optimizer.value(x)

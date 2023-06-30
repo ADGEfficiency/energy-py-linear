@@ -22,7 +22,7 @@ def test_accounting_actuals() -> None:
             "total-low_temperature_load_mwh": [0, 0, 0],
             "total-electric_charge_mwh": [0, 0, 0],
             "total-electric_discharge_mwh": [0, 0, 0],
-            "total-loss_mwh": [0, 0, 0],
+            "total-electric_loss_mwh": [0, 0, 0],
             "total-spills_mwh": [0, 0, 0],
         }
     )
