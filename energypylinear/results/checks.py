@@ -35,7 +35,7 @@ def check_electricity_balance(simulation: pd.DataFrame) -> pd.DataFrame:
             "load": simulation["total-electric_load_mwh"],
             "charge": simulation["total-electric_charge_mwh"],
             "discharge": simulation["total-electric_discharge_mwh"],
-            "loss": simulation["total-loss_mwh"],
+            "loss": simulation["total-electric_loss_mwh"],
             "spills": simulation["total-spills_mwh"],
             "soc": soc,
         }

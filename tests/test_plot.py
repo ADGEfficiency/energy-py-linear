@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 import energypylinear as epl
+from energypylinear.flags import Flags
 
 
 def test_battery_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -25,13 +26,22 @@ def test_battery_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
 def test_evs_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test we can plot the EVs chart."""
     path = tmp_path_factory.mktemp("figs")
-    ds = epl.data_generation.generate_random_ev_input_data(10, 2, 3)
+    ds = epl.data_generation.generate_random_ev_input_data(10, 5, 3)
     asset = epl.evs.EVs(
-        charger_mws=ds["charger_mws"].tolist(),
+        chargers_power_mw=ds["charger_mws"].tolist(),
+        charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+        charge_event_efficiency=1.0,
+        charger_turndown=0.0,
     )
     ds.pop("charger_mws")
+    ds.pop("charge_events_capacity_mwh")
     results = asset.optimize(
         **ds,
+        flags=Flags(
+            allow_evs_discharge=False,
+            fail_on_spill_asset_use=True,
+            allow_infeasible=False,
+        ),
     )
     assert not (path / "evs.png").exists()
     asset.plot(results, path=path)

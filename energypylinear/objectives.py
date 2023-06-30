@@ -105,7 +105,7 @@ def carbon_objective(
             #  dumping heat has no penalty
             #  so high_temperature_load_mwh and low_temperature_load_mwh
             #  are not included here
-            for spill in spills[i]
+            for spill in spills[i] + spill_evs[i]
         ]
         for i in interval_data.idx
     ]

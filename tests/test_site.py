@@ -65,11 +65,16 @@ def test_sites() -> None:
             epl.EVs(
                 chargers_power_mw=ds["charger_mws"],
                 charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+                charge_events=ds["charge_events"],
+                charge_event_efficiency=1.0,
+                charger_turndown=0.0,
             ),
         ]
     )
     ds.pop("charger_mws")
     ds.pop("charge_events_capacity_mwh")
+    #  note we don't pop out `charge_events`
+    #  this means we are passing it in twice
     site.optimize(**ds)
 
 

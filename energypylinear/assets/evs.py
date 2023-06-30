@@ -15,6 +15,18 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
+def validate_charge_events(charge_event_cfgs, charge_events):
+    if charge_events is None:
+        return charge_events
+
+    #  transpose charge_events to have time as first dimension
+    #  this makes it more natural to select by the first dimension as the time dimension
+    #  equivilant to the batch dimension when training deep learning
+    charge_events = np.array(charge_events).T
+    assert charge_event_cfgs.shape[0] == charge_events.shape[1]
+    return charge_events
+
+
 def stack_ev(vars: dict, attr: str) -> np.ndarray:
     """Stack electric vehicle charge and charge_event data.
 
@@ -355,24 +367,9 @@ def constrain_connection_charge_events_between_intervals(
 def constrain_initial_final_charge(
     optimizer: Optimizer,
     vars: dict,
-    interval_data: "epl.interval_data.IntervalData",
-    charger_cfgs: np.ndarray,
-    spill_charger_config: np.ndarray,
     charge_event_cfgs: np.ndarray,
 ) -> None:
     """Constrain state of charge at the beginning and end of the simulation."""
-    assert interval_data.evs
-
-    # stacked_charge_mwh = stack_ev(vars, "electric_charge_mwh")
-
-    # #  check the stack worked correctly
-    # assert stacked_charge_mwh.shape[0] == len(interval_data.idx)
-    # assert isinstance(interval_data.evs.charge_events, np.ndarray)
-    # assert stacked_charge_mwh.shape[1] == interval_data.evs.charge_events.shape[1]
-    # assert (
-    #     stacked_charge_mwh.shape[2]
-    #     == charger_cfgs.shape[0] + spill_charger_config.shape[0]
-    # )
 
     for charge_event_idx, charge_event_cfg in enumerate(charge_event_cfgs):
         #  constrain the intial soc
@@ -405,6 +402,7 @@ class EVs:
         #  TODO charger efficiency
         charger_turndown: float = 0.1,
         name: str = "evs",
+        charge_events: list | None = None,
     ):
         """Initialize an electric vehicle asset model."""
         self.cfg = EVsConfig(name=name)
@@ -438,13 +436,16 @@ class EVs:
             ]
         )
 
+        #  this feels a bit wierd, because `charge_events` is interval data
+        #  we need this shortcut to get the site API working
+        self.charge_events = validate_charge_events(
+            self.charge_event_cfgs, charge_events
+        )
+
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> tuple:
         """Create EV asset data for a single interval."""
-        assert self.interval_data.evs is not None
-        assert self.interval_data.evs.charge_events is not None
-
         evs, evs_array = evs_one_interval(
             optimizer,
             self.charger_cfgs,
@@ -473,14 +474,13 @@ class EVs:
         flags: Flags = Flags(),
     ) -> None:
         """Constrain EVs dispatch within a single interval"""
-        assert self.interval_data.evs is not None
 
         #  TODO refactor this into one function
         #  with `vars` as input
         constrain_charge_discharge_min_max(
             optimizer,
             vars["evs-array"][i],
-            self.interval_data.evs.charge_events,
+            self.charge_events,
             freq,
             self.charger_cfgs,
             self.charge_event_cfgs,
@@ -491,7 +491,7 @@ class EVs:
         constrain_charge_discharge_min_max(
             optimizer,
             vars["spill-evs-array"][i],
-            self.interval_data.evs.charge_events,
+            self.charge_events,
             freq,
             self.spill_charger_config,
             self.charge_event_cfgs,
@@ -513,24 +513,18 @@ class EVs:
         interval_data: "epl.IntervalData",
     ) -> None:
         """Constrain EVs after all interval asset models are created."""
-        #  TODO spill charger
         constrain_initial_final_charge(
             optimizer,
             vars,
-            interval_data,
-            self.charger_cfgs,
-            self.spill_charger_config,
             self.charge_event_cfgs,
         )
 
     def optimize(
         self,
-        charge_events: typing.Union[list[list[int]], np.ndarray],
-        electricity_prices: typing.Union[np.ndarray, list[float]],
-        gas_prices: typing.Union[None, np.ndarray, float] = None,
-        electricity_carbon_intensities: typing.Union[
-            None, np.ndarray, list[float], float
-        ] = None,
+        electricity_prices: list[float] | np.ndarray,
+        gas_prices: float | list[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        charge_events: list[list[int]] | np.ndarray | None = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         verbose: int = 0,
@@ -570,40 +564,39 @@ class EVs:
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
 
-        #  transpose charge_events to have time as first dimension
-        #  this makes it more natural to select by the first dimension as the time dimension
-        #  equivilant to the batch dimension when training deep learning
-        charge_events = np.array(charge_events).T
+        """
+        complexity here is to be able to accept `charge_events` as an input in either the class init or in optimize()
 
-        def validate_charge_events(charge_event_cfgs, charge_events):
-            assert charge_event_cfgs.shape[0] == charge_events.shape[1]
+        - want class init during site api,
+        - want optimize during asset api
+        """
+        if self.charge_events is not None:
+            assert charge_events
 
-        validate_charge_events(self.charge_event_cfgs, charge_events)
+        if self.charge_events is not None and charge_events:
+            print("warning - charge events supplied twice")
 
-        interval_data = epl.interval_data.IntervalData(
+        if self.charge_events is not None and charge_events is None:
+            charge_events = self.charge_events
+
+        self.charge_events = validate_charge_events(
+            self.charge_event_cfgs, charge_events
+        )
+
+        self.interval_data = epl.interval_data.IntervalData(
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
             electricity_carbon_intensities=electricity_carbon_intensities,
-            evs=epl.interval_data.EVIntervalData(
-                charge_events=charge_events,
-                charge_events_capacity_mwh=[
-                    cfg.capacity_mwh for cfg in self.charge_event_cfgs
-                ],
-            ),
         )
-        assert interval_data.evs
         self.site = epl.Site()
         self.spill = epl.spill.Spill()
 
-        #  needed in self.one_interval
-        self.interval_data = interval_data
-
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
-        for i in interval_data.idx:
+        for i in self.interval_data.idx:
             vars["sites"].append(
                 self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
-            assert isinstance(interval_data.evs.charge_events, np.ndarray)
+            assert isinstance(self.charge_events, np.ndarray)
             evs, evs_array, spill_evs, spill_evs_array = self.one_interval(
                 self.optimizer, i, freq, flags=flags
             )
@@ -621,27 +614,32 @@ class EVs:
                 ]
             )
 
-            self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-
-            self.constrain_within_interval(
-                self.optimizer, vars, interval_data, i, freq=freq, flags=flags
+            self.site.constrain_within_interval(
+                self.optimizer, vars, self.interval_data, i
             )
 
-        assert isinstance(interval_data.evs.charge_events, np.ndarray)
+            self.constrain_within_interval(
+                self.optimizer, vars, self.interval_data, i, freq=freq, flags=flags
+            )
+
+        assert isinstance(self.charge_events, np.ndarray)
         assert isinstance(self.charger_cfgs, np.ndarray)
         assert isinstance(self.spill_charger_config, np.ndarray)
         self.constrain_after_intervals(
             self.optimizer,
             vars,
-            interval_data,
+            self.interval_data,
         )
 
         objective_fn = epl.objectives[objective]
-        self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
+        self.optimizer.objective(objective_fn(self.optimizer, vars, self.interval_data))
         status = self.optimizer.solve(verbose=verbose)
-        self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, vars, feasible=status.feasible, flags=flags, verbose=verbose
+            self.interval_data,
+            vars,
+            feasible=status.feasible,
+            flags=flags,
+            verbose=verbose,
         )
 
     def plot(

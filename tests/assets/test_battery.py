@@ -36,6 +36,7 @@ def test_battery_price(
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=0,
+        verbose=False,
     )
     simulation = results.simulation
     charge = simulation["battery-electric_charge_mwh"].values
@@ -158,27 +159,17 @@ def test_battery_hypothesis(
     )
 
     #  check losses are a percentage of our charge
-    mask = simulation[f"{name}-charge_mwh"] > 0
+    mask = simulation[f"{name}-electric_charge_mwh"] > 0
     subset = simulation[mask]
     np.testing.assert_almost_equal(
-        subset[f"{name}-losses_mwh"].values,
-        (1 - efficiency) * subset[f"{name}-charge_mwh"].values,
+        subset[f"{name}-electric_loss_mwh"].values,
+        (1 - efficiency) * subset[f"{name}-electric_charge_mwh"].values,
         decimal=4,
     )
     #  check losses are always zero when we discharge
-    mask = simulation[f"{name}-discharge_mwh"] > 0
+    mask = simulation[f"{name}-electric_discharge_mwh"] > 0
     subset = simulation[mask]
 
-    #  temporaray debugging dataframe
-    pd.DataFrame(
-        {
-            "charge": simulation[f"{name}-charge_mwh"],
-            "charge_bin": simulation[f"{name}-charge_binary"],
-            "discharge": simulation[f"{name}-discharge_mwh"],
-            "discharge_bin": simulation[f"{name}-discharge_binary"],
-            "losses": simulation[f"{name}-losses_mwh"],
-        }
-    )
     """
     TODO DEBT
     bit of a bug here TODO - issue with charge and discharge at the same time

@@ -23,23 +23,23 @@ setup-docs:
 
 #  TEST
 .PHONY: test test-ci test-validate
-test: setup-test
-	rm -rf ./tests/phmdoctest
-	mkdir -p ./tests/phmdoctest
-	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
-	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
-	python -m phmdoctest ./docs/docs/how-to/dispatch-assets.md --outfile tests/phmdoctest/test_dispatch_assets.py
+test: setup-test clean-test-docs test-docs
 	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon --pdb
 
-test-ci: setup-test
-	rm -rf ./tests/phmdoctest
+test-docs: clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
 	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-assets.md --outfile tests/phmdoctest/test_dispatch_assets.py
+
+clean-test-docs:
+	rm -rf ./tests/phmdoctest
+
+test-ci: setup-test clean-test-docs test-docs
 	coverage run -m pytest tests --tb=short --show-capture=no
 	coverage report -m
 
+#  during debug
 test-validate:
 	python -m phmdoctest ./docs/docs/validation.md --outfile tests/test_validate.py
 	pytest tests/test_validate.py --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon

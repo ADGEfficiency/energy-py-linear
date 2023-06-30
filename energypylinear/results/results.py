@@ -31,6 +31,9 @@ class SimulationResult(pydantic.BaseModel):
             Input interval data to the simulation. EV data structures can be
             multi-dimensional, so we store as a collection of arrays,
             rather than a single DataFrame like `simulation`.
+
+        feasible: bool
+        spill: bool
     """
 
     simulation: pd.DataFrame
@@ -53,6 +56,8 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
         "electric_discharge_binary",
     ]
     evs = ev_arrays[i]
+
+    #  chargers are summed acress each charg event
     for charger_idx, charger_cfg in enumerate(evs.charger_cfgs):
         for attr in ev_cols:
             results[f"{charger_cfg.name}-{attr}"].append(
@@ -86,9 +91,8 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
 
         for charge_event_idx, soc in enumerate(socs):
             results[f"charge-event-{charge_event_idx}-{attr}"].append(soc.value())
-            # print(soc, soc.value())
 
-    # not sure TODO
+    #  spill charger (usually only one)
     spill_evs = vars["spill-evs-array"][i]
     for charger_idx, charger_cfg in enumerate(spill_evs.charger_cfgs):
         for attr in ev_cols:
@@ -101,14 +105,14 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
                 )
             )
 
-    #  spill charge event charge & discharge
-    for charge_event_idx, _ in enumerate(spill_evs.charger_cfgs):
+    #  spill charger charge & discharge
+    for charger_idx, _ in enumerate(spill_evs.charger_cfgs):
         for attr in ["electric_charge_mwh", "electric_discharge_mwh"]:
-            results[f"spill-charge-event-{charge_event_idx}-{attr}"].append(
+            results[f"spill-charger-{charger_idx}-{attr}"].append(
                 sum(
                     [
                         optimizer.value(x)
-                        for x in getattr(spill_evs, attr)[0, charge_event_idx, :]
+                        for x in getattr(spill_evs, attr)[0, :, charger_idx]
                     ]
                 )
             )
@@ -133,10 +137,20 @@ def extract_results(
 ) -> SimulationResult:
     """Creates a simulation result from interval data and a solved linear program.
 
+    This is the highest level interface of this module - it does a number of things:
+        - extract data from the linear programming variables,
+        - extracts data for many different assets (site, battery etc),
+        - adds total columns,
+        - validates the results.
+
+    This function returns an object that has the input interval data object,
+    and the output simulation results as a pd.DataFrame.
+
     Args:
         interval_data: input interval data to the simulation.
         vars: linear program variables.
         feasible: whether this linear program solution is feasible.
+        verbose: whether to print warnings and messages.
     """
     results = collections.defaultdict(list)
     for i in interval_data.idx:
@@ -172,8 +186,7 @@ def extract_results(
                         optimizer.value(getattr(battery, attr))
                     )
 
-        generators = epl.utils.filter_assets(vars, "generator", i=i)
-        if generators:
+        if generators := epl.utils.filter_assets(vars, "generator", i=i):
             for generator in generators:
                 name = f"{generator.cfg.name}"
                 for attr in [
@@ -184,8 +197,7 @@ def extract_results(
                 ]:
                     results[f"{name}-{attr}"].append(getattr(generator, attr).value())
 
-        boilers = epl.utils.filter_assets(vars, "boiler", i=i)
-        if boilers:
+        if boilers := epl.utils.filter_assets(vars, "boiler", i=i):
             for boiler in boilers:
                 name = f"{boiler.cfg.name}"
                 for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
@@ -203,7 +215,6 @@ def extract_results(
                         optimizer.value(getattr(valve, attr))
                     )
 
-        #  hmmm - works a bit different
         ev_arrays = vars.get("evs-array")
         if ev_arrays:
             extract_evs_results(vars, results, i)
@@ -216,14 +227,14 @@ def extract_results(
     #     assert isinstance(interval_data.evs, epl.interval_data.EVIntervalData)
     #     assert interval_data.evs is not None
     #     for charge_event_idx, _ in enumerate(
-    #         interval_data.evs.charge_event_mwh
+    #         interval_data.evs.charge_events_capacity_mwh
     #     ):
     #         simulation[
     #             f"charge-event-{charge_event_idx}-total-charge_mwh"
     #         ] = simulation[
     #             [
-    #                 f"charge-event-{charge_event_idx}-charge_mwh",
-    #                 f"spill-charge-event-{charge_event_idx}-charge_mwh",
+    #                 f"charge-event-{charge_event_idx}-electric_charge_mwh",
+    #                 f"spill-charge-event-{charge_event_idx}-electric_charge_mwh",
     #             ]
     #         ].sum(
     #             axis=1
@@ -257,14 +268,17 @@ def extract_results(
     simulation["total-spills_mwh"] = simulation[total_mapper["spills"]].sum(axis=1)
 
     total_mapper["losses"] = [c for c in simulation.columns if "electric_loss_mwh" in c]
-    simulation["total-loss_mwh"] = simulation[total_mapper["losses"]].sum(axis=1)
+    simulation["total-electric_loss_mwh"] = simulation[total_mapper["losses"]].sum(
+        axis=1
+    )
 
     simulation["site-electricity_balance_mwh"] = (
         simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
     )
 
-    print("Total Mapper")
-    print(total_mapper)
+    if verbose:
+        print("Total Mapper")
+        print(total_mapper)
 
     simulation_schema.validate(simulation)
     validate_results(interval_data, simulation)

@@ -14,7 +14,9 @@ mpl.rcParams["axes.titlesize"] = 10
 
 def find_column(df: pd.DataFrame, start: str, end: str) -> str:
     """Finds a column based on the start and end of the column name."""
-    cols = [c for c in df.columns if c.startswith(start) and c.endswith(end)]
+    cols: list[str] = [
+        c for c in df.columns.tolist() if c.startswith(start) and c.endswith(end)
+    ]
     assert len(cols) == 1
     return cols[0]
 
@@ -45,8 +47,8 @@ def plot_battery(
 
     #  TODO will need some work in a multi-battery world
     simulation["net-battery-charge"] = (
-        simulation[find_column(simulation, "battery-", "-charge_mwh")]
-        - simulation[find_column(simulation, "battery-", "-discharge_mwh")]
+        simulation[find_column(simulation, "battery-", "-electric_charge_mwh")]
+        - simulation[find_column(simulation, "battery-", "-electric_discharge_mwh")]
     )
     simulation.plot(
         ax=axes[1],
@@ -86,9 +88,8 @@ def plot_battery(
     plt.tight_layout()
 
     if path.is_dir():
-        fig.savefig(path / "battery.png")
-    else:
-        fig.savefig(path)
+        path = path / "battery.png"
+    fig.savefig(path)
 
 
 def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
@@ -100,14 +101,14 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
         [
             c
             for c in simulation.columns
-            if c.startswith("charger-") and c.endswith("-charge_mwh")
+            if c.startswith("charger-") and c.endswith("-electric_charge_mwh")
         ]
     ].values
     charge_event_usage = simulation[
         [
             c
             for c in simulation.columns
-            if c.startswith("charge-event-") and c.endswith("total-charge_mwh")
+            if c.startswith("charge-event-") and c.endswith("electric_charge_mwh")
         ]
     ].values
 
@@ -141,7 +142,9 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     )
     axes[1].set_xlabel("Charge Events")
 
-    spill_charge_usage = simulation["charger-spill-charge_mwh"].values.reshape(-1, 1)
+    spill_charge_usage = simulation["charger-spill-electric_charge_mwh"].values.reshape(
+        -1, 1
+    )
     data = spill_charge_usage
     seaborn.heatmap(
         data, ax=axes[2], **heatmap_config, xticklabels=["spill"], fmt="g", cbar=False
@@ -153,15 +156,10 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     )
 
     plt.tight_layout()
-    pathlib.Path("./figs").mkdir(
-        exist_ok=True,
-        parents=True,
-    )
 
     if path.is_dir():
-        fig.savefig(path / "evs.png")
-    else:
-        fig.savefig(path)
+        path = path / "evs.png"
+    fig.savefig(path)
 
 
 def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
@@ -208,11 +206,11 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     )
     axes[4].set_ylabel("tC/MWh")
     axes[4].set_title("Carbon Intensities")
+
     for ax in axes:
         ax.get_legend().remove()
     plt.tight_layout()
 
     if path.is_dir():
-        fig.savefig(path / "chp.png")
-    else:
-        fig.savefig(path)
+        path = path / "chp.png"
+    fig.savefig(path)

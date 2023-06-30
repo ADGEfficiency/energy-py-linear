@@ -234,39 +234,29 @@ class Site:
         Returns:
             epl.results.SimulationResult
         """
+
+        #  TODO could be `asset.before_intervals()`
         for asset in self.assets:
             if isinstance(asset, epl.Battery):
                 asset.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
 
+            if isinstance(asset, epl.EVs):
+                assert (
+                    asset.charge_events is not None
+                ), "EV asset should have charge events defined in it's __init__"
+
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
 
-        """
-        hmmm
-
-        bit of a leaky abstraction here
-
-        why do i need to bother with this nonsense
-
-        """
-        if charge_events is not None:
-            charge_events = np.array(charge_events).T
-            evs = epl.interval_data.EVIntervalData(
-                charge_events=charge_events,
-                charge_events_capacity_mwh=[
-                    cfg.capacity_mwh for cfg in self.charge_event_cfgs
-                ],
-            )
-        else:
-            evs = None
-
+        #  not using the evs' interval data here
+        #  instead that data structure is only made inside the ev assets
         interval_data = epl.interval_data.IntervalData(
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
             electricity_carbon_intensities=electricity_carbon_intensities,
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
-            evs=evs,
+            evs=None,
         )
 
         self.spill = epl.spill.Spill()
@@ -283,8 +273,8 @@ class Site:
         #  warn about sites without boilers?  warn sites without valve / spill?
 
         #  this is needed for evs_one_interval
-        for asset in self.assets:
-            asset.interval_data = interval_data
+        # for asset in self.assets:
+        #     asset.interval_data = interval_data
 
         vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
         for i in interval_data.idx:
@@ -309,6 +299,7 @@ class Site:
             vars["assets"].append(assets)
 
             #  constrain within interval
+            #  for evs, the interval data input here will be ignored
             self.constrain_within_interval(self.optimizer, vars, interval_data, i)
             for asset in self.assets:
                 asset.constrain_within_interval(

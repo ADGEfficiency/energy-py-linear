@@ -159,7 +159,7 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
     #  a less efficient charge event should mean we import more power
     #  our expected losses are a function of the amount we charge a charge event
 
-    losses_mwh = simulation["total-losses_mwh"].sum()
+    losses_mwh = simulation["total-electric_loss_mwh"].sum()
     # np.testing.assert_equal(
     #     simulation["site-import_power_mwh"].sum(),
     #     sum(charge_events_capacity_mwh) + losses_mwh,
@@ -171,7 +171,7 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
     debug_simulation(simulation)
     np.testing.assert_allclose(
         simulation["total-electric_charge_mwh"] * (1 - efficiency),
-        simulation["total-losses_mwh"],
+        simulation["total-electric_loss_mwh"],
     )
     #  TODO in future add charger efficiency
     #  this would allow matching of different efficiency chargers and charge events
@@ -246,7 +246,6 @@ def test_evs_hypothesis(
         **ds,
         flags=Flags(
             allow_evs_discharge=False,
-            #  allow spills here
             fail_on_spill_asset_use=False,
             allow_infeasible=False,
         ),
