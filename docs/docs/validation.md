@@ -178,3 +178,40 @@ asset.plot(results, path="./docs/docs/static/battery-fast.png")
 Takeaways:
 
 - battery SOC starts at 1 MWh and ends at 3 MWh.
+
+## EV Validation
+
+```python
+import hypothesis
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import energypylinear as epl
+from energypylinear.flags import Flags
+charge_events_capacity_mwh = [50, 100, 30, 40]
+asset = epl.evs.EVs(
+    chargers_power_mw=[100, 100],
+    charge_events_capacity_mwh=charge_events_capacity_mwh,
+    charger_turndown=0.0,
+    charge_event_efficiency=1.0,
+)
+results = asset.optimize(
+    electricity_prices=[-100, 50, 30, 50, 40],
+    charge_events=[
+        [1, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 0, 1, 1],
+        [0, 1, 0, 0, 0],
+    ],
+    flags=Flags(
+        allow_evs_discharge=False,
+        fail_on_spill_asset_use=True,
+        allow_infeasible=False,
+    ),
+    freq_mins=60,
+)
+asset.plot(results, path="./docs/docs/static/ev-validation-1.png")
+```
+
+![](static/ev-validation-1.png)

@@ -464,6 +464,10 @@ class EVs:
             self.charge_event_cfgs, charge_events
         )
 
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<energypylinear.EVs n_chargers: {len(self.charger_cfgs)}, n_charge_events: {len(self.charge_event_cfgs)}>"
+
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> tuple:

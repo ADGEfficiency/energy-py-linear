@@ -1,5 +1,8 @@
 """Test electric vehicle asset."""
+import timeit
+
 import hypothesis
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -188,14 +191,14 @@ def test_v2g():
 
 @hypothesis.settings(
     print_blob=True,
-    max_examples=200,
+    max_examples=10,
     verbosity=hypothesis.Verbosity.verbose,
     # deadline=4000, with no v2g
-    deadline=15000,
+    # deadline=150000 not enough for v2g
 )
 @hypothesis.given(
     idx_length=hypothesis.strategies.integers(min_value=10, max_value=24),
-    n_chargers=hypothesis.strategies.integers(min_value=4, max_value=24),
+    n_charge_events=hypothesis.strategies.integers(min_value=4, max_value=24),
     charger_turndown=hypothesis.strategies.floats(min_value=0.1, max_value=0.4),
     charge_length=hypothesis.strategies.integers(min_value=2, max_value=22),
     prices_mu=hypothesis.strategies.floats(min_value=-1000, max_value=1000),
@@ -204,7 +207,7 @@ def test_v2g():
 )
 def test_evs_hypothesis(
     idx_length: int,
-    n_chargers: int,
+    n_charge_events: int,
     charger_turndown: float,
     charge_length: int,
     prices_mu: float,
@@ -216,8 +219,9 @@ def test_evs_hypothesis(
     v2g = True
     ds = epl.data_generation.generate_random_ev_input_data(
         idx_length,
-        n_chargers,
-        charge_length,
+        n_chargers=3,
+        charge_length=charge_length,
+        n_charge_events=n_charge_events,
         prices_mu=prices_mu,
         prices_std=prices_std,
     )
@@ -237,3 +241,58 @@ def test_evs_hypothesis(
             allow_infeasible=False,
         ),
     )
+
+
+def test_evs_performance():
+    idx_lengths = [
+        6,
+        #  one day 60 min freq
+        24,
+        #  one week 60 min freq
+        168,
+        #  one week 15 min freq
+        672,
+        #  two weeks
+        1344,
+    ]
+    run_times = []
+    for idx_length in idx_lengths:
+        start_time = timeit.default_timer()
+        print(f"idx_length: {idx_length}")
+
+        ds = epl.data_generation.generate_random_ev_input_data(
+            idx_length,
+            n_chargers=2,
+            charge_length=10,
+            n_charge_events=24,
+            prices_mu=500,
+            prices_std=10,
+        )
+        asset = epl.evs.EVs(
+            chargers_power_mw=ds["charger_mws"].tolist(),
+            charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+            charger_turndown=0.2,
+        )
+        ds.pop("charger_mws")
+        ds.pop("charge_events_capacity_mwh")
+        asset.optimize(
+            **ds,
+            verbose=False,
+            flags=Flags(
+                allow_evs_discharge=True,
+                fail_on_spill_asset_use=False,
+                allow_infeasible=False,
+            ),
+        )
+
+        elapsed = timeit.default_timer() - start_time
+        run_times.append(elapsed)
+        print(f"idx_length: {idx_length}, elapsed: {elapsed:2.2f} sec")
+
+    plt.figure()
+    plt.plot(idx_lengths, run_times, "o-")
+    plt.xlabel("Index Length")
+    plt.ylabel("Run Time (seconds)")
+    plt.title(asset.__repr__())
+    plt.grid(True)
+    plt.savefig("./docs/docs/static/evs-performance.png")

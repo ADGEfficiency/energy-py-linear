@@ -95,7 +95,6 @@ def plot_battery(
 def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
     """Plot electric vehicle simulation results."""
     simulation = results.simulation
-    fig, axes = plt.subplots(nrows=5)
 
     charger_usage = simulation[
         [
@@ -111,26 +110,33 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
             if c.startswith("charge-event-") and c.endswith("electric_charge_mwh")
         ]
     ].values
+    discharge_event_usage = simulation[
+        [
+            c
+            for c in simulation.columns
+            if c.startswith("charge-event-") and c.endswith("electric_discharge_mwh")
+        ]
+    ].values
 
     fig, axes = plt.subplots(
-        ncols=4, figsize=(14, 6), width_ratios=(5, 10, 1, 1), sharey=True
+        ncols=5, figsize=(14, 6), width_ratios=(5, 10, 10, 1, 1), sharey=True
     )
 
     heatmap_config = {
         "annot_kws": {
-            "size": 6,
+            "size": 12,
         },
         "annot": True,
+        "cbar": False,
+        "cmap": "tab20c",
     }
     data = charger_usage
-    seaborn.heatmap(
-        data, ax=axes[0], **heatmap_config, mask=data == 0, fmt="g", cbar=False
-    )
-    axes[0].set_ylabel("Time")
+    seaborn.heatmap(data, ax=axes[0], **heatmap_config, mask=data == 0, fmt="g")
+    axes[0].set_ylabel("Interval")
     axes[0].set_xlabel("Chargers")
 
     data = charge_event_usage
-    #  want to unmask out the periods where charge_event was positive
+    #  unmask out the periods where charge_event was positive
     assert results.interval_data.evs is not None
     seaborn.heatmap(
         data,
@@ -138,22 +144,43 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
         **heatmap_config,
         mask=results.interval_data.evs.charge_events == 0,
         fmt="g",
-        cbar_kws={"label": "Charge MWh", "location": "left"}
     )
     axes[1].set_xlabel("Charge Events")
+
+    data = discharge_event_usage
+    #  want to unmask out the periods where charge_event was positive
+    assert results.interval_data.evs is not None
+    seaborn.heatmap(
+        data,
+        ax=axes[2],
+        **heatmap_config,
+        mask=results.interval_data.evs.charge_events == 0,
+        fmt="g",
+    )
+    axes[2].set_xlabel("Discharge Events")
 
     spill_charge_usage = simulation["charger-spill-electric_charge_mwh"].values.reshape(
         -1, 1
     )
     data = spill_charge_usage
     seaborn.heatmap(
-        data, ax=axes[2], **heatmap_config, xticklabels=["spill"], fmt="g", cbar=False
+        data,
+        ax=axes[3],
+        **(heatmap_config | {"cmap": ["white"]}),
+        xticklabels=["spill"],
+        fmt="g",
     )
 
     data = np.array(simulation["electricity_prices"]).reshape(-1, 1)
     seaborn.heatmap(
-        data, ax=axes[3], **heatmap_config, xticklabels=["price"], fmt="g", cbar=False
+        data,
+        ax=axes[4],
+        **(heatmap_config | {"cmap": ["white"]}),
+        xticklabels=["price"],
+        fmt="g",
     )
+    # for ax in axes:
+    #     ax.grid(True)
 
     plt.tight_layout()
 
