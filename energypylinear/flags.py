@@ -6,7 +6,7 @@ class Flags(pydantic.BaseModel):
     """Toggles to change simulation behaviour."""
 
     #  general
-    fail_on_spill_asset_use: bool = False
+    fail_on_spill_asset_use: bool = True
 
     #  battery
     include_charge_discharge_binary_variables: bool = False

@@ -41,8 +41,9 @@ test-ci: setup-test clean-test-docs test-docs
 
 #  during debug
 test-validate:
-	python -m phmdoctest ./docs/docs/validation.md --outfile tests/test_validate.py
-	pytest tests/test_validate.py --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon
+	mkdir -p tests/phmdoctest
+	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
+	pytest tests/phmdoctest/test_validate.py --showlocals --full-trace --tb=short -v -x --lf -s --color=yes
 
 #  CHECK
 .PHONY: check
@@ -60,7 +61,7 @@ static: setup-static
 lint: setup-check
 	rm -rf ./tests/phmdoctest
 	flake8 --extend-ignore E501 --exclude=__init__.py,poc
-	# ruff check .
+	ruff check .
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
@@ -68,7 +69,7 @@ lint: setup-check
 #  FORMATTING
 .PHONY: format
 format: setup-check
-	# ruff check . --format
+	ruff check . --format
 	isort **/*.py --profile black
 	black **/*.py
 	poetry lock --no-update

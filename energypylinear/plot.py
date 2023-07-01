@@ -117,10 +117,18 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
             if c.startswith("charge-event-") and c.endswith("electric_discharge_mwh")
         ]
     ].values
+    charge_event_usage = charge_event_usage - discharge_event_usage
 
     fig, axes = plt.subplots(
-        ncols=5, figsize=(14, 6), width_ratios=(5, 10, 10, 1, 1), sharey=True
+        ncols=4, figsize=(14, 6), width_ratios=(5, 10, 1, 1), sharey=True
     )
+
+    data = [
+        *charger_usage.flatten(),
+        *charge_event_usage.flatten(),
+    ]
+    global_vmin = np.min(data)
+    global_vmax = np.max(data)
 
     heatmap_config = {
         "annot_kws": {
@@ -129,6 +137,8 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
         "annot": True,
         "cbar": False,
         "cmap": "tab20c",
+        "vmin": global_vmin,
+        "vmax": global_vmax,
     }
     data = charger_usage
     seaborn.heatmap(data, ax=axes[0], **heatmap_config, mask=data == 0, fmt="g")
@@ -145,19 +155,7 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
         mask=results.interval_data.evs.charge_events == 0,
         fmt="g",
     )
-    axes[1].set_xlabel("Charge Events")
-
-    data = discharge_event_usage
-    #  want to unmask out the periods where charge_event was positive
-    assert results.interval_data.evs is not None
-    seaborn.heatmap(
-        data,
-        ax=axes[2],
-        **heatmap_config,
-        mask=results.interval_data.evs.charge_events == 0,
-        fmt="g",
-    )
-    axes[2].set_xlabel("Discharge Events")
+    axes[1].set_xlabel("Charge Events Net Charge (Discharge is Negative)")
 
     spill_charge_usage = simulation["charger-spill-electric_charge_mwh"].values.reshape(
         -1, 1
@@ -165,7 +163,7 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     data = spill_charge_usage
     seaborn.heatmap(
         data,
-        ax=axes[3],
+        ax=axes[2],
         **(heatmap_config | {"cmap": ["white"]}),
         xticklabels=["spill"],
         fmt="g",
@@ -174,13 +172,31 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     data = np.array(simulation["electricity_prices"]).reshape(-1, 1)
     seaborn.heatmap(
         data,
-        ax=axes[4],
+        ax=axes[3],
         **(heatmap_config | {"cmap": ["white"]}),
         xticklabels=["price"],
         fmt="g",
     )
     # for ax in axes:
     #     ax.grid(True)
+    # for ax in axes:
+    #     for spine in ax.spines.values():
+    #         spine.set_edgecolor('gray')
+    #         spine.set_linewidth(2)
+    from matplotlib.patches import Rectangle
+
+    for ax in axes:
+        border = Rectangle(
+            (0, 0),
+            1,
+            1,
+            edgecolor="gray",
+            facecolor="none",
+            transform=ax.transAxes,
+            figure=ax.figure,
+            linewidth=2,
+        )
+        ax.add_patch(border)
 
     plt.tight_layout()
 
