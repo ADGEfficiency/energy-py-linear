@@ -161,7 +161,6 @@ def test_v2g():
     control seeds so that we run the same seed in each trial over different charge event lengths
 
     this reduces the variance between trials - each trial uses the same prices
-
     """
     import collections
     import statistics
