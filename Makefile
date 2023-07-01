@@ -78,10 +78,16 @@ publish: setup
 	poetry publish
 
 #  DOCS
-.PHONY: docs docs-build
+.PHONY: docs docs-build setup-docs
 
 docs: setup-docs
 	cd docs; mkdocs serve; cd ..
 
 docs-build: setup-docs
 	cd docs; mkdocs build; cd ..
+
+mike:
+	cd docs; mike deploy $(VERSION); mike set default $(VERSION)
+
+mike-deploy:
+	cd docs; mike deploy 0.1.2 latest -u -b mike-pages -r origin -p
