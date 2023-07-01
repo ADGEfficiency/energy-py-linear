@@ -76,18 +76,22 @@ publish: setup
 	poetry build
 	@poetry config pypi-token.pypi $(PYPI_TOKEN)
 	poetry publish
+	#  TODO publish docs
 
 #  DOCS
-.PHONY: docs docs-build setup-docs
+.PHONY: docs docs-build mike-deploy
 
 docs: setup-docs
-	cd docs; mkdocs serve; cd ..
+	cd docs; mike serve; cd ..
 
+#  actually not used anymore - we used mike to build & deploy docs
 docs-build: setup-docs
 	cd docs; mkdocs build; cd ..
 
-mike:
-	cd docs; mike deploy $(VERSION); mike set default $(VERSION)
-
+#  -u = update aliases of this $(VERSION) to latest
+#  -b = branch - aligns with the branch name we build docs off
+#  -r = Github remote
+#  -p = push
+#  TODO - get VERSION from pyproject.toml
 mike-deploy:
-	cd docs; mike deploy 0.1.2 latest -u -b mike-pages -r origin -p
+	cd docs; mike deploy $(VERSION) latest -u -b mike-pages -r origin -p
