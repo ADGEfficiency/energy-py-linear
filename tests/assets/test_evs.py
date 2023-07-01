@@ -183,7 +183,6 @@ def test_v2g():
     - check that some of the electric_discharge_mwh is positive
 
     check final soc are correct
-
     """
 
 
@@ -200,6 +199,7 @@ def test_v2g():
     charge_length=hypothesis.strategies.integers(min_value=2, max_value=22),
     prices_mu=hypothesis.strategies.floats(min_value=-1000, max_value=1000),
     prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=25),
+    v2g=hypothesis.strategies.booleans(),
 )
 def test_evs_hypothesis(
     idx_length: int,
@@ -208,6 +208,7 @@ def test_evs_hypothesis(
     charge_length: int,
     prices_mu: float,
     prices_std: float,
+    v2g: bool,
 ) -> None:
     """Test EV optimization using hypothesis."""
     ds = epl.data_generation.generate_random_ev_input_data(
@@ -226,8 +227,9 @@ def test_evs_hypothesis(
     ds.pop("charge_events_capacity_mwh")
     evs.optimize(
         **ds,
+        verbose=True,
         flags=Flags(
-            allow_evs_discharge=False,
+            allow_evs_discharge=v2g,
             fail_on_spill_asset_use=False,
             allow_infeasible=False,
         ),

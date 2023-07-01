@@ -97,7 +97,6 @@ def extract_evs_results(vars, results: dict, i: int) -> None:
     for charger_idx, charger_cfg in enumerate(spill_evs.charger_cfgs):
         for attr in ev_cols:
             name = f"{charger_cfg.name}-{attr}"
-            print(name)
             results[name].append(
                 sum(
                     [
