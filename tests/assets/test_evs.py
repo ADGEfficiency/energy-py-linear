@@ -182,8 +182,9 @@ def test_v2g():
     how to actuall test this
     - check that some of the electric_discharge_mwh is positive
 
+    check final soc are correct
+
     """
-    breakpoint()  # fmt: skip
 
 
 @hypothesis.settings(
