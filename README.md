@@ -48,7 +48,7 @@ results = asset.optimize(
 )
 ```
 
-You can find documentation of how to optimize other assets in [how-to/optimize-assets](https://docs.adgefficiency.com/energy-py-linear/how-to/dispach-assets), and Python examples in [energy-py-linear/examples/examples](https://github.com/ADGEfficiency/energy-py-linear/tree/main/examples).
+See how to optimize other asset types in [how-to/optimize-assets](https://docs.adgefficiency.com/energy-py-linear/how-to/dispach-assets). 
 
 ### Site API
 
@@ -64,7 +64,7 @@ site = epl.Site(assets=[
     electric_power_min_mw=30,
     electric_efficiency_pct=0.4
   ),
-  epl.evs.EVs(
+  epl.EVs(
       chargers_power_mw=[100, 100],
       charge_events_capacity_mwh=[50, 100, 30, 40],
       charge_events=[

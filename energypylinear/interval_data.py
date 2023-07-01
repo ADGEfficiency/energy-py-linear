@@ -96,9 +96,9 @@ class IntervalData(pydantic.BaseModel):
         setup_idx: sets up the index of the time steps based on the length of `electricity_prices`.
     """
 
-    electricity_prices: np.ndarray
-    electricity_carbon_intensities: typing.Optional[np.ndarray] = None
-    gas_prices: typing.Optional[np.ndarray] = None
+    electricity_prices: list[float] | np.ndarray
+    electricity_carbon_intensities: list[float] | np.ndarray | None = None
+    gas_prices: list[float] | np.ndarray | None = None
     high_temperature_load_mwh: typing.Optional[np.ndarray] = None
     low_temperature_load_mwh: typing.Optional[np.ndarray] = None
     electricity_load_mwh: typing.Optional[np.ndarray] = None

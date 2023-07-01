@@ -5,6 +5,7 @@ import hypothesis
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from rich import print
 
 import energypylinear as epl
 from energypylinear.flags import Flags
@@ -154,33 +155,71 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
 
 
 def test_v2g():
-    charge_events_capacity_mwh = [50, 100, 30, 40]
-    evs = epl.evs.EVs(
-        chargers_power_mw=[100, 100],
-        charge_events_capacity_mwh=charge_events_capacity_mwh,
-        charger_turndown=0.0,
-        charge_event_efficiency=1.0,
-    )
-    results = evs.optimize(
-        electricity_prices=[-100, 50, 30, 50, 40],
-        charge_events=[
-            [1, 1, 1, 1, 1],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 1, 1],
-            [0, 1, 0, 0, 0],
-        ],
-        flags=Flags(
-            allow_evs_discharge=True,
-            fail_on_spill_asset_use=True,
-            allow_infeasible=False,
-        ),
-        freq_mins=60,
-    )
-    simulation = results.simulation
+    """
+    this test is stochastic
 
-    from energypylinear.debug import debug_simulation
+    control seeds so that we run the same seed in each trial over different charge event lengths
 
-    debug_simulation(results.simulation)
+    this reduces the variance between trials - each trial uses the same prices
+
+    """
+    import collections
+    import statistics
+
+    num_trials = 10
+    seeds = np.random.randint(0, 1000, size=num_trials)
+    discharge = collections.defaultdict(list)
+    for charge_event_length in range(3, 24, 2):
+
+        trials = collections.defaultdict(list)
+        for n_trial, seed in enumerate(seeds):
+            #  here we are resampling prices each time
+            #  really shouldn't - would need a bit of work TODO
+            ds = epl.data_generation.generate_random_ev_input_data(
+                24,
+                n_chargers=3,
+                charge_length=charge_event_length,
+                n_charge_events=12,
+                prices_mu=500,
+                prices_std=250,
+                seed=seed,
+            )
+            print(
+                f"{charge_event_length=} {n_trial=} prices: {np.mean(ds['electricity_prices'])}"
+            )
+
+            evs = epl.evs.EVs(
+                chargers_power_mw=ds["charger_mws"].tolist(),
+                charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+                charger_turndown=0.0,
+                charge_event_efficiency=1.0,
+            )
+            ds.pop("charger_mws")
+            ds.pop("charge_events_capacity_mwh")
+            results = evs.optimize(
+                **ds,
+                flags=Flags(
+                    allow_evs_discharge=True,
+                    fail_on_spill_asset_use=True,
+                    allow_infeasible=False,
+                ),
+                freq_mins=60,
+            )
+            simulation = results.simulation
+            trials["discharge"].append(simulation["total-electric_discharge_mwh"].sum())
+
+        discharge["mean"].append(statistics.mean(trials["discharge"]))
+        discharge["stdev"].append(statistics.stdev(trials["discharge"]))
+
+        #  check at each step to fail early
+        print(discharge)
+        assert all(
+            x <= y
+            for x, y in zip(discharge["mean"][:-1], discharge["mean"][1:], strict=True)
+        ), f"discharge should be increasing - it decreased on {charge_event_length=}"
+
+    # from energypylinear.debug import debug_simulation
+    # debug_simulation(results.simulation)
     """
     how to actuall test this
     - check that some of the electric_discharge_mwh is positive
@@ -191,7 +230,7 @@ def test_v2g():
 
 @hypothesis.settings(
     print_blob=True,
-    max_examples=10,
+    max_examples=200,
     verbosity=hypothesis.Verbosity.verbose,
     # deadline=4000,  # with no v2g
     deadline=200000,  # enough for v2g ?
@@ -215,8 +254,6 @@ def test_evs_hypothesis(
     v2g: bool,
 ) -> None:
     """Test EV optimization using hypothesis."""
-    #  TODO
-    v2g = True
     ds = epl.data_generation.generate_random_ev_input_data(
         idx_length,
         n_chargers=3,

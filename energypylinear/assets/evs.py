@@ -27,19 +27,20 @@ def validate_charge_events(charge_event_cfgs, charge_events):
     return charge_events
 
 
-def stack_ev(vars: dict, attr: str) -> np.ndarray:
-    """Stack electric vehicle charge and charge_event data.
+#  hmmm - I might need this or something like it during refactor
+# def stack_ev(vars: dict, attr: str) -> np.ndarray:
+#     """Stack electric vehicle charge and charge_event data.
 
-    Utility function."""
-    evs = np.concatenate(
-        [getattr(v, attr) for v in vars["evs-array"]],
-        axis=0,
-    )
-    spill = np.concatenate(
-        [getattr(v, attr) for v in vars["spill-evs-array"]],
-        axis=0,
-    )
-    return np.concatenate([evs, spill], axis=2)
+#     Utility function."""
+#     evs = np.concatenate(
+#         [getattr(v, attr) for v in vars["evs-array"]],
+#         axis=0,
+#     )
+#     spill = np.concatenate(
+#         [getattr(v, attr) for v in vars["spill-evs-array"]],
+#         axis=0,
+#     )
+#     return np.concatenate([evs, spill], axis=2)
 
 
 class ChargeEventConfig(pydantic.BaseModel):

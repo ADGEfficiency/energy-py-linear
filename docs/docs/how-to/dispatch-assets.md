@@ -1,6 +1,6 @@
-# Dispatching A Single Asset with the Asset API
+# Optimizing an Asset with the Asset API
 
-The asset API allows optimizing a single asset at once.  Below we show how to use each asset in isolation with `asset.optimize`.
+The asset API allows optimizing a single asset at once.  [You can find more examples for each asset here](https://github.com/ADGEfficiency/energy-py-linear/tree/main/examples).
 
 ## Battery
 
