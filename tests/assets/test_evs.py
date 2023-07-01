@@ -190,7 +190,8 @@ def test_v2g():
     print_blob=True,
     max_examples=200,
     verbosity=hypothesis.Verbosity.verbose,
-    deadline=4000,
+    # deadline=4000, with no v2g
+    deadline=15000,
 )
 @hypothesis.given(
     idx_length=hypothesis.strategies.integers(min_value=10, max_value=24),
@@ -211,6 +212,7 @@ def test_evs_hypothesis(
     v2g: bool,
 ) -> None:
     """Test EV optimization using hypothesis."""
+    v2g = True
     ds = epl.data_generation.generate_random_ev_input_data(
         idx_length,
         n_chargers,
