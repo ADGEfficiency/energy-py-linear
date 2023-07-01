@@ -41,12 +41,6 @@ ipython = "^8.7.0"
 mypy = "^0.991"
 
 
-[tool.poetry.group.dev.dependencies]
-<<<<<<< HEAD
-=======
-mike = "^1.1.2"
->>>>>>> origin/main
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

@@ -19,6 +19,10 @@ setup-static: setup
 setup-check: setup
 	poetry install --with check -q
 
+#  manage docs dependencies separately because
+#  we build docs on netlify
+#  netlify only has Python 3.8
+#  maybe could change this now we use mike TODO
 setup-docs:
 	pip install -r ./docs/requirements.txt -q
 
@@ -92,18 +96,16 @@ publish: setup
 	#  TODO publish docs
 
 #  DOCS
-.PHONY: docs docs-build mike-deploy
+.PHONY: docs mike-deploy
 docs: setup-docs
-	cd docs; mike serve; cd ..
-
-#  actually not used anymore - we used mike to build & deploy docs
-docs-build: setup-docs
-	cd docs; mkdocs build; cd ..
+	#  mike serve will show docs for the different versions
+	cd docs; mkdocs serve; cd ..
 
 #  -u = update aliases of this $(VERSION) to latest
 #  -b = branch - aligns with the branch name we build docs off
 #  -r = Github remote
 #  -p = push
 #  TODO - get VERSION from pyproject.toml
-mike-deploy:
+#  TODO - this is not used in CI anywhere
+mike-deploy: setup-docs
 	cd docs; mike deploy $(VERSION) latest -u -b mike-pages -r origin -p
