@@ -15,7 +15,9 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
-def validate_charge_events(charge_event_cfgs, charge_events):
+def validate_charge_events(
+    charge_event_cfgs: np.ndarray, charge_events: np.ndarray | list
+) -> np.ndarray:
     if charge_events is None:
         return charge_events
 
@@ -461,9 +463,10 @@ class EVs:
 
         #  this feels a bit wierd, because `charge_events` is interval data
         #  we need this shortcut to get the site API working
-        self.charge_events = validate_charge_events(
-            self.charge_event_cfgs, charge_events
-        )
+        if charge_events is not None:
+            self.charge_events = validate_charge_events(
+                self.charge_event_cfgs, charge_events
+            )
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -557,7 +560,7 @@ class EVs:
         charge_events: list[list[int]] | np.ndarray | None = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
-        verbose: int = 0,
+        verbose: bool = True,
         flags: Flags = Flags(),
     ) -> "epl.results.SimulationResult":
         """Optimize the EVs's dispatch using a mixed-integer linear program.

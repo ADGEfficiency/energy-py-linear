@@ -47,8 +47,8 @@ class SimulationResult(pydantic.BaseModel):
         arbitrary_types_allowed: bool = True
 
 
-def extract_evs_results(vars, results: dict, i: int) -> None:
-    ev_arrays = vars.get("evs-array")
+def extract_evs_results(vars: dict[str, list], results: dict, i: int) -> None:
+    ev_arrays = vars["evs-array"]
     ev_cols = [
         "electric_charge_mwh",
         "electric_charge_binary",

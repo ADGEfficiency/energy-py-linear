@@ -202,7 +202,7 @@ class Site:
         final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
         flags: Flags = Flags(),
-        verbose: int = 0,
+        verbose: bool = True,
     ) -> "epl.results.SimulationResult":
         """Optimize sites dispatch using a mixed-integer linear program.
 

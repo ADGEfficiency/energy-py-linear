@@ -106,4 +106,4 @@ $ make test
 
 ## Documentation 
 
-Documentation is hosted at [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com/latest).
+Hosted at [energypylinear.adgefficiency.com/latest](https://energypylinear.adgefficiency.com/latest).

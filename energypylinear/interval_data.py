@@ -113,6 +113,7 @@ class IntervalData(pydantic.BaseModel):
 
     def __str__(self) -> str:
         """A string representation of self."""
+        assert isinstance(self.electricity_prices, np.ndarray)
         return f"<epl.IntervalData n: {self.electricity_prices.shape[0]} electricity_prices: {self.electricity_prices.mean():2.1f}>"
 
     @pydantic.validator("evs")
