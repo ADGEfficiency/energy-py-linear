@@ -1,8 +1,8 @@
 # Dispatching Multiple Assets with the Site API
 
-The site API allows optimizing many assets at the same time.  These assets operate on the same site.
+The site API allows optimizing many assets at the same time.
 
-Multiple assets can be optimized using an `epl.Site`, which accepts a list of assets.
+Multiple assets can be optimized using a single `epl.Site`, which accepts a list of assets.
 
 Below we give some examples of typical configurations of energy assets.
 

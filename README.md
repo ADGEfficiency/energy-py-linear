@@ -22,7 +22,7 @@ Energy balances are performed on electricity, high & low temperature heat.
 
 Requires Python 3.10+:
 
-```shell
+```shell-session
 $ pip install energypylinear
 ```
 
@@ -79,10 +79,7 @@ site = epl.Site(assets=[
 results = site.optimize(
   electricity_prices=[100, 50, 200, -100, 0],
   high_temperature_load_mwh=[105, 110, 120, 110, 105],
-  low_temperature_load_mwh=[105, 110, 120, 110, 105],
-  freq_mins=60,
-  initial_charge_mwh=1,
-  final_charge_mwh=3,
+  low_temperature_load_mwh=[105, 110, 120, 110, 105]
 )
 ```
 

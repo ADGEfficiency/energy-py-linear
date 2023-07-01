@@ -1,9 +1,6 @@
 `energypylinear` has the ability to optimize for both price and carbon as optimization objectives.
 
-This ability comes from two things:
-
-- an objective function, which can be either for price or carbon,
-- accounting of both price and carbon emissions.
+This ability comes from two things - an objective function, which can be either for price or carbon, along with accounting of both price and carbon emissions.
 
 We can dispatch a battery to minimize carbon emissions by passing in `objective='carbon'`:
 
