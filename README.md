@@ -4,7 +4,7 @@
 
 ---
 
-Documentation: [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com)
+Documentation: [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com/latest)
 
 ---
 
@@ -107,4 +107,4 @@ $ make test
 
 ## Documentation 
 
-Documentation is hosted at [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com).
+Documentation is hosted at [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com/latest).

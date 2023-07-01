@@ -5,3 +5,4 @@ phmdoctest
 pytest
 pillow
 cairosvg
+mike

@@ -1,4 +1,5 @@
 site_name: energy-py-linear
+site_url: https://energypylinear.adgefficiency.com
 repo_url: https://github.com/ADGEfficiency/energy-py-linear
 repo_name: energy-py-linear
 theme:
@@ -63,3 +64,6 @@ nav:
   #   - Blocks: index.md
   #   - Spills: index.md
   #   - Valves: index.md
+extra:
+  version:
+    provider: mike

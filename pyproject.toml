@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "energypylinear"
-version = "0.1.1"
+version = "0.1.2"
 description = "Optimizing energy assets with mixed-integer linear programming."
 authors = ["Adam Green <adam.green@adgefficiency.com>"]
 license = "MIT"
@@ -39,6 +39,10 @@ ipython = "^8.7.0"
 
 [tool.poetry.group.static.dependencies]
 mypy = "^0.991"
+
+
+[tool.poetry.group.dev.dependencies]
+mike = "^1.1.2"
 
 [build-system]
 requires = ["poetry-core"]
