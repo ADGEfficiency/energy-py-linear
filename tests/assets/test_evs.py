@@ -193,7 +193,7 @@ def test_v2g():
     print_blob=True,
     max_examples=10,
     verbosity=hypothesis.Verbosity.verbose,
-    # deadline=4000, with no v2g
+    deadline=4000,  # with no v2g
     # deadline=150000 not enough for v2g
 )
 @hypothesis.given(

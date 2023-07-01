@@ -3,6 +3,7 @@
 all: test
 
 #  SETUP
+
 .PHONY: setup setup-test setup-static setup-check setup-docs
 setup:
 	pip install --upgrade pip -q
@@ -22,6 +23,7 @@ setup-docs:
 	pip install -r ./docs/requirements.txt -q
 
 #  TEST
+
 .PHONY: test test-ci test-validate
 test: setup-test clean-test-docs test-docs
 	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon --pdb
@@ -40,16 +42,19 @@ test-ci: setup-test clean-test-docs test-docs
 	coverage report -m
 
 #  during debug
+#  could just use `test-docs` really
 test-validate:
 	mkdir -p tests/phmdoctest
 	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
 	pytest tests/phmdoctest/test_validate.py --showlocals --full-trace --tb=short -v -x --lf -s --color=yes
 
 #  CHECK
+
 .PHONY: check
 check: lint static
 
 #  STATIC TYPING
+
 .PHONY: static
 static: setup-static
 	rm -rf ./tests/phmdoctest
@@ -57,6 +62,7 @@ static: setup-static
 	mypy --config-file ./mypy.ini --pretty ./tests
 
 #  LINTING
+
 .PHONY: lint
 lint: setup-check
 	rm -rf ./tests/phmdoctest
@@ -67,6 +73,7 @@ lint: setup-check
 	poetry lock --check
 
 #  FORMATTING
+
 .PHONY: format
 format: setup-check
 	ruff check . --format
@@ -75,6 +82,7 @@ format: setup-check
 	poetry lock --no-update
 
 #  PUBLISH TO PYPI
+
 -include .env.secret
 .PHONY: publish
 publish: setup
@@ -83,6 +91,7 @@ publish: setup
 	poetry publish
 
 #  DOCS
+
 .PHONY: docs docs-build
 docs: setup-docs
 	cd docs; mkdocs serve; cd ..
