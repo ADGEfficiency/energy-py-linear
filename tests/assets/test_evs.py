@@ -1,4 +1,5 @@
 """Test electric vehicle asset."""
+import collections
 import timeit
 
 import hypothesis
@@ -165,7 +166,7 @@ def test_v2g():
     import collections
     import statistics
 
-    num_trials = 10
+    num_trials = 25
     seeds = np.random.randint(0, 1000, size=num_trials)
     discharge = collections.defaultdict(list)
     for charge_event_length in range(3, 24, 2):
@@ -291,44 +292,59 @@ def test_evs_performance():
         #  two weeks
         1344,
     ]
-    run_times = []
-    for idx_length in idx_lengths:
-        start_time = timeit.default_timer()
-        print(f"idx_length: {idx_length}")
+    data = collections.defaultdict(list)
+    for flag in [False, True]:
+        for idx_length in idx_lengths:
+            start_time = timeit.default_timer()
+            print(f"idx_length: {idx_length}")
 
-        ds = epl.data_generation.generate_random_ev_input_data(
-            idx_length,
-            n_chargers=2,
-            charge_length=10,
-            n_charge_events=24,
-            prices_mu=500,
-            prices_std=10,
-        )
-        asset = epl.evs.EVs(
-            chargers_power_mw=ds["charger_mws"].tolist(),
-            charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
-            charger_turndown=0.2,
-        )
-        ds.pop("charger_mws")
-        ds.pop("charge_events_capacity_mwh")
-        asset.optimize(
-            **ds,
-            verbose=False,
-            flags=Flags(
-                allow_evs_discharge=True,
-                fail_on_spill_asset_use=False,
-                allow_infeasible=False,
-            ),
-        )
+            ds = epl.data_generation.generate_random_ev_input_data(
+                idx_length,
+                n_chargers=2,
+                charge_length=10,
+                n_charge_events=24,
+                prices_mu=500,
+                prices_std=10,
+            )
+            asset = epl.evs.EVs(
+                chargers_power_mw=ds["charger_mws"].tolist(),
+                charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+                charger_turndown=0.2,
+            )
+            ds.pop("charger_mws")
+            ds.pop("charge_events_capacity_mwh")
+            asset.optimize(
+                **ds,
+                verbose=False,
+                flags=Flags(
+                    allow_evs_discharge=True,
+                    fail_on_spill_asset_use=False,
+                    allow_infeasible=False,
+                    limit_charge_variables_to_valid_events=flag,
+                ),
+            )
 
-        elapsed = timeit.default_timer() - start_time
-        run_times.append(elapsed)
-        print(f"idx_length: {idx_length}, elapsed: {elapsed:2.2f} sec")
+            elapsed = timeit.default_timer() - start_time
+            data["time"].append(elapsed)
+            data["pkg"].append(
+                {"idx_length": idx_length, "time": elapsed, "flag": flag}
+            )
+            print(
+                f"idx_length: {idx_length}, elapsed: {elapsed:2.2f} sec, flag: {flag}"
+            )
 
     plt.figure()
-    plt.plot(idx_lengths, run_times, "o-")
-    plt.xlabel("Index Length")
-    plt.ylabel("Run Time (seconds)")
-    plt.title(asset.__repr__())
-    plt.grid(True)
-    plt.savefig("./docs/docs/static/evs-performance.png")
+    for flag in [True, False]:
+        subset = [p for p in data["pkg"] if p["flag"] == flag]
+        plt.plot(
+            [p["idx_length"] for p in subset],
+            [p["time"] for p in subset],
+            "o-",
+            label=f"prune charge variable to only valid charge events: {flag}",
+        )
+        plt.xlabel("Index Length")
+        plt.ylabel("Run Time (seconds)")
+        plt.legend()
+        plt.title(asset.__repr__())
+        plt.grid(True)
+        plt.savefig("./docs/docs/static/evs-performance.png")

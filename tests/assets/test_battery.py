@@ -231,24 +231,17 @@ def test_battery_performance():
         )
         print(f"idx_length: {idx_length}, elapsed: {run_times}")
 
-    fig, axes = plt.subplots(nrows=2, sharex=True)
-    axes[0].plot(
+    fig, axes = plt.subplots(nrows=1, sharex=True)
+    axes.plot(
         idx_lengths,
         [mean for mean, std in run_times["time"]],
         marker="o",
         label="mean",
     )
-    axes[1].plot(
-        idx_lengths,
-        [std for mean, std in run_times["time"]],
-        marker="o",
-        label="standard deviation",
-    )
-    axes[0].set_title(asset.__repr__())
-    axes[-1].set_xlabel("Index Length")
-    for ax in axes:
-        ax.set_ylabel("Run Time (seconds)")
-        ax.legend()
-        ax.grid(True)
+    #  TODO put in the performance impact of v2g
+    axes.set_title(asset.__repr__())
+    axes.set_ylabel("Run Time (seconds)")
+    axes.legend()
+    axes.grid(True)
     plt.tight_layout()
     fig.savefig("./docs/docs/static/battery-performance.png")

@@ -41,14 +41,11 @@ import energypylinear as epl
 asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
 
 results = asset.optimize(
-  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
-  freq_mins=60,
-  initial_charge_mwh=1,
-  final_charge_mwh=3
+  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100]
 )
 ```
 
-See how to optimize other asset types in [how-to/optimize-assets](https://docs.adgefficiency.com/energy-py-linear/how-to/dispach-assets). 
+See how to optimize other asset types in [how-to/optimize-assets](https://energypylinear.adgefficiency.com/latest/how-to/dispatch-assets/). 
 
 ### Site API
 
@@ -58,12 +55,15 @@ The site API allows optimizing multiple assets at once:
 import energypylinear as epl
 
 site = epl.Site(assets=[
+  #  2.0 MW, 4.0 MWh battery
   epl.Battery(power_mw=2.0, capacity_mwh=4.0),
+  #  30 MW generator
   epl.Generator(
     electric_power_max_mw=100,
     electric_power_min_mw=30,
     electric_efficiency_pct=0.4
   ),
+  #  2 EV chargers & 4 charge events
   epl.EVs(
       chargers_power_mw=[100, 100],
       charge_events_capacity_mwh=[50, 100, 30, 40],

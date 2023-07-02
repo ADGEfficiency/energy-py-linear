@@ -16,7 +16,8 @@ results = asset.optimize(
   electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
   freq_mins=60,
   initial_charge_mwh=1,
-  final_charge_mwh=3
+  final_charge_mwh=3,
+  objective="price"
 )
 
 assert all(

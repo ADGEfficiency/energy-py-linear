@@ -14,3 +14,4 @@ class Flags(pydantic.BaseModel):
 
     #  evs
     allow_evs_discharge: bool = False
+    limit_charge_variables_to_valid_events: bool = False

@@ -83,12 +83,12 @@ class EVOneInterval(AssetOneInterval):
     in one interval.
     """
 
-    electric_charge_mwh: pulp.LpVariable
-    electric_charge_binary: pulp.LpVariable
-    electric_discharge_mwh: pulp.LpVariable | int
+    electric_charge_mwh: pulp.LpVariable | float
+    electric_charge_binary: pulp.LpVariable | int
+    electric_discharge_mwh: pulp.LpVariable | float
     electric_discharge_binary: pulp.LpVariable | int
-    initial_soc_mwh: pulp.LpVariable | int
-    final_soc_mwh: pulp.LpVariable | int
+    initial_soc_mwh: pulp.LpVariable | float
+    final_soc_mwh: pulp.LpVariable | float
     electric_loss_mwh: pulp.LpVariable
 
     class Config:
@@ -131,6 +131,7 @@ def evs_one_interval(
     optimizer: Optimizer,
     charger_cfgs: np.ndarray,
     charge_event_cfgs: np.ndarray,
+    charge_events: np.ndarray,
     i: int,
     freq: Freq,
     flags: Flags = Flags(),
@@ -164,11 +165,15 @@ def evs_one_interval(
     losses_mwh = np.zeros((1, n_charge_events, n_chargers)).astype(object)
 
     """
-    there is oppourtunity here to prune the number of variables
+    there is opportunity here to prune the number of variables
     - when the charge event binary is 0 for a charger, charge_event pair,
     - when the charge event is over (ie the last charge event)
 
     leave this as a fun project for later
+
+    when the charge event binary is 0 for a charger, charge_event pair,
+    - this seems like the real profitable one
+    - most of the time the charge event binary is 0
     """
 
     for charge_event_idx, charge_event_cfg in enumerate(charge_event_cfgs):
@@ -193,12 +198,37 @@ def evs_one_interval(
 
         for charger_idx, charger_cfg in enumerate(charger_cfgs):
             name = f"charge-event:{charge_event_idx},i:{i},charger:{charger_cfg.name}"
-            charge_mwh = optimizer.continuous(
-                f"electric_charge_mwh,{name}",
-                low=0,
-                up=freq.mw_to_mwh(charger_cfg.power_max_mw),
-            )
-            charge_binary = optimizer.binary(f"electric_charge_binary,{name}")
+
+            if flags.limit_charge_variables_to_valid_events:
+                """
+                here we try to be clever
+                """
+                charge_event = charge_events[i, charge_event_idx]
+                charge_mwh = (
+                    optimizer.continuous(
+                        f"electric_charge_mwh,{name}",
+                        low=0,
+                        up=freq.mw_to_mwh(charger_cfg.power_max_mw),
+                    )
+                    if charge_event == 1
+                    else 0
+                )
+                charge_binary = (
+                    optimizer.binary(f"electric_charge_binary,{name}")
+                    if charge_event == 1
+                    else 0
+                )
+
+            else:
+                charge_mwh = optimizer.continuous(
+                    f"electric_charge_mwh,{name}",
+                    low=0,
+                    up=freq.mw_to_mwh(charger_cfg.power_max_mw),
+                )
+                charge_binary = optimizer.binary(f"electric_charge_binary,{name}")
+
+            discharge_mwh = 0
+            discharge_binary = 0
             if create_discharge_variables:
                 discharge_mwh = (
                     optimizer.continuous(
@@ -214,9 +244,6 @@ def evs_one_interval(
                     if flags.allow_evs_discharge
                     else 0
                 )
-            else:
-                discharge_mwh = 0
-                discharge_binary = 0
 
             loss_mwh = optimizer.continuous(
                 f"electric_loss_mwh,{name}",
@@ -288,16 +315,18 @@ def constrain_charge_discharge_min_max(
 
             for continuous, binary in variables:
                 # print(f"constraining min & max: {continuous} {binary}")
-                optimizer.constrain_max(
-                    continuous, binary, freq.mw_to_mwh(charger_cfg.power_max_mw)
-                )
-                optimizer.constrain_min(
-                    continuous, binary, freq.mw_to_mwh(charger_cfg.power_min_mw)
-                )
-                #  only let the binary be positive when the charge_event is positive
-                #  this forces the charger to only charge during a charge event
-                #  this could be a separate function
-                optimizer.constrain(binary <= charge_event[i, charge_event_idx])
+
+                if isinstance(continuous, pulp.LpVariable):
+                    optimizer.constrain_max(
+                        continuous, binary, freq.mw_to_mwh(charger_cfg.power_max_mw)
+                    )
+                    optimizer.constrain_min(
+                        continuous, binary, freq.mw_to_mwh(charger_cfg.power_min_mw)
+                    )
+                    #  only let the binary be positive when the charge_event is positive
+                    #  this forces the charger to only charge during a charge event
+                    #  this could be a separate function
+                    optimizer.constrain(binary <= charge_event[i, charge_event_idx])
 
 
 def constrain_single_charger_charge_event(
@@ -467,6 +496,8 @@ class EVs:
             self.charge_events = validate_charge_events(
                 self.charge_event_cfgs, charge_events
             )
+        else:
+            self.charge_events = None
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -480,6 +511,7 @@ class EVs:
             optimizer,
             self.charger_cfgs,
             self.charge_event_cfgs,
+            self.charge_events,
             i,
             freq,
             flags=flags,
@@ -488,6 +520,7 @@ class EVs:
             optimizer,
             self.spill_charger_config,
             self.charge_event_cfgs,
+            self.charge_events,
             i,
             freq,
             flags=flags,
@@ -507,8 +540,7 @@ class EVs:
     ) -> None:
         """Constrain EVs dispatch within a single interval"""
 
-        #  TODO refactor this into one function
-        #  with `vars` as input
+        assert self.charge_events is not None
         constrain_charge_discharge_min_max(
             optimizer,
             vars["evs-array"][i],
@@ -528,7 +560,7 @@ class EVs:
             self.spill_charger_config,
             self.charge_event_cfgs,
             i,
-            # allow_evs_discharge=flags.allow_evs_discharge,
+            #  never allow a spill charger to discharge
             allow_evs_discharge=False,
         )
 
