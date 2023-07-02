@@ -18,6 +18,10 @@ from energypylinear.optimizer import Optimizer
 def validate_charge_events(
     charge_event_cfgs: np.ndarray, charge_events: np.ndarray | list
 ) -> np.ndarray:
+    """Helper used to handle charge events.
+
+    This is a bit of a smell - will probably be reworked once I see a way.
+    """
     if charge_events is None:
         return charge_events
 
@@ -124,6 +128,7 @@ class EVsArrayOneInterval(AssetOneInterval):
         arbitrary_types_allowed = True
 
     def __repr__(self) -> str:
+        """A string representation of self."""
         return f"<EVsArrayOneInterval chargers: {len(self.charger_cfgs)} charge-events: {len(self.charge_event_cfgs)}>"
 
 

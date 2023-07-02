@@ -2,7 +2,6 @@
 import collections
 import typing
 
-import numpy as np
 import pulp
 import pydantic
 

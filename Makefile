@@ -22,13 +22,14 @@ setup-check: setup
 #  manage docs dependencies separately because
 #  we build docs on netlify
 #  netlify only has Python 3.8
-#  maybe could change this now we use mike TODO
+#  maybe could change this now we use mike
+#  as we don't run a build on netlify anymore
 setup-docs:
 	pip install -r ./docs/requirements.txt -q
 
 #  TEST
+.PHONY: test test-docs clean-test-docs test-ci test-validate
 
-.PHONY: test test-ci test-validate
 test: setup-test clean-test-docs test-docs
 	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon --pdb
 
@@ -53,21 +54,20 @@ test-validate:
 	pytest tests/phmdoctest/test_validate.py --showlocals --full-trace --tb=short -v -x --lf -s --color=yes
 
 #  CHECK
+.PHONY: check lint static
 
-.PHONY: check
 check: lint static
 
-#  STATIC TYPING
+#  CHECK - STATIC TYPING
 
-.PHONY: static
 static: setup-static
 	rm -rf ./tests/phmdoctest
 	mypy --config-file ./mypy.ini --pretty ./energypylinear
 	mypy --config-file ./mypy.ini --pretty ./tests
+	mypy --config-file ./mypy.ini --pretty ./examples
 
-#  LINTING
+#  CHECK - LINTING
 
-.PHONY: lint
 lint: setup-check
 	rm -rf ./tests/phmdoctest
 	flake8 --extend-ignore E501 --exclude=__init__.py,poc
@@ -89,6 +89,7 @@ format: setup-check
 
 -include .env.secret
 .PHONY: publish
+
 publish: setup
 	poetry build
 	@poetry config pypi-token.pypi $(PYPI_TOKEN)
@@ -96,9 +97,13 @@ publish: setup
 	#  TODO publish docs
 
 #  DOCS
+
 .PHONY: docs mike-deploy
+
 docs: setup-docs
-	#  mike serve will show docs for the different versions
+	#  `mike serve` will show docs for the different versions
+	#  `mkdocs serve` will show docs for the current version in markdown
+	#  `mkdocs serve` will usually be more useful during development
 	cd docs; mkdocs serve; cd ..
 
 #  -u = update aliases of this $(VERSION) to latest
@@ -106,6 +111,6 @@ docs: setup-docs
 #  -r = Github remote
 #  -p = push
 #  TODO - get VERSION from pyproject.toml
-#  TODO - this is not used in CI anywhere
+#  TODO - this is not used in CI anywhere yet
 mike-deploy: setup-docs
 	cd docs; mike deploy $(VERSION) latest -u -b mike-pages -r origin -p

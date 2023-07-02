@@ -3,12 +3,10 @@ import collections
 
 import numpy as np
 import pandas as pd
-import pandera as pa
 import pydantic
 from rich import print
 
 import energypylinear as epl
-from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.interval_data import IntervalData
 from energypylinear.optimizer import Optimizer
@@ -48,6 +46,7 @@ class SimulationResult(pydantic.BaseModel):
 
 
 def extract_evs_results(vars: dict[str, list], results: dict, i: int) -> None:
+    """Extract simulation result data for the EV asset."""
     ev_arrays = vars["evs-array"]
     ev_cols = [
         "electric_charge_mwh",

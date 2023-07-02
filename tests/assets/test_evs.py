@@ -176,7 +176,7 @@ def test_v2g():
             #  here we are resampling prices each time
             #  really shouldn't - would need a bit of work TODO
             ds = epl.data_generation.generate_random_ev_input_data(
-                24,
+                48,
                 n_chargers=3,
                 charge_length=charge_event_length,
                 n_charge_events=12,
@@ -204,6 +204,7 @@ def test_v2g():
                     allow_infeasible=False,
                 ),
                 freq_mins=60,
+                verbose=False,
             )
             simulation = results.simulation
             trials["discharge"].append(simulation["total-electric_discharge_mwh"].sum())
