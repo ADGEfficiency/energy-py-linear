@@ -1,18 +1,12 @@
-import collections
-
-import numpy as np
+"""Warnings for results module."""
 import pandas as pd
-import pandera as pa
-import pydantic
 from rich import print
 
-import energypylinear as epl
-from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
-from energypylinear.interval_data import IntervalData
 from energypylinear.optimizer import Optimizer
 
 optimizer = Optimizer()
+
 
 def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
     """Prints warnings if we have spilled."""
@@ -41,5 +35,3 @@ def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
         """
         print(spill_message)
     return spill_occured
-
-

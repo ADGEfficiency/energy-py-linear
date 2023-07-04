@@ -2,12 +2,10 @@
 import collections
 import statistics
 import time
-import timeit
 
 import hypothesis
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pytest
 
 import energypylinear as epl
@@ -187,6 +185,7 @@ def test_battery_hypothesis(
 
 
 def test_battery_performance():
+    """Test the Battery run time perforamnce."""
     idx_lengths = [
         6,
         # one day 60 min freq

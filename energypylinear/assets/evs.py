@@ -17,7 +17,7 @@ from energypylinear.optimizer import Optimizer
 
 def validate_charge_events(
     charge_event_cfgs: np.ndarray, charge_events: np.ndarray | list
-) -> np.ndarray:
+) -> np.ndarray | None:
     """Helper used to handle charge events.
 
     This is a bit of a smell - will probably be reworked once I see a way.
@@ -369,7 +369,7 @@ def constrain_single_charger_charge_event(
 def constrain_charge_event_electricity_balance(
     optimizer: Optimizer, vars: collections.defaultdict, i: int
 ) -> None:
-    """Constrain the electricity balance across the battery for this interval.
+    """Constrain the electricity balance across the battery.  This is within one interval.
 
     This constrant is applied once per interval."""
     evs_array = vars["evs-array"][i]
@@ -411,6 +411,11 @@ def constrain_charge_event_electricity_balance(
 def constrain_connection_charge_events_between_intervals(
     optimizer: Optimizer, vars: collections.defaultdict, i: int
 ) -> None:
+    """Constrain state of charges between intervals.
+
+    This uses data from two adjacent intervals.
+
+    This constrant is conditionally applied once per interval."""
     if i == 0:
         return None
 

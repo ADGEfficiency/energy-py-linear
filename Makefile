@@ -62,7 +62,7 @@ check: lint static
 
 static: setup-static
 	rm -rf ./tests/phmdoctest
-	mypy --config-file ./mypy.ini --pretty ./energypylinear
+	mypy --pretty ./energypylinear
 	mypy --config-file ./mypy.ini --pretty ./tests
 	mypy --config-file ./mypy.ini --pretty ./examples
 
@@ -70,8 +70,7 @@ static: setup-static
 
 lint: setup-check
 	rm -rf ./tests/phmdoctest
-	flake8 --extend-ignore E501 --exclude=__init__.py,poc
-	ruff check .
+	ruff check . --ignore E501 --extend-exclude=__init__.py,poc
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
@@ -80,10 +79,8 @@ lint: setup-check
 
 .PHONY: format
 format: setup-check
-	ruff check . --format
 	isort **/*.py --profile black
 	black **/*.py
-	poetry lock --no-update
 
 #  PUBLISH TO PYPI
 

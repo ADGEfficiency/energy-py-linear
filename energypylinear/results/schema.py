@@ -1,3 +1,4 @@
+"""Schema for simulation results."""
 import pandera as pa
 
 from energypylinear.defaults import defaults

@@ -109,6 +109,7 @@ def test_evs_optimization_carbon() -> None:
     ],
 )
 def test_evs_efficiency_losses(efficiency: float) -> None:
+    """Test the EV charge event losses."""
     charge_events_capacity_mwh = [50, 100, 30, 40]
     evs = epl.evs.EVs(
         chargers_power_mw=[500, 500],
@@ -282,6 +283,7 @@ def test_evs_hypothesis(
 
 
 def test_evs_performance():
+    """Test the Battery run time perforamnce."""
     idx_lengths = [
         6,
         #  one day 60 min freq

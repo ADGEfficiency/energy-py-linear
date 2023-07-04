@@ -169,9 +169,8 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
         fmt="g",
     )
 
-    data = np.array(simulation["electricity_prices"]).reshape(-1, 1)
     seaborn.heatmap(
-        data,
+        np.array(simulation["electricity_prices"]).reshape(-1, 1),
         ax=axes[3],
         **(heatmap_config | {"cmap": ["white"]}),
         xticklabels=["price"],

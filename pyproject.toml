@@ -41,6 +41,27 @@ ipython = "^8.7.0"
 mypy = "^0.991"
 
 
+[tool.mypy]
+disallow_any_generics = false
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+implicit_reexport = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+  'pandas',
+  'matplotlib',
+  'matplotlib.pyplot',
+  'matplotlib.patches',
+  'pulp',
+  'seaborn'
+]
+ignore_missing_imports = true
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
