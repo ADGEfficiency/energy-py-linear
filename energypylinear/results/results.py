@@ -47,85 +47,91 @@ class SimulationResult(pydantic.BaseModel):
 
 def extract_evs_results(vars: dict[str, list], results: dict, i: int) -> None:
     """Extract simulation result data for the EV asset."""
-    ev_arrays = vars["evs-array"]
-    ev_cols = [
-        "electric_charge_mwh",
-        "electric_charge_binary",
-        "electric_discharge_mwh",
-        "electric_discharge_binary",
+
+    evs_arrays_cols = [
+        k for k in vars.keys() if k.endswith("evs-array") and "spill" not in k
     ]
-    evs = ev_arrays[i]
-
-    #  chargers are summed acress each charg event
-    for charger_idx, charger_cfg in enumerate(evs.charger_cfgs):
-        for attr in ev_cols:
-            results[f"{charger_cfg.name}-{attr}"].append(
-                sum([optimizer.value(x) for x in getattr(evs, attr)[0, :, charger_idx]])
-            )
-
-    #  charge events (non-spill) are summed across each charger
-    #  one charge event, multiple chargers
-    for charge_event_idx, _ in enumerate(evs.charge_event_cfgs):
-        for attr in [
+    for key in evs_arrays_cols:
+        asset_name = key.replace("-evs-array", "")
+        ev_arrays = vars[key]
+        evs = ev_arrays[i]
+        ev_cols = [
             "electric_charge_mwh",
+            "electric_charge_binary",
             "electric_discharge_mwh",
-            "electric_loss_mwh",
+            "electric_discharge_binary",
+        ]
+
+        #  chargers are summed acress each charg event
+        for charger_idx, charger_cfg in enumerate(evs.charger_cfgs):
+            for attr in ev_cols:
+                results[f"{asset_name}-{charger_cfg.name}-{attr}"].append(
+                    sum(
+                        [
+                            optimizer.value(x)
+                            for x in getattr(evs, attr)[0, :, charger_idx]
+                        ]
+                    )
+                )
+
+        #  charge events (non-spill) are summed across each charger
+        #  one charge event, multiple chargers
+        for charge_event_idx, _ in enumerate(evs.charge_event_cfgs):
+            for attr in [
+                "electric_charge_mwh",
+                "electric_discharge_mwh",
+                "electric_loss_mwh",
+            ]:
+                results[f"{asset_name}-charge-event-{charge_event_idx}-{attr}"].append(
+                    sum(
+                        [
+                            optimizer.value(x)
+                            for x in getattr(evs, attr)[0, charge_event_idx, :]
+                        ]
+                    )
+                )
+
+        for attr in [
+            "initial_soc_mwh",
+            "final_soc_mwh",
         ]:
-            results[f"charge-event-{charge_event_idx}-{attr}"].append(
-                sum(
-                    [
-                        optimizer.value(x)
-                        for x in getattr(evs, attr)[0, charge_event_idx, :]
-                    ]
+            #  socs for all the charge events
+            socs = getattr(evs, attr)[0]
+            assert socs.shape == evs.charge_event_cfgs.shape
+
+            for charge_event_idx, soc in enumerate(socs):
+                results[f"{asset_name}-charge-event-{charge_event_idx}-{attr}"].append(
+                    soc.value()
                 )
-            )
 
-    for attr in [
-        "initial_soc_mwh",
-        "final_soc_mwh",
-    ]:
-        #  socs for all the charge events
-        socs = getattr(evs, attr)[0]
-        assert socs.shape == evs.charge_event_cfgs.shape
+        #  spill charger (usually only one)
+        spill_evs = vars[f"{asset_name}-spill-evs-array"][i]
 
-        for charge_event_idx, soc in enumerate(socs):
-            results[f"charge-event-{charge_event_idx}-{attr}"].append(soc.value())
-
-    #  spill charger (usually only one)
-    spill_evs = vars["spill-evs-array"][i]
-    for charger_idx, charger_cfg in enumerate(spill_evs.charger_cfgs):
-        for attr in ev_cols:
-            name = f"{charger_cfg.name}-{attr}"
-            results[name].append(
-                sum(
-                    [
-                        optimizer.value(x)
-                        for x in getattr(spill_evs, attr)[0, :, charger_idx]
-                    ]
+        #  spill charger charge & discharge
+        for charger_idx, cfg in enumerate(spill_evs.charger_cfgs):
+            for attr in ev_cols:
+                name = f"{asset_name}-{cfg.name}-{attr}"
+                results[name].append(
+                    sum(
+                        [
+                            optimizer.value(x)
+                            for x in getattr(spill_evs, attr)[0, :, charger_idx]
+                        ]
+                    )
                 )
-            )
+                # print(spill_evs.charger_cfgs)
+                # print(i, name, results[name])
+                # print("")
 
-    #  spill charger charge & discharge
-    for charger_idx, _ in enumerate(spill_evs.charger_cfgs):
-        for attr in ["electric_charge_mwh", "electric_discharge_mwh"]:
-            results[f"spill-charger-{charger_idx}-{attr}"].append(
-                sum(
-                    [
-                        optimizer.value(x)
-                        for x in getattr(spill_evs, attr)[0, :, charger_idx]
-                    ]
-                )
-            )
-
-    #  charge event state of charges
-    # for attr in [
-    #     "initial_soc_mwh",
-    #     "final_soc_mwh",
-    # ]:
-    #     breakpoint()  # fmt: skip
-    #     results[f"spill-charge-event-{attr}"].append(
-    #         optimizer.value(getattr(spill_evs, attr)[0, charge_event_idx, :])
-    #     )
+        #  charge event state of charges
+        # for attr in [
+        #     "initial_soc_mwh",
+        #     "final_soc_mwh",
+        # ]:
+        #     breakpoint()  # fmt: skip
+        #     results[f"spill-charge-event-{attr}"].append(
+        #         optimizer.value(getattr(spill_evs, attr)[0, charge_event_idx, :])
+        #     )
 
 
 def extract_results(
@@ -215,8 +221,8 @@ def extract_results(
                         optimizer.value(getattr(valve, attr))
                     )
 
-        ev_arrays = vars.get("evs-array")
-        if ev_arrays:
+        ev_array_check = ["evs-array" in k for k in vars.keys()]
+        if any(ev_array_check):
             extract_evs_results(vars, results, i)
 
     simulation = pd.DataFrame(results)

@@ -7,6 +7,7 @@ import hypothesis
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from rich import print
 
 import energypylinear as epl
 from energypylinear.flags import Flags
@@ -231,6 +232,8 @@ def test_battery_performance():
         print(f"idx_length: {idx_length}, elapsed: {run_times}")
 
     fig, axes = plt.subplots(nrows=1, sharex=True)
+    print("[red]final run times:[/]")
+    print(run_times)
     axes.plot(
         idx_lengths,
         [mean for mean, std in run_times["time"]],

@@ -283,22 +283,19 @@ class Site:
             assets = []
             for asset in self.assets:
                 neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
-
                 #  tech debt TODO
                 #  EV is special beacuse it returns many blocks per step
                 if isinstance(asset, epl.EVs):
                     #  evs and spill_evs - NOT the arrays
                     assets.extend(neu_assets[0])
                     assets.extend(neu_assets[2])
-                    vars["evs-array"].append(neu_assets[1])
-                    vars["spill-evs-array"].append(neu_assets[3])
+                    vars[f"{asset.cfg.name}-evs-array"].append(neu_assets[1])
+                    vars[f"{asset.cfg.name}-spill-evs-array"].append(neu_assets[3])
                 else:
                     assets.append(neu_assets)
 
             vars["assets"].append(assets)
 
-            #  constrain within interval
-            #  for evs, the interval data input here will be ignored
             self.constrain_within_interval(self.optimizer, vars, interval_data, i)
             for asset in self.assets:
                 asset.constrain_within_interval(

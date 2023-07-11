@@ -1,4 +1,6 @@
 """Test the site API."""
+import random
+
 import numpy as np
 
 import energypylinear as epl
@@ -10,8 +12,10 @@ def test_site() -> None:
     """Tests the epl.Site() API"""
     site = epl.Site(
         assets=[
-            epl.Battery(),
-            epl.Battery(name="fast-battery"),
+            epl.Battery(
+                power_mw=2, capacity_mwh=4, efficiency=0.9, name="small-battery"
+            ),
+            epl.Battery(power_mw=8, capacity_mwh=1, efficiency=0.8, name="big-battery"),
             epl.Generator(
                 electric_power_max_mw=50,
                 electric_efficiency_pct=0.3,
@@ -33,96 +37,63 @@ def test_site() -> None:
     simulation = results.simulation
 
     """
-    this is a bit of a regression test
-
     first interval we both charge and generate max electricity
     second interval we discharge and generate
     """
     np.testing.assert_array_almost_equal(
         simulation["site-import_power_mwh"],
-        [0, 0, 4.0, 0.44444, 0.0],
+        [0, 0, 4.6, 0.2222, 0.0],
         decimal=defaults.decimal_tolerance,
     )
     np.testing.assert_array_almost_equal(
         simulation["site-export_power_mwh"],
-        [96.0, 103.6, 0, 0, 4.0],
+        [96.75, 102.8, 0.0, 0.0, 53.0],
         decimal=defaults.decimal_tolerance,
     )
 
 
 def test_sites() -> None:
     """Tests various hardcoded combinations of assets."""
-
-    ds = generate_random_ev_input_data(10, n_chargers=3, charge_length=3)
-    site = epl.Site(
-        assets=[
-            epl.Battery(),
+    for _ in range(10):
+        ds = generate_random_ev_input_data(10, n_chargers=3, charge_length=3)
+        assets = [
+            epl.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9),
+            epl.Battery(power_mw=8, capacity_mwh=1, efficiency=0.8, name="battery2"),
             epl.Generator(
                 electric_power_max_mw=100,
                 electric_efficiency_pct=0.3,
                 high_temperature_efficiency_pct=0.5,
+                name="generator1",
+            ),
+            epl.Generator(
+                electric_power_max_mw=50,
+                electric_efficiency_pct=0.4,
+                high_temperature_efficiency_pct=0.4,
+                name="generator2",
+            ),
+            epl.EVs(
+                chargers_power_mw=ds["charger_mws"],
+                charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+                charge_events=ds["charge_events"],
+                charge_event_efficiency=0.8,
+                charger_turndown=0.0,
+                name="evs1",
             ),
             epl.EVs(
                 chargers_power_mw=ds["charger_mws"],
                 charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
                 charge_events=ds["charge_events"],
                 charge_event_efficiency=1.0,
-                charger_turndown=0.0,
+                charger_turndown=0.4,
+                name="evs2",
             ),
         ]
-    )
-    ds.pop("charger_mws")
-    ds.pop("charge_events_capacity_mwh")
-    #  note we don't pop out `charge_events`
-    #  this means we are passing it in twice
-    site.optimize(**ds)
 
+        ds.pop("charger_mws")
+        ds.pop("charge_events_capacity_mwh")
+        n_assets = random.randint(len(assets), len(assets))
 
-import hypothesis
-import hypothesis.strategies as st
-
-# Define the strategy for sampling from the input list
-asset_strategy = st.one_of(
-    st.builds(
-        epl.Battery,
-        power_mw=st.floats(0.5, 100),
-        capacity_mwh=st.floats(0.5, 100),
-    ),
-    st.builds(
-        epl.Generator,
-        electric_power_max_mw=st.integers(1, 100),
-        electric_efficiency_pct=st.floats(0, 1),
-        high_temperature_efficiency_pct=st.floats(0, 1),
-    ),
-    st.just(
-        epl.EVs(
-            charger_mws=[5, 10, 15],
-        )
-        # charger_mws=st.lists(
-        #     st.sampled_from([5, 10, 20]),
-        #     min_size=1,
-        #     max_size=3,
-        # ),
-    ),
-)
-
-# Define the main strategy for lists of assets
-assets_strategy = st.lists(asset_strategy, min_size=1)
-
-# Use the given decorator with the assets_strategy
-@hypothesis.settings(
-    print_blob=True,
-    max_examples=200,
-    verbosity=hypothesis.Verbosity.verbose,
-    deadline=2000,
-)
-@hypothesis.given(assets=assets_strategy)
-def test_site_hypothesis(assets: list) -> None:
-    site = epl.Site(assets)
-    print(assets)
-
-    from energypylinear.data_generation import generate_random_ev_input_data
-
-    interval_data = generate_random_ev_input_data(10, n_chargers=3, charge_length=3)
-    interval_data.pop("charger_mws")
-    site.optimize(**interval_data)
+        sampled_assets = random.sample(assets, n_assets)
+        print(len(sampled_assets))
+        site = epl.Site(assets=sampled_assets)
+        site.optimize(**ds, verbose=True)
