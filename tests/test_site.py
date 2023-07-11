@@ -55,7 +55,7 @@ def test_site() -> None:
 def test_sites() -> None:
     """Tests various hardcoded combinations of assets."""
     for _ in range(10):
-        ds = generate_random_ev_input_data(10, n_chargers=3, charge_length=3)
+        ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3)
         assets = [
             epl.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9),
             epl.Battery(power_mw=8, capacity_mwh=1, efficiency=0.8, name="battery2"),

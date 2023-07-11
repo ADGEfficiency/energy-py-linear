@@ -157,7 +157,10 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     )
     axes[1].set_xlabel("Charge Events Net Charge (Discharge is Negative)")
 
-    spill_charge_usage = simulation["charger-spill-electric_charge_mwh"].values.reshape(-1, 1)
+    #   hardcoded asset name here TODO
+    spill_charge_usage = simulation[
+        "evs-charger-spill-evs-electric_charge_mwh"
+    ].values.reshape(-1, 1)
     data = spill_charge_usage
     seaborn.heatmap(
         data,
