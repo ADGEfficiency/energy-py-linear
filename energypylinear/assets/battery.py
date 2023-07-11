@@ -49,7 +49,7 @@ class BatteryOneInterval(AssetOneInterval):
 
 def constrain_only_charge_or_discharge(
     optimizer: Optimizer,
-    batteries: list[BatteryOneInterval],
+    battery: BatteryOneInterval,
     flags: Flags,
 ) -> None:
     """Constrain battery to only charge or discharge.
@@ -58,42 +58,36 @@ def constrain_only_charge_or_discharge(
     discharge, the objective function just takes the difference to calculate net charge.
     """
     if flags.include_charge_discharge_binary_variables:
-        batteries = epl.utils.filter_assets(vars, "battery")
-        for battery in batteries:
-            optimizer.constrain_max(
-                battery.electric_charge_mwh,
-                battery.electric_charge_binary,
-                battery.cfg.capacity_mwh,
-            )
-            optimizer.constrain_max(
-                battery.electric_discharge_mwh,
-                battery.electric_discharge_binary,
-                battery.cfg.capacity_mwh,
-            )
-            optimizer.constrain(
-                battery.electric_charge_binary + battery.electric_discharge_binary <= 1
-            )
+        optimizer.constrain_max(
+            battery.electric_charge_mwh,
+            battery.electric_charge_binary,
+            battery.cfg.capacity_mwh,
+        )
+        optimizer.constrain_max(
+            battery.electric_discharge_mwh,
+            battery.electric_discharge_binary,
+            battery.cfg.capacity_mwh,
+        )
+        optimizer.constrain(
+            battery.electric_charge_binary + battery.electric_discharge_binary <= 1
+        )
 
 
 def constrain_battery_electricity_balance(
-    optimizer: Optimizer, vars: collections.defaultdict
+    optimizer: Optimizer, battery: BatteryOneInterval
 ) -> None:
     """Constrain energy balance in a single interval - also calculates losses."""
-
-    batteries = epl.utils.filter_assets(vars, "battery", -1)
-
-    for battery in batteries:
-        optimizer.constrain(
-            battery.initial_charge_mwh
-            + battery.electric_charge_mwh
-            - battery.electric_discharge_mwh
-            - battery.electric_loss_mwh
-            == battery.final_charge_mwh
-        )
-        optimizer.constrain(
-            battery.electric_loss_mwh
-            == battery.electric_charge_mwh * (1 - battery.efficiency_pct)
-        )
+    optimizer.constrain(
+        battery.initial_charge_mwh
+        + battery.electric_charge_mwh
+        - battery.electric_discharge_mwh
+        - battery.electric_loss_mwh
+        == battery.final_charge_mwh
+    )
+    optimizer.constrain(
+        battery.electric_loss_mwh
+        == battery.electric_charge_mwh * (1 - battery.efficiency_pct)
+    )
 
 
 def constrain_connection_batteries_between_intervals(
@@ -220,10 +214,13 @@ class Battery:
         flags: Flags = Flags(),
     ) -> None:
         """Constrain Battery dispatch within a single interval"""
-        batteries = epl.utils.filter_all_assets(vars, "battery", self.cfg.name)
-        constrain_only_charge_or_discharge(optimizer, batteries, flags)
-        constrain_battery_electricity_balance(optimizer, vars)
-        constrain_connection_batteries_between_intervals(optimizer, batteries)
+        battery = epl.utils.filter_assets(vars, "battery", -1, name=self.cfg.name)[0]
+        constrain_only_charge_or_discharge(optimizer, battery, flags)
+        constrain_battery_electricity_balance(optimizer, battery)
+
+        #  this is one battery asset, all intervals
+        all_batteries = epl.utils.filter_all_assets(vars, "battery", self.cfg.name)
+        constrain_connection_batteries_between_intervals(optimizer, all_batteries)
 
     def constrain_after_intervals(
         self,

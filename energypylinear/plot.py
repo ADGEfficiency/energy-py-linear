@@ -94,27 +94,28 @@ def plot_battery(
 
 def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
     """Plot electric vehicle simulation results."""
+    breakpoint()  # fmt: skip
     simulation = results.simulation
 
     charger_usage = simulation[
         [
             c
             for c in simulation.columns
-            if c.startswith("charger-") and c.endswith("-electric_charge_mwh")
+            if "charger-" in c and c.endswith("-electric_charge_mwh")
         ]
     ].values
     charge_event_usage = simulation[
         [
             c
             for c in simulation.columns
-            if c.startswith("charge-event-") and c.endswith("electric_charge_mwh")
+            if "charge-event-" in c and c.endswith("electric_charge_mwh")
         ]
     ].values
     discharge_event_usage = simulation[
         [
             c
             for c in simulation.columns
-            if c.startswith("charge-event-") and c.endswith("electric_discharge_mwh")
+            if "charge-event-" in c and c.endswith("electric_discharge_mwh")
         ]
     ].values
     charge_event_usage = charge_event_usage - discharge_event_usage
@@ -157,6 +158,7 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     )
     axes[1].set_xlabel("Charge Events Net Charge (Discharge is Negative)")
 
+    breakpoint()  # fmt: skip
     spill_charge_usage = simulation["charger-spill-electric_charge_mwh"].values.reshape(
         -1, 1
     )

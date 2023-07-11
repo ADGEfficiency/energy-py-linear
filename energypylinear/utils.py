@@ -7,6 +7,7 @@ typs = {
     "generator": epl.assets.chp.GeneratorOneInterval,
     "valve": epl.assets.valve.ValveOneInterval,
     "spill": epl.assets.spill.SpillOneInterval,
+    "spill-evs": epl.assets.spill.SpillOneInterval,
     "evs-array": epl.assets.evs.EVsArrayOneInterval,
 }
 

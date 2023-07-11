@@ -1,4 +1,5 @@
 """Models for interval data for electricity & gas prices, thermal loads and carbon intensities."""
+import collections
 import typing
 
 import numpy as np
@@ -6,6 +7,8 @@ import pandas as pd
 import pydantic
 
 import energypylinear as epl
+from energypylinear.assets.evs import EVsArrayOneInterval
+from energypylinear.assets.site import SiteOneInterval
 from energypylinear.defaults import defaults
 
 floats = typing.Union[float, np.ndarray, typing.Sequence[float], list[float]]
@@ -180,3 +183,79 @@ class IntervalData(pydantic.BaseModel):
                 if len(data) == expected_len:
                     df[name] = data
         return pd.DataFrame(df)
+
+
+class IntervalVars:
+    def __repr__(self) -> str:
+        return f"<epl.IntervalVars i: {len(self.objective_variables)}>"
+
+    #  not every lp variable - only the ones we want to iterate over
+    #  in the objective functions (price, carbon etc)
+    objective_variables = []
+    asset = collections.defaultdict(
+        lambda: {"evs_array": [], "spill_evs_array": [], "site": []}
+    )
+
+    def append(self, one_interval):
+        #  some OneInterval objects are special
+        #  is this case it is the Array EV data structures
+        #  TODO in future don't save these separately and
+        #  dynamically create as needed from the objective variables
+        if isinstance(one_interval, EVsArrayOneInterval):
+            if one_interval.is_spill:
+                self.asset[one_interval.cfg.name]["spill_evs_array"].append(
+                    one_interval
+                )
+            else:
+                self.asset[one_interval.cfg.name]["evs_array"].append(one_interval)
+        elif isinstance(one_interval, SiteOneInterval):
+            self.asset[one_interval.cfg.name]["site"].append(one_interval)
+
+        else:
+            assert isinstance(one_interval, list)
+            self.objective_variables.append(one_interval)
+
+    def filter_evs_array(self, is_spill, i, asset_name):
+        if is_spill:
+            return self.asset[asset_name]["spill_evs_array"][i]
+        else:
+            return self.asset[asset_name]["evs_array"][i]
+
+    def filter_all_evs_array(self, is_spill, asset_name):
+        if is_spill:
+            return self.asset[asset_name]["spill_evs_array"]
+        else:
+            return self.asset[asset_name]["evs_array"]
+
+    def filter_site(self, i: int, site_name: str) -> SiteOneInterval:
+        return self.asset[site_name]["site"][i]
+
+    def filter_objective_variables(self, instance_type, i=None, asset_name=None):
+
+        #  here we return data for all intervals
+        if i is None:
+            pkg = []
+            for i, assets_one_interval in enumerate(self.objective_variables):
+                pkg.append(
+                    [
+                        asset
+                        for asset in assets_one_interval
+                        if isinstance(asset, instance_type)
+                        and (
+                            asset.cfg.name == asset_name
+                            if asset_name is not None
+                            else True
+                        )
+                    ]
+                )
+            return pkg
+
+        #  here we return data for one interval
+        else:
+            assets = self.objective_variables[i]
+            return [
+                asset
+                for asset in assets
+                if isinstance(asset, instance_type)
+                and (asset.cfg.name == asset_name if asset_name is not None else True)
+            ]

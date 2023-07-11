@@ -110,7 +110,7 @@ class Optimizer:
         names = [v.name for v in variables]
         assert len(names) == len(
             set(names)
-        ), f"duplicate variables detected - {[x for x in names if names.count(x) >= 2]}"
+        ), f"duplicate variables detected - {len([x for x in names if names.count(x) >= 2])} of {len(names)}\n{sorted(set([x for x in names if names.count(x) >= 2]))}"
 
     def status(self) -> str:
         """Return the status of the optimization problem."""

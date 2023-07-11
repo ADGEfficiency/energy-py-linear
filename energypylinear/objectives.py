@@ -8,7 +8,7 @@ from energypylinear.defaults import defaults
 
 def price_objective(
     optimizer: "epl.Optimizer",
-    vars: dict,
+    ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
     """
@@ -26,18 +26,37 @@ def price_objective(
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
 
-    sites = vars["sites"]
-    spills = epl.utils.filter_all_assets(vars, "spill")
-    spill_evs = vars["spill-evs"]
-    boilers = epl.utils.filter_all_assets(vars, "boiler")
-    generators = epl.utils.filter_all_assets(vars, "generator")
+    # sites = ivars.filter_all_sites()
+    sites = ivars.asset["site"]["site"]
 
+    # spills = epl.utils.filter_all_assets(vars, "spill")
+    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
+
+    # spill_evs = [
+    #     list(pair) for pair in zip(*[vars[k] for k in vars.keys() if "spill-evs" in k])
+    # ]
+    spill_evs = ivars.filter_objective_variables(epl.evs.EVOneInterval)
+
+    pkg = []
+    for i, assets in enumerate(spill_evs):
+        pkg.append([ev for ev in assets if ev.is_spill])
+    spill_evs = pkg
+
+    # spill_evs = [
+    #     evs for i in range(len(spill_evs)) for evs in spill_evs[i] if evs.is_spill
+    # ]
     if len(spill_evs) == 0:
         spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
+
+    # boilers = epl.utils.filter_all_assets(vars, "boiler")
+    boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
+    # generators = epl.utils.filter_all_assets(vars, "generator")
+    generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
 
     assert isinstance(interval_data.gas_prices, np.ndarray)
     assert isinstance(interval_data.electricity_prices, np.ndarray)
 
+    breakpoint()  # fmt: skip
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_prices[i]
         - sites[i].export_power_mwh * interval_data.electricity_prices[i]
@@ -69,7 +88,7 @@ def price_objective(
 
 def carbon_objective(
     optimizer: "epl.Optimizer",
-    vars: dict,
+    ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
     """

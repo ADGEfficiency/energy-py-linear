@@ -15,12 +15,16 @@ from energypylinear.optimizer import Optimizer
 class SiteConfig(pydantic.BaseModel):
     """Site configuration."""
 
+    name: str = "site"
+
     import_limit_mw: float = 10000
     export_limit_mw: float = 10000
 
 
 class SiteOneInterval(pydantic.BaseModel):
     """Site data for a single interval."""
+
+    cfg: SiteConfig
 
     import_power_mwh: pulp.LpVariable
     export_power_mwh: pulp.LpVariable
@@ -38,7 +42,8 @@ class SiteOneInterval(pydantic.BaseModel):
 
 def constrain_site_electricity_balance(
     optimizer: Optimizer,
-    vars: dict,
+    cfg: SiteConfig,
+    ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.interval_data.IntervalData",
     i: int,
 ) -> None:
@@ -48,9 +53,9 @@ def constrain_site_electricity_balance(
     import + generation = (export + load) + (charge - discharge)
     import + generation - (export + load) - (charge - discharge) = 0
     """
-    assets = vars["assets"][-1]
-    site = vars["sites"][-1]
-    spills = epl.utils.filter_assets(vars, "spill")
+    assets = ivars.objective_variables[-1]
+    site = ivars.filter_site(i=-1, site_name=cfg.name)
+    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval, i=-1)
 
     assert interval_data.electricity_load_mwh is not None
     optimizer.constrain(
@@ -69,9 +74,13 @@ def constrain_site_electricity_balance(
     )
 
 
-def constrain_site_import_export(optimizer: Optimizer, vars: dict) -> None:
+def constrain_site_import_export(
+    optimizer: Optimizer,
+    cfg: SiteConfig,
+    ivars: "epl.interval_data.IntervalVars",
+) -> None:
     """Constrain to only do one of import and export electricity in an interval."""
-    site = vars["sites"][-1]
+    site = ivars.filter_site(i=-1, site_name=cfg.name)
     optimizer.constrain(
         site.import_power_mwh - site.import_limit_mwh * site.import_power_bin <= 0
     )
@@ -83,7 +92,8 @@ def constrain_site_import_export(optimizer: Optimizer, vars: dict) -> None:
 
 def constrain_site_high_temperature_heat_balance(
     optimizer: Optimizer,
-    vars: dict,
+    cfg: SiteConfig,
+    ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.interval_data.IntervalData",
     i: int,
 ) -> None:
@@ -93,7 +103,7 @@ def constrain_site_high_temperature_heat_balance(
     generation = load
     generation - load = 0
     """
-    assets = vars["assets"][-1]
+    assets = ivars.objective_variables[-1]
     assert interval_data.high_temperature_load_mwh is not None
     optimizer.constrain(
         optimizer.sum([a.high_temperature_generation_mwh for a in assets])
@@ -105,7 +115,8 @@ def constrain_site_high_temperature_heat_balance(
 
 def constrain_site_low_temperature_heat_balance(
     optimizer: Optimizer,
-    vars: dict,
+    cfg: SiteConfig,
+    ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.interval_data.IntervalData",
     i: int,
 ) -> None:
@@ -115,7 +126,7 @@ def constrain_site_low_temperature_heat_balance(
     generation = load
     generation - load = 0
     """
-    assets = vars["assets"][-1]
+    assets = ivars.objective_variables[-1]
     assert interval_data.low_temperature_load_mwh is not None
     optimizer.constrain(
         optimizer.sum([a.low_temperature_generation_mwh for a in assets])
@@ -157,6 +168,7 @@ class Site:
     ) -> SiteOneInterval:
         """Create Site asset data for a single interval."""
         return SiteOneInterval(
+            cfg=site,
             import_power_mwh=optimizer.continuous(
                 f"import_power_mw-{i}", up=freq.mw_to_mwh(self.cfg.import_limit_mw)
             ),
@@ -172,15 +184,31 @@ class Site:
     def constrain_within_interval(
         self,
         optimizer: Optimizer,
-        vars: dict,
+        ivars: "epl.interval_data.IntervalVars",
         interval_data: "epl.interval_data.IntervalData",
         i: int,
     ) -> None:
         """Constrain site within a single interval."""
-        constrain_site_electricity_balance(optimizer, vars, interval_data, i)
-        constrain_site_import_export(optimizer, vars)
-        constrain_site_high_temperature_heat_balance(optimizer, vars, interval_data, i)
-        constrain_site_low_temperature_heat_balance(optimizer, vars, interval_data, i)
+        constrain_site_electricity_balance(optimizer, self.cfg, ivars, interval_data, i)
+        constrain_site_import_export(
+            optimizer,
+            self.cfg,
+            ivars
+        )
+        constrain_site_high_temperature_heat_balance(
+            optimizer,
+            self.cfg,
+            ivars,
+            interval_data,
+            i
+        )
+        constrain_site_low_temperature_heat_balance(
+            optimizer,
+            self.cfg,
+            ivars,
+            interval_data,
+            i
+        )
 
     def optimize(
         self,
@@ -296,7 +324,7 @@ class Site:
 
             vars["assets"].append(assets)
 
-            self.constrain_within_interval(self.optimizer, vars, interval_data, i)
+            self.constrain_within_interval(self.optimizer, ivars, interval_data, i)
             for asset in self.assets:
                 asset.constrain_within_interval(
                     self.optimizer, vars, interval_data, i, flags=flags, freq=freq
