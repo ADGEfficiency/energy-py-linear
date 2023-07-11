@@ -133,6 +133,8 @@ class EVsArrayOneInterval(AssetOneInterval):
     in one interval.
     """
 
+    i: int
+
     #  1D arrays
     # charger_cfgs: np.ndarray
     # charge_event_cfgs: np.ndarray
@@ -157,7 +159,7 @@ class EVsArrayOneInterval(AssetOneInterval):
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        return f"<EVsArrayOneInterval chargers: {len(self.cfg.charger_cfgs)} charge-events: {len(self.cfg.charge_event_cfgs)}>"
+        return f"<EVsArrayOneInterval i: {self.i} chargers: {len(self.cfg.charger_cfgs)} charge-events: {len(self.cfg.charge_event_cfgs)}>"
 
 
 def evs_one_interval(
@@ -303,6 +305,7 @@ def evs_one_interval(
             losses_mwh[0, charge_event_idx, charger_idx] = loss_mwh
 
     evs_array = EVsArrayOneInterval(
+        i=i,
         electric_charge_mwh=charges_mwh,
         electric_charge_binary=charges_binary,
         electric_discharge_mwh=discharges_mwh,
@@ -455,7 +458,9 @@ def constrain_connection_charge_events_between_intervals(
     for initial_soc, final_soc in zip(
         new.initial_soc_mwh[0], old.final_soc_mwh[0], strict=True
     ):
-        if isinstance(initial_soc, pulp.LpVariable) and isinstance(final_soc, pp.LpVariable):
+        if isinstance(initial_soc, pulp.LpVariable) and isinstance(
+            final_soc, pulp.LpVariable
+        ):
             optimizer.constrain(initial_soc == final_soc)
 
 
@@ -605,11 +610,7 @@ class EVs:
 
         constrain_charge_discharge_min_max(
             optimizer,
-            ivars.filter_evs_array(
-                is_spill=False,
-                i=i,
-                asset_name=self.cfg.name
-            ),
+            ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
             self.charge_events,
             freq,
             self.charger_cfgs,
@@ -620,11 +621,7 @@ class EVs:
 
         constrain_charge_discharge_min_max(
             optimizer,
-            ivars.filter_evs_array(
-                is_spill=True,
-                i=i,
-                asset_name=self.cfg.name
-            ),
+            ivars.filter_evs_array(is_spill=True, i=i, asset_name=self.cfg.name),
             self.charge_events,
             freq,
             self.spill_charger_config,
@@ -636,32 +633,18 @@ class EVs:
 
         constrain_single_charger_charge_event(
             optimizer,
-            ivars.filter_evs_array(
-                is_spill=False,
-                i=i,
-                asset_name=self.cfg.name
-            ),
+            ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
             self.charger_cfgs,
             self.charge_event_cfgs,
         )
 
         constrain_charge_event_electricity_balance(
             optimizer,
-            ivars.filter_evs_array(
-                is_spill=False,
-                i=i,
-                asset_name=self.cfg.name
-            ),
-            ivars.filter_evs_array(
-                is_spill=True,
-                i=i,
-                asset_name=self.cfg.name
-            ),
+            ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
+            ivars.filter_evs_array(is_spill=True, i=i, asset_name=self.cfg.name),
         )
         constrain_connection_charge_events_between_intervals(
-            optimizer,
-            ivars.filter_all_evs_array(True, self.cfg.name),
-            i
+            optimizer, ivars.filter_all_evs_array(False, self.cfg.name), i
         )
 
     def constrain_after_intervals(
@@ -775,19 +758,11 @@ class EVs:
             )
 
             self.site.constrain_within_interval(
-                self.optimizer,
-                ivars,
-                self.interval_data,
-                i
+                self.optimizer, ivars, self.interval_data, i
             )
 
             self.constrain_within_interval(
-                self.optimizer,
-                ivars,
-                self.interval_data,
-                i,
-                freq=freq,
-                flags=flags
+                self.optimizer, ivars, self.interval_data, i, freq=freq, flags=flags
             )
 
         assert isinstance(self.charge_events, np.ndarray)
@@ -801,11 +776,7 @@ class EVs:
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(
-            objective_fn(
-                self.optimizer,
-                ivars,
-                self.interval_data
-            )
+            objective_fn(self.optimizer, ivars, self.interval_data)
         )
 
         status = self.optimizer.solve(verbose=verbose)

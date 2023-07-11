@@ -45,16 +45,34 @@ class SimulationResult(pydantic.BaseModel):
         arbitrary_types_allowed: bool = True
 
 
-def extract_evs_results(vars: dict[str, list], results: dict, i: int) -> None:
+def extract_evs_results(
+    ivars: "epl.interval_data.IntervalVars", results: dict, i: int
+) -> None:
     """Extract simulation result data for the EV asset."""
 
-    evs_arrays_cols = [
-        k for k in vars.keys() if k.endswith("evs-array") and "spill" not in k
-    ]
-    for key in evs_arrays_cols:
-        asset_name = key.replace("-evs-array", "")
-        ev_arrays = vars[key]
-        evs = ev_arrays[i]
+    #  need to check if there are evs, if so grab them out asset by asset
+    #  need to handle multiple evs or no evs
+
+    # pkg = []
+    # for asset_name in ivars.asset.keys():
+    #     pkg.append(ivars.filter_all_evs_array(True, asset_name))
+
+    # breakpoint()  # fmt: skip
+    # for ev_arrays in pkg:
+    #     evs = ev_arrays[i]
+
+    print(i)
+
+    pkg = []
+    for asset_name in ivars.asset.keys():
+        try:
+            vas = ivars.filter_evs_array(is_spill=False, i=i, asset_name=asset_name)
+            pkg.append(vas)
+        except IndexError:
+            pass
+
+    for evs in pkg:
+        assert not evs.is_spill
         ev_cols = [
             "electric_charge_mwh",
             "electric_charge_binary",
@@ -63,9 +81,11 @@ def extract_evs_results(vars: dict[str, list], results: dict, i: int) -> None:
         ]
 
         #  chargers are summed acress each charg event
-        for charger_idx, charger_cfg in enumerate(evs.charger_cfgs):
+        for charger_idx, charger_cfg in enumerate(evs.cfg.charger_cfgs):
             for attr in ev_cols:
-                results[f"{asset_name}-{charger_cfg.name}-{attr}"].append(
+                name = f"{asset_name}-{charger_cfg.name}-{attr}"
+                print(name)
+                results[name].append(
                     sum(
                         [
                             optimizer.value(x)
@@ -76,13 +96,15 @@ def extract_evs_results(vars: dict[str, list], results: dict, i: int) -> None:
 
         #  charge events (non-spill) are summed across each charger
         #  one charge event, multiple chargers
-        for charge_event_idx, _ in enumerate(evs.charge_event_cfgs):
+        for charge_event_idx, _ in enumerate(evs.cfg.charge_event_cfgs):
             for attr in [
                 "electric_charge_mwh",
                 "electric_discharge_mwh",
                 "electric_loss_mwh",
             ]:
-                results[f"{asset_name}-charge-event-{charge_event_idx}-{attr}"].append(
+                name = f"{asset_name}-charge-event-{charge_event_idx}-{attr}"
+                print(name)
+                results[name].append(
                     sum(
                         [
                             optimizer.value(x)
@@ -97,20 +119,31 @@ def extract_evs_results(vars: dict[str, list], results: dict, i: int) -> None:
         ]:
             #  socs for all the charge events
             socs = getattr(evs, attr)[0]
-            assert socs.shape == evs.charge_event_cfgs.shape
+            assert socs.shape == evs.cfg.charge_event_cfgs.shape
 
             for charge_event_idx, soc in enumerate(socs):
-                results[f"{asset_name}-charge-event-{charge_event_idx}-{attr}"].append(
-                    soc.value()
-                )
+                name = f"{asset_name}-charge-event-{charge_event_idx}-{attr}"
+                print(name)
+                results[name].append(soc.value())
 
         #  spill charger (usually only one)
-        spill_evs = vars[f"{asset_name}-spill-evs-array"][i]
 
+    print("spill")
+    pkg = []
+    for asset_name in ivars.asset.keys():
+        try:
+            vas = ivars.filter_evs_array(is_spill=True, i=i, asset_name=asset_name)
+            pkg.append(vas)
+        except IndexError:
+            pass
+
+    for spill_evs in pkg:
+        assert spill_evs.is_spill
         #  spill charger charge & discharge
-        for charger_idx, cfg in enumerate(spill_evs.charger_cfgs):
+        for charger_idx, spill_cfg in enumerate(spill_evs.cfg.spill_charger_cfgs):
             for attr in ev_cols:
-                name = f"{asset_name}-{cfg.name}-{attr}"
+                name = f"{spill_evs.cfg.name}-{spill_cfg.name}-{attr}"
+                print(name)
                 results[name].append(
                     sum(
                         [
@@ -119,24 +152,11 @@ def extract_evs_results(vars: dict[str, list], results: dict, i: int) -> None:
                         ]
                     )
                 )
-                # print(spill_evs.charger_cfgs)
-                # print(i, name, results[name])
-                # print("")
-
-        #  charge event state of charges
-        # for attr in [
-        #     "initial_soc_mwh",
-        #     "final_soc_mwh",
-        # ]:
-        #     breakpoint()  # fmt: skip
-        #     results[f"spill-charge-event-{attr}"].append(
-        #         optimizer.value(getattr(spill_evs, attr)[0, charge_event_idx, :])
-        #     )
 
 
 def extract_results(
     interval_data: IntervalData,
-    vars: dict,
+    ivars: "epl.interval_data.IntervalVars",
     feasible: bool,
     flags: Flags = Flags(),
     verbose: bool = True,
@@ -160,12 +180,14 @@ def extract_results(
     """
     results = collections.defaultdict(list)
     for i in interval_data.idx:
-        site = vars["sites"][i]
+        #  cheating here with the site asset name - TODO
+        site = ivars.filter_site(i, "site")
 
         results["site-import_power_mwh"].append(site.import_power_mwh.value())
         results["site-export_power_mwh"].append(site.export_power_mwh.value())
 
-        spills = epl.utils.filter_assets(vars, "spill", i=i)
+        # spills = epl.utils.filter_assets(vars, "spill", i=i)
+        spills = ivars.filter_objective_variables(epl.assets.spill.Spill, i=i)
         if len(spills) > 0:
             for spill in spills:
                 for attr in spill_quantities:
@@ -173,9 +195,9 @@ def extract_results(
                         optimizer.value(getattr(spill, attr))
                     )
 
-        #  needs to change with the removal of the batteries flag
-        batteries = epl.utils.filter_assets(vars, "battery", i=i)
-        if len(batteries) > 0:
+        if batteries := ivars.filter_objective_variables(
+            epl.assets.battery.BatteryOneInterval, i=i
+        ):
             for battery in batteries:
                 name = f"{battery.cfg.name}"
                 for attr in [
@@ -192,7 +214,9 @@ def extract_results(
                         optimizer.value(getattr(battery, attr))
                     )
 
-        if generators := epl.utils.filter_assets(vars, "generator", i=i):
+        if generators := ivars.filter_objective_variables(
+            epl.assets.chp.GeneratorOneInterval, i=i
+        ):
             for generator in generators:
                 name = f"{generator.cfg.name}"
                 for attr in [
@@ -203,15 +227,20 @@ def extract_results(
                 ]:
                     results[f"{name}-{attr}"].append(getattr(generator, attr).value())
 
-        if boilers := epl.utils.filter_assets(vars, "boiler", i=i):
+        # if boilers := epl.utils.filter_assets(vars, "boiler", i=i):
+        if boilers := ivars.filter_objective_variables(
+            epl.assets.boiler.BoilerOneInterval, i=i
+        ):
             for boiler in boilers:
                 name = f"{boiler.cfg.name}"
                 for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
                     results[f"{name}-{attr}"].append(getattr(boiler, attr).value())
 
         #  add results from the valve
-        valves = epl.utils.filter_assets(vars, "valve", i=i)
-        if len(valves) > 0:
+        # valves = epl.utils.filter_assets(vars, "valve", i=i)
+        if valves := ivars.filter_objective_variables(
+            epl.assets.valve.ValveOneInterval, i=i
+        ):
             for valve in valves:
                 for attr in [
                     "high_temperature_load_mwh",
@@ -221,30 +250,12 @@ def extract_results(
                         optimizer.value(getattr(valve, attr))
                     )
 
-        ev_array_check = ["evs-array" in k for k in vars.keys()]
-        if any(ev_array_check):
-            extract_evs_results(vars, results, i)
+        # ev_array_check = ["evs-array" in k for k in vars.keys()]
+        # if any(ev_array_check):
+        if evs := ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
+            extract_evs_results(ivars, results, i)
 
     simulation = pd.DataFrame(results)
-
-    # #  add totals for charge events across both the spill and normal chargers
-    # ev_arrays = vars.get("evs-array")
-    # if ev_arrays:
-    #     assert isinstance(interval_data.evs, epl.interval_data.EVIntervalData)
-    #     assert interval_data.evs is not None
-    #     for charge_event_idx, _ in enumerate(
-    #         interval_data.evs.charge_events_capacity_mwh
-    #     ):
-    #         simulation[
-    #             f"charge-event-{charge_event_idx}-total-charge_mwh"
-    #         ] = simulation[
-    #             [
-    #                 f"charge-event-{charge_event_idx}-electric_charge_mwh",
-    #                 f"spill-charge-event-{charge_event_idx}-electric_charge_mwh",
-    #             ]
-    #         ].sum(
-    #             axis=1
-    #         )
 
     #  include some interval data in simulation results
     assert isinstance(interval_data.electricity_prices, np.ndarray)

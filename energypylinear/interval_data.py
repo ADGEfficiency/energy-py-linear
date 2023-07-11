@@ -189,12 +189,13 @@ class IntervalVars:
     def __repr__(self) -> str:
         return f"<epl.IntervalVars i: {len(self.objective_variables)}>"
 
-    #  not every lp variable - only the ones we want to iterate over
-    #  in the objective functions (price, carbon etc)
-    objective_variables = []
-    asset = collections.defaultdict(
-        lambda: {"evs_array": [], "spill_evs_array": [], "site": []}
-    )
+    def __init__(self):
+        #  not every lp variable - only the ones we want to iterate over
+        #  in the objective functions (price, carbon etc)
+        self.objective_variables = []
+        self.asset = collections.defaultdict(
+            lambda: {"evs_array": [], "spill_evs_array": [], "site": []}
+        )
 
     def append(self, one_interval):
         #  some OneInterval objects are special

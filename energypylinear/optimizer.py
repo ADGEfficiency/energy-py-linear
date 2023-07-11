@@ -28,8 +28,12 @@ class Optimizer:
 
     def __init__(self) -> None:
         """Initialize an Optimizer."""
-        self.prob = pulp.LpProblem("prob", pulp.LpMinimize)
+        import datetime
+
+        self.prob = pulp.LpProblem(str(datetime.datetime.now()), pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=0)
+
+        print(f"{self.prob.name} vars: {len(self.variables())}")
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -45,6 +49,7 @@ class Optimizer:
             low: The lower bound of the variable.
             up: The upper bound of the variable.
         """
+        print(f"continuous: {name}")
         return pulp.LpVariable(name=name, lowBound=low, upBound=up, cat="Continuous")
 
     def binary(self, name: str) -> pulp.LpVariable:
@@ -53,6 +58,7 @@ class Optimizer:
         Args:
             name: The name of the variable.
         """
+        print(f"binary: {name}")
         return pulp.LpVariable(name=name, cat="Binary")
 
     def sum(self, vector: list[pulp.LpAffineExpression]) -> pulp.LpAffineExpression:
