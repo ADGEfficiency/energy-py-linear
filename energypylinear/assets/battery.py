@@ -226,7 +226,7 @@ class Battery:
             BatteryOneInterval, i=0, asset_name=self.cfg.name
         )[0]
         final = ivars.filter_objective_variables(
-            BatteryOneInterval, i=0, asset_name=self.cfg.name
+            BatteryOneInterval, i=-1, asset_name=self.cfg.name
         )[0]
         constrain_initial_final_charge(optimizer, initial, final)
 
