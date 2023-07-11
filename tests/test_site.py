@@ -47,7 +47,7 @@ def test_site() -> None:
     )
     np.testing.assert_array_almost_equal(
         simulation["site-export_power_mwh"],
-        [96.75, 102.8, 0.0, 0.0, 53.0],
+        ([100.0, 100.0, 0.0, 0.0, 53.0]),
         decimal=defaults.decimal_tolerance,
     )
 

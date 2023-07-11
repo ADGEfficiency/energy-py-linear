@@ -64,14 +64,16 @@ class Valve:
     def constrain_within_interval(
         self,
         optimizer: "epl.optimizer.Optimizer",
-        vars: dict,
+        ivars: "epl.interval_data.IntervalVars",
         interval_data: "epl.IntervalData",
         i: int,
         freq: "epl.freq.Freq",
         flags: epl.flags.Flags = epl.flags.Flags(),
     ) -> None:
         """Constrain thermal balance across the valve."""
-        valve = epl.utils.filter_assets(vars, "valve")[-1]
+        valve = ivars.filter_objective_variables(
+            ValveOneInterval, i=-1, asset_name=self.cfg.name
+        )[0]
         optimizer.constrain(
             valve.high_temperature_load_mwh == valve.low_temperature_generation_mwh
         )

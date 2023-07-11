@@ -49,7 +49,8 @@ class Optimizer:
             low: The lower bound of the variable.
             up: The upper bound of the variable.
         """
-        print(f"continuous: {name}")
+        #  TODO log debug
+        # print(f"continuous: {name}")
         return pulp.LpVariable(name=name, lowBound=low, upBound=up, cat="Continuous")
 
     def binary(self, name: str) -> pulp.LpVariable:
@@ -58,7 +59,8 @@ class Optimizer:
         Args:
             name: The name of the variable.
         """
-        print(f"binary: {name}")
+        #  TODO log debug
+        # print(f"binary: {name}")
         return pulp.LpVariable(name=name, cat="Binary")
 
     def sum(self, vector: list[pulp.LpAffineExpression]) -> pulp.LpAffineExpression:

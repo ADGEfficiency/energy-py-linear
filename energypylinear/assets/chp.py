@@ -107,14 +107,14 @@ class Generator:
     def constrain_within_interval(
         self,
         optimizer: Optimizer,
-        vars: dict,
+        ivars: "epl.interval_data.IntervalVars",
         interval_data: "epl.IntervalData",
         i: int,
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
         """Constrain generator upper and lower bounds for generating electricity, high & low temperature heat."""
-        assets = vars["assets"][-1]
+        assets = ivars.objective_variables[-1]
         generators = [a for a in assets if isinstance(a, epl.chp.GeneratorOneInterval)]
         for asset in generators:
             if asset.cfg.electric_efficiency_pct > 0:
@@ -200,12 +200,10 @@ class Generator:
             high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
         )
 
-        vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
+        ivars = epl.interval_data.IntervalVars()
         for i in interval_data.idx:
-            vars["sites"].append(
-                self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
-            )
-            vars["assets"].append(
+            ivars.append(self.site.one_interval(self.optimizer, self.site.cfg, i, freq))
+            ivars.append(
                 [
                     self.one_interval(self.optimizer, i, freq),
                     self.boiler.one_interval(self.optimizer, i, freq),
@@ -214,26 +212,28 @@ class Generator:
                 ]
             )
 
-            self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
-            self.constrain_within_interval(self.optimizer, vars, interval_data, i, freq)
+            self.site.constrain_within_interval(self.optimizer, ivars, interval_data, i)
+            self.constrain_within_interval(
+                self.optimizer, ivars, interval_data, i, freq
+            )
             self.boiler.constrain_within_interval(
-                self.optimizer, vars, interval_data, i, freq
+                self.optimizer, ivars, interval_data, i, freq
             )
             self.valve.constrain_within_interval(
-                self.optimizer, vars, interval_data, i, freq
+                self.optimizer, ivars, interval_data, i, freq
             )
             self.spill.constrain_within_interval(
-                self.optimizer, vars, interval_data, i, freq
+                self.optimizer, ivars, interval_data, i, freq
             )
 
-        assert len(interval_data.idx) == len(vars["assets"])
+        assert len(interval_data.idx) == len(ivars.objective_variables)
 
         objective_fn = epl.objectives[objective]
-        self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
+        self.optimizer.objective(objective_fn(self.optimizer, ivars, interval_data))
         status = self.optimizer.solve()
         self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, vars, feasible=status.feasible, flags=flags
+            interval_data, ivars, feasible=status.feasible, flags=flags
         )
 
     def plot(

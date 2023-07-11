@@ -94,7 +94,6 @@ def plot_battery(
 
 def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
     """Plot electric vehicle simulation results."""
-    breakpoint()  # fmt: skip
     simulation = results.simulation
 
     charger_usage = simulation[
@@ -158,10 +157,7 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     )
     axes[1].set_xlabel("Charge Events Net Charge (Discharge is Negative)")
 
-    breakpoint()  # fmt: skip
-    spill_charge_usage = simulation["charger-spill-electric_charge_mwh"].values.reshape(
-        -1, 1
-    )
+    spill_charge_usage = simulation["charger-spill-electric_charge_mwh"].values.reshape(-1, 1)
     data = spill_charge_usage
     seaborn.heatmap(
         data,

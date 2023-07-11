@@ -108,23 +108,10 @@ def constrain_connection_batteries_between_intervals(
             optimizer.constrain(alt.final_charge_mwh == neu.initial_charge_mwh)
 
 
-def constrain_initial_final_charge(
-    optimizer: Optimizer,
-    vars: collections.defaultdict,
-) -> None:
+def constrain_initial_final_charge(optimizer: Optimizer, initial, final) -> None:
     """Constrain the battery state of charge at the start and end of the simulation."""
-
-    assets = vars["assets"][0]
-    first = [a for a in assets if isinstance(a, epl.battery.BatteryOneInterval)]
-    for battery in first:
-        optimizer.constrain(
-            battery.initial_charge_mwh == battery.cfg.initial_charge_mwh
-        )
-
-    assets = vars["assets"][-1]
-    last = [a for a in assets if isinstance(a, epl.battery.BatteryOneInterval)]
-    for battery in last:
-        optimizer.constrain(battery.final_charge_mwh == battery.cfg.final_charge_mwh)
+    optimizer.constrain(initial.initial_charge_mwh == initial.cfg.initial_charge_mwh)
+    optimizer.constrain(final.final_charge_mwh == final.cfg.final_charge_mwh)
 
 
 class Battery:
@@ -207,29 +194,41 @@ class Battery:
     def constrain_within_interval(
         self,
         optimizer: Optimizer,
-        vars: collections.defaultdict,
+        ivars: "epl.interval_data.IntervalVars",
         interval_data: "epl.IntervalData",
         i: int,
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
         """Constrain Battery dispatch within a single interval"""
-        battery = epl.utils.filter_assets(vars, "battery", -1, name=self.cfg.name)[0]
+        battery = ivars.filter_objective_variables(
+            BatteryOneInterval, i=-1, asset_name=self.cfg.name
+        )
+        assert len(battery) == 1
+        battery = battery[0]
         constrain_only_charge_or_discharge(optimizer, battery, flags)
         constrain_battery_electricity_balance(optimizer, battery)
 
         #  this is one battery asset, all intervals
-        all_batteries = epl.utils.filter_all_assets(vars, "battery", self.cfg.name)
+        all_batteries = ivars.filter_objective_variables(
+            BatteryOneInterval, i=None, asset_name=self.cfg.name
+        )
         constrain_connection_batteries_between_intervals(optimizer, all_batteries)
 
     def constrain_after_intervals(
         self,
         optimizer: Optimizer,
-        vars: collections.defaultdict,
+        ivars: "epl.interval_data.IntervalVars",
         interval_data: "epl.IntervalData",
     ) -> None:
         """Constrain battery dispatch after all interval asset models are created."""
-        constrain_initial_final_charge(optimizer, vars)
+        initial = ivars.filter_objective_variables(
+            BatteryOneInterval, i=0, asset_name=self.cfg.name
+        )[0]
+        final = ivars.filter_objective_variables(
+            BatteryOneInterval, i=0, asset_name=self.cfg.name
+        )[0]
+        constrain_initial_final_charge(optimizer, initial, final)
 
     def optimize(
         self,
@@ -273,34 +272,32 @@ class Battery:
 
         self.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
 
-        vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
+        ivars = epl.interval_data.IntervalVars()
         for i in interval_data.idx:
-            vars["sites"].append(
-                self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
-            )
-            vars["assets"].append(
+            ivars.append(self.site.one_interval(self.optimizer, self.site.cfg, i, freq))
+            ivars.append(
                 [
                     self.one_interval(self.optimizer, i, freq, flags),
                     self.spill.one_interval(self.optimizer, i, freq),
                 ]
             )
 
-            self.site.constrain_within_interval(self.optimizer, vars, interval_data, i)
+            self.site.constrain_within_interval(self.optimizer, ivars, interval_data, i)
             self.constrain_within_interval(
-                self.optimizer, vars, interval_data, i, freq, flags=flags
+                self.optimizer, ivars, interval_data, i, freq, flags=flags
             )
 
-        self.constrain_after_intervals(self.optimizer, vars, interval_data)
+        self.constrain_after_intervals(self.optimizer, ivars, interval_data)
 
-        assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
+        assert len(interval_data.idx) == len(ivars.objective_variables)
 
         objective_fn = epl.objectives[objective]
-        self.optimizer.objective(objective_fn(self.optimizer, vars, interval_data))
+        self.optimizer.objective(objective_fn(self.optimizer, ivars, interval_data))
         status = self.optimizer.solve(verbose=verbose)
 
         self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, vars, feasible=status.feasible, verbose=verbose
+            interval_data, ivars, feasible=status.feasible, verbose=verbose
         )
 
     def plot(

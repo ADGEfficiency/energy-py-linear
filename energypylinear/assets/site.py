@@ -190,24 +190,12 @@ class Site:
     ) -> None:
         """Constrain site within a single interval."""
         constrain_site_electricity_balance(optimizer, self.cfg, ivars, interval_data, i)
-        constrain_site_import_export(
-            optimizer,
-            self.cfg,
-            ivars
-        )
+        constrain_site_import_export(optimizer, self.cfg, ivars)
         constrain_site_high_temperature_heat_balance(
-            optimizer,
-            self.cfg,
-            ivars,
-            interval_data,
-            i
+            optimizer, self.cfg, ivars, interval_data, i
         )
         constrain_site_low_temperature_heat_balance(
-            optimizer,
-            self.cfg,
-            ivars,
-            interval_data,
-            i
+            optimizer, self.cfg, ivars, interval_data, i
         )
 
     def optimize(
@@ -303,47 +291,46 @@ class Site:
         # for asset in self.assets:
         #     asset.interval_data = interval_data
 
-        vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
+        ivars = epl.interval_data.IntervalVars()
         for i in interval_data.idx:
-
-            #  setup blocks / data for site and assets
-            vars["sites"].append(self.one_interval(self.optimizer, self.cfg, i, freq))
+            ivars.append(self.one_interval(self.optimizer, self.cfg, i, freq))
             assets = []
             for asset in self.assets:
+
                 neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
                 #  tech debt TODO
                 #  EV is special beacuse it returns many blocks per step
                 if isinstance(asset, epl.EVs):
-                    #  evs and spill_evs - NOT the arrays
-                    assets.extend(neu_assets[0])
-                    assets.extend(neu_assets[2])
-                    vars[f"{asset.cfg.name}-evs-array"].append(neu_assets[1])
-                    vars[f"{asset.cfg.name}-spill-evs-array"].append(neu_assets[3])
+                    evs, evs_array, spill_evs, spill_evs_array = neu_assets
+                    assets.extend(evs)
+                    assets.extend(spill_evs)
+                    ivars.append(evs_array)
+                    ivars.append(spill_evs_array)
                 else:
                     assets.append(neu_assets)
 
-            vars["assets"].append(assets)
+            ivars.append(assets)
 
             self.constrain_within_interval(self.optimizer, ivars, interval_data, i)
             for asset in self.assets:
                 asset.constrain_within_interval(
-                    self.optimizer, vars, interval_data, i, flags=flags, freq=freq
+                    self.optimizer, ivars, interval_data, i, flags=flags, freq=freq
                 )
 
         for asset in self.assets:
             asset.constrain_after_intervals(
                 self.optimizer,
-                vars,
+                ivars,
                 interval_data,
             )
 
-        assert len(interval_data.idx) == len(vars["assets"]) == len(vars["sites"])
+        assert len(interval_data.idx) == len(ivars.objective_variables)
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(
             objective_fn(
                 self.optimizer,
-                vars,
+                ivars,
                 interval_data,
             )
         )
@@ -351,5 +338,5 @@ class Site:
         status = self.optimizer.solve(verbose=verbose)
         self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, vars, feasible=status.feasible, verbose=verbose
+            interval_data, ivars, feasible=status.feasible, verbose=verbose
         )

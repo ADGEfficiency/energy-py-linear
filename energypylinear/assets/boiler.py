@@ -72,30 +72,33 @@ class Boiler:
     def constrain_within_interval(
         self,
         optimizer: Optimizer,
-        vars: dict,
+        ivars: "epl.interval_data.IntervalVars",
         interval_data: "epl.IntervalData",
         i: int,
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
         """Constrain boiler upper and lower bounds for generating high & low temperature heat."""
-        boilers = epl.utils.filter_assets(vars, "boiler")
-        for asset in boilers:
-            optimizer.constrain(
-                asset.gas_consumption_mwh
-                == asset.high_temperature_generation_mwh
-                * (1 / asset.cfg.high_temperature_efficiency_pct)
-            )
-            optimizer.constrain_max(
-                asset.high_temperature_generation_mwh,
-                asset.binary,
-                freq.mw_to_mwh(asset.cfg.high_temperature_generation_max_mw),
-            )
-            optimizer.constrain_min(
-                asset.high_temperature_generation_mwh,
-                asset.binary,
-                freq.mw_to_mwh(asset.cfg.high_temperature_generation_min_mw),
-            )
+        boiler = ivars.filter_objective_variables(
+            BoilerOneInterval, i=-1, asset_name=self.cfg.name
+        )
+        assert len(boiler) == 1
+        boiler = boiler[0]
+        optimizer.constrain(
+            boiler.gas_consumption_mwh
+            == boiler.high_temperature_generation_mwh
+            * (1 / boiler.cfg.high_temperature_efficiency_pct)
+        )
+        optimizer.constrain_max(
+            boiler.high_temperature_generation_mwh,
+            boiler.binary,
+            freq.mw_to_mwh(boiler.cfg.high_temperature_generation_max_mw),
+        )
+        optimizer.constrain_min(
+            boiler.high_temperature_generation_mwh,
+            boiler.binary,
+            freq.mw_to_mwh(boiler.cfg.high_temperature_generation_min_mw),
+        )
 
     def constrain_after_intervals(
         self, *args: typing.Any, **kwargs: typing.Any

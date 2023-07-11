@@ -50,28 +50,19 @@ def extract_evs_results(
 ) -> None:
     """Extract simulation result data for the EV asset."""
 
-    #  need to check if there are evs, if so grab them out asset by asset
-    #  need to handle multiple evs or no evs
-
-    # pkg = []
-    # for asset_name in ivars.asset.keys():
-    #     pkg.append(ivars.filter_all_evs_array(True, asset_name))
-
-    # breakpoint()  # fmt: skip
-    # for ev_arrays in pkg:
-    #     evs = ev_arrays[i]
-
-    print(i)
-
+    print(f"extract_evs_results: i={i} non-spill")
     pkg = []
     for asset_name in ivars.asset.keys():
         try:
             vas = ivars.filter_evs_array(is_spill=False, i=i, asset_name=asset_name)
             pkg.append(vas)
+            print(f" saved {asset_name}")
         except IndexError:
             pass
 
     for evs in pkg:
+        asset_name = evs.cfg.name
+        print(f" {evs.cfg.name}")
         assert not evs.is_spill
         ev_cols = [
             "electric_charge_mwh",
@@ -84,7 +75,7 @@ def extract_evs_results(
         for charger_idx, charger_cfg in enumerate(evs.cfg.charger_cfgs):
             for attr in ev_cols:
                 name = f"{asset_name}-{charger_cfg.name}-{attr}"
-                print(name)
+                print(f" {name}")
                 results[name].append(
                     sum(
                         [
@@ -103,7 +94,7 @@ def extract_evs_results(
                 "electric_loss_mwh",
             ]:
                 name = f"{asset_name}-charge-event-{charge_event_idx}-{attr}"
-                print(name)
+                print(f" {name}")
                 results[name].append(
                     sum(
                         [
@@ -123,12 +114,12 @@ def extract_evs_results(
 
             for charge_event_idx, soc in enumerate(socs):
                 name = f"{asset_name}-charge-event-{charge_event_idx}-{attr}"
-                print(name)
+                print(f" {name}")
                 results[name].append(soc.value())
 
         #  spill charger (usually only one)
 
-    print("spill")
+    print(f"extract_evs_results: i={i} spill")
     pkg = []
     for asset_name in ivars.asset.keys():
         try:
@@ -143,7 +134,7 @@ def extract_evs_results(
         for charger_idx, spill_cfg in enumerate(spill_evs.cfg.spill_charger_cfgs):
             for attr in ev_cols:
                 name = f"{spill_evs.cfg.name}-{spill_cfg.name}-{attr}"
-                print(name)
+                print(f" {name}")
                 results[name].append(
                     sum(
                         [
@@ -186,8 +177,9 @@ def extract_results(
         results["site-import_power_mwh"].append(site.import_power_mwh.value())
         results["site-export_power_mwh"].append(site.export_power_mwh.value())
 
-        # spills = epl.utils.filter_assets(vars, "spill", i=i)
-        spills = ivars.filter_objective_variables(epl.assets.spill.Spill, i=i)
+        spills = ivars.filter_objective_variables(
+            epl.assets.spill.SpillOneInterval, i=i
+        )
         if len(spills) > 0:
             for spill in spills:
                 for attr in spill_quantities:
@@ -255,6 +247,16 @@ def extract_results(
         if evs := ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
             extract_evs_results(ivars, results, i)
 
+    def check_array_lengths(results):
+        lens = []
+        dbg = []
+        for k, v in results.items():
+            lens.append(len(v))
+            dbg.append((k, len(v)))
+
+        assert len(set(lens)) == 1, f"{len(set(lens))} {dbg}"
+
+    check_array_lengths(results)
     simulation = pd.DataFrame(results)
 
     #  include some interval data in simulation results
