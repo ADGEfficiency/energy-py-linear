@@ -4,9 +4,12 @@ Interface to the `pulp` optimization library to solve linear programming problem
 The `Optimizer` allows creating linear constraints, variables, and objectives, along with a linear program solver.
 """
 import dataclasses
+import datetime
 import typing
 
 import pulp
+
+from energypylinear.logger import logger
 
 
 @dataclasses.dataclass
@@ -28,12 +31,13 @@ class Optimizer:
 
     def __init__(self) -> None:
         """Initialize an Optimizer."""
-        import datetime
 
         self.prob = pulp.LpProblem(str(datetime.datetime.now()), pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=0)
 
-        print(f"{self.prob.name} vars: {len(self.variables())}")
+        logger.info(
+            "optimizer.init", prob=self.prob.name, variables=len(self.variables())
+        )
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -49,8 +53,7 @@ class Optimizer:
             low: The lower bound of the variable.
             up: The upper bound of the variable.
         """
-        #  TODO log debug
-        # print(f"continuous: {name}")
+        logger.debug("optimizer.continuous", name=name)
         return pulp.LpVariable(name=name, lowBound=low, upBound=up, cat="Continuous")
 
     def binary(self, name: str) -> pulp.LpVariable:
@@ -59,8 +62,7 @@ class Optimizer:
         Args:
             name: The name of the variable.
         """
-        #  TODO log debug
-        # print(f"binary: {name}")
+        logger.debug("optimizer.binary", name=name)
         return pulp.LpVariable(name=name, cat="Binary")
 
     def sum(self, vector: list[pulp.LpAffineExpression]) -> pulp.LpAffineExpression:
@@ -99,12 +101,17 @@ class Optimizer:
             verbose: a flag indicating how verbose the output should be.  0 for no output.
             allow_infeasible: whether an infeasible solution should raise an error.
         """
+        logger.debug(
+            "optimizer.solve",
+            variables=len(self.variables()),
+            constraints=len(self.constraints()),
+        )
         self.assert_no_duplicate_variables()
         self.solver.solve(self.prob)
 
         status = self.status()
         if verbose > 0:
-            print(f"status is {status}")
+            logger.info("optimizer.solve", status=status)
 
         feasible = status == "Optimal"
         if not allow_infeasible:

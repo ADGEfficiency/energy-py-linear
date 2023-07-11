@@ -14,19 +14,6 @@ from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
-# def filter_evs_array(vars, asset, i, name) -> "EVsArrayOneInterval":
-#     """TODO into utils"""
-#     key = f"{name}-{asset}"
-#     data = vars[key][i]
-#     return data
-
-
-# def filter_all_evs_array(vars, asset, name) -> "list[EVsArrayOneInterval]":
-#     """TODO into utils"""
-#     key = f"{name}-{asset}"
-#     data = vars[key]
-#     return data
-
 
 def validate_charge_events(
     charge_event_cfgs: np.ndarray, charge_events: np.ndarray | list
