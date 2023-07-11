@@ -1,9 +1,9 @@
 """Extract results from a solved linear program to pd.DataFrame's."""
 
 import pandas as pd
-from rich import print
 
 from energypylinear.interval_data import IntervalData
+from energypylinear.logger import logger
 from energypylinear.optimizer import Optimizer
 
 optimizer = Optimizer()
@@ -63,8 +63,7 @@ def check_electricity_balance(
         }
     )
     if verbose:
-        print("Electricity Balance")
-        print(data)
+        logger.info("check_electricity_balance", data=data.to_dict(orient="list"))
     assert balance.all()
     return data
 
@@ -94,8 +93,9 @@ def check_high_temperature_heat_balance(
         data["valve"] = simulation[col]
 
     if verbose:
-        print("High Temperature Heat Balance")
-        print(data)
+        logger.info(
+            "check_high_temperature_heat_balance", data=data.to_dict(orient="list")
+        )
     assert balance.all()
 
 
@@ -135,8 +135,9 @@ def check_low_temperature_heat_balance(
             data[name] = simulation[col]
 
     if verbose:
-        print("Low Temperature Heat Balance")
-        print(data)
+        logger.info(
+            "check_low_temperature_heat_balance", data=data.to_dict(orient="list")
+        )
     assert balance.all()
 
 

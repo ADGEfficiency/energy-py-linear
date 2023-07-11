@@ -9,6 +9,7 @@ from rich import print
 import energypylinear as epl
 from energypylinear.flags import Flags
 from energypylinear.interval_data import IntervalData
+from energypylinear.logger import logger
 from energypylinear.optimizer import Optimizer
 from energypylinear.results.checks import validate_results
 from energypylinear.results.schema import (quantities, simulation_schema,
@@ -49,20 +50,23 @@ def extract_evs_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int
 ) -> None:
     """Extract simulation result data for the EV asset."""
-
-    print(f"extract_evs_results: i={i} non-spill")
     pkg = []
     for asset_name in ivars.asset.keys():
         try:
             vas = ivars.filter_evs_array(is_spill=False, i=i, asset_name=asset_name)
             pkg.append(vas)
-            print(f" saved {asset_name}")
+            logger.info(
+                "filtering evs-array",
+                func="extract_evs_results",
+                i=i,
+                is_spill=False,
+                asset_name=asset_name,
+            )
         except IndexError:
             pass
 
     for evs in pkg:
         asset_name = evs.cfg.name
-        print(f" {evs.cfg.name}")
         assert not evs.is_spill
         ev_cols = [
             "electric_charge_mwh",
@@ -75,7 +79,14 @@ def extract_evs_results(
         for charger_idx, charger_cfg in enumerate(evs.cfg.charger_cfgs):
             for attr in ev_cols:
                 name = f"{asset_name}-{charger_cfg.name}-{attr}"
-                print(f" {name}")
+                logger.info(
+                    "extracting evs-array",
+                    func="extract_evs_results",
+                    i=i,
+                    is_spill=False,
+                    asset_name=asset_name,
+                    column=name,
+                )
                 results[name].append(
                     sum(
                         [
@@ -94,7 +105,14 @@ def extract_evs_results(
                 "electric_loss_mwh",
             ]:
                 name = f"{asset_name}-charge-event-{charge_event_idx}-{attr}"
-                print(f" {name}")
+                logger.info(
+                    "extracting evs-array",
+                    func="extract_evs_results",
+                    i=i,
+                    is_spill=False,
+                    asset_name=asset_name,
+                    column=name,
+                )
                 results[name].append(
                     sum(
                         [
@@ -114,12 +132,18 @@ def extract_evs_results(
 
             for charge_event_idx, soc in enumerate(socs):
                 name = f"{asset_name}-charge-event-{charge_event_idx}-{attr}"
-                print(f" {name}")
+                logger.info(
+                    "extracting evs-array",
+                    func="extract_evs_results",
+                    i=i,
+                    is_spill=evs.is_spill,
+                    asset_name=asset_name,
+                    column=name,
+                )
                 results[name].append(soc.value())
 
         #  spill charger (usually only one)
 
-    print(f"extract_evs_results: i={i} spill")
     pkg = []
     for asset_name in ivars.asset.keys():
         try:
@@ -129,12 +153,20 @@ def extract_evs_results(
             pass
 
     for spill_evs in pkg:
+        asset_name = spill_evs.cfg.name
         assert spill_evs.is_spill
         #  spill charger charge & discharge
         for charger_idx, spill_cfg in enumerate(spill_evs.cfg.spill_charger_cfgs):
             for attr in ev_cols:
                 name = f"{spill_evs.cfg.name}-{spill_cfg.name}-{attr}"
-                print(f" {name}")
+                logger.info(
+                    "extracting evs-array",
+                    func="extract_evs_results",
+                    i=i,
+                    is_spill=spill_evs.is_spill,
+                    asset_name=asset_name,
+                    column=name,
+                )
                 results[name].append(
                     sum(
                         [
@@ -296,8 +328,7 @@ def extract_results(
     )
 
     if verbose:
-        print("Total Mapper")
-        print(total_mapper)
+        logger.info("total mapper", mapper=total_mapper)
 
     simulation_schema.validate(simulation)
     validate_results(interval_data, simulation, verbose=verbose)

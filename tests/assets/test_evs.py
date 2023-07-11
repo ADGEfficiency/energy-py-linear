@@ -38,7 +38,7 @@ def test_evs_optimization_price() -> None:
         freq_mins=60,
     )
     simulation = results.simulation
-    print(simulation[[c for c in simulation.columns if "soc" in c]])
+    # print(simulation[[c for c in simulation.columns if "soc" in c]])
 
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
@@ -133,7 +133,7 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
         freq_mins=60,
     )
     simulation = results.simulation
-    print(simulation[[c for c in simulation.columns if "soc" in c]])
+    # print(simulation[[c for c in simulation.columns if "soc" in c]])
 
     #  test total import versus charge event mwh
     #  a less efficient charge event should mean we import more power
@@ -144,9 +144,9 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
     #     simulation["site-import_power_mwh"].sum(),
     #     sum(charge_events_capacity_mwh) + losses_mwh,
     # )
-    print(
-        f'import power: {simulation["site-import_power_mwh"].sum()}, charge event {sum(charge_events_capacity_mwh)}, {losses_mwh=}'
-    )
+    # print(
+    #     f'import power: {simulation["site-import_power_mwh"].sum()}, charge event {sum(charge_events_capacity_mwh)}, {losses_mwh=}'
+    # )
 
     np.testing.assert_allclose(
         simulation["total-electric_charge_mwh"] * (1 - efficiency),
@@ -185,9 +185,9 @@ def test_v2g():
                 prices_std=250,
                 seed=seed,
             )
-            print(
-                f"{charge_event_length=} {n_trial=} prices: {np.mean(ds['electricity_prices'])}"
-            )
+            # print(
+            #     f"{charge_event_length=} {n_trial=} prices: {np.mean(ds['electricity_prices'])}"
+            # )
 
             evs = epl.evs.EVs(
                 chargers_power_mw=ds["charger_mws"].tolist(),
@@ -214,7 +214,7 @@ def test_v2g():
         discharge["stdev"].append(statistics.stdev(trials["discharge"]))
 
         #  check at each step to fail early
-        print(discharge)
+        # print(discharge)
         assert all(
             x <= y
             for x, y in zip(discharge["mean"][:-1], discharge["mean"][1:], strict=True)
@@ -299,7 +299,7 @@ def test_evs_performance():
     for flag in [False, True]:
         for idx_length in idx_lengths:
             start_time = timeit.default_timer()
-            print(f"idx_length: {idx_length}")
+            # print(f"idx_length: {idx_length}")
 
             ds = epl.data_generation.generate_random_ev_input_data(
                 idx_length,
@@ -332,9 +332,9 @@ def test_evs_performance():
             data["pkg"].append(
                 {"idx_length": idx_length, "time": elapsed, "flag": flag}
             )
-            print(
-                f"idx_length: {idx_length}, elapsed: {elapsed:2.2f} sec, flag: {flag}"
-            )
+            # print(
+            #     f"idx_length: {idx_length}, elapsed: {elapsed:2.2f} sec, flag: {flag}"
+            # )
 
     plt.figure()
     for flag in [True, False]:
