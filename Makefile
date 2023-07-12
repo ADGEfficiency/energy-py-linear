@@ -3,21 +3,22 @@
 all: test
 
 #  SETUP
-
 .PHONY: setup setup-test setup-static setup-check setup-docs
+QUIET := -q
+
 setup:
-	pip install --upgrade pip -q
-	pip install poetry -c ./constraints.txt -q
-	poetry install --with main -q
+	pip install --upgrade pip $(QUIET)
+	pip install poetry -c ./constraints.txt $(QUIET)
+	poetry install --with main $(QUIET)
 
 setup-test: setup
-	poetry install --with test -q
+	poetry install --with test $(QUIET)
 
 setup-static: setup
-	poetry install --with static -q
+	poetry install --with static $(QUIET)
 
 setup-check: setup
-	poetry install --with check -q
+	poetry install --with check $(QUIET)
 
 #  manage docs dependencies separately because
 #  we build docs on netlify
@@ -25,10 +26,12 @@ setup-check: setup
 #  maybe could change this now we use mike
 #  as we don't run a build on netlify anymore
 setup-docs:
-	pip install -r ./docs/requirements.txt -q
+	pip install -r ./docs/requirements.txt $(QUIET)
 
 #  TEST
 .PHONY: test test-docs clean-test-docs test-ci test-validate
+DISABLE_LOGGERS = ""
+export
 
 test: setup-test clean-test-docs test-docs
 	pytest tests --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon --pdb
@@ -60,7 +63,7 @@ test-validate:
 
 check: lint static
 
-#  CHECK - STATIC TYPING
+#  STATIC TYPING
 
 static: setup-static
 	rm -rf ./tests/phmdoctest
@@ -68,7 +71,7 @@ static: setup-static
 	mypy --pretty ./tests
 	mypy --pretty ./examples
 
-#  CHECK - LINTING
+#  LINTING
 
 lint: setup-check
 	rm -rf ./tests/phmdoctest
@@ -96,7 +99,6 @@ publish: setup
 	#  TODO publish docs
 
 #  DOCS
-
 .PHONY: docs mike-deploy
 
 docs: setup-docs

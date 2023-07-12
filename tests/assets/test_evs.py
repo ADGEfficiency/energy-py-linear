@@ -1,5 +1,6 @@
 """Test electric vehicle asset."""
 import collections
+import statistics
 import timeit
 
 import hypothesis
@@ -167,8 +168,6 @@ def test_v2g() -> None:
 
     this reduces the variance between trials - each trial uses the same prices
     """
-    import collections
-    import statistics
 
     num_trials = 25
     seeds = np.random.randint(0, 1000, size=num_trials)
