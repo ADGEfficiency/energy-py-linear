@@ -4,24 +4,9 @@ This ability comes from two things - an objective function, which can be either 
 
 We can dispatch a battery to minimize carbon emissions by passing in `objective='carbon'`:
 
-```python
-import energypylinear as epl
+## Setup Battery Model
 
-asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
-
-results = asset.optimize(
-  electricity_prices=[100, 50, 200, -100, 0, 200, 100, -100],
-  electricity_carbon_intensities = [0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01],
-  objective='carbon'
-)
-```
-
-We can compare these results above with a simulation that optimizes for price, using a `energypylinear.accounting.Account` to compare both simulations.  
-
-Our optimization for price has a high negative cost.  
-
-The optimization for carbon has lower emissions, but at a higher cost:
-
+<!--phmdoctest-share-names-->
 ```python
 import energypylinear as epl
 
@@ -31,39 +16,83 @@ electricity_carbon_intensities = [0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01]
 
 #  battery asset
 asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
+```
 
-#  optimize for money
-price = asset.optimize(electricity_prices=electricity_prices)
+## Optimize for Carbon
 
-#  optimize for the planet
+<!--phmdoctest-share-names-->
+```python
+#  optimize for carbon
 carbon = asset.optimize(
-  electricity_prices=electricity_prices,
-  electricity_carbon_intensities=electricity_carbon_intensities,
-  objective='carbon'
+    electricity_prices=electricity_prices,
+    electricity_carbon_intensities=electricity_carbon_intensities,
+    objective='carbon',
+    verbose=False
+)
+
+carbon_account = epl.get_accounts(
+    carbon.interval_data,
+    carbon.simulation,
+    verbose=False
+)
+
+print(f"{carbon_account=}")
+```
+
+```
+carbon_account=<Accounts profit=134.44 emissions=-2.2733>
+```
+
+## Optimize for Money
+
+We can compare these results above with a simulation that optimizes for price, using a `energypylinear.accounting.Account` to compare both simulations.  
+
+Our optimization for price has a high negative cost.  
+
+The optimization for carbon has lower emissions, but at a higher cost:
+
+<!--phmdoctest-share-names-->
+```python
+#  optimize for money
+price = asset.optimize(
+    electricity_prices=electricity_prices,
+    verbose=False
 )
 
 #  get an account representing the difference between the two
-price = epl.get_accounts(
-  price.interval_data,
-  price.simulation,
-)
-carbon = epl.get_accounts(
-  carbon.interval_data,
-  carbon.simulation,
+price_account = epl.get_accounts(
+    price.interval_data,
+    price.simulation,
+    verbose=False
 )
 
-print(price)
-# cost=-1057.777778 emissions=0.08222222199999996 profit=1057.777778
+print(f"{price_account=}")
+```
 
-print(carbon)
-# cost=-134.44444399999998 emissions=-2.2733333339999997 profit=134.44444399999998
+```
+price_account=<Accounts profit=1057.78 emissions=0.0822>
+```
 
-variance = price - carbon
-print(variance)
-# cost=-923.3333339999999 emissions=2.3555555559999997
+## Calculate Variance Between Accounts
 
-print(-variance.cost / variance.emissions)
-# 391.9811322845319
+<!--phmdoctest-share-names-->
+```python
+variance = price_account - carbon_account
+print(f"{variance=}")
+```
+
+```
+variance=<Account profit=923.33 emissions=2.3556>
+```
+
+## Calculate a Carbon Price
+
+```python
+print(f"{-variance.cost / variance.emissions:.2f} $/tC")
+```
+
+```
+391.98 $/tC
 ```
 
 The accounting API is in it's first iteration - expect it to change in the future.

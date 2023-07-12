@@ -65,6 +65,7 @@ def extract_evs_results(
         except IndexError:
             pass
 
+    #  extract all of the ev assets
     for evs in pkg:
         asset_name = evs.cfg.name
         assert not evs.is_spill
@@ -98,13 +99,13 @@ def extract_evs_results(
 
         #  charge events (non-spill) are summed across each charger
         #  one charge event, multiple chargers
-        for charge_event_idx, _ in enumerate(evs.cfg.charge_event_cfgs):
+        for charge_event_idx, charge_event_cfg in enumerate(evs.cfg.charge_event_cfgs):
             for attr in [
                 "electric_charge_mwh",
                 "electric_discharge_mwh",
                 "electric_loss_mwh",
             ]:
-                name = f"{asset_name}-charge-event-{charge_event_idx}-{attr}"
+                name = f"{asset_name}-{charge_event_cfg.name}-{attr}"
                 logger.info(
                     "extracting evs-array",
                     func="extract_evs_results",
@@ -122,11 +123,11 @@ def extract_evs_results(
                     )
                 )
 
+        #  socs are for a charge event - one soc per charge event
         for attr in [
             "initial_soc_mwh",
             "final_soc_mwh",
         ]:
-            #  socs for all the charge events
             socs = getattr(evs, attr)[0]
             assert socs.shape == evs.cfg.charge_event_cfgs.shape
 
@@ -141,8 +142,6 @@ def extract_evs_results(
                     column=name,
                 )
                 results[name].append(soc.value())
-
-        #  spill charger (usually only one)
 
     pkg = []
     for asset_name in ivars.asset.keys():

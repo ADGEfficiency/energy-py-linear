@@ -260,7 +260,7 @@ class Battery:
         Returns:
             epl.results.SimulationResult
         """
-        self.optimizer = Optimizer()
+        self.optimizer = Optimizer(verbose=verbose)
         freq = Freq(freq_mins)
         interval_data = epl.interval_data.IntervalData(
             electricity_prices=electricity_prices,

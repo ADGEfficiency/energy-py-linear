@@ -37,6 +37,8 @@ test-docs: clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
 	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
+	python -m phmdoctest ./docs/docs/how-to/dispatch-forecast.md --outfile tests/phmdoctest/test_forecast.py
+	python -m phmdoctest ./docs/docs/how-to/price-carbon.md --outfile tests/phmdoctest/test_carbon.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-assets.md --outfile tests/phmdoctest/test_dispatch_assets.py
 
 clean-test-docs:
@@ -103,6 +105,7 @@ docs: setup-docs
 	#  `mkdocs serve` will usually be more useful during development
 	cd docs; mkdocs serve; cd ..
 
+#  this deploys the current docs to the docs branch
 #  -u = update aliases of this $(VERSION) to latest
 #  -b = branch - aligns with the branch name we build docs off
 #  -r = Github remote

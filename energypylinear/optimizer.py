@@ -29,15 +29,16 @@ class Optimizer:
         solver: solver to use for solving the optimization problem.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, verbose: bool = True) -> None:
         """Initialize an Optimizer."""
 
         self.prob = pulp.LpProblem(str(datetime.datetime.now()), pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=0)
 
-        logger.info(
-            "optimizer.init", prob=self.prob.name, variables=len(self.variables())
-        )
+        # if verbose:
+        #     logger.info(
+        #         "optimizer.init", prob=self.prob.name, variables=len(self.variables())
+        #     )
 
     def __repr__(self) -> str:
         """A string representation of self."""

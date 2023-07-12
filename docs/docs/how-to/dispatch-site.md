@@ -1,4 +1,4 @@
-# Dispatching Multiple Assets with the Site API
+# Multiple Assets with the Site API
 
 The site API allows optimizing many assets at the same time.
 
