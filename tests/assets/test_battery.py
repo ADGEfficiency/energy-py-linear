@@ -1,16 +1,10 @@
 """Test battery asset."""
-import collections
-import statistics
-import time
 
 import hypothesis
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from rich import print
 
 import energypylinear as epl
-from energypylinear.flags import Flags
 
 #  maybe can move to defaults / constants
 tol = 1e-5
@@ -183,67 +177,3 @@ def test_battery_hypothesis(
     this will cause the line below to break
     """
     # assert all(subset[f"{name}-losses_mwh"] == 0)
-
-
-def test_battery_performance() -> None:
-    """Test the Battery run time perforamnce."""
-    idx_lengths = [
-        6,
-        # one day 60 min freq
-        24,
-        # one week 60 min freq
-        168,
-        # one week 15 min freq
-        672,
-        # two weeks
-        1344,
-    ]
-    num_trials = 15
-
-    run_times = collections.defaultdict(list)
-    for idx_length in idx_lengths:
-        trial_times = collections.defaultdict(list)
-
-        for n_trial in range(num_trials):
-            print(f"idx_length: {idx_length} trial {n_trial}")
-            st = time.perf_counter()
-
-            ds = {"electricity_prices": np.random.uniform(-1000, 1000, idx_length)}
-            asset = epl.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
-
-            asset.optimize(
-                electricity_prices=ds["electricity_prices"],
-                verbose=False,
-                flags=Flags(
-                    allow_evs_discharge=True,
-                    fail_on_spill_asset_use=True,
-                    allow_infeasible=False,
-                ),
-            )
-
-            trial_times["time"].append(time.perf_counter() - st)
-
-        run_times["time"].append(
-            (
-                statistics.mean(trial_times["time"]),
-                statistics.stdev(trial_times["time"]),
-            )
-        )
-        print(f"idx_length: {idx_length}, elapsed: {run_times}")
-
-    fig, axes = plt.subplots(nrows=1, sharex=True)
-    print("[red]final run times:[/]")
-    print(run_times)
-    axes.plot(
-        idx_lengths,
-        [mean for mean, std in run_times["time"]],
-        marker="o",
-        label="mean",
-    )
-    axes.set_title(asset.__repr__())
-    axes.set_ylabel("Run Time (seconds)")
-    axes.legend()
-    axes.grid(True)
-    plt.xlabel("Index Length")
-    plt.tight_layout()
-    fig.savefig("./docs/docs/static/battery-performance.png")

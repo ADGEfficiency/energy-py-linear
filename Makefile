@@ -101,6 +101,9 @@ publish: setup
 #  DOCS
 .PHONY: docs mike-deploy
 
+generate-docs-images: setup
+	python ./docs/generate_images.py
+
 docs: setup-docs
 	#  `mike serve` will show docs for the different versions
 	#  `mkdocs serve` will show docs for the current version in markdown
@@ -114,5 +117,5 @@ docs: setup-docs
 #  -p = push
 #  TODO - get VERSION from pyproject.toml
 #  TODO - this is not used in CI anywhere yet
-mike-deploy: setup-docs
+mike-deploy: setup-docs generate-docs-images
 	cd docs; mike deploy $(VERSION) latest -u -b mike-pages -r origin -p
