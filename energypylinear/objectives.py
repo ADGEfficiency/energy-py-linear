@@ -6,16 +6,23 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
-def filter_spill_evs(ivars, interval_data):
-    spill_evs = ivars.filter_objective_variables(epl.evs.EVOneInterval)
+def filter_spill_evs(
+    ivars: "epl.interval_data.IntervalVars",
+    interval_data: "epl.interval_data.IntervalData",
+) -> "list[list[epl.assets.evs.EVOneInterval]]":
+    spill_evs = ivars.filter_objective_variables(epl.assets.evs.EVOneInterval)
     pkg = []
     for i, assets in enumerate(spill_evs):
-        pkg.append([ev for ev in assets if ev.is_spill])
-    spill_evs = pkg
+        for ev in assets:
+            temp = []
+            assert isinstance(ev, epl.assets.evs.EVOneInterval)
+            if ev.is_spill:
+                temp.append(ev)
+            pkg.append(temp)
 
     if len(spill_evs) == 0:
-        spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
-    return spill_evs
+        pkg = [[epl.assets.evs.EVOneInterval()] for i in interval_data.idx]
+    return pkg
 
 
 def price_objective(

@@ -65,8 +65,8 @@ check: lint static
 static: setup-static
 	rm -rf ./tests/phmdoctest
 	mypy --pretty ./energypylinear
-	mypy --config-file ./mypy.ini --pretty ./tests
-	mypy --config-file ./mypy.ini --pretty ./examples
+	mypy --pretty ./tests
+	mypy --pretty ./examples
 
 #  CHECK - LINTING
 

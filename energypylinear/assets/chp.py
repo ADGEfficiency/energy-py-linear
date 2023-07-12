@@ -151,8 +151,8 @@ class Generator:
 
     def optimize(
         self,
-        electricity_prices: typing.Union[np.ndarray, list[float]],
-        gas_prices: typing.Union[None, np.ndarray, float] = None,
+        electricity_prices: np.ndarray | typing.Sequence[float],
+        gas_prices: np.ndarray | typing.Sequence[float] | None = None,
         electricity_carbon_intensities: typing.Union[
             None, np.ndarray, list[float], float
         ] = None,

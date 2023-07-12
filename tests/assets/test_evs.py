@@ -112,7 +112,7 @@ def test_evs_optimization_carbon() -> None:
 )
 def test_evs_efficiency_losses(efficiency: float) -> None:
     """Test the EV charge event losses."""
-    charge_events_capacity_mwh = [50, 100, 30, 40]
+    charge_events_capacity_mwh: list[float] = [50, 100, 30, 40]
     evs = epl.evs.EVs(
         chargers_power_mw=[500, 500],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
@@ -159,7 +159,7 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
     #  this would allow matching of different efficiency chargers and charge events
 
 
-def test_v2g():
+def test_v2g() -> None:
     """
     this test is stochastic
 
@@ -285,7 +285,7 @@ def test_evs_hypothesis(
     )
 
 
-def test_evs_performance():
+def test_evs_performance() -> None:
     """Test the Battery run time perforamnce."""
     idx_lengths = [
         6,
@@ -330,7 +330,6 @@ def test_evs_performance():
             )
 
             elapsed = timeit.default_timer() - start_time
-            data["time"].append(elapsed)
             data["pkg"].append(
                 {"idx_length": idx_length, "time": elapsed, "flag": flag}
             )
@@ -340,7 +339,7 @@ def test_evs_performance():
 
     plt.figure()
     for flag in [True, False]:
-        subset = [p for p in data["pkg"] if p["flag"] == flag]
+        subset: list = [p for p in data["pkg"] if p["flag"] == flag]
         plt.plot(
             [p["idx_length"] for p in subset],
             [p["time"] for p in subset],

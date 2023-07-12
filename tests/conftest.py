@@ -10,7 +10,7 @@ else:
     disable_loggers = disable_logger_names.split(",")
 
 
-def pytest_configure():
+def pytest_configure() -> None:
     for logger_name in disable_loggers:
         logger = logging.getLogger(logger_name)
         logger.disabled = True

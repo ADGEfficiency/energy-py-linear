@@ -477,7 +477,7 @@ class EVs:
     def __init__(
         self,
         chargers_power_mw: list[float] | None = None,
-        charge_events_capacity_mwh: list[float] | None = None,
+        charge_events_capacity_mwh: typing.Sequence[float] | None = None,
         charge_event_efficiency: float = 0.9,
         #  TODO charger efficiency
         charger_turndown: float = 0.1,
@@ -492,6 +492,9 @@ class EVs:
             )
             chargers_power_mw = ds["charger_mws"]
             charge_events_capacity_mwh = ds["charge_events_capacity_mwh"]
+
+        assert chargers_power_mw
+        assert charge_events_capacity_mwh
 
         #  TODO remove these as attributes of the class
         self.charger_cfgs = np.array(
@@ -551,6 +554,12 @@ class EVs:
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> tuple:
         """Create EV asset data for a single interval."""
+
+        assert isinstance(self.cfg.charge_event_cfgs, np.ndarray)
+        assert isinstance(self.cfg.charger_cfgs, np.ndarray)
+        assert isinstance(self.cfg.spill_charger_cfgs, np.ndarray)
+        assert isinstance(self.charge_events, np.ndarray)
+
         evs, evs_array = evs_one_interval(
             optimizer,
             self.cfg,
@@ -637,6 +646,7 @@ class EVs:
         interval_data: "epl.IntervalData",
     ) -> None:
         """Constrain EVs after all interval asset models are created."""
+        assert isinstance(self.cfg.charge_event_cfgs, np.ndarray)
         constrain_initial_final_charge(
             optimizer,
             ivars.filter_all_evs_array(False, self.cfg.name),
@@ -703,6 +713,7 @@ class EVs:
         if self.charge_events is not None and charge_events is None:
             charge_events = self.charge_events
 
+        assert charge_events
         self.charge_events = validate_charge_events(
             self.charge_event_cfgs, charge_events
         )

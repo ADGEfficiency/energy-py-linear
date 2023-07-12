@@ -187,18 +187,22 @@ class IntervalData(pydantic.BaseModel):
 
 
 class IntervalVars:
-    def __repr__(self) -> str:
-        return f"<epl.IntervalVars i: {len(self.objective_variables)}>"
 
-    def __init__(self):
+    def __init__(self) -> None:
         #  not every lp variable - only the ones we want to iterate over
         #  in the objective functions (price, carbon etc)
-        self.objective_variables = []
-        self.asset = collections.defaultdict(
+        self.objective_variables: list[list[AssetOneInterval]] = []
+        self.asset: collections.defaultdict = collections.defaultdict(
             lambda: {"evs_array": [], "spill_evs_array": [], "site": []}
         )
 
-    def append(self, one_interval: AssetOneInterval) -> None:
+    def __repr__(self) -> str:
+        return f"<epl.IntervalVars i: {len(self.objective_variables)}>"
+
+    def append(
+        self,
+        one_interval: AssetOneInterval | SiteOneInterval | list[AssetOneInterval]
+    ) -> None:
         #  some OneInterval objects are special
         #  is this case it is the Array EV data structures
         #  TODO in future don't save these separately and
@@ -241,8 +245,7 @@ class IntervalVars:
         instance_type: type[AssetOneInterval],
         i: int | None = None,
         asset_name: str | None = None,
-    ) -> list[list] | list:
-
+    ) -> list[list[AssetOneInterval]]:
         #  here we return data for all intervals
         if i is None:
             pkg = []
@@ -264,9 +267,9 @@ class IntervalVars:
         #  here we return data for one interval
         else:
             assets = self.objective_variables[i]
-            return [
+            return [[
                 asset
                 for asset in assets
                 if isinstance(asset, instance_type)
                 and (asset.cfg.name == asset_name if asset_name is not None else True)
-            ]
+            ]]

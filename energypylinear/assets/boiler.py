@@ -79,11 +79,11 @@ class Boiler:
         flags: Flags = Flags(),
     ) -> None:
         """Constrain boiler upper and lower bounds for generating high & low temperature heat."""
-        boiler = ivars.filter_objective_variables(
+        boilers = ivars.filter_objective_variables(
             BoilerOneInterval, i=-1, asset_name=self.cfg.name
         )
-        assert len(boiler) == 1
-        boiler = boiler[0]
+        boiler = boilers[0][0]
+        assert isinstance(boiler, BoilerOneInterval)
         optimizer.constrain(
             boiler.gas_consumption_mwh
             == boiler.high_temperature_generation_mwh

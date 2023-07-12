@@ -23,6 +23,8 @@ class AssetOneInterval(pydantic.BaseModel):
     Charge and discharge are handled as explicit accumulation terms.
     """
 
+    cfg: typing.Any
+
     electric_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
     high_temperature_generation_mwh: typing.Union[pulp.LpVariable, float] = 0
     low_temperature_generation_mwh: typing.Union[pulp.LpVariable, float] = 0

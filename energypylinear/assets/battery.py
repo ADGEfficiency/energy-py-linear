@@ -48,7 +48,7 @@ class BatteryOneInterval(AssetOneInterval):
 
 def constrain_only_charge_or_discharge(
     optimizer: Optimizer,
-    battery: BatteryOneInterval,
+    battery: AssetOneInterval,
     flags: Flags,
 ) -> None:
     """Constrain battery to only charge or discharge.
@@ -56,6 +56,7 @@ def constrain_only_charge_or_discharge(
     Usually flagged off - slows things down a lot (~2x as slow).  Instead of forcing only charge or
     discharge, the objective function just takes the difference to calculate net charge.
     """
+    assert isinstance(battery, BatteryOneInterval)
     if flags.include_charge_discharge_binary_variables:
         optimizer.constrain_max(
             battery.electric_charge_mwh,
@@ -73,9 +74,10 @@ def constrain_only_charge_or_discharge(
 
 
 def constrain_battery_electricity_balance(
-    optimizer: Optimizer, battery: BatteryOneInterval
+    optimizer: Optimizer, battery: AssetOneInterval
 ) -> None:
     """Constrain energy balance in a single interval - also calculates losses."""
+    assert isinstance(battery, BatteryOneInterval)
     optimizer.constrain(
         battery.initial_charge_mwh
         + battery.electric_charge_mwh
@@ -91,7 +93,7 @@ def constrain_battery_electricity_balance(
 
 def constrain_connection_batteries_between_intervals(
     optimizer: Optimizer,
-    batteries: list[BatteryOneInterval],
+    batteries: list[list[AssetOneInterval]],
 ) -> None:
     """Constrain battery dispatch between two adjacent intervals."""
 
@@ -104,11 +106,18 @@ def constrain_connection_batteries_between_intervals(
         old = batteries[-2]
         new = batteries[-1]
         for alt, neu in zip(old, new, strict=True):
+            assert isinstance(alt, BatteryOneInterval)
+            assert isinstance(neu, BatteryOneInterval)
             optimizer.constrain(alt.final_charge_mwh == neu.initial_charge_mwh)
 
 
-def constrain_initial_final_charge(optimizer: Optimizer, initial, final) -> None:
+def constrain_initial_final_charge(
+    optimizer: Optimizer, initial: AssetOneInterval, final: AssetOneInterval
+) -> None:
     """Constrain the battery state of charge at the start and end of the simulation."""
+    assert isinstance(initial, BatteryOneInterval)
+    assert isinstance(final, BatteryOneInterval)
+
     optimizer.constrain(initial.initial_charge_mwh == initial.cfg.initial_charge_mwh)
     optimizer.constrain(final.final_charge_mwh == final.cfg.final_charge_mwh)
 
@@ -200,11 +209,11 @@ class Battery:
         flags: Flags = Flags(),
     ) -> None:
         """Constrain Battery dispatch within a single interval"""
-        battery = ivars.filter_objective_variables(
+        batteries = ivars.filter_objective_variables(
             BatteryOneInterval, i=-1, asset_name=self.cfg.name
         )
-        assert len(battery) == 1
-        battery = battery[0]
+        assert len(batteries) == 1
+        battery: AssetOneInterval = batteries[0][0]
         constrain_only_charge_or_discharge(optimizer, battery, flags)
         constrain_battery_electricity_balance(optimizer, battery)
 
@@ -212,6 +221,7 @@ class Battery:
         all_batteries = ivars.filter_objective_variables(
             BatteryOneInterval, i=None, asset_name=self.cfg.name
         )
+        assert type(all_batteries) == list[list[BatteryOneInterval]]
         constrain_connection_batteries_between_intervals(optimizer, all_batteries)
 
     def constrain_after_intervals(
@@ -223,16 +233,16 @@ class Battery:
         """Constrain battery dispatch after all interval asset models are created."""
         initial = ivars.filter_objective_variables(
             BatteryOneInterval, i=0, asset_name=self.cfg.name
-        )[0]
+        )[0][0]
         final = ivars.filter_objective_variables(
             BatteryOneInterval, i=-1, asset_name=self.cfg.name
-        )[0]
+        )[0][0]
         constrain_initial_final_charge(optimizer, initial, final)
 
     def optimize(
         self,
-        electricity_prices: np.ndarray | list[float],
-        gas_prices: np.ndarray | list[float] | None = None,
+        electricity_prices: np.ndarray | typing.Sequence[float],
+        gas_prices: np.ndarray | typing.Sequence[float] | None = None,
         electricity_carbon_intensities: np.ndarray | list[float] | None = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,

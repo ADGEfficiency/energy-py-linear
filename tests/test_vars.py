@@ -4,7 +4,7 @@ import energypylinear as epl
 from energypylinear.interval_data import IntervalVars
 
 
-def test_var():
+def test_var() -> None:
     """
     for interval
         make some lp vars

@@ -185,7 +185,7 @@ def test_battery_hypothesis(
     # assert all(subset[f"{name}-losses_mwh"] == 0)
 
 
-def test_battery_performance():
+def test_battery_performance() -> None:
     """Test the Battery run time perforamnce."""
     idx_lengths = [
         6,
@@ -212,7 +212,7 @@ def test_battery_performance():
             asset = epl.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
 
             asset.optimize(
-                **ds,
+                electricity_prices=ds["electricity_prices"],
                 verbose=False,
                 flags=Flags(
                     allow_evs_discharge=True,

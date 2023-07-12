@@ -11,16 +11,16 @@ console = Console()
 
 
 class PulpRedirectHandler(logging.Handler):
-    def __init__(self, level=logging.NOTSET):
+    def __init__(self, level: int = logging.NOTSET) -> None:
         super().__init__(level)
         self._structlog = structlog.get_logger()
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         message = self.format(record)
         self._structlog.debug("pulp", pulp_message=message)
 
 
-def configure_logger():
+def configure_logger() -> None:
     # Check if the logs directory exists, if not, create it.
     if not os.path.exists("logs"):
         os.makedirs("logs")

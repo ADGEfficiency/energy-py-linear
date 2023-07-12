@@ -66,7 +66,7 @@ class Optimizer:
         logger.debug("optimizer.binary", name=name)
         return pulp.LpVariable(name=name, cat="Binary")
 
-    def sum(self, vector: list[pulp.LpAffineExpression]) -> pulp.LpAffineExpression:
+    def sum(self, vector: list[pulp.LpAffineExpression | float]) -> pulp.LpAffineExpression:
         """Sums a list of linear expressions.
 
         Args:

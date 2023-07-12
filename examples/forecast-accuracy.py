@@ -8,7 +8,7 @@ import energypylinear as epl
 if __name__ == "__main__":
 
     #  price and forecast csv data
-    data = """
+    raw = """
     Timestamp,Trading Price [$/MWh],Predispatch Forecast [$/MWh]
     2018-07-01 17:00:00,177.11,97.58039000000001
     2018-07-01 17:30:00,135.31,133.10307
@@ -43,19 +43,19 @@ if __name__ == "__main__":
     2018-07-02 08:00:00,120.33,308.88984
     2018-07-02 08:30:00,113.26,162.32117
     """
-    data = pd.read_csv(io.StringIO(data))
+    data = pd.read_csv(io.StringIO(raw))
 
     #  battery model
     asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
 
     #  optimize for actuals
     actuals = asset.optimize(
-        electricity_prices=data["Trading Price [$/MWh]"],
+        electricity_prices=data["Trading Price [$/MWh]"].values,
         freq_mins=30,
     )
     #  optimize for forecasts
     forecasts = asset.optimize(
-        electricity_prices=data["Predispatch Forecast [$/MWh]"],
+        electricity_prices=data["Predispatch Forecast [$/MWh]"].values,
         freq_mins=30,
     )
 
