@@ -31,7 +31,7 @@ setup-docs:
 .PHONY: test test-docs clean-test-docs test-ci test-validate
 
 test: setup-test clean-test-docs test-docs
-	pytest tests --showlocals --full-trace --tb=short -v -x --lf -s --color=yes --testmon --pdb
+	pytest tests --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon --pdb
 
 test-docs: clean-test-docs
 	mkdir -p ./tests/phmdoctest

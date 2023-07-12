@@ -46,7 +46,7 @@ class SimulationResult(pydantic.BaseModel):
 
 
 def extract_evs_results(
-    ivars: "epl.interval_data.IntervalVars", results: dict, i: int
+    ivars: "epl.interval_data.IntervalVars", results: dict, i: int, verbose: bool = True
 ) -> None:
     """Extract simulation result data for the EV asset."""
     pkg = []
@@ -54,13 +54,23 @@ def extract_evs_results(
         try:
             vas = ivars.filter_evs_array(is_spill=False, i=i, asset_name=asset_name)
             pkg.append(vas)
-            logger.info(
-                "filtering evs-array",
-                func="extract_evs_results",
-                i=i,
-                is_spill=False,
-                asset_name=asset_name,
-            )
+            if verbose:
+                logger.info(
+                    "filtering evs-array",
+                    func="extract_evs_results",
+                    i=i,
+                    is_spill=False,
+                    asset_name=asset_name,
+                )
+            else:
+                logger.debug(
+                    "filtering evs-array",
+                    func="extract_evs_results",
+                    i=i,
+                    is_spill=False,
+                    asset_name=asset_name,
+                )
+
         except IndexError:
             pass
 
@@ -79,14 +89,24 @@ def extract_evs_results(
         for charger_idx, charger_cfg in enumerate(evs.cfg.charger_cfgs):
             for attr in ev_cols:
                 name = f"{asset_name}-{charger_cfg.name}-{attr}"
-                logger.info(
-                    "extracting evs-array",
-                    func="extract_evs_results",
-                    i=i,
-                    is_spill=False,
-                    asset_name=asset_name,
-                    column=name,
-                )
+                if verbose:
+                    logger.info(
+                        "extracting evs-array",
+                        func="extract_evs_results",
+                        i=i,
+                        is_spill=False,
+                        asset_name=asset_name,
+                        column=name,
+                    )
+                else:
+                    logger.debug(
+                        "extracting evs-array",
+                        func="extract_evs_results",
+                        i=i,
+                        is_spill=False,
+                        asset_name=asset_name,
+                        column=name,
+                    )
                 results[name].append(
                     sum(
                         [
@@ -105,14 +125,24 @@ def extract_evs_results(
                 "electric_loss_mwh",
             ]:
                 name = f"{asset_name}-{charge_event_cfg.name}-{attr}"
-                logger.info(
-                    "extracting evs-array",
-                    func="extract_evs_results",
-                    i=i,
-                    is_spill=False,
-                    asset_name=asset_name,
-                    column=name,
-                )
+                if verbose:
+                    logger.info(
+                        "extracting evs-array",
+                        func="extract_evs_results",
+                        i=i,
+                        is_spill=False,
+                        asset_name=asset_name,
+                        column=name,
+                    )
+                else:
+                    logger.debug(
+                        "extracting evs-array",
+                        func="extract_evs_results",
+                        i=i,
+                        is_spill=False,
+                        asset_name=asset_name,
+                        column=name,
+                    )
                 results[name].append(
                     sum(
                         [
@@ -135,14 +165,24 @@ def extract_evs_results(
 
             for charge_event_idx, soc in enumerate(socs):
                 name = f"{asset_name}-charge-event-{charge_event_idx}-{attr}"
-                logger.info(
-                    "extracting evs-array",
-                    func="extract_evs_results",
-                    i=i,
-                    is_spill=evs.is_spill,
-                    asset_name=asset_name,
-                    column=name,
-                )
+                if verbose:
+                    logger.info(
+                        "extracting evs-array",
+                        func="extract_evs_results",
+                        i=i,
+                        is_spill=evs.is_spill,
+                        asset_name=asset_name,
+                        column=name,
+                    )
+                else:
+                    logger.debug(
+                        "extracting evs-array",
+                        func="extract_evs_results",
+                        i=i,
+                        is_spill=evs.is_spill,
+                        asset_name=asset_name,
+                        column=name,
+                    )
                 results[name].append(soc.value())
 
     pkg = []
@@ -160,14 +200,25 @@ def extract_evs_results(
         for charger_idx, spill_cfg in enumerate(spill_evs.cfg.spill_charger_cfgs):
             for attr in ev_cols:
                 name = f"{spill_evs.cfg.name}-{spill_cfg.name}-{attr}"
-                logger.info(
-                    "extracting evs-array",
-                    func="extract_evs_results",
-                    i=i,
-                    is_spill=spill_evs.is_spill,
-                    asset_name=asset_name,
-                    column=name,
-                )
+                if verbose:
+                    logger.info(
+                        "extracting evs-array",
+                        func="extract_evs_results",
+                        i=i,
+                        is_spill=spill_evs.is_spill,
+                        asset_name=asset_name,
+                        column=name,
+                    )
+                else:
+                    logger.debug(
+                        "extracting evs-array",
+                        func="extract_evs_results",
+                        i=i,
+                        is_spill=spill_evs.is_spill,
+                        asset_name=asset_name,
+                        column=name,
+                    )
+
                 results[name].append(
                     sum(
                         [
@@ -280,7 +331,7 @@ def extract_results(
                     )
 
         if ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
-            extract_evs_results(ivars, results, i)
+            extract_evs_results(ivars, results, i, verbose=verbose)
 
     def check_array_lengths(results: dict[str, list]) -> None:
         lens = []

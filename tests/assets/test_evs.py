@@ -9,6 +9,7 @@ import pytest
 
 import energypylinear as epl
 from energypylinear.flags import Flags
+from energypylinear.logger import logger
 
 
 def test_evs_optimization_price() -> None:
@@ -35,6 +36,7 @@ def test_evs_optimization_price() -> None:
             allow_infeasible=False,
         ),
         freq_mins=60,
+        verbose=False,
     )
     simulation = results.simulation
     # print(simulation[[c for c in simulation.columns if "soc" in c]])
@@ -79,6 +81,7 @@ def test_evs_optimization_carbon() -> None:
         ),
         freq_mins=60,
         objective="carbon",
+        verbose=False,
     )
     simulation = results.simulation
     #  test total import power equal to total charge event mwh
@@ -130,6 +133,7 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
             allow_infeasible=False,
         ),
         freq_mins=60,
+        verbose=False,
     )
     simulation = results.simulation
     # print(simulation[[c for c in simulation.columns if "soc" in c]])
@@ -298,7 +302,6 @@ def test_evs_performance():
     for flag in [False, True]:
         for idx_length in idx_lengths:
             start_time = timeit.default_timer()
-            # print(f"idx_length: {idx_length}")
 
             ds = epl.data_generation.generate_random_ev_input_data(
                 idx_length,
@@ -331,9 +334,9 @@ def test_evs_performance():
             data["pkg"].append(
                 {"idx_length": idx_length, "time": elapsed, "flag": flag}
             )
-            # print(
-            #     f"idx_length: {idx_length}, elapsed: {elapsed:2.2f} sec, flag: {flag}"
-            # )
+            logger.info(
+                "test_ev_performance", idx_length=idx_length, elapsed=elapsed, flag=flag
+            )
 
     plt.figure()
     for flag in [True, False]:
