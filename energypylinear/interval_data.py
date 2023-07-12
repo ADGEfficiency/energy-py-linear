@@ -187,7 +187,6 @@ class IntervalData(pydantic.BaseModel):
 
 
 class IntervalVars:
-
     def __init__(self) -> None:
         #  not every lp variable - only the ones we want to iterate over
         #  in the objective functions (price, carbon etc)
@@ -200,8 +199,7 @@ class IntervalVars:
         return f"<epl.IntervalVars i: {len(self.objective_variables)}>"
 
     def append(
-        self,
-        one_interval: AssetOneInterval | SiteOneInterval | list[AssetOneInterval]
+        self, one_interval: AssetOneInterval | SiteOneInterval | list[AssetOneInterval]
     ) -> None:
         #  some OneInterval objects are special
         #  is this case it is the Array EV data structures
@@ -267,9 +265,13 @@ class IntervalVars:
         #  here we return data for one interval
         else:
             assets = self.objective_variables[i]
-            return [[
-                asset
-                for asset in assets
-                if isinstance(asset, instance_type)
-                and (asset.cfg.name == asset_name if asset_name is not None else True)
-            ]]
+            return [
+                [
+                    asset
+                    for asset in assets
+                    if isinstance(asset, instance_type)
+                    and (
+                        asset.cfg.name == asset_name if asset_name is not None else True
+                    )
+                ]
+            ]
