@@ -38,11 +38,11 @@ PARALLEL = auto
 export
 
 test: setup-test clean-test-docs test-docs
-	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon -n 1
+	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s -n $(PARALLEL) --dist loadfile --color=yes
 	pytest tests --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon -n $(PARALLEL) --ignore tests/phmdoctest
 
 test-ci: setup-test clean-test-docs test-docs
-	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s --color=yes -n 1
+	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s -n $(PARALLEL) --dist loadfile --color=yes
 	coverage run -m pytest tests --tb=short --show-capture=no -n $(PARALLEL) --ignore tests/phmdoctest
 	coverage report -m
 

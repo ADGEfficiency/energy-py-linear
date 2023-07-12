@@ -27,7 +27,7 @@ class Defaults(pydantic.BaseModel):
     decimal_tolerance: int = 4
 
     #  used for < 0 stuff
-    epsilon: float = -1e-8
+    epsilon: float = -1e-4
 
 
 defaults = Defaults()
