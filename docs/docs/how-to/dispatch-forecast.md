@@ -50,6 +50,7 @@ forecast_account=<Accounts profit=-140.00 emissions=0.0800>
 
 ## Calculate Variance Between Accounts
 
+<!--phmdoctest-share-names-->
 ```python
 variance = perfect_foresight - forecast_account
 print(f"{variance=}")

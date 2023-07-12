@@ -31,10 +31,11 @@ setup-docs:
 #  TEST
 .PHONY: test test-docs clean-test-docs test-ci test-validate
 DISABLE_LOGGERS = ""
+PARALLEL = auto
 export
 
 test: setup-test clean-test-docs test-docs
-	pytest tests --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon --pdb
+	pytest tests --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon --pdb -n $(PARALLEL)
 
 test-docs: clean-test-docs
 	mkdir -p ./tests/phmdoctest
@@ -48,7 +49,7 @@ clean-test-docs:
 	rm -rf ./tests/phmdoctest
 
 test-ci: setup-test clean-test-docs test-docs
-	coverage run -m pytest tests --tb=short --show-capture=no
+	coverage run -m pytest tests --tb=short --show-capture=no -n $(PARALLEL)
 	coverage report -m
 
 #  during debug

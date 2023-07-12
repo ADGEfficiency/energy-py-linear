@@ -77,20 +77,10 @@ price_account=<Accounts profit=1057.78 emissions=0.0822>
 ```python
 variance = price_account - carbon_account
 print(f"{variance=}")
-```
-
-```
-variance=<Account profit=923.33 emissions=2.3556>
-```
-
-## Calculate a Carbon Price
-
-```python
 print(f"{-variance.cost / variance.emissions:.2f} $/tC")
 ```
 
 ```
+variance=<Account profit=923.33 emissions=2.3556>
 391.98 $/tC
 ```
-
-The accounting API is in it's first iteration - expect it to change in the future.
