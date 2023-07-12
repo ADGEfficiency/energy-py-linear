@@ -129,7 +129,7 @@ def extract_evs_results(
         ]:
             socs = getattr(evs, attr)[0]
             assert isinstance(socs, np.ndarray)
-            assert isinstance(evs.cfg.charge_event_cfgs.shape, np.ndarray)
+            assert isinstance(evs.cfg.charge_event_cfgs, np.ndarray)
 
             assert socs.shape == evs.cfg.charge_event_cfgs.shape
 

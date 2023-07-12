@@ -119,6 +119,21 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     ].values
     charge_event_usage = charge_event_usage - discharge_event_usage
 
+    charge_event_initial_soc = simulation[
+        [
+            c
+            for c in simulation.columns
+            if "charge-event-" in c and c.endswith("initial_soc_mwh")
+        ]
+    ].values
+    charge_event_final_soc = simulation[
+        [
+            c
+            for c in simulation.columns
+            if "charge-event-" in c and c.endswith("final_soc_mwh")
+        ]
+    ].values
+
     fig, axes = plt.subplots(
         ncols=4, figsize=(14, 6), width_ratios=(5, 10, 1, 1), sharey=True
     )
@@ -136,7 +151,7 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
         },
         "annot": True,
         "cbar": False,
-        "cmap": "tab20c",
+        "cmap": "coolwarm",
         "vmin": global_vmin,
         "vmax": global_vmax,
     }
@@ -146,14 +161,27 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     axes[0].set_xlabel("Chargers")
 
     data = charge_event_usage
-    #  unmask out the periods where charge_event was positive
     assert results.interval_data.evs is not None
+    charge_event_heatmap_config = heatmap_config.copy()
+    result_array = np.empty_like(charge_event_initial_soc, dtype=object)
+
+    for i, (a, b, c) in enumerate(
+        zip(charge_event_initial_soc.T, charge_event_usage.T, charge_event_final_soc.T)
+    ):
+        for j, values in enumerate(zip(a, b, c)):
+            result_array[
+                j, i
+            ] = f"initial: {values[0]:3.1f}\ncharge: {values[1]:3.1f}\nfinal: {values[2]:3.1f}"
+
+    print(result_array)
+    charge_event_heatmap_config["annot"] = result_array
     seaborn.heatmap(
         data,
         ax=axes[1],
-        **heatmap_config,
+        **charge_event_heatmap_config,
+        #  unmask out the periods where charge_event was positive
         mask=results.interval_data.evs.charge_events == 0,
-        fmt="g",
+        fmt="",
     )
     axes[1].set_xlabel("Charge Events Net Charge (Discharge is Negative)")
 
