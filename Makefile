@@ -38,18 +38,19 @@ PARALLEL = auto
 export
 
 test: setup-test clean-test-docs test-docs
-	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon -n 1
+	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s -n 1 --color=yes --testmon
 	pytest tests --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon -n $(PARALLEL) --ignore tests/phmdoctest
 
 test-ci: setup-test clean-test-docs test-docs
-	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon -n 1
+	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s -n 1 --color=yes
 	coverage run -m pytest tests --tb=short --show-capture=no -n $(PARALLEL) --ignore tests/phmdoctest
 	coverage report -m
 
 test-docs: clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
-	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
+	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
+	python -m phmdoctest ./docs/docs/validation/evs.md --outfile tests/phmdoctest/test_validate_evs.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-forecast.md --outfile tests/phmdoctest/test_forecast.py
 	python -m phmdoctest ./docs/docs/how-to/price-carbon.md --outfile tests/phmdoctest/test_carbon.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-assets.md --outfile tests/phmdoctest/test_dispatch_assets.py
