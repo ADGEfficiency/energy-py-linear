@@ -15,13 +15,14 @@ def filter_spill_evs(
         list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]
     ] = []
     for i, assets in enumerate(spill_evs):
+        temp: list[
+            epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval
+        ] = []
         for ev in assets:
             assert isinstance(ev, epl.assets.evs.EVOneInterval)
             if ev.is_spill:
-                temp: list[
-                    epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval
-                ] = [ev]
-                pkg.append(temp)
+                temp.append(ev)
+        pkg.append(temp)
 
     if len(pkg) == 0:
         pkg = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]

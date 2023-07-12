@@ -492,9 +492,10 @@ class EVs:
             )
             chargers_power_mw = ds["charger_mws"]
             charge_events_capacity_mwh = ds["charge_events_capacity_mwh"]
+            charge_events = ds["charge_events"]
 
-        assert chargers_power_mw
-        assert charge_events_capacity_mwh
+        assert chargers_power_mw is not None
+        assert charge_events_capacity_mwh is not None
 
         #  TODO remove these as attributes of the class
         self.charger_cfgs = np.array(
@@ -705,7 +706,7 @@ class EVs:
         - want optimize during asset api
         """
         if self.charge_events is not None:
-            assert charge_events
+            assert charge_events is not None
 
         if self.charge_events is not None and charge_events:
             print("warning - charge events supplied twice")
@@ -713,7 +714,7 @@ class EVs:
         if self.charge_events is not None and charge_events is None:
             charge_events = self.charge_events
 
-        assert charge_events
+        assert charge_events is not None
         self.charge_events = validate_charge_events(
             self.charge_event_cfgs, charge_events
         )

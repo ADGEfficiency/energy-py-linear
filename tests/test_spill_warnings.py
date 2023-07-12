@@ -31,7 +31,7 @@ def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
         electricity_prices=[
             1000,
         ],
-        gas_prices=20,
+        gas_prices=20.0,
         high_temperature_load_mwh=[
             20,
         ],
@@ -39,7 +39,7 @@ def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
     )
     simulation = results.simulation
     capture = capsys.readouterr()
-    assert "Spill Occurred" in capture.out
+    assert "warn_spills" in capture.out
 
     # now check we fail when we want to
     with pytest.raises(ValueError):
@@ -70,4 +70,4 @@ def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
         freq_mins=60,
     )
     capture = capsys.readouterr()
-    assert "Spill Occurred" not in capture.out
+    assert "warn_spills" not in capture.out
