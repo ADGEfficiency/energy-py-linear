@@ -96,13 +96,22 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     """Plot electric vehicle simulation results."""
     simulation = results.simulation
 
-    charger_usage = simulation[
+    charger_charge = simulation[
         [
             c
             for c in simulation.columns
             if "charger-" in c and c.endswith("-electric_charge_mwh")
         ]
     ].values
+    charger_discharge = simulation[
+        [
+            c
+            for c in simulation.columns
+            if "charger-" in c and c.endswith("-electric_discharge_mwh")
+        ]
+    ].values
+    charger_usage = charger_charge - charger_discharge
+
     charge_event_usage = simulation[
         [
             c

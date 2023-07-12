@@ -105,7 +105,7 @@ def carbon_objective(
     sites = ivars.asset["site"]["site"]
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
 
-    spill_evs = filter_spill_evs(ivars)
+    spill_evs = filter_spill_evs(ivars, interval_data)
     generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 
