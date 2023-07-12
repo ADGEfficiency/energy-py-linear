@@ -1,16 +1,13 @@
 """Test electric vehicle asset."""
 import collections
 import statistics
-import timeit
 
 import hypothesis
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
 import energypylinear as epl
 from energypylinear.flags import Flags
-from energypylinear.logger import logger
 
 
 def test_evs_optimization_price() -> None:
