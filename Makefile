@@ -1,6 +1,9 @@
-.PHONY: all
+.PHONY: all clean
 
 all: test
+
+clean:
+	rm -rf .pytest_cache .hypothesis .mypy_cache .ruff_cache __pycache__
 
 #  SETUP
 .PHONY: setup setup-test setup-static setup-check setup-docs
@@ -35,7 +38,13 @@ PARALLEL = auto
 export
 
 test: setup-test clean-test-docs test-docs
-	pytest tests --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon --pdb -n $(PARALLEL)
+	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon -n 1
+	pytest tests --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon -n $(PARALLEL) --ignore tests/phmdoctest
+
+test-ci: setup-test clean-test-docs test-docs
+	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon -n 1
+	coverage run -m pytest tests --tb=short --show-capture=no -n $(PARALLEL) --ignore tests/phmdoctest
+	coverage report -m
 
 test-docs: clean-test-docs
 	mkdir -p ./tests/phmdoctest
@@ -47,17 +56,6 @@ test-docs: clean-test-docs
 
 clean-test-docs:
 	rm -rf ./tests/phmdoctest
-
-test-ci: setup-test clean-test-docs test-docs
-	coverage run -m pytest tests --tb=short --show-capture=no -n $(PARALLEL)
-	coverage report -m
-
-#  during debug
-#  could just use `test-docs` really
-test-validate:
-	mkdir -p tests/phmdoctest
-	python -m phmdoctest ./docs/docs/validation.md --outfile tests/phmdoctest/test_validate.py
-	pytest tests/phmdoctest/test_validate.py --showlocals --full-trace --tb=short -v -x --lf -s --color=yes
 
 #  CHECK
 .PHONY: check lint static
@@ -106,7 +104,7 @@ docs: setup-docs
 	#  `mike serve` will show docs for the different versions
 	#  `mkdocs serve` will show docs for the current version in markdown
 	#  `mkdocs serve` will usually be more useful during development
-	cd docs; mkdocs serve; cd ..
+	cd docs; mkdocs serve -a localhost:8004; cd ..
 
 #  this deploys the current docs to the docs branch
 #  -u = update aliases of this $(VERSION) to latest

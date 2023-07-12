@@ -45,7 +45,7 @@ def configure_logger() -> None:
 
     # Set up the stream handler to write info logs to stdout
     stream_handler = RichHandler(
-        console=console, rich_tracebacks=True, show_level=False
+        console=console, rich_tracebacks=True, show_level=False, show_time=False
     )
     stream_handler.setLevel(logging.INFO)
 

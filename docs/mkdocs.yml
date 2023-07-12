@@ -51,13 +51,16 @@ markdown_extensions:
   - pymdownx.details
 nav:
   - Getting Started: index.md
-  - Optimize Assets: how-to/dispatch-assets.md
-  - Optimize a Site: how-to/dispatch-site.md
-  - Optimize for Carbon: how-to/price-carbon.md
-  - Optimize for a Forecast: how-to/dispatch-forecast.md
-  # - Explanation:
-  - Validation: validation.md
+  - Optimization:
+    - Optimize Assets: how-to/dispatch-assets.md
+    - Optimize a Site: how-to/dispatch-site.md
+    - Optimize for Carbon: how-to/price-carbon.md
+    - Optimize for a Forecast: how-to/dispatch-forecast.md
+  - Validation:
+    - Battery: validation/battery.md
+    - EVs: validation/evs.md
 
+  # - Performance: performance.md
   # - Measure Forecast Quality: index.md
 
   # - Results: reference/results.md
