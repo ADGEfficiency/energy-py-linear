@@ -4,7 +4,6 @@ import collections
 import numpy as np
 import pandas as pd
 import pydantic
-from rich import print
 
 import energypylinear as epl
 from energypylinear.flags import Flags
@@ -129,6 +128,9 @@ def extract_evs_results(
             "final_soc_mwh",
         ]:
             socs = getattr(evs, attr)[0]
+            assert isinstance(socs, np.ndarray)
+            assert isinstance(evs.cfg.charge_event_cfgs.shape, np.ndarray)
+
             assert socs.shape == evs.cfg.charge_event_cfgs.shape
 
             for charge_event_idx, soc in enumerate(socs):
@@ -213,6 +215,7 @@ def extract_results(
         )
         if len(spills) > 0:
             for spill in spills:
+                assert isinstance(spill, epl.assets.spill.SpillOneInterval)
                 for attr in spill_quantities:
                     results[f"{spill.cfg.name}-{attr}"].append(
                         optimizer.value(getattr(spill, attr))
@@ -222,6 +225,7 @@ def extract_results(
             epl.assets.battery.BatteryOneInterval, i=i
         ):
             for battery in batteries:
+                assert isinstance(battery, epl.assets.battery.BatteryOneInterval)
                 name = f"{battery.cfg.name}"
                 for attr in [
                     "electric_charge_mwh",
@@ -241,6 +245,7 @@ def extract_results(
             epl.assets.chp.GeneratorOneInterval, i=i
         ):
             for generator in generators:
+                assert isinstance(generator, epl.assets.chp.GeneratorOneInterval)
                 name = f"{generator.cfg.name}"
                 for attr in [
                     "electric_generation_mwh",
@@ -250,11 +255,11 @@ def extract_results(
                 ]:
                     results[f"{name}-{attr}"].append(getattr(generator, attr).value())
 
-        # if boilers := epl.utils.filter_assets(vars, "boiler", i=i):
         if boilers := ivars.filter_objective_variables(
             epl.assets.boiler.BoilerOneInterval, i=i
         ):
             for boiler in boilers:
+                assert isinstance(boiler, epl.assets.boiler.BoilerOneInterval)
                 name = f"{boiler.cfg.name}"
                 for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
                     results[f"{name}-{attr}"].append(getattr(boiler, attr).value())
@@ -265,6 +270,7 @@ def extract_results(
             epl.assets.valve.ValveOneInterval, i=i
         ):
             for valve in valves:
+                assert isinstance(valve, epl.assets.valve.ValveOneInterval)
                 for attr in [
                     "high_temperature_load_mwh",
                     "low_temperature_generation_mwh",
@@ -273,12 +279,10 @@ def extract_results(
                         optimizer.value(getattr(valve, attr))
                     )
 
-        # ev_array_check = ["evs-array" in k for k in vars.keys()]
-        # if any(ev_array_check):
-        if evs := ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
+        if ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
             extract_evs_results(ivars, results, i)
 
-    def check_array_lengths(results):
+    def check_array_lengths(results: dict[str, list]) -> None:
         lens = []
         dbg = []
         for k, v in results.items():
@@ -327,7 +331,9 @@ def extract_results(
     )
 
     if verbose:
-        logger.info("total mapper", mapper=total_mapper)
+        logger.info("total_mapper", mapper=total_mapper)
+    else:
+        logger.debug("total_mapper", mapper=total_mapper)
 
     simulation_schema.validate(simulation)
     validate_results(interval_data, simulation, verbose=verbose)

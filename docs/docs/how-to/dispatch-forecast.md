@@ -2,7 +2,7 @@
 
 An asset (or site) can be used to model the variance between optimizing for actual & forecast prices.
 
-## Setup Battery Model
+## Setup Battery Asset
 
 <!--phmdoctest-share-names-->
 ```python

@@ -6,7 +6,6 @@ import hypothesis
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from rich import print
 
 import energypylinear as epl
 from energypylinear.flags import Flags
@@ -139,7 +138,7 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
     #  a less efficient charge event should mean we import more power
     #  our expected losses are a function of the amount we charge a charge event
 
-    losses_mwh = simulation["total-electric_loss_mwh"].sum()
+    _ = simulation["total-electric_loss_mwh"].sum()
     # np.testing.assert_equal(
     #     simulation["site-import_power_mwh"].sum(),
     #     sum(charge_events_capacity_mwh) + losses_mwh,

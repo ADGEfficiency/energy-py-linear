@@ -1,5 +1,4 @@
 """Battery asset for optimizing battery dispatch for price or carbon arbitrage."""
-import collections
 import pathlib
 import typing
 

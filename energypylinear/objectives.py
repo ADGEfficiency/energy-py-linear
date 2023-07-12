@@ -6,7 +6,7 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
-def filter_spill_evs(ivars):
+def filter_spill_evs(ivars, interval_data):
     spill_evs = ivars.filter_objective_variables(epl.evs.EVOneInterval)
     pkg = []
     for i, assets in enumerate(spill_evs):
@@ -45,7 +45,7 @@ def price_objective(
     # spills = epl.utils.filter_all_assets(vars, "spill")
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
 
-    spill_evs = filter_spill_evs(ivars)
+    spill_evs = filter_spill_evs(ivars, interval_data)
     generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 

@@ -1,5 +1,4 @@
 """Site asset for optimizing dispatch of combined heat and power (CHP) generators."""
-import collections
 import typing
 
 import pulp

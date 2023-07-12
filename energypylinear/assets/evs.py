@@ -1,5 +1,4 @@
 """Electric vehicle asset for optimizing the smart charging of electric vehicles."""
-import collections
 import pathlib
 import typing
 
@@ -121,10 +120,6 @@ class EVsArrayOneInterval(AssetOneInterval):
     """
 
     i: int
-
-    #  1D arrays
-    # charger_cfgs: np.ndarray
-    # charge_event_cfgs: np.ndarray
     cfg: EVsConfig
 
     #  2D arrays
@@ -176,6 +171,7 @@ def evs_one_interval(
     n_chargers = len(charger_cfgs)
     n_charge_events = len(charge_event_cfgs)
 
+    #  1D array
     evs = []
 
     #  2D arrays

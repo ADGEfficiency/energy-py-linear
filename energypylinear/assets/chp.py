@@ -1,5 +1,4 @@
 """CHP asset for optimizing dispatch of combined heat and power (CHP) generators."""
-import collections
 import pathlib
 import typing
 

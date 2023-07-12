@@ -240,10 +240,10 @@ def test_battery_performance():
         marker="o",
         label="mean",
     )
-    #  TODO put in the performance impact of v2g
     axes.set_title(asset.__repr__())
     axes.set_ylabel("Run Time (seconds)")
     axes.legend()
     axes.grid(True)
+    plt.xlabel("Index Length")
     plt.tight_layout()
     fig.savefig("./docs/docs/static/battery-performance.png")

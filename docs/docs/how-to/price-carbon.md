@@ -4,7 +4,7 @@ This ability comes from two things - an objective function, which can be either 
 
 We can dispatch a battery to minimize carbon emissions by passing in `objective='carbon'`:
 
-## Setup Battery Model
+## Setup Battery Asset
 
 <!--phmdoctest-share-names-->
 ```python
@@ -35,7 +35,6 @@ carbon_account = epl.get_accounts(
     carbon.simulation,
     verbose=False
 )
-
 print(f"{carbon_account=}")
 ```
 
@@ -65,7 +64,6 @@ price_account = epl.get_accounts(
     price.simulation,
     verbose=False
 )
-
 print(f"{price_account=}")
 ```
 

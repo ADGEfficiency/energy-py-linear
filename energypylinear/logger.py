@@ -37,7 +37,7 @@ def configure_logger():
     )
     file_handler.setLevel(logging.DEBUG)
 
-    latest_file_handler = logging.FileHandler(f"logs/LATEST.log")
+    latest_file_handler = logging.FileHandler("logs/LATEST.log")
     latest_file_handler.setLevel(logging.DEBUG)
 
     root_logger.addHandler(file_handler)

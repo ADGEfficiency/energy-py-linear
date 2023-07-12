@@ -7,6 +7,7 @@ import pandas as pd
 import pydantic
 
 import energypylinear as epl
+from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.assets.evs import EVsArrayOneInterval
 from energypylinear.assets.site import SiteOneInterval
 from energypylinear.defaults import defaults
@@ -197,7 +198,7 @@ class IntervalVars:
             lambda: {"evs_array": [], "spill_evs_array": [], "site": []}
         )
 
-    def append(self, one_interval):
+    def append(self, one_interval: AssetOneInterval) -> None:
         #  some OneInterval objects are special
         #  is this case it is the Array EV data structures
         #  TODO in future don't save these separately and
@@ -216,13 +217,17 @@ class IntervalVars:
             assert isinstance(one_interval, list)
             self.objective_variables.append(one_interval)
 
-    def filter_evs_array(self, is_spill, i, asset_name):
+    def filter_evs_array(
+        self, is_spill: bool, i: int, asset_name: str
+    ) -> EVsArrayOneInterval:
         if is_spill:
             return self.asset[asset_name]["spill_evs_array"][i]
         else:
             return self.asset[asset_name]["evs_array"][i]
 
-    def filter_all_evs_array(self, is_spill, asset_name):
+    def filter_all_evs_array(
+        self, is_spill: bool, asset_name: str
+    ) -> list[EVsArrayOneInterval]:
         if is_spill:
             return self.asset[asset_name]["spill_evs_array"]
         else:
@@ -231,7 +236,12 @@ class IntervalVars:
     def filter_site(self, i: int, site_name: str) -> SiteOneInterval:
         return self.asset[site_name]["site"][i]
 
-    def filter_objective_variables(self, instance_type, i=None, asset_name=None):
+    def filter_objective_variables(
+        self,
+        instance_type: type[AssetOneInterval],
+        i: int | None = None,
+        asset_name: str | None = None,
+    ) -> list[list] | list:
 
         #  here we return data for all intervals
         if i is None:
