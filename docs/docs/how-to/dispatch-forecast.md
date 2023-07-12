@@ -29,7 +29,7 @@ print(f"{perfect_foresight=}")
 ```
 
 ```
-perfect_foresight=Accounts(cost=-1057.777778, emissions=0.08222222199999996, profit=1057.777778)
+perfect_foresight=<Accounts profit=1057.78 emissions=0.0822>
 ```
 
 ## Optimize to a Forecast
@@ -45,7 +45,7 @@ print(f"{forecast_account=}")
 ```
 
 ```
-forecast_account=Accounts(cost=140.0, emissions=0.07999999999999996, profit=-140.0)
+forecast_account=<Accounts profit=-140.00 emissions=0.0800>
 ```
 
 ## Calculate Variance Between Accounts
@@ -56,7 +56,7 @@ print(f"{variance=}")
 ```
 
 ```
-variance=Account(cost=-1197.777778, emissions=0.002222221999999996)
+variance=<Account profit=1197.78 emissions=0.0022>
 ```
 
 See [examples/forecast-accuracy.py](https://github.com/ADGEfficiency/energy-py-linear/blob/main/examples/forecast-accuracy.py) for a complete example.

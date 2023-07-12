@@ -16,8 +16,13 @@ In `energypylinear`, a positive site electricity balance is importing, and a neg
 import energypylinear as epl
 
 asset = epl.Battery()
-results = asset.optimize(electricity_prices=[10, -50, 200, -50, 200], verbose=False)
-print(results.simulation[["electricity_prices", "site-electricity_balance_mwh"]])
+results = asset.optimize(
+    electricity_prices=[10, -50, 200, -50, 200],
+    verbose=False
+)
+print(results.simulation[
+    ["electricity_prices", "site-electricity_balance_mwh"]
+])
 ```
 
 ```
@@ -37,8 +42,13 @@ Now let's change the prices and see how the dispatch changes:
 import energypylinear as epl
 
 asset = epl.Battery()
-results = asset.optimize(electricity_prices=[200, -50, -50, 200, 200], verbose=False)
-print(results.simulation[["electricity_prices", "site-electricity_balance_mwh"]])
+results = asset.optimize(
+    electricity_prices=[200, -50, -50, 200, 200],
+    verbose=False
+)
+print(results.simulation[
+    ["electricity_prices", "site-electricity_balance_mwh"]
+])
 ```
 
 ```
@@ -64,7 +74,10 @@ pd.set_option('display.max_columns', 15)
 pd.set_option('display.width', 400)
 
 asset = epl.Battery()
-results = asset.optimize(electricity_prices=[10, -50, 200, -50, 200], verbose=False)
+results = asset.optimize(
+    electricity_prices=[10, -50, 200, -50, 200],
+    verbose=False
+)
 
 balance = epl.results.checks.check_electricity_balance(results.simulation, verbose=False)
 print(balance)

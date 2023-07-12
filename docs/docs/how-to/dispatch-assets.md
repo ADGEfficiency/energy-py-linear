@@ -1,6 +1,8 @@
 # Optimizing an Asset with the Asset API
 
-The asset API allows optimizing a single asset at once.  [You can find more examples for each asset here](https://github.com/ADGEfficiency/energy-py-linear/tree/main/examples).
+The asset API allows optimizing a single asset at once.  Internally the assets are using the `epl.Site`, but this is hidden when using the asset API.
+
+[You can find full examples for each asset here](https://github.com/ADGEfficiency/energy-py-linear/tree/main/examples).
 
 ## Battery
 
