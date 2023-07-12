@@ -9,19 +9,22 @@ from energypylinear.defaults import defaults
 def filter_spill_evs(
     ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.interval_data.IntervalData",
-) -> "list[list[epl.assets.evs.EVOneInterval]]":
+) -> "list[list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]]":
     spill_evs = ivars.filter_objective_variables(epl.assets.evs.EVOneInterval)
-    pkg = []
+    pkg: list[
+        list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]
+    ] = []
     for i, assets in enumerate(spill_evs):
         for ev in assets:
-            temp = []
             assert isinstance(ev, epl.assets.evs.EVOneInterval)
             if ev.is_spill:
-                temp.append(ev)
-            pkg.append(temp)
+                temp: list[
+                    epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval
+                ] = [ev]
+                pkg.append(temp)
 
-    if len(spill_evs) == 0:
-        pkg = [[epl.assets.evs.EVOneInterval()] for i in interval_data.idx]
+    if len(pkg) == 0:
+        pkg = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
     return pkg
 
 

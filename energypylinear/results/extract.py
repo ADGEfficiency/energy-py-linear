@@ -263,7 +263,7 @@ def extract_results(
 
         spills = ivars.filter_objective_variables(
             epl.assets.spill.SpillOneInterval, i=i
-        )
+        )[0]
         if len(spills) > 0:
             for spill in spills:
                 assert isinstance(spill, epl.assets.spill.SpillOneInterval)
@@ -274,7 +274,7 @@ def extract_results(
 
         if batteries := ivars.filter_objective_variables(
             epl.assets.battery.BatteryOneInterval, i=i
-        ):
+        )[0]:
             for battery in batteries:
                 assert isinstance(battery, epl.assets.battery.BatteryOneInterval)
                 name = f"{battery.cfg.name}"
@@ -294,7 +294,7 @@ def extract_results(
 
         if generators := ivars.filter_objective_variables(
             epl.assets.chp.GeneratorOneInterval, i=i
-        ):
+        )[0]:
             for generator in generators:
                 assert isinstance(generator, epl.assets.chp.GeneratorOneInterval)
                 name = f"{generator.cfg.name}"
@@ -308,7 +308,7 @@ def extract_results(
 
         if boilers := ivars.filter_objective_variables(
             epl.assets.boiler.BoilerOneInterval, i=i
-        ):
+        )[0]:
             for boiler in boilers:
                 assert isinstance(boiler, epl.assets.boiler.BoilerOneInterval)
                 name = f"{boiler.cfg.name}"
@@ -319,7 +319,7 @@ def extract_results(
         # valves = epl.utils.filter_assets(vars, "valve", i=i)
         if valves := ivars.filter_objective_variables(
             epl.assets.valve.ValveOneInterval, i=i
-        ):
+        )[0]:
             for valve in valves:
                 assert isinstance(valve, epl.assets.valve.ValveOneInterval)
                 for attr in [

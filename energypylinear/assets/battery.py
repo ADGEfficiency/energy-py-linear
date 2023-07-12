@@ -221,7 +221,8 @@ class Battery:
         all_batteries = ivars.filter_objective_variables(
             BatteryOneInterval, i=None, asset_name=self.cfg.name
         )
-        assert type(all_batteries) == list[list[BatteryOneInterval]]
+        assert isinstance(all_batteries, list)
+        # assert type(all_batteries) == list[list[BatteryOneInterval]]
         constrain_connection_batteries_between_intervals(optimizer, all_batteries)
 
     def constrain_after_intervals(
