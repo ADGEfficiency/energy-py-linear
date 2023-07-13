@@ -207,7 +207,7 @@ def _one_v2g(args: tuple) -> tuple:
     return (results.simulation, charge_event_length, seed)
 
 
-def test_v2g_fast():
+def test_v2g_fast() -> None:
     num_trials = 25
     args = [
         (seed, charge_event_length)
@@ -219,9 +219,10 @@ def test_v2g_fast():
 
     discharge = collections.defaultdict(list)
     for charge_event_length in range(3, 24, 2):
-        trial_results = [x for x in trials if x[1] == charge_event_length]
         trial_results = [
-            x[0]["total-electric_discharge_mwh"].sum() for x in trial_results
+            x[0]["total-electric_discharge_mwh"].sum()
+            for x in trials
+            if x[1] == charge_event_length
         ]
         discharge["mean"].append(statistics.mean(trial_results))
         discharge["stdev"].append(statistics.stdev(trial_results))
