@@ -78,7 +78,7 @@ def configure_logger(enable_file_logging: bool = False) -> None:
     )
 
 
-configure_logger(enable_file_logging=bool(os.environ.get("ENABLE_FILE_LOGGING", True)))
+configure_logger(enable_file_logging=bool(os.environ.get("ENABLE_FILE_LOGGING", False)))
 
 
 def get_logger(name: str = "default_logger") -> structlog.BoundLogger:

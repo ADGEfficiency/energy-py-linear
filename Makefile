@@ -3,7 +3,7 @@
 all: test
 
 clean:
-	rm -rf .pytest_cache .hypothesis .mypy_cache .ruff_cache __pycache__ .coverage logs
+	rm -rf .pytest_cache .hypothesis .mypy_cache .ruff_cache __pycache__ .coverage logs .coverage*
 
 #  SETUP
 .PHONY: setup setup-test setup-static setup-check setup-docs
@@ -34,10 +34,11 @@ setup-docs:
 #  TEST
 .PHONY: test test-ci test-docs clean-test-docs test-validate
 PARALLEL = auto
+ENABLE_FILE_LOGGING = 1
 export
 
 test: setup-test clean-test-docs test-docs
-	pytest tests --cov=energypylinear --tb=short --show-capture=no -n $(PARALLEL) --dist loadfile --color=yes --durations=5
+	pytest tests --cov=energypylinear -n $(PARALLEL) --dist loadfile --color=yes --durations=5 --verbose
 
 test-ci: test
 
