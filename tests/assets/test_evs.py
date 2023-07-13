@@ -1,6 +1,7 @@
 """Test electric vehicle asset."""
 import collections
 import statistics
+from concurrent.futures import ProcessPoolExecutor
 
 import hypothesis
 import numpy as np
@@ -157,76 +158,78 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
     #  this would allow matching of different efficiency chargers and charge events
 
 
-def test_v2g() -> None:
+def _one_v2g(args: tuple) -> tuple:
     """
-    this test is stochastic
+    Runs a single opmitization with a randomly generated EV dataset.
 
-    control seeds so that we run the same seed in each trial over different charge event lengths
-
-    this reduces the variance between trials - each trial uses the same prices
+    Helper for `test_evs_v2g_fast`.
     """
+    seed, charge_event_length = args
 
+    ds = epl.data_generation.generate_random_ev_input_data(
+        48,
+        n_chargers=3,
+        charge_length=charge_event_length,
+        n_charge_events=12,
+        prices_mu=500,
+        prices_std=250,
+        seed=seed,
+    )
+    evs = epl.evs.EVs(
+        chargers_power_mw=ds["charger_mws"].tolist(),
+        charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+        charger_turndown=0.0,
+        charge_event_efficiency=1.0,
+    )
+    ds.pop("charger_mws")
+    charge_events_capacity_mwh = ds.pop("charge_events_capacity_mwh")
+    results = evs.optimize(
+        **ds,
+        flags=Flags(
+            allow_evs_discharge=True,
+            fail_on_spill_asset_use=True,
+            allow_infeasible=False,
+        ),
+        freq_mins=60,
+        verbose=False,
+    )
+
+    #  test that the initial and final socs are correct
+    cols = [
+        c
+        for c in results.simulation
+        if "evs-charge-event" in c and "final_soc_mwh" in c
+    ]
+    subset = results.simulation[cols]
+    np.testing.assert_array_almost_equal(
+        subset.iloc[-1, :].values, charge_events_capacity_mwh
+    )
+    return (results.simulation, charge_event_length, seed)
+
+
+def test_v2g_fast():
     num_trials = 25
-    seeds = np.random.randint(0, 1000, size=num_trials)
+    args = [
+        (seed, charge_event_length)
+        for charge_event_length in range(3, 24, 2)
+        for seed in np.random.randint(0, 1000, size=num_trials)
+    ]
+    with ProcessPoolExecutor() as executor:
+        trials = list(executor.map(_one_v2g, args))
+
     discharge = collections.defaultdict(list)
     for charge_event_length in range(3, 24, 2):
+        trial_results = [x for x in trials if x[1] == charge_event_length]
+        trial_results = [
+            x[0]["total-electric_discharge_mwh"].sum() for x in trial_results
+        ]
+        discharge["mean"].append(statistics.mean(trial_results))
+        discharge["stdev"].append(statistics.stdev(trial_results))
 
-        trials = collections.defaultdict(list)
-        for n_trial, seed in enumerate(seeds):
-            #  here we are resampling prices each time
-            #  really shouldn't - would need a bit of work TODO
-            ds = epl.data_generation.generate_random_ev_input_data(
-                48,
-                n_chargers=3,
-                charge_length=charge_event_length,
-                n_charge_events=12,
-                prices_mu=500,
-                prices_std=250,
-                seed=seed,
-            )
-            # print(
-            #     f"{charge_event_length=} {n_trial=} prices: {np.mean(ds['electricity_prices'])}"
-            # )
-
-            evs = epl.evs.EVs(
-                chargers_power_mw=ds["charger_mws"].tolist(),
-                charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
-                charger_turndown=0.0,
-                charge_event_efficiency=1.0,
-            )
-            ds.pop("charger_mws")
-            ds.pop("charge_events_capacity_mwh")
-            results = evs.optimize(
-                **ds,
-                flags=Flags(
-                    allow_evs_discharge=True,
-                    fail_on_spill_asset_use=True,
-                    allow_infeasible=False,
-                ),
-                freq_mins=60,
-                verbose=False,
-            )
-            simulation = results.simulation
-            trials["discharge"].append(simulation["total-electric_discharge_mwh"].sum())
-
-        discharge["mean"].append(statistics.mean(trials["discharge"]))
-        discharge["stdev"].append(statistics.stdev(trials["discharge"]))
-
-        #  check at each step to fail early
-        # print(discharge)
-        assert all(
-            x <= y
-            for x, y in zip(discharge["mean"][:-1], discharge["mean"][1:], strict=True)
-        ), f"discharge should be increasing - it decreased on {charge_event_length=}"
-
-    # from energypylinear.debug import debug_simulation
-    # debug_simulation(results.simulation)
-    """
-    how to actuall test this
-    - check that some of the electric_discharge_mwh is positive
-
-    check final soc are correct
-    """
+    assert all(
+        x <= y
+        for x, y in zip(discharge["mean"][:-1], discharge["mean"][1:], strict=True)
+    ), "discharge should be increasing always as charge event increases"
 
 
 @hypothesis.settings(

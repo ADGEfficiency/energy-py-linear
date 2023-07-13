@@ -3,7 +3,7 @@
 all: test
 
 clean:
-	rm -rf .pytest_cache .hypothesis .mypy_cache .ruff_cache __pycache__
+	rm -rf .pytest_cache .hypothesis .mypy_cache .ruff_cache __pycache__ .coverage logs
 
 #  SETUP
 .PHONY: setup setup-test setup-static setup-check setup-docs
@@ -32,19 +32,14 @@ setup-docs:
 	pip install -r ./docs/requirements.txt $(QUIET)
 
 #  TEST
-.PHONY: test test-docs clean-test-docs test-ci test-validate
-DISABLE_LOGGERS = ""
+.PHONY: test test-ci test-docs clean-test-docs test-validate
 PARALLEL = auto
 export
 
 test: setup-test clean-test-docs test-docs
-	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s -n $(PARALLEL) --dist loadfile --color=yes
-	pytest tests --showlocals --full-trace --tb=short -v -x -s --color=yes --testmon -n $(PARALLEL) --ignore tests/phmdoctest
+	pytest tests --cov=energypylinear --tb=short --show-capture=no -n $(PARALLEL) --dist loadfile --color=yes --durations=5
 
-test-ci: setup-test clean-test-docs test-docs
-	pytest tests/phmdoctest --showlocals --full-trace --tb=short -v -x -s -n $(PARALLEL) --dist loadfile --color=yes
-	coverage run -m pytest tests --tb=short --show-capture=no -n $(PARALLEL) --ignore tests/phmdoctest
-	coverage report -m
+test-ci: test
 
 test-docs: clean-test-docs
 	mkdir -p ./tests/phmdoctest

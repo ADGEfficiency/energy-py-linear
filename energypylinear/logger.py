@@ -20,7 +20,7 @@ class PulpRedirectHandler(logging.Handler):
         self._structlog.debug("pulp", pulp_message=message)
 
 
-def configure_logger() -> None:
+def configure_logger(enable_file_logging: bool = False) -> None:
     # Check if the logs directory exists, if not, create it.
     if not os.path.exists("logs"):
         os.makedirs("logs")
@@ -31,17 +31,18 @@ def configure_logger() -> None:
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
 
-    # Set up the file handler to write debug logs to a file
-    file_handler = logging.handlers.TimedRotatingFileHandler(
-        f"logs/{unix_time}.log", when="midnight", backupCount=10
-    )
-    file_handler.setLevel(logging.DEBUG)
+    if enable_file_logging:
+        # Set up the file handler to write debug logs to a file
+        file_handler = logging.handlers.TimedRotatingFileHandler(
+            f"logs/{unix_time}.log", when="midnight", backupCount=10
+        )
+        file_handler.setLevel(logging.DEBUG)
 
-    latest_file_handler = logging.FileHandler("logs/LATEST.log")
-    latest_file_handler.setLevel(logging.DEBUG)
+        latest_file_handler = logging.FileHandler("logs/LATEST.log")
+        latest_file_handler.setLevel(logging.DEBUG)
 
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(latest_file_handler)
+        root_logger.addHandler(file_handler)
+        root_logger.addHandler(latest_file_handler)
 
     # Set up the stream handler to write info logs to stdout
     stream_handler = RichHandler(
@@ -77,5 +78,11 @@ def configure_logger() -> None:
     )
 
 
-configure_logger()
-logger = structlog.get_logger()
+configure_logger(enable_file_logging=bool(os.environ.get("ENABLE_FILE_LOGGING", True)))
+
+
+def get_logger(name: str = "default_logger") -> structlog.BoundLogger:
+    return structlog.get_logger(name)
+
+
+logger = get_logger()
