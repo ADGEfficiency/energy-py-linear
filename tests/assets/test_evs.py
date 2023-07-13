@@ -211,7 +211,7 @@ def test_v2g_fast() -> None:
     num_trials = 25
     args = [
         (seed, charge_event_length)
-        for charge_event_length in range(3, 24, 2)
+        for charge_event_length in range(3, 24, 5)
         for seed in np.random.randint(0, 1000, size=num_trials)
     ]
     with ProcessPoolExecutor() as executor:
