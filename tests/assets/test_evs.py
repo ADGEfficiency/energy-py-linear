@@ -209,16 +209,17 @@ def _one_v2g(args: tuple) -> tuple:
 
 def test_v2g_fast() -> None:
     num_trials = 25
+    charge_event_lengths = range(3, 24, 5)
     args = [
         (seed, charge_event_length)
-        for charge_event_length in range(3, 24, 5)
+        for charge_event_length in charge_event_lengths
         for seed in np.random.randint(0, 1000, size=num_trials)
     ]
     with ProcessPoolExecutor() as executor:
         trials = list(executor.map(_one_v2g, args))
 
     discharge = collections.defaultdict(list)
-    for charge_event_length in range(3, 24, 2):
+    for charge_event_length in charge_event_lengths:
         trial_results = [
             x[0]["total-electric_discharge_mwh"].sum()
             for x in trials

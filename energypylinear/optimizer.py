@@ -35,11 +35,6 @@ class Optimizer:
         self.prob = pulp.LpProblem(str(datetime.datetime.now()), pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=0)
 
-        # if verbose:
-        #     logger.info(
-        #         "optimizer.init", prob=self.prob.name, variables=len(self.variables())
-        #     )
-
     def __repr__(self) -> str:
         """A string representation of self."""
         return f"<energypylinear.Optimizer variables: {len(self.variables())} constraints: {len(self.constraints())}>"
