@@ -104,9 +104,8 @@ def test_evs_optimization_carbon() -> None:
         1.0,
         0.9,
         0.5,
-        # 0.1,  TODO causes problems
-        # 0.0,
-        # -0.1
+        0.2,
+        # 0.1, causes spill - not enough power to charge
     ],
 )
 def test_evs_efficiency_losses(efficiency: float) -> None:
@@ -207,7 +206,8 @@ def _one_v2g(args: tuple) -> tuple:
     return (results.simulation, charge_event_length, seed)
 
 
-def test_v2g_fast() -> None:
+def test_v2g() -> None:
+    """Test that we discharge more power as the charge events get longer."""
     num_trials = 25
     charge_event_lengths = range(3, 24, 5)
     args = [
@@ -238,7 +238,6 @@ def test_v2g_fast() -> None:
     print_blob=True,
     max_examples=10,
     verbosity=hypothesis.Verbosity.verbose,
-    # deadline=4000,  # with no v2g
     deadline=200000,  # enough for v2g ?
 )
 @hypothesis.given(
