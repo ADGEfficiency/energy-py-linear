@@ -83,7 +83,7 @@ def test_battery_carbon(
 
 @hypothesis.settings(
     print_blob=True,
-    max_examples=200,
+    max_examples=100,
     verbosity=hypothesis.Verbosity.verbose,
     deadline=2000,
 )
@@ -94,7 +94,8 @@ def test_battery_carbon(
     initial_charge_mwh=hypothesis.strategies.floats(min_value=0.0, max_value=100),
     efficiency=hypothesis.strategies.floats(min_value=0.5, max_value=1.0),
     prices_mu=hypothesis.strategies.floats(min_value=-1000, max_value=1000),
-    prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=25),
+    prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=1000),
+    prices_offset=hypothesis.strategies.floats(min_value=-250, max_value=250),
 )
 def test_battery_hypothesis(
     idx_length: int,
@@ -104,16 +105,16 @@ def test_battery_hypothesis(
     initial_charge_mwh: float,
     prices_mu: float,
     prices_std: float,
+    prices_offset: float,
 ) -> None:
     """Test battery optimization with hypothesis."""
     freq_mins = 30
-    electricity_prices = np.random.normal(prices_mu, prices_std, idx_length).tolist()
+    electricity_prices = np.random.normal(prices_mu, prices_std, idx_length) + prices_offset
 
     asset = epl.battery.Battery(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
 
-    #  TODO
     #  possible to enter into infeasible situations where the final charge is more than the battery can
     #  produce in the interval
     #  this is a problem with the tests, not the application

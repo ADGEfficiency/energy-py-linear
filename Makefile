@@ -38,7 +38,8 @@ ENABLE_FILE_LOGGING = 1
 export
 
 test: setup-test clean-test-docs test-docs
-	pytest tests --cov=energypylinear -n $(PARALLEL) --dist loadfile --color=yes --durations=5 --verbose
+	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose
+	pytest tests --cov=energypylinear -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest
 
 test-ci: test
 
