@@ -61,7 +61,6 @@ clean-test-docs:
 check: lint static
 
 #  STATIC TYPING
-
 static: setup-static
 	rm -rf ./tests/phmdoctest
 	mypy --pretty ./energypylinear
@@ -69,7 +68,6 @@ static: setup-static
 	mypy --pretty ./examples
 
 #  LINTING
-
 lint: setup-check
 	rm -rf ./tests/phmdoctest
 	ruff check . --ignore E501 --extend-exclude=__init__.py,poc
@@ -78,16 +76,14 @@ lint: setup-check
 	poetry lock --check
 
 #  FORMATTING
-
 .PHONY: format
 format: setup-check
 	isort **/*.py --profile black
 	black **/*.py
 
 #  PUBLISH TO PYPI
-
--include .env.secret
 .PHONY: publish
+-include .env.secret
 
 publish: setup
 	poetry build
