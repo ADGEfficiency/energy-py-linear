@@ -153,11 +153,11 @@ class Generator:
         self,
         electricity_prices: np.ndarray | typing.Sequence[float],
         gas_prices: np.ndarray | typing.Sequence[float] | float | None = None,
-        electricity_carbon_intensities: typing.Union[
-            None, np.ndarray, list[float], float
-        ] = None,
-        high_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
-        low_temperature_load_mwh: typing.Union[None, np.ndarray, list[float]] = None,
+        # fmt: off
+        electricity_carbon_intensities: np.ndarray| typing.Sequence[float] | float | None = None,
+        high_temperature_load_mwh: np.ndarray| typing.Sequence[float] | float| None = None,
+        low_temperature_load_mwh: np.ndarray| typing.Sequence[float] | float | None = None,
+        # fmt: on
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         flags: Flags = Flags(),

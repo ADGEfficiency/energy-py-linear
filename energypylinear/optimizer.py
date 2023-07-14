@@ -165,7 +165,7 @@ class Optimizer:
         """Return the value of a linear program variable.
 
         Args:
-            variable: either a pupl variable or already numeric.
+            variable: either a pulp variable or number.
         """
         if isinstance(variable, pulp.LpVariable):
             return variable.value()

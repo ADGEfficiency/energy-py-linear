@@ -25,27 +25,10 @@ def validate_charge_events(
         return charge_events
 
     #  transpose charge_events to have time as first dimension
-    #  this makes it more natural to select by the first dimension as the time dimension
     #  equivilant to the batch dimension when training deep learning
     charge_events = np.array(charge_events).T
     assert charge_event_cfgs.shape[0] == charge_events.shape[1]
     return charge_events
-
-
-#  hmmm - I might need this or something like it during refactor
-# def stack_ev(vars: dict, attr: str) -> np.ndarray:
-#     """Stack electric vehicle charge and charge_event data.
-
-#     Utility function."""
-#     evs = np.concatenate(
-#         [getattr(v, attr) for v in vars["evs-array"]],
-#         axis=0,
-#     )
-#     spill = np.concatenate(
-#         [getattr(v, attr) for v in vars["spill-evs-array"]],
-#         axis=0,
-#     )
-#     return np.concatenate([evs, spill], axis=2)
 
 
 class ChargeEventConfig(pydantic.BaseModel):
@@ -71,9 +54,9 @@ class EVsConfig(pydantic.BaseModel):
     """Electric vehicle (EV) asset configuration."""
 
     name: str
-    charger_cfgs: np.ndarray | list[ChargerConfig]
-    spill_charger_cfgs: np.ndarray | list[ChargerConfig]
-    charge_event_cfgs: np.ndarray | list[ChargeEventConfig]
+    charger_cfgs: np.ndarray
+    spill_charger_cfgs: np.ndarray
+    charge_event_cfgs: np.ndarray
 
     class Config:
         """pydantic.BaseModel configuration."""
@@ -121,18 +104,15 @@ class EVsArrayOneInterval(AssetOneInterval):
 
     i: int
     cfg: EVsConfig
+    is_spill: bool = False
 
-    #  2D arrays
     initial_soc_mwh: np.ndarray
     final_soc_mwh: np.ndarray
-
     electric_charge_mwh: np.ndarray
     electric_charge_binary: np.ndarray
     electric_discharge_mwh: np.ndarray
     electric_discharge_binary: np.ndarray
     electric_loss_mwh: np.ndarray
-
-    is_spill: bool = False
 
     class Config:
         """pydantic.BaseModel configuration."""
@@ -467,11 +447,26 @@ def constrain_initial_final_charge(
 
 
 class EVs:
-    """EV asset class - handles optimization and plotting of results over many intervals.
+    """Electric vehicle asset, used to represent multiple chargers.
+
+    Can handle vehicle-to-grid charging.
+
+    Handles optimization and plotting of results over many intervals.
 
     Args:
-        charger_mws - size of EV chargers in mega-watts.
-        charger_turndown - minimum charger output defined by the charger_turndown as a percent of the charger size in mega-watts.
+        chargers_power_mw: size of EV chargers in mega-watts.
+        charge_events_capacity_mwh:
+            1D array of final SOC for each charge event.
+            Length is the number of charge events.
+        charge_event_efficiency:
+            Roundtrip efficiency of the charge event charge & discharge.
+        charger_turndown:
+            minimum charger output as a percent of the
+            charger size in mega-watts.
+        name
+        charge_events:
+            An optional 2D array of charge events.  The epl.Site API
+            makes use of this to pass in charge events from epl.Site.optimize.
     """
 
     def __init__(
@@ -479,7 +474,6 @@ class EVs:
         chargers_power_mw: list[float] | None = None,
         charge_events_capacity_mwh: typing.Sequence[float] | None = None,
         charge_event_efficiency: float = 0.9,
-        #  TODO charger efficiency
         charger_turndown: float = 0.1,
         name: str = "evs",
         charge_events: list | None = None,
@@ -497,8 +491,7 @@ class EVs:
         assert chargers_power_mw is not None
         assert charge_events_capacity_mwh is not None
 
-        #  TODO remove these as attributes of the class
-        self.charger_cfgs = np.array(
+        charger_cfgs = np.array(
             [
                 ChargerConfig(
                     name=f"charger-{name}",
@@ -508,7 +501,7 @@ class EVs:
                 for name, power_mw in enumerate(chargers_power_mw)
             ]
         )
-        self.spill_charger_config = np.array(
+        spill_charger_config = np.array(
             [
                 ChargerConfig(
                     name=f"charger-spill-{name}",
@@ -517,7 +510,7 @@ class EVs:
                 )
             ]
         )
-        self.charge_event_cfgs = np.array(
+        charge_event_cfgs = np.array(
             [
                 ChargeEventConfig(
                     name=f"charge-event-{name}",
@@ -530,9 +523,9 @@ class EVs:
 
         self.cfg = EVsConfig(
             name=name,
-            charger_cfgs=self.charger_cfgs,
-            spill_charger_cfgs=self.spill_charger_config,
-            charge_event_cfgs=self.charge_event_cfgs,
+            charger_cfgs=charger_cfgs,
+            spill_charger_cfgs=spill_charger_config,
+            charge_event_cfgs=charge_event_cfgs,
         )
 
         self.site = epl.Site()
@@ -542,14 +535,14 @@ class EVs:
         #  we need this shortcut to get the site API working
         if charge_events is not None:
             self.charge_events = validate_charge_events(
-                self.charge_event_cfgs, charge_events
+                self.cfg.charge_event_cfgs, charge_events
             )
         else:
             self.charge_events = None
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        return f"<energypylinear.EVs n_chargers: {len(self.charger_cfgs)}, n_charge_events: {len(self.charge_event_cfgs)}>"
+        return f"<energypylinear.EVs n_chargers: {len(self.cfg.charger_cfgs)}, n_charge_events: {len(self.cfg.charge_event_cfgs)}>"
 
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
@@ -606,8 +599,8 @@ class EVs:
             ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
             self.charge_events,
             freq,
-            self.charger_cfgs,
-            self.charge_event_cfgs,
+            self.cfg.charger_cfgs,
+            self.cfg.charge_event_cfgs,
             i,
             allow_evs_discharge=flags.allow_evs_discharge,
         )
@@ -617,8 +610,8 @@ class EVs:
             ivars.filter_evs_array(is_spill=True, i=i, asset_name=self.cfg.name),
             self.charge_events,
             freq,
-            self.spill_charger_config,
-            self.charge_event_cfgs,
+            self.cfg.spill_charger_cfgs,
+            self.cfg.charge_event_cfgs,
             i,
             #  never allow a spill charger to discharge
             allow_evs_discharge=False,
@@ -627,8 +620,8 @@ class EVs:
         constrain_single_charger_charge_event(
             optimizer,
             ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
-            self.charger_cfgs,
-            self.charge_event_cfgs,
+            self.cfg.charger_cfgs,
+            self.cfg.charge_event_cfgs,
         )
 
         constrain_charge_event_electricity_balance(
@@ -657,8 +650,8 @@ class EVs:
     def optimize(
         self,
         electricity_prices: list[float] | np.ndarray,
-        gas_prices: float | list[float] | np.ndarray | None = None,
         electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        gas_prices: float | list[float] | np.ndarray | None = None,
         charge_events: list[list[int]] | np.ndarray | None = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
@@ -668,6 +661,9 @@ class EVs:
         """Optimize the EVs's dispatch using a mixed-integer linear program.
 
         Args:
+            electricity_prices - the price of electricity in each interval.
+            gas_prices - the prices of natural gas, used in CHP and boilers in each interval.
+            electricity_carbon_intensities - carbon intensity of electricity in each interval.
             charge_events: 2D matrix representing when a charge event is active.
                 Shape is (n_charge_events, n_timesteps).
                 A charge events matrix for 4 charge events over 5 intervals.
@@ -680,15 +676,6 @@ class EVs:
                 ]
                 ```
 
-            charge_event_mwh: 1D array of the total charge energy required for each charge event - total across all intervals in mega-watts.
-                Length is the number of charge events.
-                ```
-                charge_event_mwh = [50, 100, 30, 40]
-                ```
-
-            electricity_prices - the price of electricity in each interval.
-            gas_prices - the prices of natural gas, used in CHP and boilers in each interval.
-            electricity_carbon_intensities - carbon intensity of electricity in each interval.
             freq_mins - the size of an interval in minutes.
             objective - the optimization objective - either "price" or "carbon".
             verbose: level of printing.
@@ -716,7 +703,7 @@ class EVs:
 
         assert charge_events is not None
         self.charge_events = validate_charge_events(
-            self.charge_event_cfgs, charge_events
+            self.cfg.charge_event_cfgs, charge_events
         )
 
         self.interval_data = epl.interval_data.IntervalData(
@@ -726,7 +713,7 @@ class EVs:
             evs=epl.interval_data.EVIntervalData(
                 charge_events=self.charge_events,
                 charge_events_capacity_mwh=[
-                    cfg.capacity_mwh for cfg in self.charge_event_cfgs
+                    cfg.capacity_mwh for cfg in self.cfg.charge_event_cfgs
                 ],
             ),
         )
@@ -761,8 +748,8 @@ class EVs:
             )
 
         assert isinstance(self.charge_events, np.ndarray)
-        assert isinstance(self.charger_cfgs, np.ndarray)
-        assert isinstance(self.spill_charger_config, np.ndarray)
+        assert isinstance(self.cfg.charger_cfgs, np.ndarray)
+        assert isinstance(self.cfg.spill_charger_cfgs, np.ndarray)
         self.constrain_after_intervals(
             self.optimizer,
             ivars,
