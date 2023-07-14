@@ -7,7 +7,7 @@ This section will give you confidence in the implementation of the EV implementa
 ```python
 import energypylinear as epl
 
-asset = epl.evs.EVs(
+asset = epl.EVs(
     chargers_power_mw=[100, 100],
     charge_events_capacity_mwh=[50, 100, 30],
     charger_turndown=0.0,
@@ -33,7 +33,7 @@ Note third charger - this is the spill charger
 ```python
 import energypylinear as epl
 
-asset = epl.evs.EVs(
+asset = epl.EVs(
     chargers_power_mw=[100, 100],
     charge_events_capacity_mwh=[50, 100, 30],
     charger_turndown=0.0,
@@ -59,7 +59,7 @@ Now we see that the charge has happened in interval 3, this is because electrici
 ```python
 import energypylinear as epl
 
-asset = epl.evs.EVs(
+asset = epl.EVs(
     chargers_power_mw=[100, 100],
     charge_events_capacity_mwh=[50, 100, 30],
     charger_turndown=0.0,
@@ -89,7 +89,7 @@ do the math here just as a fyi
 ```python
 import energypylinear as epl
 
-asset = epl.evs.EVs(
+asset = epl.EVs(
     chargers_power_mw=[100, 100],
     charge_events_capacity_mwh=[50, 100, 30],
     charger_turndown=0.0,

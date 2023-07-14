@@ -7,7 +7,7 @@ if __name__ == "__main__":
     carbon_intensities = [0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01]
 
     #  battery model
-    asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
+    asset = epl.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
 
     #  optimize for money
     results = asset.optimize(

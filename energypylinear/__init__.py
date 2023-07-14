@@ -1,16 +1,8 @@
 """A library for mixed-integer linear optimization of energy assets."""
-from energypylinear import (
-    accounting,
-    assets,
-    data_generation,
-    defaults,
-    interval_data,
-    plot,
-    results,
-    utils,
-)
+from energypylinear import (accounting, assets, data_generation, defaults,
+                            interval_data, plot, results)
 from energypylinear.accounting import get_accounts
-from energypylinear.assets import battery, chp, evs, site, spill, valve
+from energypylinear.assets import battery, chp, site, spill, valve
 from energypylinear.assets.battery import Battery
 from energypylinear.assets.boiler import Boiler
 from energypylinear.assets.chp import Generator
@@ -24,14 +16,14 @@ from energypylinear.optimizer import Optimizer
 
 __all__ = [
     "Battery",
-    "Generator",
     "Boiler",
-    "Site",
-    "Optimizer",
     "EVs",
     "Flags",
     "Freq",
+    "Generator",
     "IntervalData",
+    "Optimizer",
+    "Site",
     "get_accounts",
-    "utils",
+    "objectives",
 ]

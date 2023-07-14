@@ -238,7 +238,7 @@ class Generator:
     def plot(
         self,
         results: "epl.results.SimulationResult",
-        path: typing.Union[pathlib.Path, str],
+        path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_chp(results, pathlib.Path(path))

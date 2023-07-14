@@ -10,23 +10,28 @@ def filter_spill_evs(
     ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.interval_data.IntervalData",
 ) -> "list[list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]]":
-    spill_evs = ivars.filter_objective_variables(epl.assets.evs.EVOneInterval)
-    pkg: list[
+    """
+    Complexity here comes from the need to extract only the spill EVs linear program
+    variables.
+
+    """
+    evs = ivars.filter_objective_variables(epl.assets.evs.EVOneInterval)
+    spill_evs: list[
         list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]
     ] = []
-    for i, assets in enumerate(spill_evs):
-        temp: list[
+    for i, assets_one_interval in enumerate(evs):
+        spill_evs_one_interval: list[
             epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval
         ] = []
-        for ev in assets:
+        for ev in assets_one_interval:
             assert isinstance(ev, epl.assets.evs.EVOneInterval)
             if ev.is_spill:
-                temp.append(ev)
-        pkg.append(temp)
+                spill_evs_one_interval.append(ev)
+        spill_evs.append(spill_evs_one_interval)
 
-    if len(pkg) == 0:
-        pkg = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
-    return pkg
+    if len(spill_evs) == 0:
+        spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
+    return spill_evs
 
 
 def price_objective(
@@ -49,13 +54,9 @@ def price_objective(
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
 
-    # sites = ivars.filter_all_sites()
     #  cheating here with the site name (the second `site`)
     sites = ivars.asset["site"]["site"]
-
-    # spills = epl.utils.filter_all_assets(vars, "spill")
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-
     spill_evs = filter_spill_evs(ivars, interval_data)
     generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
@@ -115,7 +116,6 @@ def carbon_objective(
     #  cheating here with the site name (the second `site`)
     sites = ivars.asset["site"]["site"]
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-
     spill_evs = filter_spill_evs(ivars, interval_data)
     generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)

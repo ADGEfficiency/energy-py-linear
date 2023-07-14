@@ -13,7 +13,7 @@ if __name__ == "__main__":
     charge_event_mwh: list[float] = [50, 100, 30, 40]
 
     #  ev model
-    asset = epl.evs.EVs(
+    asset = epl.EVs(
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_event_mwh,
     )

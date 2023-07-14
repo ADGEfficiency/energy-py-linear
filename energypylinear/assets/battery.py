@@ -37,9 +37,9 @@ class BatteryOneInterval(AssetOneInterval):
 
     cfg: BatteryConfig
     electric_charge_mwh: pulp.LpVariable
-    electric_charge_binary: typing.Union[pulp.LpVariable, int]
+    electric_charge_binary: pulp.LpVariable | int
     electric_discharge_mwh: pulp.LpVariable
-    electric_discharge_binary: typing.Union[pulp.LpVariable, int]
+    electric_discharge_binary: pulp.LpVariable | int
     electric_loss_mwh: pulp.LpVariable
     initial_charge_mwh: pulp.LpVariable
     final_charge_mwh: pulp.LpVariable
@@ -313,7 +313,7 @@ class Battery:
     def plot(
         self,
         results: "epl.results.SimulationResult",
-        path: typing.Union[pathlib.Path, str],
+        path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_battery(results, pathlib.Path(path))

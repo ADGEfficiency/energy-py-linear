@@ -773,7 +773,7 @@ class EVs:
     def plot(
         self,
         results: "epl.results.SimulationResult",
-        path: typing.Union[pathlib.Path, str],
+        path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_evs(results, pathlib.Path(path))

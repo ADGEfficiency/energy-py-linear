@@ -158,7 +158,7 @@ To optimize two 100 MWe chargers for 4 charge events over 5 intervals:
 import energypylinear as epl
 
 #  2 100 MW EV chargers
-asset = epl.evs.EVs(
+asset = epl.EVs(
     chargers_power_mw=[100, 100],
     charge_events_capacity_mwh = [50, 100, 30, 40],
     charger_turndown=0.1
