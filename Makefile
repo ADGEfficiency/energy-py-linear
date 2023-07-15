@@ -34,7 +34,7 @@ setup-docs:
 #  TEST
 .PHONY: test test-ci test-docs clean-test-docs test-validate
 PARALLEL = auto
-ENABLE_FILE_LOGGING = 1
+ENABLE_FILE_LOGGING = 0
 export
 
 test: setup-test clean-test-docs test-docs

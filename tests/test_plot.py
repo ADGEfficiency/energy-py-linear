@@ -27,7 +27,7 @@ def test_evs_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test we can plot the EVs chart."""
     path = tmp_path_factory.mktemp("figs")
     ds = epl.data_generation.generate_random_ev_input_data(10, 5, 3)
-    asset = epl.evs.EVs(
+    asset = epl.EVs(
         chargers_power_mw=ds["charger_mws"].tolist(),
         charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
         charge_event_efficiency=1.0,
@@ -58,7 +58,7 @@ def test_chp_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     ht_load = np.random.uniform(0, 100, 24).tolist()
     lt_load = np.random.uniform(0, 100, 24).tolist()
 
-    asset = epl.chp.Generator(
+    asset = epl.Generator(
         electric_power_max_mw=100,
         electric_power_min_mw=50,
         electric_efficiency_pct=0.3,

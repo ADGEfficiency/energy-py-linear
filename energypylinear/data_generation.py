@@ -15,7 +15,7 @@ def generate_random_ev_input_data(
     prices_std: float = 20,
     seed: int | None = 2,
 ) -> dict:
-    """Create interval data for the `epl.evs.EVs` smart electric charging asset."""
+    """Create interval data for the `epl.EVs` smart electric charging asset."""
     np.random.seed(seed)
     electricity_prices = np.random.normal(prices_mu, prices_std, idx_length)
     charger_mws = np.random.randint(10, 100, n_chargers)

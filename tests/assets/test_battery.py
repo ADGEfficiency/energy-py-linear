@@ -28,7 +28,7 @@ def test_battery_price(
     capacity_mwh = 6
     efficiency = 1.0
     freq_mins = 60
-    asset = epl.battery.Battery(
+    asset = epl.Battery(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
     results = asset.optimize(
@@ -64,7 +64,7 @@ def test_battery_carbon(
     efficiency = 1.0
     freq_mins = 60
     prices = np.zeros_like(carbon_intensities)
-    asset = epl.battery.Battery(
+    asset = epl.Battery(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
     results = asset.optimize(
@@ -109,9 +109,11 @@ def test_battery_hypothesis(
 ) -> None:
     """Test battery optimization with hypothesis."""
     freq_mins = 30
-    electricity_prices = np.random.normal(prices_mu, prices_std, idx_length) + prices_offset
+    electricity_prices = (
+        np.random.normal(prices_mu, prices_std, idx_length) + prices_offset
+    )
 
-    asset = epl.battery.Battery(
+    asset = epl.Battery(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
 
@@ -127,7 +129,7 @@ def test_battery_hypothesis(
     )
     simulation = results.simulation
 
-    freq = epl.freq.Freq(freq_mins)
+    freq = epl.Freq(freq_mins)
 
     #  check we don't exceed the battery rating
     assert all(

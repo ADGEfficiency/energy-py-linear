@@ -15,7 +15,7 @@ def test_evs_optimization_price() -> None:
     """Test EV optimization for price."""
 
     charge_events_capacity_mwh = [50, 100, 30, 40]
-    evs = epl.evs.EVs(
+    evs = epl.EVs(
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
         charger_turndown=0.0,
@@ -58,7 +58,7 @@ def test_evs_optimization_price() -> None:
 def test_evs_optimization_carbon() -> None:
     """Test EV optimization for carbon."""
     charge_events_capacity_mwh = [50, 100, 30, 40]
-    evs = epl.evs.EVs(
+    evs = epl.EVs(
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
         charger_turndown=0.0,
@@ -111,7 +111,7 @@ def test_evs_optimization_carbon() -> None:
 def test_evs_efficiency_losses(efficiency: float) -> None:
     """Test the EV charge event losses."""
     charge_events_capacity_mwh: list[float] = [50, 100, 30, 40]
-    evs = epl.evs.EVs(
+    evs = epl.EVs(
         chargers_power_mw=[500, 500],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
         charger_turndown=0.0,
@@ -174,7 +174,7 @@ def _one_v2g(args: tuple) -> tuple:
         prices_std=250,
         seed=seed,
     )
-    evs = epl.evs.EVs(
+    evs = epl.EVs(
         chargers_power_mw=ds["charger_mws"].tolist(),
         charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
         charger_turndown=0.0,
@@ -267,7 +267,7 @@ def test_evs_hypothesis(
         prices_mu=prices_mu,
         prices_std=prices_std,
     )
-    evs = epl.evs.EVs(
+    evs = epl.EVs(
         chargers_power_mw=ds["charger_mws"].tolist(),
         charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
         charger_turndown=charger_turndown,

@@ -59,7 +59,7 @@ import energypylinear as epl
 
 site = epl.Site(assets=[
   epl.Battery(power_mw=2.0, capacity_mwh=4.0),
-  epl.evs.EVs(charger_mws=[100, 100], charger_turndown=0.1)
+  epl.EVs(charger_mws=[100, 100], charger_turndown=0.1)
 ])
 
 results = site.optimize(
