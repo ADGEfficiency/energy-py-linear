@@ -13,6 +13,8 @@ def test_repr() -> None:
         epl.assets.boiler.Boiler(),
         epl.interval_data.IntervalData(electricity_prices=[10]),
         epl.Optimizer(),
+        epl.accounting.accounting.Account(cost=0, emissions=0)
+        epl.interval_data.IntervalVars()
     ]
     for th in things:
         print(th)

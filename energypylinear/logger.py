@@ -1,6 +1,7 @@
 import logging
 import logging.handlers
 import os
+import pathlib
 import time
 
 import structlog
@@ -21,9 +22,7 @@ class PulpRedirectHandler(logging.Handler):
 
 
 def configure_logger(enable_file_logging: bool = False) -> None:
-    # Check if the logs directory exists, if not, create it.
-    if not os.path.exists("logs"):
-        os.makedirs("logs")
+    pathlib.Path("logs").mkdir(exist_ok=True)
 
     unix_time = int(time.time())
 
