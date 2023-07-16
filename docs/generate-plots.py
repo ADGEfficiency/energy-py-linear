@@ -29,52 +29,59 @@ def test_battery_performance() -> None:
     num_trials = 15
 
     run_times = collections.defaultdict(list)
-    for idx_length in idx_lengths:
-        trial_times = collections.defaultdict(list)
+    for flag in [False, True]:
+        for idx_length in idx_lengths:
+            trial_times = collections.defaultdict(list)
 
-        for n_trial in range(num_trials):
-            print(f"idx_length: {idx_length} trial {n_trial}")
-            st = time.perf_counter()
+            for n_trial in range(num_trials):
+                print(f"idx_length: {idx_length} trial {n_trial}")
+                st = time.perf_counter()
 
-            ds = {"electricity_prices": np.random.uniform(-1000, 1000, idx_length)}
-            asset = epl.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
+                ds = {"electricity_prices": np.random.uniform(-1000, 1000, idx_length)}
+                asset = epl.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
 
-            asset.optimize(
-                electricity_prices=ds["electricity_prices"],
-                verbose=False,
-                flags=Flags(
-                    allow_evs_discharge=True,
-                    fail_on_spill_asset_use=True,
-                    allow_infeasible=False,
-                ),
+                asset.optimize(
+                    electricity_prices=ds["electricity_prices"],
+                    verbose=False,
+                    flags=Flags(
+                        allow_evs_discharge=True,
+                        fail_on_spill_asset_use=True,
+                        allow_infeasible=False,
+                        include_charge_discharge_binary_variables=flag,
+                    ),
+                )
+
+                trial_times["time"].append(time.perf_counter() - st)
+
+            run_times["time"].append(
+                {
+                    "mean": statistics.mean(trial_times["time"]),
+                    "std": statistics.stdev(trial_times["time"]),
+                    "flag": flag,
+                    "idx_length": idx_length,
+                }
             )
-
-            trial_times["time"].append(time.perf_counter() - st)
-
-        run_times["time"].append(
-            (
-                statistics.mean(trial_times["time"]),
-                statistics.stdev(trial_times["time"]),
-            )
-        )
-        print(f"idx_length: {idx_length}, elapsed: {run_times}")
+            print(run_times["time"])
 
     fig, axes = plt.subplots(nrows=1, sharex=True)
     print("[red]final run times:[/]")
     print(run_times)
-    axes.plot(
-        idx_lengths,
-        [mean for mean, std in run_times["time"]],
-        marker="o",
-        label="mean",
-    )
-    axes.set_title(asset.__repr__())
-    axes.set_ylabel("Run Time (seconds)")
-    axes.legend()
-    axes.grid(True)
-    plt.xlabel("Index Length")
-    plt.tight_layout()
-    fig.savefig("./docs/docs/static/battery-performance.png")
+    for flag in [False, True]:
+
+        subset: list = [p for p in run_times["time"] if p["flag"] == flag]
+        axes.plot(
+            [p["idx_length"] for p in subset],
+            [p["mean"] for p in subset],
+            marker="o",
+            label=f"include_charge_discharge_binary_variables={flag}",
+        )
+        axes.set_title(asset.__repr__())
+        axes.set_ylabel("Run Time (seconds)")
+        axes.legend()
+        axes.grid(True)
+        plt.xlabel("Index Length")
+        plt.tight_layout()
+        fig.savefig("./docs/docs/static/battery-performance.png")
 
 
 def test_evs_performance() -> None:
@@ -103,7 +110,7 @@ def test_evs_performance() -> None:
                 prices_mu=500,
                 prices_std=10,
             )
-            asset = epl.evs.EVs(
+            asset = epl.EVs(
                 chargers_power_mw=ds["charger_mws"].tolist(),
                 charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
                 charger_turndown=0.2,
@@ -139,7 +146,7 @@ def test_evs_performance() -> None:
             [p["idx_length"] for p in subset],
             [p["time"] for p in subset],
             "o-",
-            label=f"prune charge variable to only valid charge events: {flag}",
+            label=f"limit_charge_variables_to_valid_events: {flag}",
         )
         plt.xlabel("Index Length")
         plt.ylabel("Run Time (seconds)")

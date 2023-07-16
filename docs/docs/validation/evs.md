@@ -109,4 +109,34 @@ asset.plot(results, path="./docs/docs/static/ev-validation-4.png")
 
 ![](../static/ev-validation-4.png)
 
-## Charge Event Final Charges
+The key takeaway here is that we discharge during interval 2.  All our charge events still end up at the correct state of charge at the end of the program.
+
+## Spill Chargers
+
+```python
+import energypylinear as epl
+
+asset = epl.EVs(
+    chargers_power_mw=[100, 100],
+    charge_events_capacity_mwh=[50, 100, 30, 500],
+    charger_turndown=0.0,
+    charge_event_efficiency=1.0
+)
+results = asset.optimize(
+    electricity_prices=[-100, 50, 300, 10, 40],
+    charge_events=[
+        [1, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1],
+        [0, 0, 1, 1, 1],
+        [1, 0, 0, 0, 0],
+    ],
+    flags=epl.Flags(allow_evs_discharge=True)
+)
+asset.plot(results, path="./docs/docs/static/ev-validation-5.png")
+```
+
+Key takeaway here is the use of the spill charger - we have a 500 MWh charge event, but only 200 MWh of capacity.  We meet the remaining demand from a spill charger.
+
+This allows the linear program to be feasible, while communicating directly which intervals or charge events are causing the mismatch between charge event demand and spill charger capacity.
+
+![](../static/ev-validation-5.png)

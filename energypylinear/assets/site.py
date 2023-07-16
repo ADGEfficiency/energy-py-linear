@@ -54,7 +54,9 @@ def constrain_site_electricity_balance(
     """
     assets = ivars.objective_variables[-1]
     site = ivars.filter_site(i=-1, site_name=cfg.name)
-    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval, i=-1)[0]
+    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval, i=-1)[
+        0
+    ]
 
     assert interval_data.electricity_load_mwh is not None
     optimizer.constrain(

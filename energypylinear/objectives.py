@@ -29,8 +29,9 @@ def filter_spill_evs(
                 spill_evs_one_interval.append(ev)
         spill_evs.append(spill_evs_one_interval)
 
-    if len(spill_evs) == 0:
-        spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
+    #  hmm
+    # if len(spill_evs) == 0:
+    #     spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
     return spill_evs
 
 

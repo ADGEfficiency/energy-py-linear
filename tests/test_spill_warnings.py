@@ -15,7 +15,7 @@ def test_spill_validation() -> None:
     epl.assets.spill.SpillConfig(name="valid-spill")
 
 
-def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
+def test_chp_spill(capsys: CaptureFixture) -> None:
     """Check spill with gas turbine."""
     asset = epl.chp.Generator(
         electric_power_max_mw=100,
@@ -71,3 +71,23 @@ def test_chp_gas_turbine_price(capsys: CaptureFixture) -> None:
     )
     capture = capsys.readouterr()
     assert "warn_spills" not in capture.out
+
+
+def test_evs_spill():
+    import energypylinear as epl
+
+    asset = epl.EVs(
+        chargers_power_mw=[100],
+        charge_events_capacity_mwh=[50, 100, 30],
+        charger_turndown=0.0,
+        charge_event_efficiency=1.0,
+    )
+    results = asset.optimize(
+        electricity_prices=[-100, 50],
+        charge_events=[
+            [1, 0],
+            [1, 0],
+            [1, 0],
+        ],
+    )
+    assert results.simulation["total-spills_mwh"].sum() > 0

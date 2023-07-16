@@ -15,20 +15,13 @@ from energypylinear.optimizer import Optimizer
 
 
 def validate_charge_events(
-    charge_event_cfgs: np.ndarray, charge_events: np.ndarray | list
-) -> np.ndarray | None:
+    charge_event_cfgs: np.ndarray, charge_events: np.ndarray
+) -> None:
     """Helper used to handle charge events.
 
     This is a bit of a smell - will probably be reworked once I see a way.
     """
-    if charge_events is None:
-        return charge_events
-
-    #  transpose charge_events to have time as first dimension
-    #  equivilant to the batch dimension when training deep learning
-    charge_events = np.array(charge_events).T
     assert charge_event_cfgs.shape[0] == charge_events.shape[1]
-    return charge_events
 
 
 class ChargeEventConfig(pydantic.BaseModel):
@@ -532,10 +525,15 @@ class EVs:
         self.spill = epl.spill.Spill()
 
         #  this feels a bit wierd, because `charge_events` is interval data
+        #  interval data is usually input with the `asset.optimize()` call
         #  we need this shortcut to get the site API working
         if charge_events is not None:
-            self.charge_events = validate_charge_events(
-                self.cfg.charge_event_cfgs, charge_events
+            # transpose charge_events to have time as first dimension
+            # equivilant to the batch dimension when training deep learning
+            self.charge_events = np.array(charge_events).T
+            validate_charge_events(
+                self.cfg.charge_event_cfgs,
+                self.charge_events
             )
         else:
             self.charge_events = None
@@ -692,19 +690,10 @@ class EVs:
         - want class init during site api,
         - want optimize during asset api
         """
-        if self.charge_events is not None:
+        if self.charge_events is None:
             assert charge_events is not None
-
-        if self.charge_events is not None and charge_events:
-            print("warning - charge events supplied twice")
-
-        if self.charge_events is not None and charge_events is None:
-            charge_events = self.charge_events
-
-        assert charge_events is not None
-        self.charge_events = validate_charge_events(
-            self.cfg.charge_event_cfgs, charge_events
-        )
+            self.charge_events = np.array(charge_events).T
+            validate_charge_events(self.cfg.charge_event_cfgs, self.charge_events)
 
         self.interval_data = epl.interval_data.IntervalData(
             electricity_prices=electricity_prices,
@@ -771,9 +760,7 @@ class EVs:
         )
 
     def plot(
-        self,
-        results: "epl.results.SimulationResult",
-        path: pathlib.Path | str
+        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_evs(results, pathlib.Path(path))

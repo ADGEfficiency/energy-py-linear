@@ -13,8 +13,31 @@ def test_repr() -> None:
         epl.assets.boiler.Boiler(),
         epl.interval_data.IntervalData(electricity_prices=[10]),
         epl.Optimizer(),
-        epl.accounting.accounting.Account(cost=0, emissions=0)
-        epl.interval_data.IntervalVars()
+        epl.accounting.accounting.Account(cost=0, emissions=0),
+        epl.accounting.accounting.Accounts(
+            electricity=epl.accounting.accounting.ElectricityAccount(
+                import_cost=0,
+                export_cost=0,
+                cost=0,
+                import_emissions=0,
+                export_emissions=0,
+                emissions=0,
+            ),
+            gas=epl.accounting.accounting.ElectricityAccount(
+                import_cost=0,
+                export_cost=0,
+                cost=0,
+                import_emissions=0,
+                export_emissions=0,
+                emissions=0,
+            ),
+            profit=0,
+            cost=0,
+            emissions=0,
+        ),
+        epl.interval_data.IntervalVars(),
     ]
     for th in things:
+        repr(th)
+        str(th)
         print(th)

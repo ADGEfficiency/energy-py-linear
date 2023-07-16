@@ -4,6 +4,7 @@ import random
 import numpy as np
 import pytest
 
+from energypylinear.debug import debug_simulation
 import energypylinear as epl
 from energypylinear.data_generation import generate_random_ev_input_data
 from energypylinear.defaults import defaults
@@ -95,4 +96,6 @@ def test_sites(seed: int) -> None:
     n_assets = random.randint(len(assets), len(assets))
     sampled_assets = random.sample(assets, n_assets)
     site = epl.Site(assets=sampled_assets)
-    site.optimize(**ds, verbose=True)
+    results = site.optimize(**ds, verbose=True)
+
+    debug_simulation(results.simulation)

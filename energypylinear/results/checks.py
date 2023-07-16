@@ -34,14 +34,14 @@ def check_electricity_balance(
         [
             c
             for c in simulation.columns
-            if "spill-charger" in c and "electric_charge_mwh" in c
+            if "charger" in c and "spill" in c and "electric_charge_mwh" in c
         ]
     ].values.flatten()
 
-    if len(spill) > 0:
-        balance = abs(inp + accumulation + spill - out) < 1e-4
-    else:
-        balance = abs(inp + accumulation - out) < 1e-4
+    # if len(spill) > 0:
+    #     balance = abs(inp + accumulation + spill - out) < 1e-4
+    # else:
+    balance = abs(inp + accumulation - out) < 1e-4
 
     soc = simulation[[c for c in simulation.columns if "final_soc" in c]].sum(axis=1)
     data = pd.DataFrame(

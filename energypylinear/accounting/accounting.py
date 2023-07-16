@@ -14,7 +14,11 @@ class Account(pydantic.BaseModel):
     cost: float
     emissions: float
 
+    def __str__(self) -> str:
+        return f"<Account profit={-1 * self.cost:.2f} emissions={self.emissions:.4f}>"
+
     def __repr__(self) -> str:
+        #  TODO
         return f"<Account profit={-1 * self.cost:.2f} emissions={self.emissions:.4f}>"
 
     def __sub__(self, other: object) -> "Account":
@@ -64,7 +68,11 @@ class Accounts(Account):
     profit: float
     emissions: float
 
+    def __str__(self) -> str:
+        return f"<Accounts profit={self.profit:.2f} emissions={self.emissions:.4f}>"
+
     def __repr__(self) -> str:
+        #  TODO
         return f"<Accounts profit={self.profit:.2f} emissions={self.emissions:.4f}>"
 
 

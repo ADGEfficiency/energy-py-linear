@@ -39,7 +39,7 @@ export
 
 test: setup-test clean-test-docs test-docs
 	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose
-	pytest tests --cov=energypylinear -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest
+	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest
 
 test-ci: test
 
@@ -95,7 +95,7 @@ publish: setup
 .PHONY: docs mike-deploy
 
 generate-docs-images: setup
-	python ./docs/generate_images.py
+	python ./docs/generate-plots.py
 
 docs: setup-docs
 	#  `mike serve` will show docs for the different versions
