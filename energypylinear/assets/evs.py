@@ -529,8 +529,8 @@ class EVs:
         #  we need this shortcut to get the site API working
         if charge_events is not None:
             # transpose charge_events to have time as first dimension
-            # equivilant to the batch dimension when training deep learning
-            self.charge_events = np.array(charge_events).T
+            # equivilant to the batch dimension in neural nets
+            self.charge_events: np.ndarray | None = np.array(charge_events).T
             validate_charge_events(
                 self.cfg.charge_event_cfgs,
                 self.charge_events

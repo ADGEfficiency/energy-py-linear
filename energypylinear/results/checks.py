@@ -27,20 +27,6 @@ def check_electricity_balance(
     #  have this idea of wanting to show the balance without the spill effect
     raw_balance = abs(inp + accumulation - out) < 1e-4
 
-    #  this is the balance after spills
-    #  ignoring discharge - this is because spills can't discharge
-    #  but this isn't set in stone here - possible that asset spill is implemented differently TODO
-    spill = simulation[
-        [
-            c
-            for c in simulation.columns
-            if "charger" in c and "spill" in c and "electric_charge_mwh" in c
-        ]
-    ].values.flatten()
-
-    # if len(spill) > 0:
-    #     balance = abs(inp + accumulation + spill - out) < 1e-4
-    # else:
     balance = abs(inp + accumulation - out) < 1e-4
 
     soc = simulation[[c for c in simulation.columns if "final_soc" in c]].sum(axis=1)

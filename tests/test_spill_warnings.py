@@ -73,7 +73,7 @@ def test_chp_spill(capsys: CaptureFixture) -> None:
     assert "warn_spills" not in capture.out
 
 
-def test_evs_spill():
+def test_evs_spill() -> None:
     import energypylinear as epl
 
     asset = epl.EVs(

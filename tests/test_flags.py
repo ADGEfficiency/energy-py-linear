@@ -17,12 +17,12 @@ def test_flags() -> None:
         flags=Flags(include_charge_discharge_binary_variables=True),
     )
 
-    asset = epl.EVs()
-    asset.optimize(
+    evs = epl.EVs()
+    evs.optimize(
         electricity_prices=np.random.normal(10, 5, 48),
         flags=Flags(limit_charge_variables_to_valid_events=True),
     )
-    asset.optimize(
+    evs.optimize(
         electricity_prices=np.random.normal(10, 5, 48),
         flags=Flags(limit_charge_variables_to_valid_events=False),
     )

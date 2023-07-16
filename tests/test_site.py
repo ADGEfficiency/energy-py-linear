@@ -4,9 +4,9 @@ import random
 import numpy as np
 import pytest
 
-from energypylinear.debug import debug_simulation
 import energypylinear as epl
 from energypylinear.data_generation import generate_random_ev_input_data
+from energypylinear.debug import debug_simulation
 from energypylinear.defaults import defaults
 
 
