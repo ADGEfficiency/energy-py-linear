@@ -29,7 +29,7 @@ def test_battery_performance() -> None:
     num_trials = 15
 
     run_times = collections.defaultdict(list)
-    for flag in [False, True]:
+    for flag in [True, False]:
         for idx_length in idx_lengths:
             trial_times = collections.defaultdict(list)
 
@@ -66,7 +66,7 @@ def test_battery_performance() -> None:
     fig, axes = plt.subplots(nrows=1, sharex=True)
     print("[red]final run times:[/]")
     print(run_times)
-    for flag in [False, True]:
+    for flag in [True, False]:
 
         subset: list = [p for p in run_times["time"] if p["flag"] == flag]
         axes.plot(
@@ -140,7 +140,7 @@ def test_evs_performance() -> None:
             )
 
     plt.figure()
-    for flag in [True, False]:
+    for flag in [False, True]:
         subset: list = [p for p in data["pkg"] if p["flag"] == flag]
         plt.plot(
             [p["idx_length"] for p in subset],
