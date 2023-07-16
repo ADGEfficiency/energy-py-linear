@@ -51,7 +51,6 @@ class Optimizer:
             up: The upper bound of the variable.
         """
         logger.debug("optimizer.continuous", name=name)
-        assert " " not in name
         return pulp.LpVariable(name=name, lowBound=low, upBound=up, cat="Continuous")
 
     def binary(self, name: str) -> pulp.LpVariable:
@@ -61,7 +60,6 @@ class Optimizer:
             name: The name of the variable.
         """
         logger.debug("optimizer.binary", name=name)
-        assert " " not in name
         return pulp.LpVariable(name=name, cat="Binary")
 
     def sum(
@@ -83,8 +81,6 @@ class Optimizer:
             constraint: equality or inequality expression.
             name: optional name to give to the constraint.
         """
-        if name:
-            assert " " not in name
         return self.prob.addConstraint(constraint, name)
 
     def objective(self, objective: pulp.LpAffineExpression) -> pulp.LpConstraint:

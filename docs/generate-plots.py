@@ -139,7 +139,8 @@ def test_evs_performance() -> None:
                 flag=flag,
             )
 
-    plt.figure()
+    # plt.figure()
+    fig, axes = plt.subplots(nrows=1, sharex=True)
     for flag in [False, True]:
         subset: list = [p for p in data["pkg"] if p["flag"] == flag]
         plt.plot(

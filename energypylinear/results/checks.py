@@ -26,7 +26,6 @@ def check_electricity_balance(
     #  TODO - bunch of debt here
     #  have this idea of wanting to show the balance without the spill effect
     raw_balance = abs(inp + accumulation - out) < 1e-4
-
     balance = abs(inp + accumulation - out) < 1e-4
 
     soc = simulation[[c for c in simulation.columns if "final_soc" in c]].sum(axis=1)
