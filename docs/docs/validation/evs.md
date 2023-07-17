@@ -24,11 +24,13 @@ results = asset.optimize(
 asset.plot(results, path="./docs/docs/static/ev-validation-1.png")
 ```
 
-Note third charger - this is the spill charger
+The third charger is the spill charger.
 
 ![](../static/ev-validation-1.png)
 
 ## Expanding a Charge Event Window
+
+Let's expand out the charge event window to the last three intervals for the last charge event:
 
 ```python
 import energypylinear as epl
@@ -56,6 +58,8 @@ Now we see that the charge has happened in interval 3, this is because electrici
 
 ## Overlapping Charge Events
 
+When charge events overlap at low prices, both (but only two) chargers are used:
+
 ```python
 import energypylinear as epl
 
@@ -68,7 +72,7 @@ asset = epl.EVs(
 results = asset.optimize(
     electricity_prices=[-100, 50, 300, 10, 40],
     charge_events=[
-        [1, 0, 0, 0, 0],
+        [1, 0, 0, 1, 0],
         [0, 1, 1, 1, 1],
         [0, 0, 1, 1, 1],
     ]
@@ -77,12 +81,6 @@ asset.plot(results, path="./docs/docs/static/ev-validation-3.png")
 ```
 
 ![](../static/ev-validation-3.png)
-
-we have moved our 100 MWh charging into the third interval
-
-our first charge event is still at the negative price because splitting our 100 MWh load would be worse
-
-do the math here just as a fyi
 
 ## Adding V2G
 

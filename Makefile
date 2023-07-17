@@ -41,9 +41,7 @@ test: setup-test clean-test-docs test-docs
 	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose
 	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest
 
-test-ci: test
-
-test-docs: clean-test-docs
+test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
 	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
@@ -110,5 +108,5 @@ docs: setup-docs
 #  -p = push
 #  TODO - get VERSION from pyproject.toml
 #  TODO - this is not used in CI anywhere yet
-mike-deploy: setup-docs generate-docs-images
+mike-deploy: setup-docs
 	cd docs; mike deploy $(VERSION) latest -u -b mike-pages -r origin -p
