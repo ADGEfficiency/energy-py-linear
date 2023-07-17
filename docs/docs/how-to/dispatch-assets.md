@@ -1,6 +1,8 @@
-# Dispatching A Single Asset with the Asset API
+# Optimizing an Asset with the Asset API
 
-The asset API allows optimizing a single asset at once.  Below we show how to use each asset in isolation with `asset.optimize`.
+The asset API allows optimizing a single asset at once.  Internally the assets are using the `epl.Site`, but this is hidden when using the asset API.
+
+[You can find full examples for each asset here](https://github.com/ADGEfficiency/energy-py-linear/tree/main/examples).
 
 ## Battery
 
@@ -16,11 +18,13 @@ results = asset.optimize(
   electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
   freq_mins=60,
   initial_charge_mwh=1,
-  final_charge_mwh=3
+  final_charge_mwh=3,
+  objective="price"
 )
 
 assert all(
-    results.simulation.columns == [
+    results.simulation.columns
+    == [
         'site-import_power_mwh',
         'site-export_power_mwh',
         'spill-electric_generation_mwh',
@@ -30,13 +34,11 @@ assert all(
         'spill-high_temperature_load_mwh',
         'spill-low_temperature_load_mwh',
         'spill-gas_consumption_mwh',
-        'spill-charge_mwh',
-        'spill-discharge_mwh',
-        'battery-charge_mwh',
-        'battery-charge_binary',
-        'battery-discharge_mwh',
-        'battery-discharge_binary',
-        'battery-losses_mwh',
+        'battery-electric_charge_mwh',
+        'battery-electric_charge_binary',
+        'battery-electric_discharge_mwh',
+        'battery-electric_discharge_binary',
+        'battery-electric_loss_mwh',
         'battery-initial_charge_mwh',
         'battery-final_charge_mwh',
         'electricity_prices',
@@ -48,10 +50,10 @@ assert all(
         'total-high_temperature_load_mwh',
         'total-low_temperature_load_mwh',
         'total-gas_consumption_mwh',
-        'total-charge_mwh',
-        'total-discharge_mwh',
+        'total-electric_charge_mwh',
+        'total-electric_discharge_mwh',
         'total-spills_mwh',
-        'total-losses_mwh',
+        'total-electric_loss_mwh',
         'site-electricity_balance_mwh',
         'load-high_temperature_load_mwh',
         'load-low_temperature_load_mwh'
@@ -112,8 +114,6 @@ assert all(
         'spill-high_temperature_load_mwh',
         'spill-low_temperature_load_mwh',
         'spill-gas_consumption_mwh',
-        'spill-charge_mwh',
-        'spill-discharge_mwh',
         'generator-electric_generation_mwh',
         'generator-gas_consumption_mwh',
         'generator-high_temperature_generation_mwh',
@@ -131,10 +131,10 @@ assert all(
         'total-high_temperature_load_mwh',
         'total-low_temperature_load_mwh',
         'total-gas_consumption_mwh',
-        'total-charge_mwh',
-        'total-discharge_mwh',
+        'total-electric_charge_mwh',
+        'total-electric_discharge_mwh',
         'total-spills_mwh',
-        'total-losses_mwh',
+        'total-electric_loss_mwh',
         'site-electricity_balance_mwh',
         'load-high_temperature_load_mwh',
         'load-low_temperature_load_mwh'
@@ -158,7 +158,11 @@ To optimize two 100 MWe chargers for 4 charge events over 5 intervals:
 import energypylinear as epl
 
 #  2 100 MW EV chargers
-asset = epl.evs.EVs(charger_mws=[100, 100], charger_turndown=0.1)
+asset = epl.EVs(
+    chargers_power_mw=[100, 100],
+    charge_events_capacity_mwh = [50, 100, 30, 40],
+    charger_turndown=0.1
+)
 
 electricity_prices = [-100, 50, 30, 50, 40]
 charge_events = [
@@ -167,12 +171,10 @@ charge_events = [
     [0, 0, 0, 1, 1],
     [0, 1, 0, 0, 0],
 ]
-charge_event_mwh = [50, 100, 30, 40]
 
 results = asset.optimize(
     electricity_prices=electricity_prices,
     charge_events=charge_events,
-    charge_event_mwh=charge_event_mwh,
 )
 
 assert all(
@@ -186,26 +188,38 @@ assert all(
         'spill-high_temperature_load_mwh',
         'spill-low_temperature_load_mwh',
         'spill-gas_consumption_mwh',
-        'spill-charge_mwh',
-        'spill-discharge_mwh',
-        'charger-0-charge_mwh',
-        'charger-0-charge_binary',
-        'charger-1-charge_mwh',
-        'charger-1-charge_binary',
-        'charge-event-0-charge_mwh',
-        'charge-event-1-charge_mwh',
-        'charge-event-2-charge_mwh',
-        'charge-event-3-charge_mwh',
-        'charger-spill-charge_mwh',
-        'charger-spill-charge_binary',
-        'spill-charge-event-0-charge_mwh',
-        'spill-charge-event-1-charge_mwh',
-        'spill-charge-event-2-charge_mwh',
-        'spill-charge-event-3-charge_mwh',
-        'charge-event-0-total-charge_mwh',
-        'charge-event-1-total-charge_mwh',
-        'charge-event-2-total-charge_mwh',
-        'charge-event-3-total-charge_mwh',
+        'evs-charger-0-electric_charge_mwh',
+        'evs-charger-0-electric_charge_binary',
+        'evs-charger-0-electric_discharge_mwh',
+        'evs-charger-0-electric_discharge_binary',
+        'evs-charger-1-electric_charge_mwh',
+        'evs-charger-1-electric_charge_binary',
+        'evs-charger-1-electric_discharge_mwh',
+        'evs-charger-1-electric_discharge_binary',
+        'evs-charge-event-0-electric_charge_mwh',
+        'evs-charge-event-0-electric_discharge_mwh',
+        'evs-charge-event-0-electric_loss_mwh',
+        'evs-charge-event-1-electric_charge_mwh',
+        'evs-charge-event-1-electric_discharge_mwh',
+        'evs-charge-event-1-electric_loss_mwh',
+        'evs-charge-event-2-electric_charge_mwh',
+        'evs-charge-event-2-electric_discharge_mwh',
+        'evs-charge-event-2-electric_loss_mwh',
+        'evs-charge-event-3-electric_charge_mwh',
+        'evs-charge-event-3-electric_discharge_mwh',
+        'evs-charge-event-3-electric_loss_mwh',
+        'evs-charge-event-0-initial_soc_mwh',
+        'evs-charge-event-1-initial_soc_mwh',
+        'evs-charge-event-2-initial_soc_mwh',
+        'evs-charge-event-3-initial_soc_mwh',
+        'evs-charge-event-0-final_soc_mwh',
+        'evs-charge-event-1-final_soc_mwh',
+        'evs-charge-event-2-final_soc_mwh',
+        'evs-charge-event-3-final_soc_mwh',
+        'evs-charger-spill-evs-electric_charge_mwh',
+        'evs-charger-spill-evs-electric_charge_binary',
+        'evs-charger-spill-evs-electric_discharge_mwh',
+        'evs-charger-spill-evs-electric_discharge_binary',
         'electricity_prices',
         'electricity_carbon_intensities',
         'total-electric_generation_mwh',
@@ -215,14 +229,13 @@ assert all(
         'total-high_temperature_load_mwh',
         'total-low_temperature_load_mwh',
         'total-gas_consumption_mwh',
-        'total-charge_mwh',
-        'total-discharge_mwh',
+        'total-electric_charge_mwh',
+        'total-electric_discharge_mwh',
         'total-spills_mwh',
-        'total-losses_mwh',
+        'total-electric_loss_mwh',
         'site-electricity_balance_mwh',
         'load-high_temperature_load_mwh',
         'load-low_temperature_load_mwh'
     ]
 )
 ```
-

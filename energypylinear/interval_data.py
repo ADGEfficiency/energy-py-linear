@@ -1,4 +1,5 @@
 """Models for interval data for electricity & gas prices, thermal loads and carbon intensities."""
+import collections
 import typing
 
 import numpy as np
@@ -6,6 +7,9 @@ import pandas as pd
 import pydantic
 
 import energypylinear as epl
+from energypylinear.assets.asset import AssetOneInterval
+from energypylinear.assets.evs import EVsArrayOneInterval
+from energypylinear.assets.site import SiteOneInterval
 from energypylinear.defaults import defaults
 
 floats = typing.Union[float, np.ndarray, typing.Sequence[float], list[float]]
@@ -18,7 +22,7 @@ class EVIntervalData(pydantic.BaseModel):
     Attributes:
         charge_events: a list or numpy array of charge events for each time step
         idx: index of the time steps (default is an empty list)
-        charge_event_mwh: total energy consumption in each time step
+        charge_events_capacity_mwh:
 
     Methods:
         setup_idx: sets up the index of the time steps based on the shape of `charge_events`
@@ -26,8 +30,8 @@ class EVIntervalData(pydantic.BaseModel):
     """
 
     charge_events: np.ndarray
+    charge_events_capacity_mwh: list
     idx: typing.Any = []
-    charge_event_mwh: typing.Union[list[int], np.ndarray]
 
     class Config:
         """pydantic.BaseModel configuration."""
@@ -42,11 +46,6 @@ class EVIntervalData(pydantic.BaseModel):
     @pydantic.root_validator()
     def validate_all_things(cls, values: dict) -> dict:
         """Validate all input data in a single step."""
-        #  only_positive or zero charge_event_mwh
-        assert all(
-            values["charge_event_mwh"] >= 0
-        ), "charge_event_mwh has negative values"
-
         assert all(
             np.array(values["charge_events"]).sum(axis=0) > 0
         ), "sum across axis=0"
@@ -54,9 +53,6 @@ class EVIntervalData(pydantic.BaseModel):
         assert (
             values["idx"].shape[0] == values["charge_events"].shape[0]
         ), "charge_event_mwh not equal to length of electricitiy prices."
-        assert (
-            values["charge_events"].shape[1] == values["charge_event_mwh"].shape[0]
-        ), "charge_events not equal to charge_event_mwh"
         return values
 
 
@@ -105,11 +101,11 @@ class IntervalData(pydantic.BaseModel):
     """
 
     electricity_prices: np.ndarray
-    electricity_carbon_intensities: typing.Optional[np.ndarray] = None
-    gas_prices: typing.Optional[np.ndarray] = None
-    high_temperature_load_mwh: typing.Optional[np.ndarray] = None
-    low_temperature_load_mwh: typing.Optional[np.ndarray] = None
-    electricity_load_mwh: typing.Optional[np.ndarray] = None
+    electricity_carbon_intensities: np.ndarray | None = None
+    gas_prices: np.ndarray | None = None
+    high_temperature_load_mwh: np.ndarray | None = None
+    low_temperature_load_mwh: np.ndarray | None = None
+    electricity_load_mwh: np.ndarray | None = None
     idx: list[int] = []
 
     evs: typing.Union[EVIntervalData, None] = None
@@ -121,6 +117,7 @@ class IntervalData(pydantic.BaseModel):
 
     def __str__(self) -> str:
         """A string representation of self."""
+        assert isinstance(self.electricity_prices, np.ndarray)
         return f"<epl.IntervalData n: {self.electricity_prices.shape[0]} electricity_prices: {self.electricity_prices.mean():2.1f}>"
 
     @pydantic.validator("evs")
@@ -187,3 +184,94 @@ class IntervalData(pydantic.BaseModel):
                 if len(data) == expected_len:
                     df[name] = data
         return pd.DataFrame(df)
+
+
+class IntervalVars:
+    def __init__(self) -> None:
+        #  not every lp variable - only the ones we want to iterate over
+        #  in the objective functions (price, carbon etc)
+        self.objective_variables: list[list[AssetOneInterval]] = []
+        self.asset: collections.defaultdict = collections.defaultdict(
+            lambda: {"evs_array": [], "spill_evs_array": [], "site": []}
+        )
+
+    def __repr__(self) -> str:
+        return f"<epl.IntervalVars i: {len(self.objective_variables)}>"
+
+    def append(
+        self, one_interval: AssetOneInterval | SiteOneInterval | list[AssetOneInterval]
+    ) -> None:
+        #  some OneInterval objects are special
+        #  is this case it is the Array EV data structures
+        #  TODO in future don't save these separately and
+        #  dynamically create as needed from the objective variables
+        if isinstance(one_interval, EVsArrayOneInterval):
+            if one_interval.is_spill:
+                self.asset[one_interval.cfg.name]["spill_evs_array"].append(
+                    one_interval
+                )
+            else:
+                self.asset[one_interval.cfg.name]["evs_array"].append(one_interval)
+        elif isinstance(one_interval, SiteOneInterval):
+            self.asset[one_interval.cfg.name]["site"].append(one_interval)
+
+        else:
+            assert isinstance(one_interval, list)
+            self.objective_variables.append(one_interval)
+
+    def filter_evs_array(
+        self, is_spill: bool, i: int, asset_name: str
+    ) -> EVsArrayOneInterval:
+        if is_spill:
+            return self.asset[asset_name]["spill_evs_array"][i]
+        else:
+            return self.asset[asset_name]["evs_array"][i]
+
+    def filter_all_evs_array(
+        self, is_spill: bool, asset_name: str
+    ) -> list[EVsArrayOneInterval]:
+        if is_spill:
+            return self.asset[asset_name]["spill_evs_array"]
+        else:
+            return self.asset[asset_name]["evs_array"]
+
+    def filter_site(self, i: int, site_name: str) -> SiteOneInterval:
+        return self.asset[site_name]["site"][i]
+
+    def filter_objective_variables(
+        self,
+        instance_type: type[AssetOneInterval],
+        i: int | None = None,
+        asset_name: str | None = None,
+    ) -> list[list[AssetOneInterval]]:
+        #  here we return data for all intervals
+        if i is None:
+            pkg = []
+            for i, assets_one_interval in enumerate(self.objective_variables):
+                pkg.append(
+                    [
+                        asset
+                        for asset in assets_one_interval
+                        if isinstance(asset, instance_type)
+                        and (
+                            asset.cfg.name == asset_name
+                            if asset_name is not None
+                            else True
+                        )
+                    ]
+                )
+            return pkg
+
+        #  here we return data for one interval
+        else:
+            assets = self.objective_variables[i]
+            return [
+                [
+                    asset
+                    for asset in assets
+                    if isinstance(asset, instance_type)
+                    and (
+                        asset.cfg.name == asset_name if asset_name is not None else True
+                    )
+                ]
+            ]

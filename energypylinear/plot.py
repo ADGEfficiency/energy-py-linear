@@ -14,7 +14,9 @@ mpl.rcParams["axes.titlesize"] = 10
 
 def find_column(df: pd.DataFrame, start: str, end: str) -> str:
     """Finds a column based on the start and end of the column name."""
-    cols = [c for c in df.columns if c.startswith(start) and c.endswith(end)]
+    cols: list[str] = [
+        c for c in df.columns.tolist() if c.startswith(start) and c.endswith(end)
+    ]
     assert len(cols) == 1
     return cols[0]
 
@@ -45,8 +47,8 @@ def plot_battery(
 
     #  TODO will need some work in a multi-battery world
     simulation["net-battery-charge"] = (
-        simulation[find_column(simulation, "battery-", "-charge_mwh")]
-        - simulation[find_column(simulation, "battery-", "-discharge_mwh")]
+        simulation[find_column(simulation, "battery-", "-electric_charge_mwh")]
+        - simulation[find_column(simulation, "battery-", "-electric_discharge_mwh")]
     )
     simulation.plot(
         ax=axes[1],
@@ -86,28 +88,58 @@ def plot_battery(
     plt.tight_layout()
 
     if path.is_dir():
-        fig.savefig(path / "battery.png")
-    else:
-        fig.savefig(path)
+        path = path / "battery.png"
+    fig.savefig(path)
 
 
 def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
     """Plot electric vehicle simulation results."""
     simulation = results.simulation
-    fig, axes = plt.subplots(nrows=5)
 
-    charger_usage = simulation[
+    charger_charge = simulation[
         [
             c
             for c in simulation.columns
-            if c.startswith("charger-") and c.endswith("-charge_mwh")
+            if "charger-" in c and c.endswith("-electric_charge_mwh")
         ]
     ].values
+    charger_discharge = simulation[
+        [
+            c
+            for c in simulation.columns
+            if "charger-" in c and c.endswith("-electric_discharge_mwh")
+        ]
+    ].values
+    charger_usage = charger_charge - charger_discharge
+
     charge_event_usage = simulation[
         [
             c
             for c in simulation.columns
-            if c.startswith("charge-event-") and c.endswith("total-charge_mwh")
+            if "charge-event-" in c and c.endswith("electric_charge_mwh")
+        ]
+    ].values
+    discharge_event_usage = simulation[
+        [
+            c
+            for c in simulation.columns
+            if "charge-event-" in c and c.endswith("electric_discharge_mwh")
+        ]
+    ].values
+    charge_event_usage = charge_event_usage - discharge_event_usage
+
+    charge_event_initial_soc = simulation[
+        [
+            c
+            for c in simulation.columns
+            if "charge-event-" in c and c.endswith("initial_soc_mwh")
+        ]
+    ].values
+    charge_event_final_soc = simulation[
+        [
+            c
+            for c in simulation.columns
+            if "charge-event-" in c and c.endswith("final_soc_mwh")
         ]
     ].values
 
@@ -115,53 +147,99 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
         ncols=4, figsize=(14, 6), width_ratios=(5, 10, 1, 1), sharey=True
     )
 
+    data = [
+        *charger_usage.flatten(),
+        *charge_event_usage.flatten(),
+    ]
+    global_vmin = np.min(data)
+    global_vmax = np.max(data)
+
     heatmap_config = {
         "annot_kws": {
-            "size": 6,
+            "size": 12,
         },
         "annot": True,
+        "cbar": False,
+        "cmap": "coolwarm",
+        "vmin": global_vmin,
+        "vmax": global_vmax,
     }
     data = charger_usage
-    seaborn.heatmap(
-        data, ax=axes[0], **heatmap_config, mask=data == 0, fmt="g", cbar=False
-    )
-    axes[0].set_ylabel("Time")
+    seaborn.heatmap(data, ax=axes[0], **heatmap_config, mask=data == 0, fmt="g")
+    axes[0].set_ylabel("Interval")
     axes[0].set_xlabel("Chargers")
 
     data = charge_event_usage
-    #  want to unmask out the periods where charge_event was positive
     assert results.interval_data.evs is not None
+    charge_event_heatmap_config = heatmap_config.copy()
+    result_array = np.empty_like(charge_event_initial_soc, dtype=object)
+
+    for i, (a, b, c) in enumerate(
+        zip(charge_event_initial_soc.T, charge_event_usage.T, charge_event_final_soc.T)
+    ):
+        for j, values in enumerate(zip(a, b, c)):
+            result_array[
+                j, i
+            ] = f"initial: {values[0]:3.1f}\ncharge: {values[1]:3.1f}\nfinal: {values[2]:3.1f}"
+
+    print(result_array)
+    charge_event_heatmap_config["annot"] = result_array
     seaborn.heatmap(
         data,
         ax=axes[1],
-        **heatmap_config,
+        **charge_event_heatmap_config,
+        #  unmask out the periods where charge_event was positive
         mask=results.interval_data.evs.charge_events == 0,
-        fmt="g",
-        cbar_kws={"label": "Charge MWh", "location": "left"}
+        fmt="",
     )
-    axes[1].set_xlabel("Charge Events")
+    axes[1].set_xlabel("Charge Events Net Charge (Discharge is Negative)")
 
-    spill_charge_usage = simulation["charger-spill-charge_mwh"].values.reshape(-1, 1)
+    #   hardcoded asset name here TODO
+    spill_charge_usage = simulation[
+        "evs-charger-spill-evs-electric_charge_mwh"
+    ].values.reshape(-1, 1)
     data = spill_charge_usage
     seaborn.heatmap(
-        data, ax=axes[2], **heatmap_config, xticklabels=["spill"], fmt="g", cbar=False
+        data,
+        ax=axes[2],
+        **(heatmap_config | {"cmap": ["white"]}),
+        xticklabels=["spill"],
+        fmt="g",
     )
 
-    data = np.array(simulation["electricity_prices"]).reshape(-1, 1)
     seaborn.heatmap(
-        data, ax=axes[3], **heatmap_config, xticklabels=["price"], fmt="g", cbar=False
+        np.array(simulation["electricity_prices"]).reshape(-1, 1),
+        ax=axes[3],
+        **(heatmap_config | {"cmap": ["white"]}),
+        xticklabels=["price"],
+        fmt="g",
     )
+    # for ax in axes:
+    #     ax.grid(True)
+    # for ax in axes:
+    #     for spine in ax.spines.values():
+    #         spine.set_edgecolor('gray')
+    #         spine.set_linewidth(2)
+    from matplotlib.patches import Rectangle
+
+    for ax in axes:
+        border = Rectangle(
+            (0, 0),
+            1,
+            1,
+            edgecolor="gray",
+            facecolor="none",
+            transform=ax.transAxes,
+            figure=ax.figure,
+            linewidth=2,
+        )
+        ax.add_patch(border)
 
     plt.tight_layout()
-    pathlib.Path("./figs").mkdir(
-        exist_ok=True,
-        parents=True,
-    )
 
     if path.is_dir():
-        fig.savefig(path / "evs.png")
-    else:
-        fig.savefig(path)
+        path = path / "evs.png"
+    fig.savefig(path)
 
 
 def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
@@ -208,11 +286,11 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     )
     axes[4].set_ylabel("tC/MWh")
     axes[4].set_title("Carbon Intensities")
+
     for ax in axes:
         ax.get_legend().remove()
     plt.tight_layout()
 
     if path.is_dir():
-        fig.savefig(path / "chp.png")
-    else:
-        fig.savefig(path)
+        path = path / "chp.png"
+    fig.savefig(path)

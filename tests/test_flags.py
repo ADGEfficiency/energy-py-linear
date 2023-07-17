@@ -14,7 +14,15 @@ def test_flags() -> None:
     )
     asset.optimize(
         electricity_prices=np.random.normal(10, 5, 100),
-        freq_mins=5,
         flags=Flags(include_charge_discharge_binary_variables=True),
-        verbose=True,
+    )
+
+    evs = epl.EVs()
+    evs.optimize(
+        electricity_prices=np.random.normal(10, 5, 48),
+        flags=Flags(limit_charge_variables_to_valid_events=True),
+    )
+    evs.optimize(
+        electricity_prices=np.random.normal(10, 5, 48),
+        flags=Flags(limit_charge_variables_to_valid_events=False),
     )

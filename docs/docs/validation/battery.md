@@ -1,10 +1,8 @@
 A natural response when you get access to something someone else build is to wonder - **does this work correctly?**
 
-This section will give you confidence in the implementation of underlying energy models.
+This section will give you confidence in the implementation of the battery implementation.
 
-## Battery Validation
-
-### Price Dispatch Behaviour
+## Price Dispatch Behaviour
 
 Let's optimize a battery using a sequence of five prices.
 
@@ -16,8 +14,13 @@ In `energypylinear`, a positive site electricity balance is importing, and a neg
 import energypylinear as epl
 
 asset = epl.Battery()
-results = asset.optimize(electricity_prices=[10, -50, 200, -50, 200], verbose=False)
-print(results.simulation[["electricity_prices", "site-electricity_balance_mwh"]])
+results = asset.optimize(
+    electricity_prices=[10, -50, 200, -50, 200],
+    verbose=False
+)
+print(results.simulation[
+    ["electricity_prices", "site-electricity_balance_mwh"]
+])
 ```
 
 ```
@@ -37,8 +40,13 @@ Now let's change the prices and see how the dispatch changes:
 import energypylinear as epl
 
 asset = epl.Battery()
-results = asset.optimize(electricity_prices=[200, -50, -50, 200, 200], verbose=False)
-print(results.simulation[["electricity_prices", "site-electricity_balance_mwh"]])
+results = asset.optimize(
+    electricity_prices=[200, -50, -50, 200, 200],
+    verbose=False
+)
+print(results.simulation[
+    ["electricity_prices", "site-electricity_balance_mwh"]
+])
 ```
 
 ```
@@ -52,32 +60,39 @@ print(results.simulation[["electricity_prices", "site-electricity_balance_mwh"]]
 
 As expected, the battery continues to charge during low electricity price intervals, and discharge when electricity prices are high.
 
-### Energy Balance
+## Energy Balance
 
 Let's return to our original set of prices and check the energy balance of the battery:
 
 ```python
+import pandas as pd
 import energypylinear as epl
 
-asset = epl.Battery()
-results = asset.optimize(electricity_prices=[10, -50, 200, -50, 200], verbose=False)
+pd.set_option('display.max_columns', 15)
+pd.set_option('display.width', 400)
 
-balance = epl.results.check_electricity_balance(results.simulation, verbose=False)
+asset = epl.Battery()
+results = asset.optimize(
+    electricity_prices=[10, -50, 200, -50, 200],
+    verbose=False
+)
+
+balance = epl.results.checks.check_electricity_balance(results.simulation, verbose=False)
 print(balance)
 ```
 
 ```
-     import  generation  export  load    charge  discharge  balance      loss  spills
-0  0.444444         0.0     0.0   0.0  0.444444        0.0     True  0.044444     0.0
-1  2.000000         0.0     0.0   0.0  2.000000        0.0     True  0.200000     0.0
-2  0.000000         0.0     2.0   0.0  0.000000        2.0     True  0.000000     0.0
-3  2.000000         0.0     0.0   0.0  2.000000        0.0     True  0.200000     0.0
-4  0.000000         0.0     2.0   0.0  0.000000        2.0     True  0.000000     0.0
+      input  accumulation  output  raw_balance  balance    import  generation  export  load    charge  discharge      loss  spills  soc
+0  0.444444     -0.444444     0.0         True     True  0.444444         0.0     0.0   0.0  0.444444        0.0  0.044444     0.0  0.0
+1  2.000000     -2.000000     0.0         True     True  2.000000         0.0     0.0   0.0  2.000000        0.0  0.200000     0.0  0.0
+2  0.000000      2.000000     2.0         True     True  0.000000         0.0     2.0   0.0  0.000000        2.0  0.000000     0.0  0.0
+3  2.000000     -2.000000     0.0         True     True  2.000000         0.0     0.0   0.0  2.000000        0.0  0.200000     0.0  0.0
+4  0.000000      2.000000     2.0         True     True  0.000000         0.0     2.0   0.0  0.000000        2.0  0.000000     0.0  0.0
 ```
 
 In the first interval, we charge the battery with `0.444444 MWh` - `0.4 MWh` goes into increasing the battery state of charge from `0.0 MWh` to `0.4 MWh`, with the balance `0.044444 MWh` going to battery losses.
 
-### Battery Efficiency
+## Battery Efficiency
 
 We can validate the performance of the battery efficiency by checking the losses across different battery efficiencies:
 
@@ -86,9 +101,10 @@ import numpy as np
 import pandas as pd
 import energypylinear as epl
 
-out = []
 np.random.seed(42)
 prices = (np.random.uniform(-100, 100, 12) + 100).tolist()
+
+out = []
 for efficiency_pct in [1.0, 0.9, 0.8]:
     asset = epl.battery.Battery(
         power_mw=4,
@@ -103,9 +119,9 @@ for efficiency_pct in [1.0, 0.9, 0.8]:
     out.append(
         {
             "eff_pct": efficiency_pct,
-            "charge_mwh": results.simulation["battery-charge_mwh"].sum(),
-            "discharge_mwh": results.simulation["battery-discharge_mwh"].sum(),
-            "loss_mwh": results.simulation["battery-losses_mwh"].sum(),
+            "charge_mwh": results.simulation["battery-electric_charge_mwh"].sum(),
+            "discharge_mwh": results.simulation["battery-electric_discharge_mwh"].sum(),
+            "loss_mwh": results.simulation["battery-electric_loss_mwh"].sum(),
             "prices_$_mwh": results.simulation["electricity_prices"].mean(),
             "import_mwh": results.simulation["site-import_power_mwh"].sum(),
             "objective": (results.simulation["site-import_power_mwh"] - results.simulation["site-export_power_mwh"] * results.simulation["electricity_prices"]).sum(),
@@ -128,7 +144,7 @@ From the above we observe the following as efficiency decreases:
 - a reduction in the amount charged and discharged,
 - a increase in the objective function, which represents an increase in cost or decrease in value of the battery arbitrage.
 
-### State of Charge & Power Ratings
+## State of Charge & Power Ratings
 
 We can demonstrate the state of charge and battery power settings by first optimizing a battery and showing it's plot:
 
@@ -138,12 +154,13 @@ import energypylinear as epl
 
 np.random.seed(42)
 electricity_prices = np.random.normal(100, 10, 10).tolist()
+
 asset = epl.battery.Battery(power_mw=2, capacity_mwh=4)
 results = asset.optimize(electricity_prices=electricity_prices)
 asset.plot(results, path="./docs/docs/static/battery.png")
 ```
 
-![](static/battery.png)
+![](../static/battery.png)
 
 Takeaways:
 
@@ -157,6 +174,7 @@ import energypylinear as epl
 
 np.random.seed(42)
 electricity_prices = np.random.normal(100, 10, 10).tolist()
+
 asset = epl.battery.Battery(
     power_mw=4,
     capacity_mwh=8,
@@ -169,8 +187,9 @@ results = asset.optimize(
 asset.plot(results, path="./docs/docs/static/battery-fast.png")
 ```
 
-![](static/battery-fast.png)
+![](../static/battery-fast.png)
 
 Takeaways:
 
 - battery SOC starts at 1 MWh and ends at 3 MWh.
+

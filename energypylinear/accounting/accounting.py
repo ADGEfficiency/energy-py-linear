@@ -14,6 +14,13 @@ class Account(pydantic.BaseModel):
     cost: float
     emissions: float
 
+    def __str__(self) -> str:
+        return f"<Account profit={-1 * self.cost:.2f} emissions={self.emissions:.4f}>"
+
+    def __repr__(self) -> str:
+        #  TODO
+        return f"<Account profit={-1 * self.cost:.2f} emissions={self.emissions:.4f}>"
+
     def __sub__(self, other: object) -> "Account":
         """
         self == other -> True, else False
@@ -60,6 +67,13 @@ class Accounts(Account):
     cost: float
     profit: float
     emissions: float
+
+    def __str__(self) -> str:
+        return f"<Accounts profit={self.profit:.2f} emissions={self.emissions:.4f}>"
+
+    def __repr__(self) -> str:
+        #  TODO
+        return f"<Accounts profit={self.profit:.2f} emissions={self.emissions:.4f}>"
 
 
 def get_one_gas_account(
@@ -108,6 +122,7 @@ def get_accounts(
     interval_data: "epl.interval_data.IntervalData",
     simulation: pd.DataFrame,
     validate: bool = True,
+    verbose: bool = True,
 ) -> Accounts:
     """
     Create one pair of gas and electricity accounts.
@@ -124,7 +139,7 @@ def get_accounts(
         simulation: simulation results.
     """
     if validate:
-        epl.results.validate_results(interval_data, simulation)
+        epl.results.validate_results(interval_data, simulation, verbose=verbose)
     electricity = get_one_electricity_account(interval_data, simulation)
     gas = get_one_gas_account(interval_data, simulation)
 

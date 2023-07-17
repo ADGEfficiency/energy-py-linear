@@ -32,6 +32,9 @@ class SpillOneInterval(AssetOneInterval):
     high_temperature_generation_mwh: pulp.LpVariable
     low_temperature_load_mwh: pulp.LpVariable
 
+    electric_charge_mwh: float = 0.0
+    electric_discharge_mwh: float = 0.0
+
 
 class Spill:
     """Spill asset - allows excess or insufficient balances to be filled in."""

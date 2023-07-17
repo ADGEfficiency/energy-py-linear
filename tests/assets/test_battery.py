@@ -1,7 +1,7 @@
 """Test battery asset."""
+
 import hypothesis
 import numpy as np
-import pandas as pd
 import pytest
 
 import energypylinear as epl
@@ -28,7 +28,7 @@ def test_battery_price(
     capacity_mwh = 6
     efficiency = 1.0
     freq_mins = 60
-    asset = epl.battery.Battery(
+    asset = epl.Battery(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
     results = asset.optimize(
@@ -36,10 +36,11 @@ def test_battery_price(
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=0,
+        verbose=False,
     )
     simulation = results.simulation
-    charge = simulation["battery-charge_mwh"].values
-    discharge = simulation["battery-discharge_mwh"].values
+    charge = simulation["battery-electric_charge_mwh"].values
+    discharge = simulation["battery-electric_discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
@@ -63,7 +64,7 @@ def test_battery_carbon(
     efficiency = 1.0
     freq_mins = 60
     prices = np.zeros_like(carbon_intensities)
-    asset = epl.battery.Battery(
+    asset = epl.Battery(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
     results = asset.optimize(
@@ -74,15 +75,15 @@ def test_battery_carbon(
         objective="carbon",
     )
     simulation = results.simulation
-    charge = simulation["battery-charge_mwh"].values
-    discharge = simulation["battery-discharge_mwh"].values
+    charge = simulation["battery-electric_charge_mwh"].values
+    discharge = simulation["battery-electric_discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
 
 @hypothesis.settings(
     print_blob=True,
-    max_examples=200,
+    max_examples=100,
     verbosity=hypothesis.Verbosity.verbose,
     deadline=2000,
 )
@@ -93,7 +94,8 @@ def test_battery_carbon(
     initial_charge_mwh=hypothesis.strategies.floats(min_value=0.0, max_value=100),
     efficiency=hypothesis.strategies.floats(min_value=0.5, max_value=1.0),
     prices_mu=hypothesis.strategies.floats(min_value=-1000, max_value=1000),
-    prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=25),
+    prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=1000),
+    prices_offset=hypothesis.strategies.floats(min_value=-250, max_value=250),
 )
 def test_battery_hypothesis(
     idx_length: int,
@@ -103,16 +105,18 @@ def test_battery_hypothesis(
     initial_charge_mwh: float,
     prices_mu: float,
     prices_std: float,
+    prices_offset: float,
 ) -> None:
     """Test battery optimization with hypothesis."""
     freq_mins = 30
-    electricity_prices = np.random.normal(prices_mu, prices_std, idx_length).tolist()
+    electricity_prices = (
+        np.random.normal(prices_mu, prices_std, idx_length) + prices_offset
+    )
 
-    asset = epl.battery.Battery(
+    asset = epl.Battery(
         power_mw=power_mw, capacity_mwh=capacity_mwh, efficiency=efficiency
     )
 
-    #  TODO
     #  possible to enter into infeasible situations where the final charge is more than the battery can
     #  produce in the interval
     #  this is a problem with the tests, not the application
@@ -125,15 +129,19 @@ def test_battery_hypothesis(
     )
     simulation = results.simulation
 
-    freq = epl.freq.Freq(freq_mins)
+    freq = epl.Freq(freq_mins)
 
     #  check we don't exceed the battery rating
-    assert all(simulation["battery-charge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
-    assert all(simulation["battery-discharge_mwh"] <= freq.mw_to_mwh(power_mw) + tol)
+    assert all(
+        simulation["battery-electric_charge_mwh"] <= freq.mw_to_mwh(power_mw) + tol
+    )
+    assert all(
+        simulation["battery-electric_discharge_mwh"] <= freq.mw_to_mwh(power_mw) + tol
+    )
 
     #  check charge & discharge are always positive
-    assert all(simulation["battery-charge_mwh"] >= 0 - tol)
-    assert all(simulation["battery-discharge_mwh"] >= 0 - tol)
+    assert all(simulation["battery-electric_charge_mwh"] >= 0 - tol)
+    assert all(simulation["battery-electric_discharge_mwh"] >= 0 - tol)
 
     #  check we don't exceed battery capacity
     name = "battery"
@@ -154,27 +162,17 @@ def test_battery_hypothesis(
     )
 
     #  check losses are a percentage of our charge
-    mask = simulation[f"{name}-charge_mwh"] > 0
+    mask = simulation[f"{name}-electric_charge_mwh"] > 0
     subset = simulation[mask]
     np.testing.assert_almost_equal(
-        subset[f"{name}-losses_mwh"].values,
-        (1 - efficiency) * subset[f"{name}-charge_mwh"].values,
+        subset[f"{name}-electric_loss_mwh"].values,
+        (1 - efficiency) * subset[f"{name}-electric_charge_mwh"].values,
         decimal=4,
     )
     #  check losses are always zero when we discharge
-    mask = simulation[f"{name}-discharge_mwh"] > 0
+    mask = simulation[f"{name}-electric_discharge_mwh"] > 0
     subset = simulation[mask]
 
-    #  temporaray debugging dataframe
-    pd.DataFrame(
-        {
-            "charge": simulation[f"{name}-charge_mwh"],
-            "charge_bin": simulation[f"{name}-charge_binary"],
-            "discharge": simulation[f"{name}-discharge_mwh"],
-            "discharge_bin": simulation[f"{name}-discharge_binary"],
-            "losses": simulation[f"{name}-losses_mwh"],
-        }
-    )
     """
     TODO DEBT
     bit of a bug here TODO - issue with charge and discharge at the same time

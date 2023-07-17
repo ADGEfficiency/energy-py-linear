@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "energypylinear"
-version = "0.1.2"
+version = "0.2.0"
 description = "Optimizing energy assets with mixed-integer linear programming."
 authors = ["Adam Green <adam.green@adgefficiency.com>"]
 license = "MIT"
@@ -17,6 +17,7 @@ rich = "^12.0.0"
 seaborn = "^0.12.2"
 pandera = "^0.14.5"
 markdown-include = "^0.8.1"
+structlog = "^23.1.0"
 
 [tool.poetry.group.check.dependencies]
 black = "^22.10.0"
@@ -30,9 +31,10 @@ coverage = "^6.5.0"
 hypothesis = "^6.61.0"
 phmdoctest = "^1.4.0"
 nbmake = "^1.3.5"
-pytest-testmon = "^1.4.5"
 pytest-sugar = "^0.9.6"
 coverage-badge = "^1.1.0"
+pytest-xdist = "^3.3.1"
+pytest-cov = "^4.1.0"
 
 [tool.poetry.group.develop.dependencies]
 ipython = "^8.7.0"
@@ -41,8 +43,26 @@ ipython = "^8.7.0"
 mypy = "^0.991"
 
 
-[tool.poetry.group.dev.dependencies]
-mike = "^1.1.2"
+[tool.mypy]
+disallow_any_generics = false
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+implicit_reexport = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+  'pandas',
+  'matplotlib',
+  'matplotlib.pyplot',
+  'matplotlib.patches',
+  'pulp',
+  'seaborn'
+]
+ignore_missing_imports = true
+
 
 [build-system]
 requires = ["poetry-core"]

@@ -22,7 +22,7 @@ Energy balances are performed on electricity, high & low temperature heat.
 
 Requires Python 3.10+:
 
-```shell
+```shell-session
 $ pip install energypylinear
 ```
 
@@ -41,14 +41,11 @@ import energypylinear as epl
 asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
 
 results = asset.optimize(
-  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
-  freq_mins=60,
-  initial_charge_mwh=1,
-  final_charge_mwh=3
+  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100]
 )
 ```
 
-You can find documentation of how to optimize other assets in [how-to/optimize-assets](https://docs.adgefficiency.com/energy-py-linear/how-to/dispach-assets), and Python examples in [energy-py-linear/examples/examples](https://github.com/ADGEfficiency/energy-py-linear/tree/main/examples).
+See how to optimize other asset types in [how-to/optimize-assets](https://energypylinear.adgefficiency.com/latest/how-to/dispatch-assets/). 
 
 ### Site API
 
@@ -58,29 +55,31 @@ The site API allows optimizing multiple assets at once:
 import energypylinear as epl
 
 site = epl.Site(assets=[
+  #  2.0 MW, 4.0 MWh battery
   epl.Battery(power_mw=2.0, capacity_mwh=4.0),
+  #  30 MW generator
   epl.Generator(
     electric_power_max_mw=100,
     electric_power_min_mw=30,
     electric_efficiency_pct=0.4
   ),
-  epl.evs.EVs(charger_mws=[100, 100])
+  #  2 EV chargers & 4 charge events
+  epl.EVs(
+      chargers_power_mw=[100, 100],
+      charge_events_capacity_mwh=[50, 100, 30, 40],
+      charge_events=[
+          [1, 0, 0, 0, 0],
+          [0, 1, 1, 1, 0],
+          [0, 0, 0, 1, 1],
+          [0, 1, 0, 0, 0]
+      ]
+  )
 ])
 
 results = site.optimize(
   electricity_prices=[100, 50, 200, -100, 0],
   high_temperature_load_mwh=[105, 110, 120, 110, 105],
-  low_temperature_load_mwh=[105, 110, 120, 110, 105],
-  freq_mins=60,
-  initial_charge_mwh=1,
-  final_charge_mwh=3,
-  charge_events=[
-      [1, 0, 0, 0, 0],
-      [0, 1, 1, 1, 0],
-      [0, 0, 0, 1, 1],
-      [0, 1, 0, 0, 0],
-  ],
-  charge_event_mwh=[50, 100, 30, 40]
+  low_temperature_load_mwh=[105, 110, 120, 110, 105]
 )
 ```
 
@@ -107,4 +106,4 @@ $ make test
 
 ## Documentation 
 
-Documentation is hosted at [energypylinear.adgefficiency.com](https://energypylinear.adgefficiency.com/latest).
+Hosted at [energypylinear.adgefficiency.com/latest](https://energypylinear.adgefficiency.com/latest).

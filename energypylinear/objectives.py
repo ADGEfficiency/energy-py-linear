@@ -6,9 +6,38 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
+def filter_spill_evs(
+    ivars: "epl.interval_data.IntervalVars",
+    interval_data: "epl.interval_data.IntervalData",
+) -> "list[list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]]":
+    """
+    Complexity here comes from the need to extract only the spill EVs linear program
+    variables.
+
+    """
+    evs = ivars.filter_objective_variables(epl.assets.evs.EVOneInterval)
+    spill_evs: list[
+        list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]
+    ] = []
+    for i, assets_one_interval in enumerate(evs):
+        spill_evs_one_interval: list[
+            epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval
+        ] = []
+        for ev in assets_one_interval:
+            assert isinstance(ev, epl.assets.evs.EVOneInterval)
+            if ev.is_spill:
+                spill_evs_one_interval.append(ev)
+        spill_evs.append(spill_evs_one_interval)
+
+    #  hmm
+    # if len(spill_evs) == 0:
+    #     spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
+    return spill_evs
+
+
 def price_objective(
-    optimizer: epl.optimizer.Optimizer,
-    vars: dict,
+    optimizer: "epl.Optimizer",
+    ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
     """
@@ -18,7 +47,7 @@ def price_objective(
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
 
     Inputs:
-        optimizer: an instance of `epl.optimizer.Optimizer` class.
+        optimizer: an instance of `epl.Optimizer` class.
         vars: a dictionary of linear programming variables in the optimization problem.
         interval_data: interaval data used in the simulation.
 
@@ -26,14 +55,12 @@ def price_objective(
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
 
-    sites = vars["sites"]
-    spills = epl.utils.filter_all_assets(vars, "spill")
-    spill_evs = vars["spill-evs"]
-    boilers = epl.utils.filter_all_assets(vars, "boiler")
-    generators = epl.utils.filter_all_assets(vars, "generator")
-
-    if len(spill_evs) == 0:
-        spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
+    #  cheating here with the site name (the second `site`)
+    sites = ivars.asset["site"]["site"]
+    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
+    spill_evs = filter_spill_evs(ivars, interval_data)
+    generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
+    boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 
     assert isinstance(interval_data.gas_prices, np.ndarray)
     assert isinstance(interval_data.electricity_prices, np.ndarray)
@@ -50,7 +77,8 @@ def price_objective(
             for spill in spills[i]
         ]
         + [
-            spill_ev.charge_mwh * defaults.spill_objective_penalty
+            spill_ev.electric_charge_mwh * defaults.spill_objective_penalty
+            + spill_ev.electric_discharge_mwh * defaults.spill_objective_penalty
             for spill_ev in spill_evs[i]
         ]
         + [
@@ -67,8 +95,8 @@ def price_objective(
 
 
 def carbon_objective(
-    optimizer: epl.optimizer.Optimizer,
-    vars: dict,
+    optimizer: "epl.Optimizer",
+    ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
     """
@@ -78,7 +106,7 @@ def carbon_objective(
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
 
     Inputs:
-        optimizer: an instance of `epl.optimizer.Optimizer` class.
+        optimizer: an instance of `epl.Optimizer` class.
         vars: a dictionary of linear programming variables in the optimization problem.
         interval_data: interaval data used in the simulation.
 
@@ -86,10 +114,12 @@ def carbon_objective(
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
 
-    sites = vars["sites"]
-    spills = epl.utils.filter_all_assets(vars, "spill")
-    boilers = epl.utils.filter_all_assets(vars, "boiler")
-    generators = epl.utils.filter_all_assets(vars, "generator")
+    #  cheating here with the site name (the second `site`)
+    sites = ivars.asset["site"]["site"]
+    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
+    spill_evs = filter_spill_evs(ivars, interval_data)
+    generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
+    boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
     obj = [
@@ -99,25 +129,31 @@ def carbon_objective(
             spill.electric_generation_mwh * defaults.spill_objective_penalty
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
             + spill.electric_load_mwh * defaults.spill_objective_penalty
+            + spill.electric_charge_mwh * defaults.spill_objective_penalty
+            + spill.electric_discharge_mwh * defaults.spill_objective_penalty
             #  dumping heat has no penalty
             #  so high_temperature_load_mwh and low_temperature_load_mwh
             #  are not included here
             for spill in spills[i]
         ]
-        for i in interval_data.idx
-    ]
-    if generators:
-        obj += [
+        + [
+            spill.electric_generation_mwh * defaults.spill_objective_penalty
+            + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
+            + spill.electric_load_mwh * defaults.spill_objective_penalty
+            + spill.electric_charge_mwh * defaults.spill_objective_penalty
+            + spill.electric_discharge_mwh * defaults.spill_objective_penalty
+            for spill in spill_evs[i]
+        ]
+        + [
             generator.gas_consumption_mwh * defaults.gas_carbon_intensity
-            for i in interval_data.idx
             for generator in generators[i]
         ]
-    if boilers:
-        obj += [
+        + [
             boiler.gas_consumption_mwh * defaults.gas_carbon_intensity
-            for i in interval_data.idx
             for boiler in boilers[i]
         ]
+        for i in interval_data.idx
+    ]
     return optimizer.sum(obj)
 
 

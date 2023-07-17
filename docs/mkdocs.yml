@@ -31,6 +31,14 @@ theme:
 plugins:
   - search
   - social
+  - mike:
+      alias_type: symlink
+      redirect_template: null
+      deploy_prefix: ''
+      canonical_version: null
+      version_selector: true
+      css_dir: css
+      javascript_dir: js
 markdown_extensions:
   - markdown_include.include:
       base_path: docs
@@ -39,15 +47,20 @@ markdown_extensions:
   - pymdownx.superfences
   - attr_list
   - md_in_html
+  - admonition
+  - pymdownx.details
 nav:
   - Getting Started: index.md
-  - Optimize Assets: how-to/dispatch-assets.md
-  - Optimize a Site: how-to/dispatch-site.md
-  - Optimize for Carbon: how-to/price-carbon.md
-  - Optimize for a Forecast: how-to/dispatch-forecast.md
-  # - Explanation:
-  - Validation: validation.md
+  - Optimization:
+    - Optimize Assets: how-to/dispatch-assets.md
+    - Optimize a Site: how-to/dispatch-site.md
+    - Optimize for Carbon: how-to/price-carbon.md
+    - Optimize for a Forecast: how-to/dispatch-forecast.md
+  - Validation:
+    - Battery: validation/battery.md
+    - EVs: validation/evs.md
 
+  # - Performance: performance.md
   # - Measure Forecast Quality: index.md
 
   # - Results: reference/results.md

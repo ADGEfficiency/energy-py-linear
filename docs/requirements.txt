@@ -5,4 +5,4 @@ phmdoctest
 pytest
 pillow
 cairosvg
-mike
+mike==1.1.2

@@ -17,18 +17,23 @@ def test_interval_data() -> None:
         gas_prices=gas_prices,
         electricity_carbon_intensities=carbon_intensities,
     )
-    assert all(id.electricity_prices == np.array(electricity_prices))
-    assert all(id.gas_prices == np.array(gas_prices))
-    assert all(id.electricity_carbon_intensities == np.array(carbon_intensities))
+    assert all(np.array(id.electricity_prices) == np.array(electricity_prices))
+    assert all(np.array(id.gas_prices) == np.array(gas_prices))
+    assert all(
+        np.array(id.electricity_carbon_intensities) == np.array(carbon_intensities)
+    )
 
     id = epl.interval_data.IntervalData(
         electricity_prices=electricity_prices,
-        gas_prices=40,
+        gas_prices=40.0,
         electricity_carbon_intensities=0.05,
     )
-    assert all(id.electricity_prices == electricity_prices)
-    assert all(id.gas_prices == np.array([40, 40, 40, 40]))
-    assert all(id.electricity_carbon_intensities == np.array([0.05, 0.05, 0.05, 0.05]))
+    assert all(np.array(id.electricity_prices) == electricity_prices)
+    assert all(np.array(id.gas_prices) == np.array([40, 40, 40, 40]))
+    assert all(
+        np.array(id.electricity_carbon_intensities)
+        == np.array([0.05, 0.05, 0.05, 0.05])
+    )
     assert all(id.high_temperature_load_mwh == np.array([0, 0, 0, 0]))
     assert id.idx == [0, 1, 2, 3]
 

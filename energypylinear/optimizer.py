@@ -4,9 +4,12 @@ Interface to the `pulp` optimization library to solve linear programming problem
 The `Optimizer` allows creating linear constraints, variables, and objectives, along with a linear program solver.
 """
 import dataclasses
+import datetime
 import typing
 
 import pulp
+
+from energypylinear.logger import logger
 
 
 @dataclasses.dataclass
@@ -26,9 +29,11 @@ class Optimizer:
         solver: solver to use for solving the optimization problem.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, verbose: bool = True) -> None:
         """Initialize an Optimizer."""
-        self.prob = pulp.LpProblem("prob", pulp.LpMinimize)
+        name = str(datetime.datetime.now())
+        name = name.replace(" ", "-")
+        self.prob = pulp.LpProblem(name, pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(msg=0)
 
     def __repr__(self) -> str:
@@ -45,6 +50,7 @@ class Optimizer:
             low: The lower bound of the variable.
             up: The upper bound of the variable.
         """
+        logger.debug("optimizer.continuous", name=name)
         return pulp.LpVariable(name=name, lowBound=low, upBound=up, cat="Continuous")
 
     def binary(self, name: str) -> pulp.LpVariable:
@@ -53,9 +59,12 @@ class Optimizer:
         Args:
             name: The name of the variable.
         """
+        logger.debug("optimizer.binary", name=name)
         return pulp.LpVariable(name=name, cat="Binary")
 
-    def sum(self, vector: list[pulp.LpAffineExpression]) -> pulp.LpAffineExpression:
+    def sum(
+        self, vector: list[pulp.LpAffineExpression | float]
+    ) -> pulp.LpAffineExpression:
         """Sums a list of linear expressions.
 
         Args:
@@ -91,12 +100,17 @@ class Optimizer:
             verbose: a flag indicating how verbose the output should be.  0 for no output.
             allow_infeasible: whether an infeasible solution should raise an error.
         """
+        logger.debug(
+            "optimizer.solve",
+            variables=len(self.variables()),
+            constraints=len(self.constraints()),
+        )
         self.assert_no_duplicate_variables()
         self.solver.solve(self.prob)
 
         status = self.status()
         if verbose > 0:
-            print(f"status is {status}")
+            logger.info("optimizer.solve", status=status)
 
         feasible = status == "Optimal"
         if not allow_infeasible:
@@ -110,7 +124,7 @@ class Optimizer:
         names = [v.name for v in variables]
         assert len(names) == len(
             set(names)
-        ), f"duplicate variables detected - {[x for x in names if names.count(x) >= 2]}"
+        ), f"duplicate variables detected - {len([x for x in names if names.count(x) >= 2])} of {len(names)}\n{sorted(set([x for x in names if names.count(x) >= 2]))}"
 
     def status(self) -> str:
         """Return the status of the optimization problem."""
@@ -152,7 +166,7 @@ class Optimizer:
         """Return the value of a linear program variable.
 
         Args:
-            variable: either a pupl variable or already numeric.
+            variable: either a pulp variable or number.
         """
         if isinstance(variable, pulp.LpVariable):
             return variable.value()
