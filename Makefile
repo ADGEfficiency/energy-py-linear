@@ -41,6 +41,8 @@ test: setup-test clean-test-docs test-docs
 	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose
 	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest
 
+test-ci: test
+
 test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
