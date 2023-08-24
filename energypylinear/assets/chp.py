@@ -13,11 +13,13 @@ from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
-def get_default_boiler_size(freq, interval_data):
+
+def get_default_boiler_size(freq: "epl.Freq", interval_data: "epl.interval_data.IntervalData") -> float:
     return freq.mw_to_mwh(
         max(interval_data.high_temperature_load_mwh)
         + max(interval_data.low_temperature_load_mwh)
     )
+
 
 class GeneratorConfig(pydantic.BaseModel):
     """CHP generator configuration."""
@@ -29,7 +31,6 @@ class GeneratorConfig(pydantic.BaseModel):
     electric_efficiency_pct: float = 0
     high_temperature_efficiency_pct: float = 0
     low_temperature_efficiency_pct: float = 0
-    #  add cooling efficieny here TODO
 
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
@@ -127,7 +128,6 @@ class Generator:
                     == asset.electric_generation_mwh
                     * (1 / asset.cfg.electric_efficiency_pct)
                 )
-
             optimizer.constrain(
                 asset.high_temperature_generation_mwh
                 == asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
@@ -136,7 +136,6 @@ class Generator:
                 asset.low_temperature_generation_mwh
                 == asset.gas_consumption_mwh * asset.cfg.low_temperature_efficiency_pct
             )
-            #  add cooling constraint here TODO
             optimizer.constrain_max(
                 asset.electric_generation_mwh,
                 asset.binary,

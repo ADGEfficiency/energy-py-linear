@@ -1,6 +1,7 @@
 """Site asset for optimizing dispatch of combined heat and power (CHP) generators."""
 import typing
 
+import numpy as np
 import pulp
 import pydantic
 
@@ -105,7 +106,7 @@ def constrain_site_high_temperature_heat_balance(
     generation - load = 0
     """
     assets = ivars.objective_variables[-1]
-    assert interval_data.high_temperature_load_mwh is not None
+    assert isinstance(interval_data.high_temperature_load_mwh, np.ndarray)
     optimizer.constrain(
         optimizer.sum([a.high_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.high_temperature_load_mwh for a in assets])
@@ -128,7 +129,8 @@ def constrain_site_low_temperature_heat_balance(
     generation - load = 0
     """
     assets = ivars.objective_variables[-1]
-    assert interval_data.low_temperature_load_mwh is not None
+    assert isinstance(interval_data.low_temperature_load_mwh, np.ndarray)
+    assert isinstance(interval_data.low_temperature_generation_mwh, np.ndarray)
     optimizer.constrain(
         optimizer.sum([a.low_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.low_temperature_load_mwh for a in assets])
@@ -294,7 +296,6 @@ class Site:
             ivars.append(self.one_interval(self.optimizer, self.cfg, i, freq))
             assets = []
             for asset in self.assets:
-
                 neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
                 #  tech debt TODO
                 #  EV is special beacuse it returns many one interval blocks per step

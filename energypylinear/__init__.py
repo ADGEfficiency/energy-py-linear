@@ -11,10 +11,10 @@ from energypylinear import (
 from energypylinear.accounting import get_accounts
 from energypylinear.assets import battery, chp, site, spill, valve
 from energypylinear.assets.battery import Battery
-from energypylinear.assets.heat_pump import HeatPump
 from energypylinear.assets.boiler import Boiler
 from energypylinear.assets.chp import Generator
 from energypylinear.assets.evs import EVs
+from energypylinear.assets.heat_pump import HeatPump
 from energypylinear.assets.site import Site
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
