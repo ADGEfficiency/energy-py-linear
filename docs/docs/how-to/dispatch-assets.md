@@ -41,8 +41,6 @@ assert all(
         'battery-electric_loss_mwh',
         'battery-initial_charge_mwh',
         'battery-final_charge_mwh',
-        'electricity_prices',
-        'electricity_carbon_intensities',
         'total-electric_generation_mwh',
         'total-electric_load_mwh',
         'total-high_temperature_generation_mwh',
@@ -55,8 +53,11 @@ assert all(
         'total-spills_mwh',
         'total-electric_loss_mwh',
         'site-electricity_balance_mwh',
+        'electricity_prices',
+        'electricity_carbon_intensities',
         'load-high_temperature_load_mwh',
-        'load-low_temperature_load_mwh'
+        'load-low_temperature_load_mwh',
+        'load-low_temperature_generation_mwh'
     ]
 )
 ```
@@ -122,8 +123,6 @@ assert all(
         'boiler-gas_consumption_mwh',
         'valve-high_temperature_load_mwh',
         'valve-low_temperature_generation_mwh',
-        'electricity_prices',
-        'electricity_carbon_intensities',
         'total-electric_generation_mwh',
         'total-electric_load_mwh',
         'total-high_temperature_generation_mwh',
@@ -136,8 +135,11 @@ assert all(
         'total-spills_mwh',
         'total-electric_loss_mwh',
         'site-electricity_balance_mwh',
+        'electricity_prices',
+        'electricity_carbon_intensities',
         'load-high_temperature_load_mwh',
-        'load-low_temperature_load_mwh'
+        'load-low_temperature_load_mwh',
+        'load-low_temperature_generation_mwh'
     ]
 )
 ```
@@ -220,8 +222,6 @@ assert all(
         'evs-charger-spill-evs-electric_charge_binary',
         'evs-charger-spill-evs-electric_discharge_mwh',
         'evs-charger-spill-evs-electric_discharge_binary',
-        'electricity_prices',
-        'electricity_carbon_intensities',
         'total-electric_generation_mwh',
         'total-electric_load_mwh',
         'total-high_temperature_generation_mwh',
@@ -234,8 +234,11 @@ assert all(
         'total-spills_mwh',
         'total-electric_loss_mwh',
         'site-electricity_balance_mwh',
+        'electricity_prices',
+        'electricity_carbon_intensities',
         'load-high_temperature_load_mwh',
-        'load-low_temperature_load_mwh'
+        'load-low_temperature_load_mwh',
+        'load-low_temperature_generation_mwh'
     ]
 )
 ```
