@@ -14,7 +14,9 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
-def get_default_boiler_size(freq: "epl.Freq", interval_data: "epl.interval_data.IntervalData") -> float:
+def get_default_boiler_size(
+    freq: "epl.Freq", interval_data: "epl.interval_data.IntervalData"
+) -> float:
     return freq.mw_to_mwh(
         max(interval_data.high_temperature_load_mwh)
         + max(interval_data.low_temperature_load_mwh)
@@ -237,9 +239,7 @@ class Generator:
         )
 
     def plot(
-        self,
-        results: "epl.results.SimulationResult",
-        path: pathlib.Path | str
+        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_chp(results, pathlib.Path(path))

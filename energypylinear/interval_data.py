@@ -101,11 +101,11 @@ class IntervalData(pydantic.BaseModel):
     """
 
     electricity_prices: list[float] | np.ndarray
-    electricity_carbon_intensities: float | list[float] | np.ndarray | None = None
-    gas_prices: float | list[float] | np.ndarray | None = None
-    high_temperature_load_mwh: float | list[float] | np.ndarray | None = None
-    low_temperature_load_mwh: float | list[float] | np.ndarray | None = None
-    low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None
+    electricity_carbon_intensities: np.ndarray | None = None
+    gas_prices: np.ndarray | None = None
+    high_temperature_load_mwh: np.ndarray | None = None
+    low_temperature_load_mwh: np.ndarray | None = None
+    low_temperature_generation_mwh: np.ndarray | None = None
     electric_load_mwh: np.ndarray | None = None
     idx: list[int] = []
 
