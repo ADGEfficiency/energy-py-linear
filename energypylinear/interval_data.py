@@ -100,12 +100,13 @@ class IntervalData(pydantic.BaseModel):
         setup_idx: sets up the index of the time steps based on the length of `electricity_prices`.
     """
 
-    electricity_prices: np.ndarray
-    electricity_carbon_intensities: np.ndarray | None = None
-    gas_prices: np.ndarray | None = None
-    high_temperature_load_mwh: np.ndarray | None = None
-    low_temperature_load_mwh: np.ndarray | None = None
-    electricity_load_mwh: np.ndarray | None = None
+    electricity_prices: list[float] | np.ndarray
+    electricity_carbon_intensities: float | list[float] | np.ndarray | None = None
+    gas_prices: float | list[float] | np.ndarray | None = None
+    high_temperature_load_mwh: float | list[float] | np.ndarray | None = None
+    low_temperature_load_mwh: float | list[float] | np.ndarray | None = None
+    low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None
+    electric_load_mwh: np.ndarray | None = None
     idx: list[int] = []
 
     evs: typing.Union[EVIntervalData, None] = None
@@ -147,7 +148,8 @@ class IntervalData(pydantic.BaseModel):
             "electricity_carbon_intensities",
             "high_temperature_load_mwh",
             "low_temperature_load_mwh",
-            "electricity_load_mwh",
+            "low_temperature_generation_mwh",
+            "electric_load_mwh",
         ]
         for field in fields:
             value = values.get(field)
@@ -264,6 +266,8 @@ class IntervalVars:
 
         #  here we return data for one interval
         else:
+
+            #  why a list of lists??????????
             assets = self.objective_variables[i]
             return [
                 [

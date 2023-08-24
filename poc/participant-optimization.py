@@ -266,7 +266,7 @@ def test_create_objective():
 
     interval_data = epl.interval_data.IntervalData(
         electricity_prices=np.array([20, 30, 100, -10, 0]),
-        electricity_load_mwh=np.array([100, 50, 50, 100, 100]),
+        electric_load_mwh=np.array([100, 50, 50, 100, 100]),
     )
 
     vars: collections.defaultdict[str, typing.Any] = collections.defaultdict(list)
@@ -291,7 +291,7 @@ def test_create_objective():
     results = epl.results.extract_results(interval_data, vars, feasible=status.feasible)
     assert (
         results.simulation["import_power_mwh"].sum()
-        == interval_data.electricity_load_mwh.sum()
+        == interval_data.electric_load_mwh.sum()
     )
     assert results.simulation["export_power_mwh"].sum() == 0
 

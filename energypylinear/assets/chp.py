@@ -13,6 +13,11 @@ from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
+def get_default_boiler_size(freq, interval_data):
+    return freq.mw_to_mwh(
+        max(interval_data.high_temperature_load_mwh)
+        + max(interval_data.low_temperature_load_mwh)
+    )
 
 class GeneratorConfig(pydantic.BaseModel):
     """CHP generator configuration."""
@@ -152,12 +157,10 @@ class Generator:
     def optimize(
         self,
         electricity_prices: np.ndarray | typing.Sequence[float],
-        gas_prices: np.ndarray | typing.Sequence[float] | float | None = None,
-        # fmt: off
-        electricity_carbon_intensities: np.ndarray| typing.Sequence[float] | float | None = None,
-        high_temperature_load_mwh: np.ndarray| typing.Sequence[float] | float| None = None,
-        low_temperature_load_mwh: np.ndarray| typing.Sequence[float] | float | None = None,
-        # fmt: on
+        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        gas_prices: float | list[float] | np.ndarray | None = None,
+        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
+        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         flags: Flags = Flags(),
@@ -190,12 +193,11 @@ class Generator:
 
         assert interval_data.high_temperature_load_mwh is not None
         assert interval_data.low_temperature_load_mwh is not None
-        default_boiler_size = freq.mw_to_mwh(
-            max(interval_data.high_temperature_load_mwh)
-            + max(interval_data.low_temperature_load_mwh)
-        )
+
         self.boiler = epl.Boiler(
-            high_temperature_generation_max_mw=default_boiler_size,
+            high_temperature_generation_max_mw=get_default_boiler_size(
+                freq, interval_data
+            ),
             high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
         )
 
