@@ -1,4 +1,6 @@
 """"""
+import typing
+
 import pydantic
 from energypylinear.assets.asset import AssetOneInterval
 import numpy as np
@@ -26,10 +28,6 @@ class HeatPumpOneInterval(AssetOneInterval):
     high_temperature_generation_mwh: pulp.LpVariable
 
 
-def constraints():
-    pass
-
-
 class HeatPump:
     def __init__(self, electric_power_mw: float, cop: float):
         self.cfg = HeatPumpConfig(electric_power_mw=electric_power_mw, cop=cop)
@@ -38,17 +36,18 @@ class HeatPump:
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        return f"<energypylinear.HeatPump {self.cfg.electric_power_mw=}, {self.cop=}>"
+        return (
+            f"<energypylinear.HeatPump {self.cfg.electric_power_mw=}, {self.cfg.cop=}>"
+        )
 
     def one_interval(
         self,
         optimizer: "epl.Optimizer",
         i: int,
         freq: "epl.Freq",
-        *args,
-        **kwargs,
+        *args: typing.Any,
+        **kwargs: typing.Any,
     ) -> HeatPumpOneInterval:
-
         name = f"i:{i},asset:{self.cfg.name}"
         return HeatPumpOneInterval(
             cfg=self.cfg,
@@ -80,10 +79,11 @@ class HeatPump:
         ivars: "epl.interval_data.IntervalVars",
         i: int,
         freq: "epl.Freq",
-        *args,
-        **kwargs
-    ):
+        *args: typing.Any,
+        **kwargs: typing.Any,
+    ) -> None:
         for heat_pump in ivars.filter_objective_variables(HeatPumpOneInterval, i=i)[0]:
+            assert isinstance(heat_pump, HeatPumpOneInterval)
             optimizer.constrain_max(
                 heat_pump.electric_load_mwh,
                 heat_pump.electric_load_binary,
@@ -98,7 +98,9 @@ class HeatPump:
                 == heat_pump.high_temperature_generation_mwh
             )
 
-    def constrain_after_intervals(self, *args, **kwargs):
+    def constrain_after_intervals(
+        self, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         pass
 
     def optimize(
@@ -142,31 +144,17 @@ class HeatPump:
                 self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
 
-            heat_pump = self.one_interval(
-                self.optimizer,
-                i,
-                freq,
-                flags=flags
-            )
+            heat_pump = self.one_interval(self.optimizer, i, freq, flags=flags)
             spill = self.spill.one_interval(self.optimizer, i, freq)
             boiler = self.boiler.one_interval(self.optimizer, i, freq)
 
-            self.ivars.append([
-                heat_pump,
-                spill,
-                boiler
-            ])
+            self.ivars.append([heat_pump, spill, boiler])
 
             self.site.constrain_within_interval(
                 self.optimizer, self.ivars, self.idata, i
             )
 
-            self.constrain_within_interval(
-                self.optimizer,
-                self.ivars,
-                i,
-                freq=freq
-            )
+            self.constrain_within_interval(self.optimizer, self.ivars, i, freq=freq)
 
             self.spill.constrain_within_interval(
                 self.optimizer, self.ivars, self.idata, i, freq

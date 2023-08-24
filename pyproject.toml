@@ -59,7 +59,8 @@ module = [
   'matplotlib.pyplot',
   'matplotlib.patches',
   'pulp',
-  'seaborn'
+  'seaborn',
+  'bs4'
 ]
 ignore_missing_imports = true
 

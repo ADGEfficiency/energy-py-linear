@@ -17,6 +17,8 @@ from energypylinear.optimizer import Optimizer
 def get_default_boiler_size(
     freq: "epl.Freq", interval_data: "epl.interval_data.IntervalData"
 ) -> float:
+    assert isinstance(interval_data.high_temperature_load_mwh, np.ndarray)
+    assert isinstance(interval_data.low_temperature_load_mwh, np.ndarray)
     return freq.mw_to_mwh(
         max(interval_data.high_temperature_load_mwh)
         + max(interval_data.low_temperature_load_mwh)

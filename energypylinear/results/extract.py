@@ -229,11 +229,11 @@ def extract_evs_results(
                 )
 
 def extract_heat_pump_results(
-    heat_pumps: "list[epl.assets.heat_pump.HeatPumpOneInterval]",
+    heat_pumps: "list[epl.assets.asset.AssetOneInterval]",
     results: dict,
     i: int,
     verbose: bool = True
-):
+) -> None:
     for heat_pump in heat_pumps:
         for attr in [
             "electric_load_mwh",

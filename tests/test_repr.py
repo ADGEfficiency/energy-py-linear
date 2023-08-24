@@ -7,6 +7,7 @@ import energypylinear as epl
 def test_repr() -> None:
     """Test we can print our things."""
     things = [
+        epl.HeatPump(electric_power_mw=1.0, cop=3),
         epl.Battery(),
         epl.EVs(chargers_power_mw=[10], charge_events_capacity_mwh=[10]),
         epl.assets.evs.EVsArrayOneInterval(

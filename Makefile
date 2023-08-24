@@ -6,21 +6,21 @@ clean:
 	rm -rf .pytest_cache .hypothesis .mypy_cache .ruff_cache __pycache__ .coverage logs .coverage*
 
 #  SETUP
-.PHONY: setup setup-test setup-static setup-check setup-docs
+.PHONY: setup-pip-poetry setup-test setup-static setup-check setup-docs
 QUIET := -q
 
-setup:
+setup-pip-poetry:
 	pip install --upgrade pip $(QUIET)
 	pip install poetry -c ./constraints.txt $(QUIET)
 	poetry install --with main $(QUIET)
 
-setup-test: setup
+setup-test: setup-pip-poetry
 	poetry install --with test $(QUIET)
 
-setup-static: setup
+setup-static: setup-pip-poetry
 	poetry install --with static $(QUIET)
 
-setup-check: setup
+setup-check: setup-pip-poetry
 	poetry install --with check $(QUIET)
 
 #  manage docs dependencies separately because
@@ -90,7 +90,7 @@ publish: setup
 	poetry build
 	@poetry config pypi-token.pypi $(PYPI_TOKEN)
 	poetry publish
-	#  TODO publish docs
+	#  TODO publish docs automatically
 
 #  DOCS
 .PHONY: docs mike-deploy
@@ -104,6 +104,7 @@ docs: setup-docs
 	#  `mkdocs serve` will usually be more useful during development
 	cd docs; mkdocs serve -a localhost:8004; cd ..
 
+#  TODO currently run manually - should be automated with publishing
 #  this deploys the current docs to the docs branch
 #  -u = update aliases of this $(VERSION) to latest
 #  -b = branch - aligns with the branch name we build docs off
