@@ -1,4 +1,4 @@
-A natural response when you get access to something someone else built is to wonder - **does this work correctly?**
+A natural response when you get access to something someone else built is to wonder - does this work correctly?
 
 This section will give you confidence in the implementation of the battery asset.
 
