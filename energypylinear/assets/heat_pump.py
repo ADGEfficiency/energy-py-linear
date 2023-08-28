@@ -1,5 +1,6 @@
 """"""
 import typing
+import pathlib
 
 import pydantic
 from energypylinear.assets.asset import AssetOneInterval
@@ -33,6 +34,7 @@ class HeatPump:
         self.cfg = HeatPumpConfig(electric_power_mw=electric_power_mw, cop=cop)
         self.site = epl.Site()
         self.spill = epl.spill.Spill()
+        self.valve = epl.valve.Valve()
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -144,11 +146,12 @@ class HeatPump:
                 self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
 
-            heat_pump = self.one_interval(self.optimizer, i, freq, flags=flags)
-            spill = self.spill.one_interval(self.optimizer, i, freq)
-            boiler = self.boiler.one_interval(self.optimizer, i, freq)
-
-            self.ivars.append([heat_pump, spill, boiler])
+            self.ivars.append([
+                self.one_interval(self.optimizer, i, freq, flags=flags),
+                self.boiler.one_interval(self.optimizer, i, freq),
+                self.spill.one_interval(self.optimizer, i, freq),
+                self.valve.one_interval(self.optimizer, i, freq),
+            ])
 
             self.site.constrain_within_interval(
                 self.optimizer, self.ivars, self.idata, i
@@ -183,4 +186,14 @@ class HeatPump:
         self.interval_data = self.idata
         return epl.results.extract_results(
             self.idata, self.ivars, feasible=status.feasible, verbose=verbose
+        )
+
+    def plot(
+        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
+    ) -> None:
+        """Plot simulation results."""
+        return epl.plot.plot_heat_pump(
+            results,
+            pathlib.Path(path),
+            asset_name=self.cfg.name
         )

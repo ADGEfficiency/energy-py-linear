@@ -169,3 +169,11 @@ def validate_results(
         ]
         subset = simulation[cols]
         assert (subset <= 1).all().all()
+
+    breakpoint()  # fmt: skip
+    """
+    if valves
+    - then check balance across the valve
+
+    """
+

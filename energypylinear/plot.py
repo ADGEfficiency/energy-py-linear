@@ -294,3 +294,70 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     if path.is_dir():
         path = path / "chp.png"
     fig.savefig(path)
+
+
+def plot_heat_pump(
+    results: "epl.results.SimulationResult",
+    path: pathlib.Path | str,
+    asset_name: str
+) -> None:
+    path = pathlib.Path(path)
+    path.parent.mkdir(exist_ok=True, parents=True)
+
+    fig, axes = plt.subplots(nrows=3, sharex=True, figsize=(12, 8))
+    simulation = results.simulation
+    simulation["index"] = np.arange(simulation.shape[0]).tolist()
+
+    for col in [
+        "load-high_temperature_load_mwh",
+        f"{asset_name}-high_temperature_generation_mwh"
+    ]:
+        simulation.plot(ax=axes[0], x="index", y=col)
+
+    neg_cols = [
+        "spill-low_temperature_load_mwh",
+        "load-low_temperature_load_mwh",
+        "heat-pump-low_temperature_load_mwh",
+    ]
+    neg_bottom = np.zeros_like(simulation['index'])
+    width = 0.3
+    adj = 0.15
+    for col in neg_cols:
+        axes[1].bar(
+            simulation['index'] - adj,
+            simulation[col],
+            width,
+            label=col,
+            bottom=neg_bottom
+        )
+        neg_bottom += simulation[col]
+
+    bottom = np.zeros_like(simulation['index'])
+    for col in [
+        "load-low_temperature_generation_mwh",
+        "valve-low_temperature_generation_mwh",
+    ]:
+        axes[1].bar(
+            simulation['index'] + adj,
+            simulation[col],
+            width,
+            label=col,
+            bottom=bottom
+        )
+        bottom += simulation[col]
+
+    axes[1].legend()
+    for col in [
+            "electricity_prices"
+    ]:
+        simulation.plot(ax=axes[2], x="index", y=col)
+
+    # for ax in axes:
+    #     ax.get_legend().remove()
+    # plt.tight_layout()
+
+    if path.is_dir():
+        path = path / "heat-pump.png"
+    fig.savefig(path)
+
+    # from IPython.core.debugger import set_trace; set_trace()

@@ -45,13 +45,13 @@ class GeneratorConfig(pydantic.BaseModel):
 
 class GeneratorOneInterval(AssetOneInterval):
     """CHP generator data for a single interval."""
+    cfg: GeneratorConfig
 
+    binary: pulp.LpVariable
     electric_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
     high_temperature_generation_mwh: pulp.LpVariable
     low_temperature_generation_mwh: pulp.LpVariable
-    binary: pulp.LpVariable
-    cfg: GeneratorConfig
 
 
 class Generator:
@@ -211,8 +211,8 @@ class Generator:
                 [
                     self.one_interval(self.optimizer, i, freq),
                     self.boiler.one_interval(self.optimizer, i, freq),
-                    self.valve.one_interval(self.optimizer, i, freq),
                     self.spill.one_interval(self.optimizer, i, freq),
+                    self.valve.one_interval(self.optimizer, i, freq),
                 ]
             )
 
