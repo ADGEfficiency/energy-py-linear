@@ -101,7 +101,6 @@ def test_heat_pump_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
         freq_mins=60,
     )
 
-    breakpoint()  # fmt: skip
     # assert not (path / "heat-pump.png").exists()
     asset.plot(results, path=path)
     assert (path / "heat-pump.png").exists()

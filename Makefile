@@ -41,6 +41,7 @@ test: setup-test clean-test-docs create-test-docs
 	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose
 	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest
 	python tests/assert-test-coverage.py
+	coverage combine
 
 test-ci: test
 

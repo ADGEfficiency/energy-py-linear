@@ -118,6 +118,7 @@ class HeatPump:
         low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
         #  this is a special one
         low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
+        include_valve: bool = True,
     ) -> "epl.results.SimulationResult":
         self.optimizer = epl.Optimizer()
         freq = epl.Freq(freq_mins)
@@ -130,7 +131,6 @@ class HeatPump:
             low_temperature_load_mwh=low_temperature_load_mwh,
             low_temperature_generation_mwh=low_temperature_generation_mwh,
         )
-        print(f"{self.idata.low_temperature_generation_mwh=}")
 
         self.boiler = epl.Boiler(
             high_temperature_generation_max_mw=get_default_boiler_size(
@@ -146,12 +146,16 @@ class HeatPump:
                 self.site.one_interval(self.optimizer, self.site.cfg, i, freq)
             )
 
-            self.ivars.append([
+            ivars_interval = [
                 self.one_interval(self.optimizer, i, freq, flags=flags),
                 self.boiler.one_interval(self.optimizer, i, freq),
                 self.spill.one_interval(self.optimizer, i, freq),
-                self.valve.one_interval(self.optimizer, i, freq),
-            ])
+            ]
+
+            if include_valve:
+                ivars_interval.append(self.valve.one_interval(self.optimizer, i, freq))
+
+            self.ivars.append(ivars_interval)
 
             self.site.constrain_within_interval(
                 self.optimizer, self.ivars, self.idata, i
@@ -165,6 +169,10 @@ class HeatPump:
             self.boiler.constrain_within_interval(
                 self.optimizer, self.ivars, self.idata, i, freq
             )
+            if include_valve:
+                self.valve.constrain_within_interval(
+                    self.optimizer, self.ivars, self.idata, i, freq
+                )
 
         #  does nothing at the moment
         self.constrain_after_intervals(i)
@@ -193,7 +201,5 @@ class HeatPump:
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_heat_pump(
-            results,
-            pathlib.Path(path),
-            asset_name=self.cfg.name
+            results, pathlib.Path(path), asset_name=self.cfg.name
         )

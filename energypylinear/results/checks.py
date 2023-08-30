@@ -103,7 +103,7 @@ def check_low_temperature_heat_balance(
     ].sum(axis=1)
     balance = abs(inp - out) < 1e-4
     #  used for debug
-    data = pd.DataFrame(
+    debug = pd.DataFrame(
         {
             "in": inp,
             "out": out,
@@ -121,11 +121,11 @@ def check_low_temperature_heat_balance(
         ("spill", "spill-low_temperature_load_mwh")
     ]:
         if col in simulation.columns:
-            data[name] = simulation[col]
+            debug[name] = simulation[col]
 
     if verbose:
         logger.info(
-            "check_low_temperature_heat_balance", data=data.to_dict(orient="list")
+            "check_low_temperature_heat_balance", debug=debug.to_dict(orient="list")
         )
     assert balance.all()
 
@@ -170,10 +170,19 @@ def validate_results(
         subset = simulation[cols]
         assert (subset <= 1).all().all()
 
-    breakpoint()  # fmt: skip
     """
-    if valves
-    - then check balance across the valve
+    TODO
 
+    bit of debt here detecting if there is a valve present in the simulation
+    - maybe better to check the assets list?
+    - would need to pass this into the results validation...
     """
+    valve_cols = ["valve" in c for c in simulation.columns]
+    if any(valve_cols):
+        print(
+            simulation[['valve-low_temperature_generation_mwh', 'valve-high_temperature_load_mwh']]
+        )
+        assert all(
+            simulation['valve-low_temperature_generation_mwh'] == simulation['valve-high_temperature_load_mwh']
+        )
 

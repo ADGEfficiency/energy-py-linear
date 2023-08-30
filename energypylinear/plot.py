@@ -297,9 +297,7 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
 
 
 def plot_heat_pump(
-    results: "epl.results.SimulationResult",
-    path: pathlib.Path | str,
-    asset_name: str
+    results: "epl.results.SimulationResult", path: pathlib.Path | str, asset_name: str
 ) -> None:
     path = pathlib.Path(path)
     path.parent.mkdir(exist_ok=True, parents=True)
@@ -310,7 +308,7 @@ def plot_heat_pump(
 
     for col in [
         "load-high_temperature_load_mwh",
-        f"{asset_name}-high_temperature_generation_mwh"
+        f"{asset_name}-high_temperature_generation_mwh",
     ]:
         simulation.plot(ax=axes[0], x="index", y=col)
 
@@ -319,37 +317,31 @@ def plot_heat_pump(
         "load-low_temperature_load_mwh",
         "heat-pump-low_temperature_load_mwh",
     ]
-    neg_bottom = np.zeros_like(simulation['index'])
+    neg_bottom = np.zeros_like(simulation["index"])
     width = 0.3
     adj = 0.15
     for col in neg_cols:
         axes[1].bar(
-            simulation['index'] - adj,
+            simulation["index"] - adj,
             simulation[col],
             width,
             label=col,
-            bottom=neg_bottom
+            bottom=neg_bottom,
         )
         neg_bottom += simulation[col]
 
-    bottom = np.zeros_like(simulation['index'])
+    bottom = np.zeros_like(simulation["index"])
     for col in [
         "load-low_temperature_generation_mwh",
         "valve-low_temperature_generation_mwh",
     ]:
         axes[1].bar(
-            simulation['index'] + adj,
-            simulation[col],
-            width,
-            label=col,
-            bottom=bottom
+            simulation["index"] + adj, simulation[col], width, label=col, bottom=bottom
         )
         bottom += simulation[col]
 
     axes[1].legend()
-    for col in [
-            "electricity_prices"
-    ]:
+    for col in ["electricity_prices"]:
         simulation.plot(ax=axes[2], x="index", y=col)
 
     # for ax in axes:
@@ -359,5 +351,3 @@ def plot_heat_pump(
     if path.is_dir():
         path = path / "heat-pump.png"
     fig.savefig(path)
-
-    # from IPython.core.debugger import set_trace; set_trace()
