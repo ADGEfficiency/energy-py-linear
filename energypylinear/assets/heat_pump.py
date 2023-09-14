@@ -15,12 +15,13 @@ import pulp
 
 class HeatPumpConfig(pydantic.BaseModel):
     """Heat pump asset configuration."""
+
     name: str
     electric_power_mw: float
     cop: float
 
     @pydantic.validator("cop", pre=True, always=True)
-    def validate_cop(cls, value):
+    def validate_cop(cls, value: float) -> float:
         """Check COP is greater than 1.0.
 
         Heat balance doesn't make sense with a COP less than 1.0.
@@ -36,6 +37,7 @@ class HeatPumpConfig(pydantic.BaseModel):
 
 class HeatPumpOneInterval(AssetOneInterval):
     """Heat pump asset data for a single interval."""
+
     cfg: HeatPumpConfig
     electric_load_mwh: pulp.LpVariable
     electric_load_binary: pulp.LpVariable
@@ -55,17 +57,11 @@ class HeatPump:
             The ratio of high temperature heat output over input electricity.
         name: the asset name.
     """
-    def __init__(
-        self,
-        electric_power_mw: float,
-        cop: float,
-        name: str = "heat-pump"
-    ):
+
+    def __init__(self, electric_power_mw: float, cop: float, name: str = "heat-pump"):
         """Initializes the asset."""
         self.cfg = HeatPumpConfig(
-            name=name,
-            electric_power_mw=electric_power_mw,
-            cop=cop
+            name=name, electric_power_mw=electric_power_mw, cop=cop
         )
         self.site = epl.Site()
         self.spill = epl.spill.Spill()
@@ -141,12 +137,12 @@ class HeatPump:
 
     def optimize(
         self,
-        electricity_prices: list[float] | np.ndarray,
-        gas_prices: float | list[float] | np.ndarray | None = None,
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
-        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
+        electricity_prices: typing.Sequence[float] | np.ndarray,
+        gas_prices: float | typing.Sequence[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: float | typing.Sequence[float] | np.ndarray | None = None,
+        high_temperature_load_mwh: float | typing.Sequence[float] | np.ndarray | None = None,
+        low_temperature_load_mwh: float | typing.Sequence[float] | np.ndarray | None = None,
+        low_temperature_generation_mwh: float | typing.Sequence[float] | np.ndarray | None = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         verbose: bool = True,

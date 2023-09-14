@@ -86,7 +86,7 @@ def test_heat_pump_optimization_price() -> None:
     )
 
 
-def test_heat_pump_optimization_carbon():
+def test_heat_pump_optimization_carbon() -> None:
     """Test optimization for carbon."""
     gas_price = 20
     #  TODO pass this into model
@@ -128,13 +128,13 @@ def test_heat_pump_optimization_carbon():
     )
 
 
-def test_heat_pump_invalid_cop():
+def test_heat_pump_invalid_cop() -> None:
     """Test invalid COP raises error."""
     with pytest.raises(ValueError, match="COP must be 1 or above"):
         epl.HeatPump(electric_power_mw=2.0, cop=0.5)
 
 
-def test_heat_pump_heat_balance():
+def test_heat_pump_heat_balance() -> None:
     """Test heat balance around heat pump."""
 
     gas_price = 20

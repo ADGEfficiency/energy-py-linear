@@ -81,11 +81,7 @@ def test_chp_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 def test_heat_pump_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test we can plot the CHP chart."""
-    # path = tmp_path_factory.mktemp("figs")
-
-    import pathlib
-
-    path = pathlib.Path("./figs")
+    path = tmp_path_factory.mktemp("figs")
 
     prices = np.random.uniform(-1000, 1000, 24).tolist()
     ht_load = np.random.uniform(0, 100, 24).tolist()
@@ -102,6 +98,6 @@ def test_heat_pump_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
         freq_mins=60,
     )
 
-    # assert not (path / "heat-pump.png").exists()
+    assert not (path / "heat-pump.png").exists()
     asset.plot(results, path=path)
     assert (path / "heat-pump.png").exists()

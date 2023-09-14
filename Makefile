@@ -43,12 +43,13 @@ setup-docs:
 .PHONY: test test-ci test-docs clean-test-docs test-validate create-test-docs
 PARALLEL = auto
 ENABLE_FILE_LOGGING = 0
+TEST_ARGS=
 export
 
 test: setup-test clean-test-docs create-test-docs
-	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose
-	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest
-	python tests/assert-test-coverage.py
+	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose $(TEST_ARGS)
+	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest $(TEST_ARGS)
+	python tests/assert-test-coverage.py $(TEST_ARGS)
 	coverage combine
 
 test-ci: test
