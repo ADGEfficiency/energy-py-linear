@@ -2,6 +2,11 @@
 import pandas as pd
 from rich import print
 
+from energypylinear.results.checks import (
+    check_high_temperature_heat_balance,
+    check_low_temperature_heat_balance,
+)
+
 
 def _debug_column(simulation: pd.DataFrame, col: str) -> None:
     """Print a subset of one column for debugging"""
@@ -27,3 +32,19 @@ def debug_simulation(simulation: pd.DataFrame) -> None:
     _debug_column(simulation, "initial_soc_mwh")
     _debug_column(simulation, "final_soc_mwh")
     _debug_column(simulation, "electric_loss_mwh")
+
+
+def debug_balances(simulation: pd.DataFrame) -> None:
+    """runs balance checks"""
+    check_high_temperature_heat_balance(simulation, True)
+    check_low_temperature_heat_balance(simulation, True)
+
+
+def debug_asset(
+    simulation: pd.DataFrame, name: str, verbose: bool = True
+) -> pd.DataFrame:
+    """Extracts result columns for a singel asset."""
+    cols = [c for c in simulation.columns if name in c]
+    if verbose:
+        print(simulation[cols])
+    return simulation[cols]

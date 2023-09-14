@@ -3,7 +3,6 @@ import pathlib
 
 from bs4 import BeautifulSoup
 
-
 if __name__ == "__main__":
     threshold = 100.0
     html = pathlib.Path("./htmlcov/index.html").read_text()

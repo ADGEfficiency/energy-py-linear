@@ -228,12 +228,14 @@ def extract_evs_results(
                     )
                 )
 
+
 def extract_heat_pump_results(
     heat_pumps: "list[epl.assets.asset.AssetOneInterval]",
     results: dict,
     i: int,
     verbose: bool = True
 ) -> None:
+    """Extract simulation result data for the Heat Pump asset."""
     for heat_pump in heat_pumps:
         for attr in [
             "electric_load_mwh",
@@ -244,6 +246,24 @@ def extract_heat_pump_results(
             results[name].append(
                 optimizer.value(getattr(heat_pump, attr))
             )
+
+
+def check_array_lengths(results: dict[str, list]) -> None:
+    """Check that all lists in the results dictionary have the same length.
+
+    Args:
+        results (dict[str, list]):
+            Dictionary containing lists whose lengths need to be checked.
+
+    Raises:
+        AssertionError: If lists in the dictionary have different lengths.
+    """
+    lens = []
+    dbg = []
+    for k, v in results.items():
+        lens.append(len(v))
+        dbg.append((k, len(v)))
+    assert len(set(lens)) == 1, f"{len(set(lens))} {dbg}"
 
 
 def extract_results(
@@ -356,15 +376,6 @@ def extract_results(
             extract_heat_pump_results(
                 heat_pumps, results, i, verbose=verbose
             )
-
-    def check_array_lengths(results: dict[str, list]) -> None:
-        lens = []
-        dbg = []
-        for k, v in results.items():
-            lens.append(len(v))
-            dbg.append((k, len(v)))
-
-        assert len(set(lens)) == 1, f"{len(set(lens))} {dbg}"
 
     check_array_lengths(results)
     simulation = pd.DataFrame(results)

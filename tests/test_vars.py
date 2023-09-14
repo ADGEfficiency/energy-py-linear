@@ -1,3 +1,4 @@
+"""Interval variable testing."""
 from rich import print
 
 import energypylinear as epl

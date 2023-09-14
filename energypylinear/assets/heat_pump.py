@@ -14,15 +14,29 @@ import pulp
 
 
 class HeatPumpConfig(pydantic.BaseModel):
-    name: str = "heat-pump"
-
+    """Heat pump asset configuration."""
+    name: str
     electric_power_mw: float
     cop: float
 
+    @pydantic.validator("cop", pre=True, always=True)
+    def validate_cop(cls, value):
+        """Check COP is greater than 1.0.
+
+        Heat balance doesn't make sense with a COP less than 1.0.
+
+        The HT heat output is the sum of the LT heat and electricity input.
+
+        Introducing losses to the heat pump would allow COPs less than 1.0.
+        """
+        if value < 1:
+            raise ValueError("COP must be 1 or above")
+        return value
+
 
 class HeatPumpOneInterval(AssetOneInterval):
+    """Heat pump asset data for a single interval."""
     cfg: HeatPumpConfig
-
     electric_load_mwh: pulp.LpVariable
     electric_load_binary: pulp.LpVariable
     low_temperature_load_mwh: pulp.LpVariable
@@ -30,8 +44,29 @@ class HeatPumpOneInterval(AssetOneInterval):
 
 
 class HeatPump:
-    def __init__(self, electric_power_mw: float, cop: float):
-        self.cfg = HeatPumpConfig(electric_power_mw=electric_power_mw, cop=cop)
+    """Heat pump asset - handles optimization and plotting of results over many intervals.
+
+    A heat pump generates high temperature heat from low temperature heat and electricity.
+
+    Args:
+        electric_power_mw: the maximum power input of the heat pump.
+            Measured in in mega-watts.
+        cop: the coefficient of performance of the heat pump.
+            The ratio of high temperature heat output over input electricity.
+        name: the asset name.
+    """
+    def __init__(
+        self,
+        electric_power_mw: float,
+        cop: float,
+        name: str = "heat-pump"
+    ):
+        """Initializes the asset."""
+        self.cfg = HeatPumpConfig(
+            name=name,
+            electric_power_mw=electric_power_mw,
+            cop=cop
+        )
         self.site = epl.Site()
         self.spill = epl.spill.Spill()
         self.valve = epl.valve.Valve()
@@ -50,6 +85,7 @@ class HeatPump:
         *args: typing.Any,
         **kwargs: typing.Any,
     ) -> HeatPumpOneInterval:
+        """Creates asset data for a single interval."""
         name = f"i:{i},asset:{self.cfg.name}"
         return HeatPumpOneInterval(
             cfg=self.cfg,
@@ -64,14 +100,10 @@ class HeatPump:
             low_temperature_load_mwh=optimizer.continuous(
                 f"low_temperature_load_mwh,{name}",
                 low=0,
-                # up=self.idata.low_temperature_load_mwh[i],
             ),
             high_temperature_generation_mwh=optimizer.continuous(
                 f"high_temperature_generation_mwh,{name}",
                 low=0,
-                #  could set the upper bound here
-                #  but the balance should take care of it
-                #  same for the `up` for lt load
             ),
         )
 
@@ -84,6 +116,7 @@ class HeatPump:
         *args: typing.Any,
         **kwargs: typing.Any,
     ) -> None:
+        """Constrain asset dispatch within a single interval."""
         for heat_pump in ivars.filter_objective_variables(HeatPumpOneInterval, i=i)[0]:
             assert isinstance(heat_pump, HeatPumpOneInterval)
             optimizer.constrain_max(
@@ -103,23 +136,42 @@ class HeatPump:
     def constrain_after_intervals(
         self, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
+        """Constrain dispatch after all interval asset models are created."""
         pass
 
     def optimize(
         self,
         electricity_prices: list[float] | np.ndarray,
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
         gas_prices: float | list[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
+        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
+        low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
-        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        #  this is a special one
-        low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
         include_valve: bool = True,
     ) -> "epl.results.SimulationResult":
+        """Optimize the asset dispatch using a mixed-integer linear program.
+
+        Args:
+            electricity_prices: the price of electricity in each interval.
+            gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
+            electricity_carbon_intensities: carbon intensity of electricity in each interval.
+            high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
+            low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
+            low_temperature_generation_mwh: low temperature heat generated by the site in mega-watt hours.
+            freq_mins: the size of an interval in minutes.
+            objective: the optimization objective - either "price" or "carbon".
+            verbose: level of printing.
+            flags: boolean flags to change simulation and results behaviour.
+            include_valve: whether to allow heat to flow from high to low temperature.
+
+        Returns:
+            epl.results.SimulationResult
+        """
+
         self.optimizer = epl.Optimizer()
         freq = epl.Freq(freq_mins)
 

@@ -15,15 +15,24 @@ class Account(pydantic.BaseModel):
     emissions: float
 
     def __str__(self) -> str:
+        """A string representation of self."""
         return f"<Account profit={-1 * self.cost:.2f} emissions={self.emissions:.4f}>"
 
     def __repr__(self) -> str:
-        #  TODO
+        """A string representation of self."""
         return f"<Account profit={-1 * self.cost:.2f} emissions={self.emissions:.4f}>"
 
     def __sub__(self, other: object) -> "Account":
-        """
-        self == other -> True, else False
+        """Subtracts two Account objects and returns a new Account.
+
+        Args:
+            other (object): The Account object to subtract from self.
+
+        Returns:
+            Account: New Account object with updated cost and emissions.
+
+        Raises:
+            NotImplementedError: If 'other' is not an instance of Account.
         """
         if not isinstance(other, Account):
             raise NotImplementedError("Cannot compare {other} to Account")
@@ -69,10 +78,11 @@ class Accounts(Account):
     emissions: float
 
     def __str__(self) -> str:
+        """A string representation of self."""
         return f"<Accounts profit={self.profit:.2f} emissions={self.emissions:.4f}>"
 
     def __repr__(self) -> str:
-        #  TODO
+        """A string representation of self."""
         return f"<Accounts profit={self.profit:.2f} emissions={self.emissions:.4f}>"
 
 

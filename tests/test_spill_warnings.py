@@ -74,7 +74,7 @@ def test_chp_spill(capsys: CaptureFixture) -> None:
 
 
 def test_evs_spill() -> None:
-    import energypylinear as epl
+    """Test EV spills."""
 
     asset = epl.EVs(
         chargers_power_mw=[100],

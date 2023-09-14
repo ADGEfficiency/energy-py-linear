@@ -179,10 +179,6 @@ def validate_results(
     """
     valve_cols = ["valve" in c for c in simulation.columns]
     if any(valve_cols):
-        print(
-            simulation[['valve-low_temperature_generation_mwh', 'valve-high_temperature_load_mwh']]
-        )
         assert all(
             simulation['valve-low_temperature_generation_mwh'] == simulation['valve-high_temperature_load_mwh']
         )
-

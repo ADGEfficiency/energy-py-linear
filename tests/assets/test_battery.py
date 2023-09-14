@@ -1,4 +1,4 @@
-"""Test battery asset."""
+"""Test Battery asset."""
 
 import hypothesis
 import numpy as np
@@ -23,7 +23,7 @@ def test_battery_price(
     initial_charge_mwh: float,
     expected_dispatch: list[float],
 ) -> None:
-    """Test battery optimization for price."""
+    """Test optimization for price."""
     power_mw = 4
     capacity_mwh = 6
     efficiency = 1.0
@@ -58,7 +58,7 @@ def test_battery_carbon(
     initial_charge_mwh: float,
     expected_dispatch: list[float],
 ) -> None:
-    """Test battery optimization for carbon."""
+    """Test optimization for carbon."""
     power_mw = 4
     capacity_mwh = 6
     efficiency = 1.0
@@ -107,7 +107,7 @@ def test_battery_hypothesis(
     prices_std: float,
     prices_offset: float,
 ) -> None:
-    """Test battery optimization with hypothesis."""
+    """Test optimization with hypothesis."""
     freq_mins = 30
     electricity_prices = (
         np.random.normal(prices_mu, prices_std, idx_length) + prices_offset

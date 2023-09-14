@@ -84,6 +84,7 @@ def test_heat_pump_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     # path = tmp_path_factory.mktemp("figs")
 
     import pathlib
+
     path = pathlib.Path("./figs")
 
     prices = np.random.uniform(-1000, 1000, 24).tolist()
@@ -104,5 +105,3 @@ def test_heat_pump_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     # assert not (path / "heat-pump.png").exists()
     asset.plot(results, path=path)
     assert (path / "heat-pump.png").exists()
-
-

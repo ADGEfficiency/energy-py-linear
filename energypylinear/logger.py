@@ -1,3 +1,4 @@
+"""Structured logging to console and files."""
 import logging
 import logging.handlers
 import os
@@ -12,16 +13,38 @@ console = Console()
 
 
 class PulpRedirectHandler(logging.Handler):
+    """Custom logging handler for redirecting PuLP logs to structlog.
+
+    Attributes:
+        _structlog (structlog.BoundLogger): The structlog logger instance.
+    """
+
     def __init__(self, level: int = logging.NOTSET) -> None:
+        """Initialize the PulpRedirectHandler with the given logging level.
+
+        Args:
+            level (int, optional): The logging level. Defaults to logging.NOTSET.
+        """
         super().__init__(level)
         self._structlog = structlog.get_logger()
 
     def emit(self, record: logging.LogRecord) -> None:
+        """Emit a log record by formatting and sending it to structlog.
+
+        Args:
+            record (logging.LogRecord): The log record to emit.
+        """
         message = self.format(record)
         self._structlog.debug("pulp", pulp_message=message)
 
 
 def configure_logger(enable_file_logging: bool = False) -> None:
+    """Configure root and PuLP loggers. Optionally enable file logging.
+
+    Args:
+        enable_file_logging (bool, optional):
+            Whether to enable file logging. Defaults to False.
+    """
     pathlib.Path("logs").mkdir(exist_ok=True)
 
     unix_time = int(time.time())
@@ -81,11 +104,20 @@ def configure_logger(enable_file_logging: bool = False) -> None:
     )
 
 
-configure_logger(enable_file_logging=bool(os.environ.get("ENABLE_FILE_LOGGING", False)))
-
-
 def get_logger(name: str = "default_logger") -> structlog.BoundLogger:
+    """Get a logger instance by name, using structlog.
+
+    Args:
+        name (str, optional): The name of the logger to retrieve.
+        Defaults to "default_logger".
+
+    Returns:
+        structlog.BoundLogger: The logger instance.
+    """
     return structlog.get_logger(name)
+
+
+configure_logger(enable_file_logging=bool(os.environ.get("ENABLE_FILE_LOGGING", False)))
 
 
 logger = get_logger()

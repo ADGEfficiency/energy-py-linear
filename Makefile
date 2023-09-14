@@ -5,13 +5,18 @@ all: test
 clean:
 	rm -rf .pytest_cache .hypothesis .mypy_cache .ruff_cache __pycache__ .coverage logs .coverage*
 
-#  SETUP
+
+#  ----- SETUP -----
+#  installs dependencies
+
 .PHONY: setup-pip-poetry setup-test setup-static setup-check setup-docs
 QUIET := -q
 
 setup-pip-poetry:
 	pip install --upgrade pip $(QUIET)
 	pip install poetry -c ./constraints.txt $(QUIET)
+
+setup: setup-pip-poetry
 	poetry install --with main $(QUIET)
 
 setup-test: setup-pip-poetry
@@ -31,8 +36,11 @@ setup-check: setup-pip-poetry
 setup-docs:
 	pip install -r ./docs/requirements.txt $(QUIET)
 
-#  TEST
-.PHONY: test test-ci test-docs clean-test-docs test-validate
+
+#  ----- TEST -----
+#  unit, integration and system tests
+
+.PHONY: test test-ci test-docs clean-test-docs test-validate create-test-docs
 PARALLEL = auto
 ENABLE_FILE_LOGGING = 0
 export
@@ -57,33 +65,40 @@ create-test-docs: setup-test clean-test-docs
 clean-test-docs:
 	rm -rf ./tests/phmdoctest
 
-#  CHECK
+
+#  ----- CHECK -----
+#  linting and static typing checks
+
 .PHONY: check lint static
 
 check: lint static
 
-#  STATIC TYPING
 static: setup-static
 	rm -rf ./tests/phmdoctest
 	mypy --pretty ./energypylinear
 	mypy --pretty ./tests
 	mypy --pretty ./examples
 
-#  LINTING
 lint: setup-check
 	rm -rf ./tests/phmdoctest
+	flake8 --extend-ignore E501,DAR --exclude=__init__.py,poc
 	ruff check . --ignore E501 --extend-exclude=__init__.py,poc
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
 
-#  FORMATTING
+
+#  ----- FORMATTING -----
+
 .PHONY: format
 format: setup-check
 	isort **/*.py --profile black
 	black **/*.py
 
-#  PUBLISH TO PYPI
+
+#  ----- PUBLISH ------
+#  updating package on pypi
+
 .PHONY: publish
 -include .env.secret
 
@@ -93,7 +108,8 @@ publish: setup
 	poetry publish
 	#  TODO publish docs automatically
 
-#  DOCS
+
+#  ----- DOCS ------
 .PHONY: docs mike-deploy
 
 generate-docs-images: setup

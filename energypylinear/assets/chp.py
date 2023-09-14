@@ -17,6 +17,18 @@ from energypylinear.optimizer import Optimizer
 def get_default_boiler_size(
     freq: "epl.Freq", interval_data: "epl.interval_data.IntervalData"
 ) -> float:
+    """Calculates the default boiler size based on high and low temperature loads.
+
+        Args:
+            freq (epl.Freq): Frequency-related data and conversion functions.
+            interval_data (epl.interval_data.IntervalData): Data for various temperature intervals, including high and low temperature loads.
+
+        Returns:
+            float: The default boiler size calculated from max high and low temperature loads.
+
+        Raises:
+            AssertionError: If high_temperature_load_mwh or low_temperature_load_mwh are not numpy arrays.
+        """
     assert isinstance(interval_data.high_temperature_load_mwh, np.ndarray)
     assert isinstance(interval_data.low_temperature_load_mwh, np.ndarray)
     return freq.mw_to_mwh(
