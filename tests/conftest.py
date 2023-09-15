@@ -11,7 +11,7 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def set_pandas_options():
+def set_pandas_options() -> None:
     """Forces pandas to print all columns on one line."""
     pd.set_option("display.max_columns", 24)
     pd.set_option("display.width", 1000)
