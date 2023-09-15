@@ -427,7 +427,7 @@ def extract_results(
 
     simulation_schema.validate(simulation)
     validate_results(interval_data, simulation, verbose=verbose)
-    spill_occured = warn_spills(simulation, flags)
+    spill_occured = warn_spills(simulation, flags, verbose=verbose)
 
     return SimulationResult(
         simulation=simulation,

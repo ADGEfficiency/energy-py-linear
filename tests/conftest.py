@@ -6,6 +6,16 @@ This module allows users to disable specific loggers when running pytest.
 import logging
 import os
 
+import pandas as pd
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def set_pandas_options():
+    """Forces pandas to print all columns on one line."""
+    pd.set_option("display.max_columns", 24)
+    pd.set_option("display.width", 1000)
+
 
 def pytest_configure() -> None:
     """Disable specific loggers during pytest runs.

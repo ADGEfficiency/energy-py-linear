@@ -46,25 +46,26 @@ ENABLE_FILE_LOGGING = 0
 TEST_ARGS=
 export
 
-test: setup-test clean-test-docs create-test-docs
-	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose $(TEST_ARGS)
+test: setup-test test-docs
 	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest $(TEST_ARGS)
 	python tests/assert-test-coverage.py $(TEST_ARGS)
 	coverage combine
-
-test-ci: test
 
 create-test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
 	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
 	python -m phmdoctest ./docs/docs/validation/evs.md --outfile tests/phmdoctest/test_validate_evs.py
+	python -m phmdoctest ./docs/docs/validation/heat-pump.md --outfile tests/phmdoctest/test_validate_heat-pump.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-forecast.md --outfile tests/phmdoctest/test_forecast.py
 	python -m phmdoctest ./docs/docs/how-to/price-carbon.md --outfile tests/phmdoctest/test_carbon.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-assets.md --outfile tests/phmdoctest/test_dispatch_assets.py
 
 clean-test-docs:
 	rm -rf ./tests/phmdoctest
+
+test-docs: clean-test-docs create-test-docs
+	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose $(TEST_ARGS)
 
 
 #  ----- CHECK -----

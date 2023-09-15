@@ -8,7 +8,7 @@ from energypylinear.optimizer import Optimizer
 optimizer = Optimizer()
 
 
-def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
+def warn_spills(simulation: pd.DataFrame, flags: Flags, verbose: bool = True) -> bool:
     """Prints warnings if we have spilled."""
     #  add warnings on the use of any spill asset
     spill_columns = [c for c in simulation.columns if "spill" in c]
@@ -27,7 +27,7 @@ def warn_spills(simulation: pd.DataFrame, flags: Flags) -> bool:
         {spills}
         """
         raise ValueError(spill_message)
-    elif spill_occured:
+    elif spill_occured and verbose:
         logger.warning(
             "warn_spills",
             n_spills=len(spills),
