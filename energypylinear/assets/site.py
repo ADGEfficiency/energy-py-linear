@@ -1,6 +1,7 @@
 """Site asset for optimizing dispatch of combined heat and power (CHP) generators."""
 import typing
 
+import numpy as np
 import pulp
 import pydantic
 
@@ -58,12 +59,12 @@ def constrain_site_electricity_balance(
         0
     ]
 
-    assert interval_data.electricity_load_mwh is not None
+    assert interval_data.electric_load_mwh is not None
     optimizer.constrain(
         (
             site.import_power_mwh
             - site.export_power_mwh
-            - interval_data.electricity_load_mwh[i]
+            - interval_data.electric_load_mwh[i]
             + optimizer.sum([a.electric_generation_mwh for a in assets])
             - optimizer.sum([a.electric_load_mwh for a in assets])
             - optimizer.sum([a.electric_charge_mwh for a in assets])
@@ -105,7 +106,7 @@ def constrain_site_high_temperature_heat_balance(
     generation - load = 0
     """
     assets = ivars.objective_variables[-1]
-    assert interval_data.high_temperature_load_mwh is not None
+    assert isinstance(interval_data.high_temperature_load_mwh, np.ndarray)
     optimizer.constrain(
         optimizer.sum([a.high_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.high_temperature_load_mwh for a in assets])
@@ -128,11 +129,13 @@ def constrain_site_low_temperature_heat_balance(
     generation - load = 0
     """
     assets = ivars.objective_variables[-1]
-    assert interval_data.low_temperature_load_mwh is not None
+    assert isinstance(interval_data.low_temperature_load_mwh, np.ndarray)
+    assert isinstance(interval_data.low_temperature_generation_mwh, np.ndarray)
     optimizer.constrain(
         optimizer.sum([a.low_temperature_generation_mwh for a in assets])
         - optimizer.sum([a.low_temperature_load_mwh for a in assets])
         - interval_data.low_temperature_load_mwh[i]
+        + interval_data.low_temperature_generation_mwh[i]
         == 0
     )
 
@@ -288,23 +291,20 @@ class Site:
 
         #  warn about sites without boilers?  warn sites without valve / spill?
 
-        #  this is needed for evs_one_interval
-        # for asset in self.assets:
-        #     asset.interval_data = interval_data
-
         ivars = epl.interval_data.IntervalVars()
         for i in interval_data.idx:
             ivars.append(self.one_interval(self.optimizer, self.cfg, i, freq))
             assets = []
             for asset in self.assets:
-
                 neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
                 #  tech debt TODO
-                #  EV is special beacuse it returns many blocks per step
+                #  EV is special beacuse it returns many one interval blocks per step
                 if isinstance(asset, epl.EVs):
                     evs, evs_array, spill_evs, spill_evs_array = neu_assets
                     assets.extend(evs)
                     assets.extend(spill_evs)
+                    #  ivars has special logic for append
+                    #  the EVsArrayOneInterval deals with them separately
                     ivars.append(evs_array)
                     ivars.append(spill_evs_array)
                 else:

@@ -718,6 +718,9 @@ class EVs:
                 flags=flags,
             )
 
+            #  this is a bit confusing
+            #  ivars has special logic for append
+            #  the EVsArrayOneInterval deals with them separately
             ivars.append(evs_array)
             ivars.append(spill_evs_array)
             ivars.append(

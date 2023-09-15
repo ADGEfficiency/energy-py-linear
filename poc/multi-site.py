@@ -47,7 +47,7 @@ def constrain_site_electricity_balance(
             + optimizer.sum([a.discharge_mwh for a in assets])
             + (spills[-1].electric_generation_mwh if spills else 0)
             - (spills[-1].electric_load_mwh if spills else 0)
-            - interval_data.electricity_load_mwh[i]
+            - interval_data.electric_load_mwh[i]
         )
         == 0
     )

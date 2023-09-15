@@ -1,2 +1,3 @@
 tests/phmdoctest/**/*
 logs
+docs/.cache

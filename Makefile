@@ -5,22 +5,27 @@ all: test
 clean:
 	rm -rf .pytest_cache .hypothesis .mypy_cache .ruff_cache __pycache__ .coverage logs .coverage*
 
-#  SETUP
-.PHONY: setup setup-test setup-static setup-check setup-docs
+
+#  ----- SETUP -----
+#  installs dependencies
+
+.PHONY: setup-pip-poetry setup-test setup-static setup-check setup-docs
 QUIET := -q
 
-setup:
+setup-pip-poetry:
 	pip install --upgrade pip $(QUIET)
 	pip install poetry -c ./constraints.txt $(QUIET)
+
+setup: setup-pip-poetry
 	poetry install --with main $(QUIET)
 
-setup-test: setup
+setup-test: setup-pip-poetry
 	poetry install --with test $(QUIET)
 
-setup-static: setup
+setup-static: setup-pip-poetry
 	poetry install --with static $(QUIET)
 
-setup-check: setup
+setup-check: setup-pip-poetry
 	poetry install --with check $(QUIET)
 
 #  manage docs dependencies separately because
@@ -31,23 +36,27 @@ setup-check: setup
 setup-docs:
 	pip install -r ./docs/requirements.txt $(QUIET)
 
-#  TEST
-.PHONY: test test-ci test-docs clean-test-docs test-validate
+
+#  ----- TEST -----
+#  unit, integration and system tests
+
+.PHONY: test test-ci test-docs clean-test-docs test-validate create-test-docs
 PARALLEL = auto
 ENABLE_FILE_LOGGING = 0
+TEST_ARGS=
 export
 
-test: setup-test clean-test-docs test-docs
-	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose
-	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest
+test: setup-test test-docs
+	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest $(TEST_ARGS)
+	python tests/assert-test-coverage.py $(TEST_ARGS)
+	-coverage combine
 
-test-ci: test
-
-test-docs: setup-test clean-test-docs
+create-test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
 	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
 	python -m phmdoctest ./docs/docs/validation/evs.md --outfile tests/phmdoctest/test_validate_evs.py
+	python -m phmdoctest ./docs/docs/validation/heat-pump.md --outfile tests/phmdoctest/test_validate_heat-pump.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-forecast.md --outfile tests/phmdoctest/test_forecast.py
 	python -m phmdoctest ./docs/docs/how-to/price-carbon.md --outfile tests/phmdoctest/test_carbon.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-assets.md --outfile tests/phmdoctest/test_dispatch_assets.py
@@ -55,33 +64,43 @@ test-docs: setup-test clean-test-docs
 clean-test-docs:
 	rm -rf ./tests/phmdoctest
 
-#  CHECK
+test-docs: clean-test-docs create-test-docs
+	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose $(TEST_ARGS)
+
+
+#  ----- CHECK -----
+#  linting and static typing checks
+
 .PHONY: check lint static
 
 check: lint static
 
-#  STATIC TYPING
 static: setup-static
 	rm -rf ./tests/phmdoctest
 	mypy --pretty ./energypylinear
 	mypy --pretty ./tests
 	mypy --pretty ./examples
 
-#  LINTING
 lint: setup-check
 	rm -rf ./tests/phmdoctest
+	flake8 --extend-ignore E501,DAR --exclude=__init__.py,poc
 	ruff check . --ignore E501 --extend-exclude=__init__.py,poc
 	isort --check **/*.py --profile black
 	black --check **/*.py
 	poetry lock --check
 
-#  FORMATTING
+
+#  ----- FORMATTING -----
+
 .PHONY: format
 format: setup-check
 	isort **/*.py --profile black
 	black **/*.py
 
-#  PUBLISH TO PYPI
+
+#  ----- PUBLISH ------
+#  updating package on pypi
+
 .PHONY: publish
 -include .env.secret
 
@@ -89,9 +108,10 @@ publish: setup
 	poetry build
 	@poetry config pypi-token.pypi $(PYPI_TOKEN)
 	poetry publish
-	#  TODO publish docs
+	#  TODO publish docs automatically
 
-#  DOCS
+
+#  ----- DOCS ------
 .PHONY: docs mike-deploy
 
 generate-docs-images: setup
@@ -103,6 +123,7 @@ docs: setup-docs
 	#  `mkdocs serve` will usually be more useful during development
 	cd docs; mkdocs serve -a localhost:8004; cd ..
 
+#  TODO currently run manually - should be automated with publishing
 #  this deploys the current docs to the docs branch
 #  -u = update aliases of this $(VERSION) to latest
 #  -b = branch - aligns with the branch name we build docs off

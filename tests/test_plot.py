@@ -77,3 +77,27 @@ def test_chp_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (path / "chp.png").exists()
     asset.plot(results, path=path / "chp-custom.png")
     assert (path / "chp-custom.png").exists()
+
+
+def test_heat_pump_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Test we can plot the CHP chart."""
+    path = tmp_path_factory.mktemp("figs")
+
+    prices = np.random.uniform(-1000, 1000, 24).tolist()
+    ht_load = np.random.uniform(0, 100, 24).tolist()
+    lt_load = np.random.uniform(0, 100, 24).tolist()
+    lt_gen = np.random.uniform(0, 100, 24).tolist()
+
+    asset = epl.HeatPump(10, 2.0)
+    results = asset.optimize(
+        electricity_prices=prices,
+        gas_prices=20,
+        high_temperature_load_mwh=ht_load,
+        low_temperature_load_mwh=lt_load,
+        low_temperature_generation_mwh=lt_gen,
+        freq_mins=60,
+    )
+
+    assert not (path / "heat-pump.png").exists()
+    asset.plot(results, path=path)
+    assert (path / "heat-pump.png").exists()

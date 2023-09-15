@@ -1,4 +1,8 @@
+0.2.1
+- added the heat pump asset.
+
 0.2.0 
+- added bi-directional V2G charging to the EV asset.
 - added bi-directional V2G charging to the EV asset.
 
 0.1.2 

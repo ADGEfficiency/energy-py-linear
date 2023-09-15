@@ -16,8 +16,7 @@ floats = typing.Union[float, np.ndarray, typing.Sequence[float], list[float]]
 
 
 class EVIntervalData(pydantic.BaseModel):
-    """
-    Interval data for electric vehicle (EV) simulation.
+    """Interval data for electric vehicle (EV) simulation.
 
     Attributes:
         charge_events: a list or numpy array of charge events for each time step
@@ -100,12 +99,13 @@ class IntervalData(pydantic.BaseModel):
         setup_idx: sets up the index of the time steps based on the length of `electricity_prices`.
     """
 
-    electricity_prices: np.ndarray
+    electricity_prices: list[float] | np.ndarray
     electricity_carbon_intensities: np.ndarray | None = None
     gas_prices: np.ndarray | None = None
     high_temperature_load_mwh: np.ndarray | None = None
     low_temperature_load_mwh: np.ndarray | None = None
-    electricity_load_mwh: np.ndarray | None = None
+    low_temperature_generation_mwh: np.ndarray | None = None
+    electric_load_mwh: np.ndarray | None = None
     idx: list[int] = []
 
     evs: typing.Union[EVIntervalData, None] = None
@@ -147,7 +147,8 @@ class IntervalData(pydantic.BaseModel):
             "electricity_carbon_intensities",
             "high_temperature_load_mwh",
             "low_temperature_load_mwh",
-            "electricity_load_mwh",
+            "low_temperature_generation_mwh",
+            "electric_load_mwh",
         ]
         for field in fields:
             value = values.get(field)
@@ -187,7 +188,10 @@ class IntervalData(pydantic.BaseModel):
 
 
 class IntervalVars:
+    """Interval data of linear program variables."""
+
     def __init__(self) -> None:
+        """Initializes the interval variables object."""
         #  not every lp variable - only the ones we want to iterate over
         #  in the objective functions (price, carbon etc)
         self.objective_variables: list[list[AssetOneInterval]] = []
@@ -196,11 +200,20 @@ class IntervalVars:
         )
 
     def __repr__(self) -> str:
+        """A string representation of self."""
         return f"<epl.IntervalVars i: {len(self.objective_variables)}>"
 
     def append(
         self, one_interval: AssetOneInterval | SiteOneInterval | list[AssetOneInterval]
     ) -> None:
+        """Appends a one_interval object to the appropriate attribute.
+
+        Args:
+            one_interval (Union[AssetOneInterval, SiteOneInterval, list[AssetOneInterval]]): The interval data to append.
+
+        Raises:
+            AssertionError: If one_interval is not a recognized type.
+        """
         #  some OneInterval objects are special
         #  is this case it is the Array EV data structures
         #  TODO in future don't save these separately and
@@ -222,6 +235,16 @@ class IntervalVars:
     def filter_evs_array(
         self, is_spill: bool, i: int, asset_name: str
     ) -> EVsArrayOneInterval:
+        """Filters and returns EVsArrayOneInterval data based on criteria.
+
+        Args:
+            is_spill (bool): Whether to filter spill EVs or regular EVs.
+            i (int): Interval index.
+            asset_name (str): Name of the asset.
+
+        Returns:
+            EVsArrayOneInterval: The filtered EVsArrayOneInterval object.
+        """
         if is_spill:
             return self.asset[asset_name]["spill_evs_array"][i]
         else:
@@ -230,12 +253,30 @@ class IntervalVars:
     def filter_all_evs_array(
         self, is_spill: bool, asset_name: str
     ) -> list[EVsArrayOneInterval]:
+        """Filters EVsArrayOneInterval instances based on spill status and asset name.
+
+        Args:
+            is_spill (bool): Whether to filter by spill or not.
+            asset_name (str): Name of the asset to filter by.
+
+        Returns:
+            list[EVsArrayOneInterval]: Filtered list of EVsArrayOneInterval instances.
+        """
         if is_spill:
             return self.asset[asset_name]["spill_evs_array"]
         else:
             return self.asset[asset_name]["evs_array"]
 
     def filter_site(self, i: int, site_name: str) -> SiteOneInterval:
+        """Filters and a SiteOneInterval based on interval index and site name.
+
+        Args:
+            i (int): Interval index.
+            site_name (str): Name of the site to filter by.
+
+        Returns:
+            SiteOneInterval: Filtered SiteOneInterval instance.
+        """
         return self.asset[site_name]["site"][i]
 
     def filter_objective_variables(
@@ -244,6 +285,22 @@ class IntervalVars:
         i: int | None = None,
         asset_name: str | None = None,
     ) -> list[list[AssetOneInterval]]:
+        """Filters objective variables based on type, interval index, and asset name.
+
+        Args:
+            instance_type (type[AssetOneInterval]):
+                Type of the AssetOneInterval instances to filter.
+            i (int | None, optional):
+                Interval index. If None, filters across all intervals.
+                Defaults to None.
+            asset_name (str | None, optional):
+                Name of the asset to filter by. If None, no filtering by name.
+                Defaults to None.
+
+        Returns:
+            list[list[AssetOneInterval]]:
+                Filtered list of AssetOneInterval instances.
+        """
         #  here we return data for all intervals
         if i is None:
             pkg = []
@@ -264,6 +321,8 @@ class IntervalVars:
 
         #  here we return data for one interval
         else:
+
+            #  why a list of lists??????????
             assets = self.objective_variables[i]
             return [
                 [

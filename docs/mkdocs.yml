@@ -52,14 +52,14 @@ markdown_extensions:
 nav:
   - Getting Started: index.md
   - Optimization:
-    - Optimize Assets: how-to/dispatch-assets.md
-    - Optimize a Site: how-to/dispatch-site.md
-    - Optimize for Carbon: how-to/price-carbon.md
-    - Optimize for a Forecast: how-to/dispatch-forecast.md
+      - Optimize Assets: how-to/dispatch-assets.md
+      - Optimize a Site: how-to/dispatch-site.md
+      - Optimize for Carbon: how-to/price-carbon.md
+      - Optimize for a Forecast: how-to/dispatch-forecast.md
   - Validation:
-    - Battery: validation/battery.md
-    - EVs: validation/evs.md
-
+      - Battery: validation/battery.md
+      - EVs: validation/evs.md
+      - Heat Pump: validation/heat-pump.md
   # - Performance: performance.md
   # - Measure Forecast Quality: index.md
 

@@ -57,12 +57,13 @@ def check_high_temperature_heat_balance(
     simulation: pd.DataFrame, verbose: bool = True
 ) -> None:
     """Checks the high temperature heat balance."""
-    inp = simulation[["total-high_temperature_generation_mwh"]].sum(axis=1)
+    inp = simulation[[
+        "total-high_temperature_generation_mwh"
+    ]].sum(axis=1)
     out = simulation[
         [
             "total-high_temperature_load_mwh",
             "load-high_temperature_load_mwh",
-            #  valve naming - hmmmmmmmmmmmmmmmmmmmmmm
         ]
     ].sum(axis=1)
     balance = abs(inp - out) < 1e-4
@@ -91,6 +92,7 @@ def check_low_temperature_heat_balance(
     inp = simulation[
         [
             "total-low_temperature_generation_mwh",
+            "load-low_temperature_generation_mwh",
         ]
     ].sum(axis=1)
     out = simulation[
@@ -101,7 +103,7 @@ def check_low_temperature_heat_balance(
     ].sum(axis=1)
     balance = abs(inp - out) < 1e-4
     #  used for debug
-    data = pd.DataFrame(
+    debug = pd.DataFrame(
         {
             "in": inp,
             "out": out,
@@ -115,13 +117,15 @@ def check_low_temperature_heat_balance(
         ("assets-load", "total-low_temperature_load_mwh"),
         ("generator-load", "generator-low_temperature_load_mwh"),
         ("generator-generation", "generator-low_temperature_generation_mwh"),
+        ("heat-pump", "heat-pump-low_temperature_load_mwh"),
+        ("spill", "spill-low_temperature_load_mwh")
     ]:
         if col in simulation.columns:
-            data[name] = simulation[col]
+            debug[name] = simulation[col]
 
     if verbose:
         logger.info(
-            "check_low_temperature_heat_balance", data=data.to_dict(orient="list")
+            "check_low_temperature_heat_balance", debug=debug.to_dict(orient="list")
         )
     assert balance.all()
 
@@ -137,13 +141,6 @@ def validate_results(
     """
     #  TODO
     check_electricity_balance(simulation, verbose)
-
-    #  hmmmmmmmmmmmmmmmmmmm TODO move into above
-    simulation[
-        "load-high_temperature_load_mwh"
-    ] = interval_data.high_temperature_load_mwh
-    simulation["load-low_temperature_load_mwh"] = interval_data.low_temperature_load_mwh
-
     check_high_temperature_heat_balance(simulation, verbose)
     check_low_temperature_heat_balance(simulation, verbose)
 
@@ -172,3 +169,16 @@ def validate_results(
         ]
         subset = simulation[cols]
         assert (subset <= 1).all().all()
+
+    """
+    TODO
+
+    bit of debt here detecting if there is a valve present in the simulation
+    - maybe better to check the assets list?
+    - would need to pass this into the results validation...
+    """
+    valve_cols = ["valve" in c for c in simulation.columns]
+    if any(valve_cols):
+        assert all(
+            simulation['valve-low_temperature_generation_mwh'] == simulation['valve-high_temperature_load_mwh']
+        )

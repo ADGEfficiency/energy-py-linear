@@ -33,7 +33,7 @@ class BatteryConfig(pydantic.BaseModel):
 
 
 class BatteryOneInterval(AssetOneInterval):
-    """Battery asset data for a single interval"""
+    """Battery asset data for a single interval."""
 
     cfg: BatteryConfig
     electric_charge_mwh: pulp.LpVariable
@@ -126,10 +126,10 @@ class Battery:
     """Battery asset - handles optimization and plotting of results over many intervals.
 
     Args:
-        power_mw - the maximum power output of the battery in mega-watts, used for both charge and discharge.
-        capacity_mwh - battery capacity in mega-watt hours.
-        efficiency - round-trip efficiency of the battery, with a default value of 90% efficient.
-        battery_name parameter represents the name of the battery, with a default value of "battery".
+        power_mw: the maximum power output of the battery in mega-watts, used for both charge and discharge.
+        capacity_mwh: battery capacity in mega-watt hours.
+        efficiency: round-trip efficiency of the battery, with a default value of 90% efficient.
+        name: the asset name.
     """
 
     def __init__(
@@ -165,7 +165,7 @@ class Battery:
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags
     ) -> BatteryOneInterval:
-        """Create Battery asset data for a single interval."""
+        """Creates asset data for a single interval."""
         return BatteryOneInterval(
             cfg=self.cfg,
             electric_charge_mwh=optimizer.continuous(
@@ -208,7 +208,7 @@ class Battery:
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
-        """Constrain Battery dispatch within a single interval"""
+        """Constrain asset dispatch within a single interval."""
         batteries = ivars.filter_objective_variables(
             BatteryOneInterval, i=-1, asset_name=self.cfg.name
         )
@@ -231,7 +231,7 @@ class Battery:
         ivars: "epl.interval_data.IntervalVars",
         interval_data: "epl.IntervalData",
     ) -> None:
-        """Constrain battery dispatch after all interval asset models are created."""
+        """Constrain dispatch after all interval asset models are created."""
         initial = ivars.filter_objective_variables(
             BatteryOneInterval, i=0, asset_name=self.cfg.name
         )[0][0]
@@ -246,20 +246,18 @@ class Battery:
         gas_prices: np.ndarray | typing.Sequence[float] | None = None,
         electricity_carbon_intensities: np.ndarray | list[float] | None = None,
         freq_mins: int = defaults.freq_mins,
-        initial_charge_mwh: float = 0.0,
-        final_charge_mwh: float | None = None,
         objective: str = "price",
         flags: Flags = Flags(),
         verbose: bool = True,
+        initial_charge_mwh: float = 0.0,
+        final_charge_mwh: float | None = None,
     ) -> "epl.results.SimulationResult":
-        """Optimize the battery's dispatch using a mixed-integer linear program.
+        """Optimize the asset dispatch using a mixed-integer linear program.
 
         Args:
             electricity_prices: the price of electricity in each interval.
             gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
             electricity_carbon_intensities: carbon intensity of electricity in each interval.
-            high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
-            low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
             freq_mins: the size of an interval in minutes.
             initial_charge_mwh: initial charge state of the battery in mega-watt hours.
             final_charge_mwh: final charge state of the battery in mega-watt hours.

@@ -294,3 +294,76 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     if path.is_dir():
         path = path / "chp.png"
     fig.savefig(path)
+
+
+def plot_heat_pump(
+    results: "epl.results.SimulationResult", path: pathlib.Path | str, asset_name: str
+) -> None:
+    """Plot Heat Pump simulation results."""
+    path = pathlib.Path(path)
+    path.parent.mkdir(exist_ok=True, parents=True)
+
+    fig, axes = plt.subplots(nrows=3, sharex=True, figsize=(12, 12))
+    simulation = results.simulation
+    simulation["index"] = np.arange(simulation.shape[0]).tolist()
+
+    for col in [
+        "load-high_temperature_load_mwh",
+        f"{asset_name}-high_temperature_generation_mwh",
+    ]:
+        simulation.plot(ax=axes[0], x="index", y=col)
+    axes[0].set_ylabel("MWh")
+    axes[0].set_title("Heat Pump")
+
+    box = axes[0].get_position()
+    axes[0].set_position([box.x0, box.y0 + box.y0 * 0.1, box.width, box.height * 0.8])
+    axes[0].legend(loc="lower center", bbox_to_anchor=(0.5, -0.3), ncol=2)
+
+    out_cols = [
+        "spill-low_temperature_load_mwh",
+        "load-low_temperature_load_mwh",
+        "heat-pump-low_temperature_load_mwh",
+    ]
+    neg_bottom = np.zeros_like(simulation["index"]).astype(float)
+    width = 0.3
+    adj = 0.15
+    for col in out_cols:
+        simulation[col] = simulation[col].round(4)
+        axes[1].bar(
+            simulation["index"] - adj,
+            simulation[col],
+            width,
+            label=col,
+            bottom=neg_bottom,
+        )
+        neg_bottom += simulation[col]
+
+    bottom = np.zeros_like(simulation["index"]).astype(float)
+    in_cols = [
+        "load-low_temperature_generation_mwh",
+        "spill-low_temperature_generation_mwh",
+        "valve-low_temperature_generation_mwh",
+    ]
+    for col in in_cols:
+        simulation[col] = simulation[col].round(4)
+        axes[1].bar(
+            simulation["index"] + adj, simulation[col], width, label=col, bottom=bottom
+        )
+        bottom += simulation[col]
+
+    axes[1].set_ylabel("MWh")
+    axes[1].set_title("Low Temperature Heat Balance")
+
+    box = axes[1].get_position()
+    axes[1].set_position([box.x0, box.y0 + box.y0 * 0.2, box.width, box.height * 0.8])
+    axes[1].legend(loc="lower center", bbox_to_anchor=(0.5, -0.5), ncol=2)
+
+    for col in ["electricity_prices", "electricity_carbon_intensities"]:
+        simulation.plot(ax=axes[2], x="index", y=col)
+
+    axes[2].set_ylabel("$/MWh or tC/MWh")
+    axes[2].set_title("Electricity Prices & Carbon Intensities")
+
+    if path.is_dir():
+        path = path / "heat-pump.png"
+    fig.savefig(path)

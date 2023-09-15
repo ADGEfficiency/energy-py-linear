@@ -229,6 +229,43 @@ def extract_evs_results(
                 )
 
 
+def extract_heat_pump_results(
+    heat_pumps: "list[epl.assets.asset.AssetOneInterval]",
+    results: dict,
+    i: int,
+    verbose: bool = True
+) -> None:
+    """Extract simulation result data for the Heat Pump asset."""
+    for heat_pump in heat_pumps:
+        for attr in [
+            "electric_load_mwh",
+            "low_temperature_load_mwh",
+            "high_temperature_generation_mwh"
+        ]:
+            name = f"{heat_pump.cfg.name}-{attr}"
+            results[name].append(
+                optimizer.value(getattr(heat_pump, attr))
+            )
+
+
+def check_array_lengths(results: dict[str, list]) -> None:
+    """Check that all lists in the results dictionary have the same length.
+
+    Args:
+        results (dict[str, list]):
+            Dictionary containing lists whose lengths need to be checked.
+
+    Raises:
+        AssertionError: If lists in the dictionary have different lengths.
+    """
+    lens = []
+    dbg = []
+    for k, v in results.items():
+        lens.append(len(v))
+        dbg.append((k, len(v)))
+    assert len(set(lens)) == 1, f"{len(set(lens))} {dbg}"
+
+
 def extract_results(
     interval_data: IntervalData,
     ivars: "epl.interval_data.IntervalVars",
@@ -333,25 +370,15 @@ def extract_results(
         if ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
             extract_evs_results(ivars, results, i, verbose=verbose)
 
-    def check_array_lengths(results: dict[str, list]) -> None:
-        lens = []
-        dbg = []
-        for k, v in results.items():
-            lens.append(len(v))
-            dbg.append((k, len(v)))
-
-        assert len(set(lens)) == 1, f"{len(set(lens))} {dbg}"
+        if heat_pumps := ivars.filter_objective_variables(
+            epl.assets.heat_pump.HeatPumpOneInterval, i=i
+        )[0]:
+            extract_heat_pump_results(
+                heat_pumps, results, i, verbose=verbose
+            )
 
     check_array_lengths(results)
     simulation = pd.DataFrame(results)
-
-    #  include some interval data in simulation results
-    assert isinstance(interval_data.electricity_prices, np.ndarray)
-    assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
-    simulation["electricity_prices"] = interval_data.electricity_prices
-    simulation[
-        "electricity_carbon_intensities"
-    ] = interval_data.electricity_carbon_intensities
 
     #  add totals
     total_mapper = {}
@@ -381,6 +408,18 @@ def extract_results(
         simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
     )
 
+    #  include some interval data in simulation results
+    assert isinstance(interval_data.electricity_prices, np.ndarray)
+    assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
+    simulation["electricity_prices"] = interval_data.electricity_prices
+    simulation[
+        "electricity_carbon_intensities"
+    ] = interval_data.electricity_carbon_intensities
+
+    simulation["load-high_temperature_load_mwh"] = interval_data.high_temperature_load_mwh
+    simulation["load-low_temperature_load_mwh"] = interval_data.low_temperature_load_mwh
+    simulation["load-low_temperature_generation_mwh"] = interval_data.low_temperature_generation_mwh
+
     if verbose:
         logger.info("total_mapper", mapper=total_mapper)
     else:
@@ -388,7 +427,7 @@ def extract_results(
 
     simulation_schema.validate(simulation)
     validate_results(interval_data, simulation, verbose=verbose)
-    spill_occured = warn_spills(simulation, flags)
+    spill_occured = warn_spills(simulation, flags, verbose=verbose)
 
     return SimulationResult(
         simulation=simulation,

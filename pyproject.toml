@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "energypylinear"
-version = "0.2.0"
+version = "0.2.1"
 description = "Optimizing energy assets with mixed-integer linear programming."
 authors = ["Adam Green <adam.green@adgefficiency.com>"]
 license = "MIT"
@@ -24,6 +24,7 @@ black = "^22.10.0"
 isort = "^5.10.1"
 flake8-docstring-checker = "^1.1"
 ruff = "^0.0.275"
+darglint = "^1.8.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
@@ -35,6 +36,7 @@ pytest-sugar = "^0.9.6"
 coverage-badge = "^1.1.0"
 pytest-xdist = "^3.3.1"
 pytest-cov = "^4.1.0"
+beautifulsoup4 = "^4.12.2"
 
 [tool.poetry.group.develop.dependencies]
 ipython = "^8.7.0"
@@ -59,7 +61,8 @@ module = [
   'matplotlib.pyplot',
   'matplotlib.patches',
   'pulp',
-  'seaborn'
+  'seaborn',
+  'bs4'
 ]
 ignore_missing_imports = true
 

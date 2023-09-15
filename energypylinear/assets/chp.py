@@ -14,6 +14,29 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
+def get_default_boiler_size(
+    freq: "epl.Freq", interval_data: "epl.interval_data.IntervalData"
+) -> float:
+    """Calculates the default boiler size based on high and low temperature loads.
+
+        Args:
+            freq (epl.Freq): Frequency-related data and conversion functions.
+            interval_data (epl.interval_data.IntervalData): Data for various temperature intervals, including high and low temperature loads.
+
+        Returns:
+            float: The default boiler size calculated from max high and low temperature loads.
+
+        Raises:
+            AssertionError: If high_temperature_load_mwh or low_temperature_load_mwh are not numpy arrays.
+        """
+    assert isinstance(interval_data.high_temperature_load_mwh, np.ndarray)
+    assert isinstance(interval_data.low_temperature_load_mwh, np.ndarray)
+    return freq.mw_to_mwh(
+        max(interval_data.high_temperature_load_mwh)
+        + max(interval_data.low_temperature_load_mwh)
+    )
+
+
 class GeneratorConfig(pydantic.BaseModel):
     """CHP generator configuration."""
 
@@ -24,7 +47,6 @@ class GeneratorConfig(pydantic.BaseModel):
     electric_efficiency_pct: float = 0
     high_temperature_efficiency_pct: float = 0
     low_temperature_efficiency_pct: float = 0
-    #  add cooling efficieny here TODO
 
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
@@ -35,13 +57,13 @@ class GeneratorConfig(pydantic.BaseModel):
 
 class GeneratorOneInterval(AssetOneInterval):
     """CHP generator data for a single interval."""
+    cfg: GeneratorConfig
 
+    binary: pulp.LpVariable
     electric_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
     high_temperature_generation_mwh: pulp.LpVariable
     low_temperature_generation_mwh: pulp.LpVariable
-    binary: pulp.LpVariable
-    cfg: GeneratorConfig
 
 
 class Generator:
@@ -122,7 +144,6 @@ class Generator:
                     == asset.electric_generation_mwh
                     * (1 / asset.cfg.electric_efficiency_pct)
                 )
-
             optimizer.constrain(
                 asset.high_temperature_generation_mwh
                 == asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
@@ -131,7 +152,6 @@ class Generator:
                 asset.low_temperature_generation_mwh
                 == asset.gas_consumption_mwh * asset.cfg.low_temperature_efficiency_pct
             )
-            #  add cooling constraint here TODO
             optimizer.constrain_max(
                 asset.electric_generation_mwh,
                 asset.binary,
@@ -152,12 +172,10 @@ class Generator:
     def optimize(
         self,
         electricity_prices: np.ndarray | typing.Sequence[float],
-        gas_prices: np.ndarray | typing.Sequence[float] | float | None = None,
-        # fmt: off
-        electricity_carbon_intensities: np.ndarray| typing.Sequence[float] | float | None = None,
-        high_temperature_load_mwh: np.ndarray| typing.Sequence[float] | float| None = None,
-        low_temperature_load_mwh: np.ndarray| typing.Sequence[float] | float | None = None,
-        # fmt: on
+        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        gas_prices: float | list[float] | np.ndarray | None = None,
+        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
+        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         flags: Flags = Flags(),
@@ -190,12 +208,11 @@ class Generator:
 
         assert interval_data.high_temperature_load_mwh is not None
         assert interval_data.low_temperature_load_mwh is not None
-        default_boiler_size = freq.mw_to_mwh(
-            max(interval_data.high_temperature_load_mwh)
-            + max(interval_data.low_temperature_load_mwh)
-        )
+
         self.boiler = epl.Boiler(
-            high_temperature_generation_max_mw=default_boiler_size,
+            high_temperature_generation_max_mw=get_default_boiler_size(
+                freq, interval_data
+            ),
             high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
         )
 
@@ -206,8 +223,8 @@ class Generator:
                 [
                     self.one_interval(self.optimizer, i, freq),
                     self.boiler.one_interval(self.optimizer, i, freq),
-                    self.valve.one_interval(self.optimizer, i, freq),
                     self.spill.one_interval(self.optimizer, i, freq),
+                    self.valve.one_interval(self.optimizer, i, freq),
                 ]
             )
 
@@ -236,9 +253,7 @@ class Generator:
         )
 
     def plot(
-        self,
-        results: "epl.results.SimulationResult",
-        path: pathlib.Path | str
+        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_chp(results, pathlib.Path(path))

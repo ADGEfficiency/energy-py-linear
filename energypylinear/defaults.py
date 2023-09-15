@@ -12,7 +12,8 @@ class Defaults(pydantic.BaseModel):
 
     high_temperature_load_mwh: float = 0
     low_temperature_load_mwh: float = 0
-    electricity_load_mwh: float = 0
+    low_temperature_generation_mwh: float = 0
+    electric_load_mwh: float = 0
 
     #   setting this too high will break the evs... was as 1e10
     spill_objective_penalty: float = 1e11

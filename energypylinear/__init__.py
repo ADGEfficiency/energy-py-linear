@@ -14,6 +14,7 @@ from energypylinear.assets.battery import Battery
 from energypylinear.assets.boiler import Boiler
 from energypylinear.assets.chp import Generator
 from energypylinear.assets.evs import EVs
+from energypylinear.assets.heat_pump import HeatPump
 from energypylinear.assets.site import Site
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
@@ -28,6 +29,7 @@ __all__ = [
     "Flags",
     "Freq",
     "Generator",
+    "HeatPump",
     "IntervalData",
     "Optimizer",
     "Site",
