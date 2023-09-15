@@ -12,7 +12,8 @@ A Python library for optimizing energy assets with mixed-integer linear programm
 
 - electric batteries,
 - combined heat & power (CHP) generators,
-- electric vehicle smart charging.
+- electric vehicle smart charging,
+- heat pumps.
 
 Assets can be optimized to either maximize profit or minimize carbon emissions.  
 
