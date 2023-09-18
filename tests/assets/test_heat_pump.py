@@ -184,7 +184,7 @@ def test_heat_pump_heat_balance() -> None:
     )
 
 
-def test_heat_pump_site_api():
+def test_heat_pump_site_api() -> None:
     """Test the heat pump using the site API."""
     assets = [
         epl.HeatPump(electric_power_mw=1.0, cop=3.0),
