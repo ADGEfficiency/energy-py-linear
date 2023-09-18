@@ -309,9 +309,7 @@ class Battery:
         )
 
     def plot(
-        self,
-        results: "epl.results.SimulationResult",
-        path: pathlib.Path | str
+        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_battery(results, pathlib.Path(path))
