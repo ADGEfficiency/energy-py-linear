@@ -46,7 +46,7 @@ class HeatPumpOneInterval(AssetOneInterval):
 
 
 class HeatPump:
-    """Heat pump asset - handles optimization and plotting of results over many intervals.
+    """Heat Pump asset - handles optimization and plotting of results over many intervals.
 
     A heat pump generates high temperature heat from low temperature heat and electricity.
 
