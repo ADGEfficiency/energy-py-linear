@@ -1,9 +1,10 @@
-"""Test Heat Pump asset."""
+"""Tests for the Heat Pump asset."""
 import hypothesis
-import energypylinear as epl
-from energypylinear.debug import debug_asset
 import numpy as np
 import pytest
+
+import energypylinear as epl
+from energypylinear.debug import debug_asset
 
 
 def test_heat_pump_optimization_price() -> None:
@@ -120,7 +121,7 @@ def test_heat_pump_optimization_carbon() -> None:
         gas_prices=gas_price,
         high_temperature_load_mwh=100,
         low_temperature_generation_mwh=100,
-        objective="carbon"
+        objective="carbon",
     )
     simulation = results.simulation
     np.testing.assert_array_equal(

@@ -1,4 +1,6 @@
 """A library for mixed-integer linear optimization of energy assets."""
+from pulp import LpVariable
+
 from energypylinear import (
     accounting,
     assets,
@@ -15,6 +17,7 @@ from energypylinear.assets.boiler import Boiler
 from energypylinear.assets.chp import Generator
 from energypylinear.assets.evs import EVs
 from energypylinear.assets.heat_pump import HeatPump
+from energypylinear.assets.renewable_generator import RenewableGenerator
 from energypylinear.assets.site import Site
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq

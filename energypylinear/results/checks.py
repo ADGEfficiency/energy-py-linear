@@ -29,7 +29,7 @@ def check_electricity_balance(
     balance = abs(inp + accumulation - out) < 1e-4
 
     soc = simulation[[c for c in simulation.columns if "final_soc" in c]].sum(axis=1)
-    data = pd.DataFrame(
+    debug = pd.DataFrame(
         {
             "input": inp,
             "accumulation": accumulation,
@@ -48,18 +48,18 @@ def check_electricity_balance(
         }
     )
     if verbose:
-        logger.info("check_electricity_balance", data=data.to_dict(orient="list"))
-    assert balance.all()
-    return data
+        logger.info("check_electricity_balance", debug=debug.to_dict(orient="list"))
+    import json
+
+    assert balance.all(), json.dumps(debug.to_dict(), indent=4)
+    return debug
 
 
 def check_high_temperature_heat_balance(
     simulation: pd.DataFrame, verbose: bool = True
 ) -> None:
     """Checks the high temperature heat balance."""
-    inp = simulation[[
-        "total-high_temperature_generation_mwh"
-    ]].sum(axis=1)
+    inp = simulation[["total-high_temperature_generation_mwh"]].sum(axis=1)
     out = simulation[
         [
             "total-high_temperature_load_mwh",
@@ -118,7 +118,7 @@ def check_low_temperature_heat_balance(
         ("generator-load", "generator-low_temperature_load_mwh"),
         ("generator-generation", "generator-low_temperature_generation_mwh"),
         ("heat-pump", "heat-pump-low_temperature_load_mwh"),
-        ("spill", "spill-low_temperature_load_mwh")
+        ("spill", "spill-low_temperature_load_mwh"),
     ]:
         if col in simulation.columns:
             debug[name] = simulation[col]
@@ -180,5 +180,6 @@ def validate_results(
     valve_cols = ["valve" in c for c in simulation.columns]
     if any(valve_cols):
         assert all(
-            simulation['valve-low_temperature_generation_mwh'] == simulation['valve-high_temperature_load_mwh']
+            simulation["valve-low_temperature_generation_mwh"]
+            == simulation["valve-high_temperature_load_mwh"]
         )

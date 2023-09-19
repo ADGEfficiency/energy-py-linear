@@ -1,4 +1,5 @@
 """Site asset for optimizing dispatch of combined heat and power (CHP) generators."""
+
 import typing
 
 import numpy as np
@@ -12,13 +13,71 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
+class SiteIntervalData(pydantic.BaseModel):
+    electricity_prices: float | list[float] | np.ndarray | None = None
+    electricity_carbon_intensities: float | list[float] | np.ndarray | None = None
+    gas_prices: float | list[float] | np.ndarray | None = None
+
+    electric_load_mwh: float | list[float] | np.ndarray | None = None
+    high_temperature_load_mwh: float | list[float] | np.ndarray | None = None
+    low_temperature_load_mwh: float | list[float] | np.ndarray | None = None
+    low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None
+
+    idx: list[int] | np.ndarray = []
+
+    class Config:
+        arbitrary_types_allowed: bool = True
+
+    @pydantic.root_validator(pre=True)
+    def validate_all_things(cls, values: dict) -> dict:
+
+        fields = list(cls.__fields__.keys())
+        fields.remove("idx")
+        if values["electricity_prices"] is not None:
+            values["idx"] = np.arange(len(values["electricity_prices"]))
+            values["electricity_prices"] = np.array(values["electricity_prices"])
+            fields.remove("electricity_prices")
+
+        elif values["electricity_carbon_intensities"] is not None:
+            values["idx"] = np.arange(len(values["electricity_carbon_intensities"]))
+            values["electricity_carbon_intensities"] = np.array(
+                values["electricity_carbon_intensities"]
+            )
+            fields.remove("electricity_carbon_intensities")
+
+        else:
+            raise ValueError(
+                "One of electricity_prices or carbon_intensities should be specified."
+            )
+
+        idx = values["idx"]
+        for field in fields:
+            value = values.get(field)
+            if isinstance(value, (float, int)):
+                values[field] = np.array([value] * len(idx))
+
+            elif value is None:
+                values[field] = np.array([getattr(defaults, field)] * len(idx))
+
+            else:
+                assert len(value) == len(idx)
+                values[field] = np.array(value)
+
+            assert values[field] is not None
+            assert isinstance(values[field], np.ndarray)
+            assert np.isnan(values[field]).sum() == 0
+
+        return values
+
+
 class SiteConfig(pydantic.BaseModel):
     """Site configuration."""
 
-    name: str = "site"
+    name: str
+    interval_data: SiteIntervalData
 
-    import_limit_mw: float = 10000
-    export_limit_mw: float = 10000
+    import_limit_mw: float
+    export_limit_mw: float
 
 
 class SiteOneInterval(pydantic.BaseModel):
@@ -155,13 +214,28 @@ class Site:
     def __init__(
         self,
         assets: list | None = None,
-        cfg: SiteConfig = SiteConfig(),
+        electricity_prices: float | list[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        electric_load_mwh: float | list[float] | np.ndarray | None = None,
+        name: str = "site",
+        import_limit_mw: float = 10000,
+        export_limit_mw: float = 10000,
     ):
         """Initialize a Site asset model."""
         if assets is None:
             assets = []
         self.assets = assets
-        self.cfg = cfg
+
+        self.cfg = SiteConfig(
+            name=name,
+            interval_data=SiteIntervalData(
+                electricity_prices=electricity_prices,
+                electricity_carbon_intensities=electricity_carbon_intensities,
+                electric_load_mwh=electric_load_mwh,
+            ),
+            import_limit_mw=import_limit_mw,
+            export_limit_mw=export_limit_mw,
+        )
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -204,86 +278,63 @@ class Site:
 
     def optimize(
         self,
-        electricity_prices: typing.Union[float, typing.Iterable[float]],
-        gas_prices: typing.Optional[typing.Union[float, typing.Iterable[float]]] = None,
-        electricity_carbon_intensities: typing.Optional[
-            typing.Union[float, typing.Iterable[float]]
-        ] = None,
-        high_temperature_load_mwh: typing.Optional[
-            typing.Union[float, typing.Iterable[float]]
-        ] = None,
-        low_temperature_load_mwh: typing.Optional[
-            typing.Union[float, typing.Iterable[float]]
-        ] = None,
-        charge_events: typing.Union[list[list[int]], typing.Iterable[int], None] = None,
+        # electricity_prices: typing.Union[float, typing.Iterable[float]],
+        # gas_prices: typing.Optional[typing.Union[float, typing.Iterable[float]]] = None,
+        # electricity_carbon_intensities: typing.Optional[
+        #     typing.Union[float, typing.Iterable[float]]
+        # ] = None,
+        # high_temperature_load_mwh: typing.Optional[
+        #     typing.Union[float, typing.Iterable[float]]
+        # ] = None,
+        # low_temperature_load_mwh: typing.Optional[
+        #     typing.Union[float, typing.Iterable[float]]
+        # ] = None,
+        # charge_events: typing.Union[list[list[int]], typing.Iterable[int], None] = None,
+        # initial_charge_mwh: float = 0.0,
+        # final_charge_mwh: typing.Union[float, None] = None,
         freq_mins: int = defaults.freq_mins,
-        initial_charge_mwh: float = 0.0,
-        final_charge_mwh: typing.Union[float, None] = None,
         objective: str = "price",
         flags: Flags = Flags(),
         verbose: bool = True,
     ) -> "epl.results.SimulationResult":
         """Optimize sites dispatch using a mixed-integer linear program.
 
-        Args:
-            electricity_prices: the price of electricity in each interval.
-            gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
-            electricity_carbon_intensities: carbon intensity of electricity in each interval.
-            high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
-            low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
-            charge_events: 2D matrix representing when a charge event is active.
-                Shape is (n_charge_events, n_timesteps).
-                A charge events matrix for 4 charge events over 5 intervals.
-                ```
-                charge_events = [
-                    [1, 0, 0, 0, 0],
-                    [0, 1, 1, 1, 0],
-                    [0, 0, 0, 1, 1],
-                    [0, 1, 0, 0, 0],
-                ]
-                ```
-
-            freq_mins: the size of an interval in minutes.
-            initial_charge_mwh: initial charge state of the battery in mega-watt hours.
-            final_charge_mwh: final charge state of the battery in mega-watt hours.
-            objective: the optimization objective - either "price" or "carbon".
-            flags: boolean flags to change simulation and results behaviour.
-            verbose: level of printing.
-
         Returns:
             epl.results.SimulationResult
         """
 
         #  TODO could be `asset.before_intervals()`
-        for asset in self.assets:
-            if isinstance(asset, epl.Battery):
-                asset.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
+        # for asset in self.assets:
+        #     if isinstance(asset, epl.Battery):
+        #         asset.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
 
-            if isinstance(asset, epl.EVs):
-                assert (
-                    asset.charge_events is not None
-                ), "EV asset should have charge events defined in it's __init__"
+        #     if isinstance(asset, epl.EVs):
+        #         assert (
+        #             asset.charge_events is not None
+        #         ), "EV asset should have charge events defined in it's __init__"
 
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
 
-        #  not using the evs' interval data here
-        #  instead that data structure is only made inside the ev assets
-        interval_data = epl.interval_data.IntervalData(
-            electricity_prices=electricity_prices,
-            gas_prices=gas_prices,
-            electricity_carbon_intensities=electricity_carbon_intensities,
-            high_temperature_load_mwh=high_temperature_load_mwh,
-            low_temperature_load_mwh=low_temperature_load_mwh,
-            evs=None,
-        )
+        # #  not using the evs' interval data here
+        # #  instead that data structure is only made inside the ev assets
+        # interval_data = epl.interval_data.IntervalData(
+        #     electricity_prices=electricity_prices,
+        #     gas_prices=gas_prices,
+        #     electricity_carbon_intensities=electricity_carbon_intensities,
+        #     high_temperature_load_mwh=high_temperature_load_mwh,
+        #     low_temperature_load_mwh=low_temperature_load_mwh,
+        #     evs=None,
+        # )
 
-        self.spill = epl.spill.Spill()
-        self.valve = epl.valve.Valve()
+        # self.spill = epl.spill.Spill()
+        # self.valve = epl.valve.Valve()
 
-        self.assets.append(self.spill)
-        self.assets.append(self.valve)
+        # self.assets.append(self.spill)
+        # self.assets.append(self.valve)
 
+        #  TODO this is repeated in `validate_interval_data`
+        #  should reuse that here - TODO when I do the site again
         names = [asset.cfg.name for asset in self.assets]
         assert len(names) == len(
             set(names)
@@ -292,13 +343,14 @@ class Site:
         #  warn about sites without boilers?  warn sites without valve / spill?
 
         ivars = epl.interval_data.IntervalVars()
-        for i in interval_data.idx:
+        for i in self.cfg.interval_data.idx:
             ivars.append(self.one_interval(self.optimizer, self.cfg, i, freq))
+
             assets = []
             for asset in self.assets:
                 neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
                 #  tech debt TODO
-                #  EV is special beacuse it returns many one interval blocks per step
+                #  EV is special because it returns many one interval blocks per step
                 if isinstance(asset, epl.EVs):
                     evs, evs_array, spill_evs, spill_evs_array = neu_assets
                     assets.extend(evs)
@@ -312,32 +364,33 @@ class Site:
 
             ivars.append(assets)
 
-            self.constrain_within_interval(self.optimizer, ivars, interval_data, i)
+            self.constrain_within_interval(
+                self.optimizer, ivars, self.cfg.interval_data, i
+            )
             for asset in self.assets:
                 asset.constrain_within_interval(
-                    self.optimizer, ivars, interval_data, i, flags=flags, freq=freq
+                    self.optimizer, ivars, i, flags=flags, freq=freq
                 )
 
+        assert len(self.cfg.interval_data.idx) == len(ivars.objective_variables)
         for asset in self.assets:
             asset.constrain_after_intervals(
                 self.optimizer,
                 ivars,
-                interval_data,
             )
-
-        assert len(interval_data.idx) == len(ivars.objective_variables)
+            assert len(asset.cfg.interval_data.idx) == len(ivars.objective_variables)
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(
             objective_fn(
                 self.optimizer,
                 ivars,
-                interval_data,
+                self.cfg.interval_data,
             )
         )
 
         status = self.optimizer.solve(verbose=verbose)
-        self.interval_data = interval_data
+        # self.interval_data = interval_data
         return epl.results.extract_results(
-            interval_data, ivars, feasible=status.feasible, verbose=verbose
+            self.cfg.interval_data, ivars, feasible=status.feasible, verbose=verbose
         )

@@ -99,3 +99,53 @@ def test_sites(seed: int) -> None:
     results = site.optimize(**ds, verbose=True)
 
     debug_simulation(results.simulation)
+
+
+def test_interval_data():
+
+    #  test we use electricity_prices to create the index
+    electricity_prices = [1.0, 2.0]
+    idata = epl.assets.site.SiteIntervalData(electricity_prices=electricity_prices)
+    assert len(idata.idx) == 2
+
+    #  test we use electricity_carbon_intensities to create the index
+    electricity_prices = [1.0, 2.0]
+    electricity_carbon_intensities = [1.0, 2.0, 3.0]
+    idata = epl.assets.site.SiteIntervalData(
+        electricity_carbon_intensities=electricity_carbon_intensities
+    )
+    assert len(idata.idx) == 3
+
+    #  test we fail when neither specified
+    with pytest.raises(Exception):
+        epl.interval_data.IntervalData()
+
+    from energypylinear.assets.renewable_generator import validate_interval_data
+
+    #  test that things work correctly when the assets have the same length data as the site index
+    site = epl.Site(electricity_carbon_intensities=[1.0, 2.0])
+    assets = [epl.RenewableGenerator(electric_generation_mwh=[1.0, 2.0])]
+    validate_interval_data(assets, site)
+
+    #  test that things work correctly when the assets have different length data as the site index
+    with pytest.raises(AssertionError):
+        site = epl.Site(electricity_carbon_intensities=[1.0, 2.0])
+        assets = [epl.RenewableGenerator(electric_generation_mwh=2.0)]
+        validate_interval_data(assets, site, repeat_interval_data=False)
+
+    #  test that things work correctly when the assets have different length data as the site index
+    site = epl.Site(electricity_carbon_intensities=[1.0, 2.0])
+    assets = [epl.RenewableGenerator(electric_generation_mwh=2.0, name="solar")]
+    validate_interval_data(assets, site, repeat_interval_data=True)
+
+    asset = assets[0]
+    assert asset.cfg.name == "solar"
+    assert all(asset.cfg.interval_data.electric_generation_mwh == [2.0, 2.0])
+
+    #  test that the repeat works correctly
+    from energypylinear.assets.renewable_generator import repeat_to_match_length
+
+    assert all(
+        repeat_to_match_length([1.0, 2.0, 3.0], np.zeros(5))
+        == np.array([1.0, 2.0, 3.0, 1.0, 2.0])
+    )

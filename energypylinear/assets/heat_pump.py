@@ -1,20 +1,20 @@
-""""""
-import typing
+"""Heat Pump asset."""
 import pathlib
+import typing
 
-import pydantic
-from energypylinear.assets.asset import AssetOneInterval
 import numpy as np
+import pulp
+import pydantic
 
 import energypylinear as epl
+from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.assets.chp import get_default_boiler_size
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
-import pulp
 
 
 class HeatPumpConfig(pydantic.BaseModel):
-    """Heat pump asset configuration."""
+    """Heat Pump asset configuration."""
 
     name: str
     electric_power_mw: float
@@ -139,10 +139,22 @@ class HeatPump:
         self,
         electricity_prices: typing.Sequence[float] | np.ndarray,
         gas_prices: float | typing.Sequence[float] | np.ndarray | None = None,
-        electricity_carbon_intensities: float | typing.Sequence[float] | np.ndarray | None = None,
-        high_temperature_load_mwh: float | typing.Sequence[float] | np.ndarray | None = None,
-        low_temperature_load_mwh: float | typing.Sequence[float] | np.ndarray | None = None,
-        low_temperature_generation_mwh: float | typing.Sequence[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: float
+        | typing.Sequence[float]
+        | np.ndarray
+        | None = None,
+        high_temperature_load_mwh: float
+        | typing.Sequence[float]
+        | np.ndarray
+        | None = None,
+        low_temperature_load_mwh: float
+        | typing.Sequence[float]
+        | np.ndarray
+        | None = None,
+        low_temperature_generation_mwh: float
+        | typing.Sequence[float]
+        | np.ndarray
+        | None = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         verbose: bool = True,
