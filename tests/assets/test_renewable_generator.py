@@ -9,7 +9,7 @@ from energypylinear.debug import debug_asset
 
 def test_optimization_price() -> None:
     """Test optimization of the renewable generator for price."""
-    electricity_prices = [-100, -1, 1, 100]
+    electricity_prices = [-100.0, -1, 1, 100]
 
     #  test that we only dispatch the asset when prices are positive
     asset = epl.RenewableGenerator(
@@ -31,6 +31,8 @@ def test_optimization_price() -> None:
         electric_generation_lower_bound_pct=1.0,
         electricity_prices=electricity_prices,
     )
+    simulation = asset.optimize()
+    results = simulation.results
     expected = [50, 50, 50, 50]
     np.testing.assert_array_equal(results["site-export_power_mwh"], expected)
     np.testing.assert_array_equal(results["wind-electric_generation_mwh"], expected)

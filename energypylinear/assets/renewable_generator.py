@@ -2,7 +2,6 @@
 Renewable Generator asset.
 
 Suitable for modelling either turndownable wind or solar."""
-import abc
 
 import numpy as np
 import pydantic
@@ -14,7 +13,7 @@ from energypylinear.flags import Flags
 
 
 def repeat_to_match_length(a, b):
-    #  TODO unit test
+    #  TODO unit test and move to utils
     quotient, remainder = divmod(len(b), len(a))
     return np.concatenate([np.tile(a, quotient), a[:remainder]])
 
@@ -41,30 +40,6 @@ def validate_interval_data(assets, site, repeat_interval_data: bool = True):
                     )
 
 
-class Asset(abc.ABC):
-    """Abstract Base Class for an Asset."""
-
-    @abc.abstractmethod
-    def one_interval(self):
-        """Generate the linear program data for one interval."""
-        pass
-
-    @abc.abstractmethod
-    def constrain_within_interval(self):
-        """Constrain the asset within an interval."""
-        pass
-
-    @abc.abstractmethod
-    def constrain_after_intervals(self):
-        """Constrain the asset after all intervals."""
-        pass
-
-    @abc.abstractmethod
-    def optimize(self):
-        """Optimize the dispatch of the asset."""
-        pass
-
-
 class RenewableGeneratorIntervalData(pydantic.BaseModel):
     electric_generation_mwh: float | list[float] | np.ndarray
     idx: list[int] | np.ndarray = []
@@ -88,7 +63,7 @@ class RenewableGeneratorConfig(pydantic.BaseModel):
     """Renewable Generator asset configuration."""
 
     name: str
-    electric_generation_lower_bound_pct: float
+    electric_generation_lower_bound_pct: float = pydantic.Field(..., ge=0, le=1)
     interval_data: RenewableGeneratorIntervalData
 
 
@@ -97,7 +72,7 @@ class RenewableGeneratorOneInterval(AssetOneInterval):
     electric_generation_mwh: epl.LpVariable
 
 
-class RenewableGenerator(Asset):
+class RenewableGenerator(epl.Asset):
     """Renewable Generator asset.
 
     Handles optimization and plotting of results over many intervals.
@@ -126,6 +101,7 @@ class RenewableGenerator(Asset):
         electric_load_mwh: float | list[float] | np.ndarray | None = None,
         electric_generation_lower_bound_pct: float = 1.0,
         name="str",
+        freq_mins: int = defaults.freq_mins,
     ):
         self.cfg = RenewableGeneratorConfig(
             name=name,
@@ -133,6 +109,7 @@ class RenewableGenerator(Asset):
             interval_data=RenewableGeneratorIntervalData(
                 electric_generation_mwh=electric_generation_mwh,
             ),
+            freq_mins=freq_mins,
         )
 
         assets = [self]
@@ -146,17 +123,25 @@ class RenewableGenerator(Asset):
 
         validate_interval_data(assets, self.site)
 
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        raise NotImplementedError()
+        # return (
+        #     f"<energypylinear.HeatPump {self.cfg.electric_power_mw=}, {self.cfg.cop=}>"
+        # )
+
     def one_interval(
         self, optimizer: "epl.Optimizer", i: int, freq: "epl.Freq", flags: "epl.Flags"
     ):
-
+        """Create asset data for a single interval."""
         name = f"i:{i},asset:{self.cfg.name}"
         assert isinstance(self.cfg.interval_data.electric_generation_mwh, np.ndarray)
         return RenewableGeneratorOneInterval(
             cfg=self.cfg,
             electric_generation_mwh=optimizer.continuous(
                 f"electric_generation_mwh,{name}",
-                low=0,
+                low=freq.mw_to_mwh(self.cfg.interval_data.electric_generation_mwh[i])
+                * self.cfg.electric_generation_lower_bound_pct,
                 up=freq.mw_to_mwh(self.cfg.interval_data.electric_generation_mwh[i]),
             ),
         )
@@ -169,6 +154,7 @@ class RenewableGenerator(Asset):
         freq: "epl.Freq",
         flags: "epl.Flags",
     ):
+        """Constrain optimization within a single interval."""
         pass
 
     def constrain_after_intervals(
@@ -180,11 +166,13 @@ class RenewableGenerator(Asset):
 
     def optimize(
         self,
-        freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
     ) -> "epl.results.extract.SimulationResult":
         return self.site.optimize(
-            freq_mins=freq_mins, objective=objective, flags=flags, verbose=verbose
+            freq_mins=self.cfg.freq_mins,
+            objective=objective,
+            flags=flags,
+            verbose=verbose,
         )

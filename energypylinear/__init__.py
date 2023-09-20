@@ -11,7 +11,8 @@ from energypylinear import (
     results,
 )
 from energypylinear.accounting import get_accounts
-from energypylinear.assets import battery, chp, site, spill, valve
+from energypylinear.assets import asset, battery, chp, site, spill, valve
+from energypylinear.assets.asset import Asset
 from energypylinear.assets.battery import Battery
 from energypylinear.assets.boiler import Boiler
 from energypylinear.assets.chp import Generator

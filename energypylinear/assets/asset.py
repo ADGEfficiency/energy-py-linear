@@ -1,8 +1,33 @@
 """Contains AssetOneInterval - used as the base for all single interval energy assets data samples."""
+import abc
 import typing
 
 import pulp
 import pydantic
+
+
+class Asset(abc.ABC):
+    """Abstract Base Class for an Asset."""
+
+    @abc.abstractmethod
+    def one_interval(self):
+        """Generate the linear program data for one interval."""
+        pass
+
+    @abc.abstractmethod
+    def constrain_within_interval(self):
+        """Constrain the asset within an interval."""
+        pass
+
+    @abc.abstractmethod
+    def constrain_after_intervals(self):
+        """Constrain the asset after all intervals."""
+        pass
+
+    @abc.abstractmethod
+    def optimize(self):
+        """Optimize the dispatch of the asset."""
+        pass
 
 
 class AssetOneInterval(pydantic.BaseModel):

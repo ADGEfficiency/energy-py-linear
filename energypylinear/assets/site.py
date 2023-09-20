@@ -377,7 +377,6 @@ class Site:
                 self.optimizer,
                 ivars,
             )
-            #  TODO move to extract
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(
