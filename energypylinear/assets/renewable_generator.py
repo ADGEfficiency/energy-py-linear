@@ -184,8 +184,7 @@ class RenewableGenerator(Asset):
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
-    ):
-        results = self.site.optimize(
+    ) -> "epl.results.extract.SimulationResult":
+        return self.site.optimize(
             freq_mins=freq_mins, objective=objective, flags=flags, verbose=verbose
         )
-        breakpoint()  # fmt: skip

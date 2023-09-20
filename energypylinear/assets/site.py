@@ -372,13 +372,12 @@ class Site:
                     self.optimizer, ivars, i, flags=flags, freq=freq
                 )
 
-        assert len(self.cfg.interval_data.idx) == len(ivars.objective_variables)
         for asset in self.assets:
             asset.constrain_after_intervals(
                 self.optimizer,
                 ivars,
             )
-            assert len(asset.cfg.interval_data.idx) == len(ivars.objective_variables)
+            #  TODO move to extract
 
         objective_fn = epl.objectives[objective]
         self.optimizer.objective(
@@ -390,7 +389,11 @@ class Site:
         )
 
         status = self.optimizer.solve(verbose=verbose)
-        # self.interval_data = interval_data
+
         return epl.results.extract_results(
-            self.cfg.interval_data, ivars, feasible=status.feasible, verbose=verbose
+            self,
+            self.assets,
+            ivars,
+            feasible=status.feasible,
+            verbose=verbose,
         )

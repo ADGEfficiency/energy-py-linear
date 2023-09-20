@@ -1,4 +1,7 @@
-from energypylinear.results.extract import (SimulationResult, extract_results,
-                                            validate_results)
+from energypylinear.results.checks import check_results
+from energypylinear.results.extract import extract_results
 
-__all__ = ["extract_results", "validate_results", "SimulationResult"]
+__all__ = [
+    "extract_results",
+    "check_results",
+]
