@@ -33,10 +33,10 @@ class ValveOneInterval(AssetOneInterval):
 
 
 class Valve:
-    """Spill asset - allows heat to flow from high to low temperature."""
+    """Valve asset - allows heat to flow from high to low temperature."""
 
     def __init__(self, name: str = "valve"):
-        """Initialize a Valve asset model."""
+        """Initialize the asset model."""
         self.cfg = ValveConfig(name=name)
 
     def __repr__(self) -> str:
@@ -44,13 +44,9 @@ class Valve:
         return "<energypylinear.Valve>"
 
     def one_interval(
-        self,
-        optimizer: "epl.optimizer.Optimizer",
-        i: int,
-        freq: "epl.freq.Freq",
-        flags: epl.flags.Flags = epl.flags.Flags(),
+        self, optimizer: "epl.Optimizer", i: int, freq: "epl.Freq", flags: epl.Flags
     ) -> ValveOneInterval:
-        """Create Valve asset data for a single interval."""
+        """Create asset data for a single interval."""
         return ValveOneInterval(
             cfg=self.cfg,
             high_temperature_load_mwh=optimizer.continuous(
@@ -78,7 +74,11 @@ class Valve:
         )
 
     def constrain_after_intervals(
-        self, *args: typing.Any, **kwargs: typing.Any
+        self, optimizer: "epl.Optimizer", ivars: "epl.IntervalVars"
     ) -> None:
-        """Constrain asset after all interval asset models are created."""
+        """Constrain the asset after all intervals."""
         return
+
+    def optimize(self):
+        """Optimize the dispatch of the asset."""
+        raise NotImplementedError()

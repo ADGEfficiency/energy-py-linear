@@ -12,12 +12,18 @@ from energypylinear.optimizer import Optimizer
 
 
 class BoilerConfig(AssetOneInterval):
-    """Gas boiler configuration."""
+    """Boiler configuration."""
 
     name: str
     high_temperature_generation_max_mw: float = 0
     high_temperature_generation_min_mw: float = 0
     high_temperature_efficiency_pct: float = pydantic.Field(gt=0.0, default=0.8, le=1.0)
+
+    @pydantic.validator("name")
+    def check_name(cls, name: str) -> str:
+        """Ensure we can identify this asset correctly."""
+        assert "boiler" in name
+        return name
 
 
 class BoilerOneInterval(AssetOneInterval):
@@ -39,7 +45,7 @@ class Boiler(epl.Asset):
         high_temperature_generation_min_mw: float = 0,
         high_temperature_efficiency_pct: float = 0.8,
     ):
-        """Initialize a Boiler asset model."""
+        """Initialize the asset model."""
         self.cfg = BoilerConfig(
             name=name,
             high_temperature_generation_max_mw=high_temperature_generation_max_mw,
@@ -48,6 +54,7 @@ class Boiler(epl.Asset):
         )
 
     def __repr__(self) -> str:
+        """A string representation of self."""
         return f"<energypylinear.Boiler {self.cfg.high_temperature_generation_max_mw=}>"
 
     def one_interval(
@@ -77,7 +84,7 @@ class Boiler(epl.Asset):
         freq: Freq,
         flags: Flags,
     ) -> None:
-        """Constrain asset within a single interval."""
+        """Constrain boiler for generation of high temperature heat."""
         boiler = ivars.filter_objective_variables(
             BoilerOneInterval, i=-1, asset_name=self.cfg.name
         )[0][0]
