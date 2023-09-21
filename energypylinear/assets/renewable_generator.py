@@ -42,7 +42,7 @@ def validate_interval_data(assets, site, repeat_interval_data: bool = True):
 
 class RenewableGeneratorIntervalData(pydantic.BaseModel):
     electric_generation_mwh: float | list[float] | np.ndarray
-    idx: list[int] | np.ndarray = []
+    idx: list[int] | np.ndarray = pydantic.Field(default_factory=list)
 
     @pydantic.validator("idx", always=True)
     def create_idx(cls, _: list, values: dict) -> np.ndarray:
@@ -50,7 +50,7 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
         return np.arange(len(values["electric_generation_mwh"]))
 
     @pydantic.validator("electric_generation_mwh", pre=True, always=True)
-    def handle_single_float(cls, value) -> np.ndarray:
+    def handle_single_float(cls, value) -> list | np.ndarray:
         if isinstance(value, float):
             return [value]
         return np.array(value)

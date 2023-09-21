@@ -217,6 +217,10 @@ class Site:
         electricity_prices: float | list[float] | np.ndarray | None = None,
         electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
         electric_load_mwh: float | list[float] | np.ndarray | None = None,
+        gas_prices: float | list[float] | np.ndarray | None = None,
+        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
+        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
+        low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
         name: str = "site",
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
@@ -231,7 +235,11 @@ class Site:
             interval_data=SiteIntervalData(
                 electricity_prices=electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
+                gas_prices=gas_prices,
                 electric_load_mwh=electric_load_mwh,
+                high_temperature_load_mwh=high_temperature_load_mwh,
+                low_temperature_load_mwh=low_temperature_load_mwh,
+                low_temperature_generation_mwh=low_temperature_generation_mwh
             ),
             import_limit_mw=import_limit_mw,
             export_limit_mw=export_limit_mw,

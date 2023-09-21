@@ -29,8 +29,8 @@ class BoilerOneInterval(AssetOneInterval):
     binary: pulp.LpVariable
 
 
-class Boiler:
-    """Battery asset - generates high temperature heat."""
+class Boiler(epl.Asset):
+    """Boiler asset - generates high temperature heat from natural gas."""
 
     def __init__(
         self,
@@ -48,12 +48,12 @@ class Boiler:
         )
 
     def __repr__(self) -> str:
-        return "<energypylinear.Boiler>"
+        return f"<energypylinear.Boiler {self.cfg.high_temperature_generation_max_mw=}>"
 
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> BoilerOneInterval:
-        """Create Boiler asset data for a single interval."""
+        """Create asset data for a single interval."""
         return BoilerOneInterval(
             high_temperature_generation_mwh=optimizer.continuous(
                 f"{self.cfg.name}-high_temperature_generation_mwh-{i}",
@@ -73,16 +73,14 @@ class Boiler:
         self,
         optimizer: Optimizer,
         ivars: "epl.interval_data.IntervalVars",
-        interval_data: "epl.IntervalData",
         i: int,
         freq: Freq,
-        flags: Flags = Flags(),
+        flags: Flags,
     ) -> None:
-        """Constrain boiler upper and lower bounds for generating high & low temperature heat."""
-        boilers = ivars.filter_objective_variables(
+        """Constrain asset within a single interval."""
+        boiler = ivars.filter_objective_variables(
             BoilerOneInterval, i=-1, asset_name=self.cfg.name
-        )
-        boiler = boilers[0][0]
+        )[0][0]
         assert isinstance(boiler, BoilerOneInterval)
         optimizer.constrain(
             boiler.gas_consumption_mwh
@@ -101,7 +99,11 @@ class Boiler:
         )
 
     def constrain_after_intervals(
-        self, *args: typing.Any, **kwargs: typing.Any
+        self, optimizer: "epl.Optimizer", ivars: "epl.IntervalVars"
     ) -> None:
-        """Constrain asset after all interval asset models are created."""
+        """Constrain the asset after all intervals."""
         return
+
+    def optimize(self):
+        """Optimize the dispatch of the asset."""
+        raise NotImplementedError()

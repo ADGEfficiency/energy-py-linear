@@ -15,25 +15,20 @@ from energypylinear.optimizer import Optimizer
 
 
 def get_default_boiler_size(
-    freq: "epl.Freq", interval_data: "epl.interval_data.IntervalData"
+    freq: "epl.Freq",
+    high_temperature_load_mwh: np.array,
+    low_temperature_load_mwh: np.array,
 ) -> float:
     """Calculates the default boiler size based on high and low temperature loads.
 
-        Args:
-            freq (epl.Freq): Frequency-related data and conversion functions.
-            interval_data (epl.interval_data.IntervalData): Data for various temperature intervals, including high and low temperature loads.
+    Args:
+        freq (epl.Freq): Frequency-related data and conversion functions.
 
-        Returns:
-            float: The default boiler size calculated from max high and low temperature loads.
-
-        Raises:
-            AssertionError: If high_temperature_load_mwh or low_temperature_load_mwh are not numpy arrays.
-        """
-    assert isinstance(interval_data.high_temperature_load_mwh, np.ndarray)
-    assert isinstance(interval_data.low_temperature_load_mwh, np.ndarray)
+    Returns:
+        float: The default boiler size calculated from max high and low temperature loads.
+    """
     return freq.mw_to_mwh(
-        max(interval_data.high_temperature_load_mwh)
-        + max(interval_data.low_temperature_load_mwh)
+        max(high_temperature_load_mwh) + max(low_temperature_load_mwh)
     )
 
 
@@ -57,6 +52,7 @@ class GeneratorConfig(pydantic.BaseModel):
 
 class GeneratorOneInterval(AssetOneInterval):
     """CHP generator data for a single interval."""
+
     cfg: GeneratorConfig
 
     binary: pulp.LpVariable

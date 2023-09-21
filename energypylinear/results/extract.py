@@ -446,7 +446,8 @@ def extract_results(
     #  validate that we have all the data we need
     assert len(site.cfg.interval_data.idx) == len(ivars.objective_variables)
     for asset in assets:
-        assert len(asset.cfg.interval_data.idx) == len(ivars.objective_variables)
+        if hasattr(asset.cfg, "interval_data"):
+            assert len(asset.cfg.interval_data.idx) == len(ivars.objective_variables)
 
     #  extract linear program results from the assets
     lp_results = collections.defaultdict(list)

@@ -16,9 +16,11 @@ from energypylinear.flags import Flags
 class HeatPumpConfig(pydantic.BaseModel):
     """Heat Pump asset configuration."""
 
-    name: str
-    electric_power_mw: float
     cop: float
+    electric_power_mw: float
+    freq_mins: int
+    include_valve: bool
+    name: str
 
     @pydantic.validator("cop", pre=True, always=True)
     def validate_cop(cls, value: float) -> float:
@@ -69,39 +71,52 @@ class HeatPump(epl.Asset):
 
     def __init__(
         self,
-        electric_power_mw: float,
         cop: float,
+        electric_power_mw: float,
+        freq_mins: int = defaults.freq_mins,
         include_valve: bool = True,
+        name: str = "heat-pump",
         electricity_prices: float | list[float] | np.ndarray | None = None,
         electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
         gas_prices: float | list[float] | np.ndarray | None = None,
         high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
         low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
         low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
-        name: str = "heat-pump",
-        freq_mins: int = defaults.freq_mins,
     ):
         """Initializes the asset."""
         self.cfg = HeatPumpConfig(
-            name=name,
-            electric_power_mw=electric_power_mw,
             cop=cop,
-            include_valve=include_valve,
-            interval_data=HeatPumpIntervalData(),
+            electric_power_mw=electric_power_mw,
             freq_mins=freq_mins,
+            include_valve=include_valve,
+            name=name,
         )
+
+        #  need to create the site interval data ahead of time
+        #  because we need to size the boiler
+        #  we don't put all the interval data in here
+        site_idata = epl.assets.site.SiteIntervalData(
+            electricity_prices=electricity_prices,
+            electricity_carbon_intensities=electricity_carbon_intensities,
+            high_temperature_load_mwh=high_temperature_load_mwh,
+            low_temperature_load_mwh=low_temperature_load_mwh,
+        )
+
+        freq = epl.Freq(freq_mins)
         assets = [
             self,
-            epl.spill.Spill(),
+            epl.Spill(),
             epl.Boiler(
                 high_temperature_generation_max_mw=get_default_boiler_size(
-                    freq, self.idata
+                    freq,
+                    site_idata.high_temperature_load_mwh,
+                    site_idata.low_temperature_load_mwh,
                 ),
                 high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
             ),
         ]
         if include_valve:
-            assets.append(epl.valve.Valve())
+            assets.append(epl.Valve())
 
         self.site = epl.Site(
             assets=assets,
@@ -152,22 +167,24 @@ class HeatPump(epl.Asset):
         freq: "epl.Freq",
         flags: "epl.Flags",
     ) -> None:
-        """Constrain optimization within a single interval."""
-        for heat_pump in ivars.filter_objective_variables(HeatPumpOneInterval, i=i)[0]:
-            assert isinstance(heat_pump, HeatPumpOneInterval)
-            optimizer.constrain_max(
-                heat_pump.electric_load_mwh,
-                heat_pump.electric_load_binary,
-                freq.mw_to_mwh(heat_pump.cfg.electric_power_mw),
-            )
-            optimizer.constrain(
-                heat_pump.high_temperature_generation_mwh
-                == heat_pump.electric_load_mwh * heat_pump.cfg.cop
-            )
-            optimizer.constrain(
-                heat_pump.low_temperature_load_mwh + heat_pump.electric_load_mwh
-                == heat_pump.high_temperature_generation_mwh
-            )
+        """Constrain asset within a single interval."""
+        heat_pump = ivars.filter_objective_variables(
+            HeatPumpOneInterval, i=i, asset_name=self.cfg.name
+        )[0][0]
+        assert isinstance(heat_pump, HeatPumpOneInterval)
+        optimizer.constrain_max(
+            heat_pump.electric_load_mwh,
+            heat_pump.electric_load_binary,
+            freq.mw_to_mwh(heat_pump.cfg.electric_power_mw),
+        )
+        optimizer.constrain(
+            heat_pump.high_temperature_generation_mwh
+            == heat_pump.electric_load_mwh * heat_pump.cfg.cop
+        )
+        optimizer.constrain(
+            heat_pump.low_temperature_load_mwh + heat_pump.electric_load_mwh
+            == heat_pump.high_temperature_generation_mwh
+        )
 
     def constrain_after_intervals(
         self,
