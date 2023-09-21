@@ -25,17 +25,17 @@ class Asset(abc.ABC):
 
     @abc.abstractmethod
     def constrain_within_interval(self):
-        """Constrain the asset within an interval."""
+        """Constrain asset within an interval."""
         pass
 
     @abc.abstractmethod
     def constrain_after_intervals(self):
-        """Constrain the asset after all intervals."""
+        """Constrain asset after all intervals."""
         pass
 
     @abc.abstractmethod
     def optimize(self):
-        """Optimize the dispatch of the asset."""
+        """Optimize the asset."""
         pass
 
 

@@ -48,7 +48,7 @@ class CHPConfig(pydantic.BaseModel):
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
-        assert "generator" in name
+        assert "chp" in name
         return name
 
 
@@ -69,6 +69,9 @@ class CHP(epl.Asset):
 
     A CHP (combined heat and power) generator generates electricity, high temperature
     and low temperature heat from natural gas.
+
+    This asset can be used to model gas turbines, gas engines or open cycle generators
+    like diesel generators.
 
     Args:
         electric_power_max_mw - maximum electric power output of the generator in mega-watts.

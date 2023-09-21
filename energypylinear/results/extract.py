@@ -101,7 +101,7 @@ def extract_spill_results(
                 )
 
 
-def extract_generator_results(
+def extract_chp_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int
 ):
     if generators := ivars.filter_objective_variables(
@@ -109,14 +109,13 @@ def extract_generator_results(
     )[0]:
         for generator in generators:
             assert isinstance(generator, epl.assets.chp.CHPOneInterval)
-            name = f"{generator.cfg.name}"
             for attr in [
                 "electric_generation_mwh",
                 "gas_consumption_mwh",
                 "high_temperature_generation_mwh",
                 "low_temperature_generation_mwh",
             ]:
-                results[f"{name}-{attr}"].append(getattr(generator, attr).value())
+                results[f"{generator.cfg.name}-{attr}"].append(getattr(generator, attr).value())
 
 
 def extract_boiler_results(
@@ -127,9 +126,8 @@ def extract_boiler_results(
     )[0]:
         for boiler in boilers:
             assert isinstance(boiler, epl.assets.boiler.BoilerOneInterval)
-            name = f"{boiler.cfg.name}"
             for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
-                results[f"{name}-{attr}"].append(getattr(boiler, attr).value())
+                results[f"{boiler.cfg.name}-{attr}"].append(getattr(boiler, attr).value())
 
 
 def extract_valve_results(
@@ -455,7 +453,7 @@ def extract_results(
         extract_site_results(site, ivars, lp_results, i)
         extract_spill_results(ivars, lp_results, i)
         extract_battery_results(ivars, lp_results, i)
-        extract_generator_results(ivars, lp_results, i)
+        extract_chp_results(ivars, lp_results, i)
         extract_boiler_results(ivars, lp_results, i)
         extract_valve_results(ivars, lp_results, i)
         extract_evs_results(ivars, lp_results, i, verbose=verbose)

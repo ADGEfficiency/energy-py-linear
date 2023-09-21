@@ -21,12 +21,12 @@ class BatteryConfig(pydantic.BaseModel):
     power_mw: float
     capacity_mwh: float
     efficiency_pct: float
-    initial_charge_mwh: float = 0
-    final_charge_mwh: float = 0
+    initial_charge_mwh: float = 0.0
+    final_charge_mwh: float | None = 0.0
 
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
-        """Check that name includes battery."""
+        """Ensure we can identify this asset correctly."""
 
         assert "battery" in name
         return name
@@ -138,6 +138,12 @@ class Battery:
         capacity_mwh: float = 4.0,
         efficiency: float = 0.9,
         name: str = "battery",
+        electricity_prices: float | list[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        gas_prices: float | list[float] | np.ndarray | None = None,
+        initial_charge_mwh: float = 0.0,
+        final_charge_mwh: float | None = None,
+        freq_mins: int = defaults.freq_mins,
     ):
         """Initialize a Battery asset model."""
         self.cfg = BatteryConfig(
@@ -145,6 +151,21 @@ class Battery:
             power_mw=power_mw,
             capacity_mwh=capacity_mwh,
             efficiency_pct=efficiency,
+            initial_charge_mwh=initial_charge_mwh,
+            final_charge_mwh=final_charge_mwh,
+        )
+
+        freq = epl.Freq(freq_mins)
+        assets = [self, epl.Spill()]
+
+        self.site = epl.Site(
+            assets=assets,
+            electricity_prices=electricity_prices,
+            electricity_carbon_intensities=electricity_carbon_intensities,
+            gas_prices=gas_prices,
+            high_temperature_load_mwh=high_temperature_load_mwh,
+            low_temperature_load_mwh=low_temperature_load_mwh,
+            low_temperature_generation_mwh=low_temperature_generation_mwh,
         )
 
     def __repr__(self) -> str:
@@ -155,6 +176,8 @@ class Battery:
         self, initial_charge_mwh: float, final_charge_mwh: float | None
     ) -> None:
         """Processes the options for initial and final charge."""
+        #  TODO move off the asset
+        #  TODO move
         self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)
         self.cfg.final_charge_mwh = (
             self.cfg.initial_charge_mwh
@@ -203,21 +226,20 @@ class Battery:
         self,
         optimizer: Optimizer,
         ivars: "epl.interval_data.IntervalVars",
-        interval_data: "epl.IntervalData",
         i: int,
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
         """Constrain asset dispatch within a single interval."""
-        batteries = ivars.filter_objective_variables(
+        battery = ivars.filter_objective_variables(
             BatteryOneInterval, i=-1, asset_name=self.cfg.name
-        )
-        assert len(batteries) == 1
-        battery: AssetOneInterval = batteries[0][0]
+        )[0][0]
         constrain_only_charge_or_discharge(optimizer, battery, flags)
         constrain_battery_electricity_balance(optimizer, battery)
 
         #  this is one battery asset, all intervals
+        #  TODO maybe refactor into the after intervals?
+        #  bit of a weird case really
         all_batteries = ivars.filter_objective_variables(
             BatteryOneInterval, i=None, asset_name=self.cfg.name
         )
@@ -242,15 +264,9 @@ class Battery:
 
     def optimize(
         self,
-        electricity_prices: np.ndarray | typing.Sequence[float],
-        gas_prices: np.ndarray | typing.Sequence[float] | None = None,
-        electricity_carbon_intensities: np.ndarray | list[float] | None = None,
-        freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         flags: Flags = Flags(),
         verbose: bool = True,
-        initial_charge_mwh: float = 0.0,
-        final_charge_mwh: float | None = None,
     ) -> "epl.results.SimulationResult":
         """Optimize the asset dispatch using a mixed-integer linear program.
 
@@ -309,9 +325,7 @@ class Battery:
         )
 
     def plot(
-        self,
-        results: "epl.results.SimulationResult",
-        path: pathlib.Path | str
+        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_battery(results, pathlib.Path(path))
