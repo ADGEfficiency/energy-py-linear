@@ -56,7 +56,7 @@ def test_site() -> None:
 
 @pytest.mark.parametrize("seed", range(10))
 def test_sites(seed: int) -> None:
-    """Tests various hardcoded combinations of assets."""
+    """Tests random combinations of assets."""
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=seed)
     assets = [
         epl.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9),
@@ -89,6 +89,7 @@ def test_sites(seed: int) -> None:
             charger_turndown=0.4,
             name="evs2",
         ),
+        epl.HeatPump(2.0, 3.0),
     ]
 
     ds.pop("charger_mws")
@@ -97,5 +98,4 @@ def test_sites(seed: int) -> None:
     sampled_assets = random.sample(assets, n_assets)
     site = epl.Site(assets=sampled_assets)
     results = site.optimize(**ds, verbose=True)
-
     debug_simulation(results.simulation)

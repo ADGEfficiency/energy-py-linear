@@ -204,17 +204,24 @@ class Site:
 
     def optimize(
         self,
-        electricity_prices: typing.Union[float, typing.Iterable[float]],
-        gas_prices: typing.Optional[typing.Union[float, typing.Iterable[float]]] = None,
-        electricity_carbon_intensities: typing.Optional[
-            typing.Union[float, typing.Iterable[float]]
-        ] = None,
-        high_temperature_load_mwh: typing.Optional[
-            typing.Union[float, typing.Iterable[float]]
-        ] = None,
-        low_temperature_load_mwh: typing.Optional[
-            typing.Union[float, typing.Iterable[float]]
-        ] = None,
+        electricity_prices: typing.Sequence[float] | np.ndarray,
+        gas_prices: float | typing.Sequence[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: float
+        | typing.Sequence[float]
+        | np.ndarray
+        | None = None,
+        high_temperature_load_mwh: float
+        | typing.Sequence[float]
+        | np.ndarray
+        | None = None,
+        low_temperature_load_mwh: float
+        | typing.Sequence[float]
+        | np.ndarray
+        | None = None,
+        low_temperature_generation_mwh: float
+        | typing.Sequence[float]
+        | np.ndarray
+        | None = None,
         charge_events: typing.Union[list[list[int]], typing.Iterable[int], None] = None,
         freq_mins: int = defaults.freq_mins,
         initial_charge_mwh: float = 0.0,
@@ -275,6 +282,7 @@ class Site:
             electricity_carbon_intensities=electricity_carbon_intensities,
             high_temperature_load_mwh=high_temperature_load_mwh,
             low_temperature_load_mwh=low_temperature_load_mwh,
+            low_temperature_generation_mwh=low_temperature_generation_mwh,
             evs=None,
         )
 
@@ -298,7 +306,7 @@ class Site:
             for asset in self.assets:
                 neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
                 #  tech debt TODO
-                #  EV is special beacuse it returns many one interval blocks per step
+                #  EV is special because it returns many one interval blocks per step
                 if isinstance(asset, epl.EVs):
                     evs, evs_array, spill_evs, spill_evs_array = neu_assets
                     assets.extend(evs)
@@ -312,17 +320,24 @@ class Site:
 
             ivars.append(assets)
 
-            self.constrain_within_interval(self.optimizer, ivars, interval_data, i)
+            self.constrain_within_interval(
+                optimizer=self.optimizer, ivars=ivars, interval_data=interval_data, i=i
+            )
             for asset in self.assets:
                 asset.constrain_within_interval(
-                    self.optimizer, ivars, interval_data, i, flags=flags, freq=freq
+                    optimizer=self.optimizer,
+                    ivars=ivars,
+                    interval_data=interval_data,
+                    i=i,
+                    flags=flags,
+                    freq=freq,
                 )
 
         for asset in self.assets:
             asset.constrain_after_intervals(
-                self.optimizer,
-                ivars,
-                interval_data,
+                optimizer=self.optimizer,
+                ivars=ivars,
+                interval_data=interval_data,
             )
 
         assert len(interval_data.idx) == len(ivars.objective_variables)

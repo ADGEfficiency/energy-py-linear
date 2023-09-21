@@ -1,17 +1,19 @@
 """Test Heat Pump asset."""
 import hypothesis
-import energypylinear as epl
-from energypylinear.debug import debug_asset
 import numpy as np
 import pytest
+
+import energypylinear as epl
+from energypylinear.debug import debug_asset
 
 
 def test_heat_pump_optimization_price() -> None:
     """Test optimization for price."""
 
     gas_price = 20
-    #  TODO pass this into model
-    blr_effy = 0.8
+    defaults = epl.defaults.Defaults()
+    blr_effy = defaults.default_boiler_efficiency_pct
+    assert blr_effy == 0.8
     cop = 3.0
 
     """
@@ -89,6 +91,7 @@ def test_heat_pump_optimization_price() -> None:
 def test_heat_pump_optimization_carbon() -> None:
     """Test optimization for carbon."""
     gas_price = 20
+
     #  TODO pass this into model
     blr_effy = 0.8
     cop = 3.0
@@ -120,7 +123,7 @@ def test_heat_pump_optimization_carbon() -> None:
         gas_prices=gas_price,
         high_temperature_load_mwh=100,
         low_temperature_generation_mwh=100,
-        objective="carbon"
+        objective="carbon",
     )
     simulation = results.simulation
     np.testing.assert_array_equal(
@@ -179,6 +182,29 @@ def test_heat_pump_heat_balance() -> None:
         simulation["site-import_power_mwh"],
         [0.25 / (cop - 1), 0.5 / (cop - 1), 1.0 / (cop - 1)],
     )
+
+
+def test_heat_pump_site_api() -> None:
+    """Test the heat pump using the site API."""
+    assets = [
+        epl.HeatPump(electric_power_mw=1.0, cop=3.0),
+        epl.Boiler(
+            high_temperature_generation_max_mw=100,
+            high_temperature_efficiency_pct=0.8,
+        ),
+        #  TODO
+        # epl.spill.Spill(),
+        # epl.valve.Valve(),
+    ]
+
+    site = epl.Site(assets=assets)
+    results = site.optimize(
+        electricity_prices=[100, -100],
+        high_temperature_load_mwh=[5, 5],
+        low_temperature_generation_mwh=[10, 10],
+    )
+    simulation = results.simulation
+    np.testing.assert_array_equal(simulation["heat-pump-electric_load_mwh"], [0.0, 1.0])
 
 
 @hypothesis.settings(print_blob=True, deadline=None)
