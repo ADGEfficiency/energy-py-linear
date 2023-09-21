@@ -1,4 +1,4 @@
-"""CHP asset for optimizing dispatch of combined heat and power (CHP) generators."""
+"""Asset for optimizing combined heat and power (CHP) generators."""
 import pathlib
 import typing
 
@@ -16,13 +16,13 @@ from energypylinear.optimizer import Optimizer
 
 def get_default_boiler_size(
     freq: "epl.Freq",
-    high_temperature_load_mwh: np.array,
-    low_temperature_load_mwh: np.array,
+    high_temperature_load_mwh: np.ndarray,
+    low_temperature_load_mwh: np.ndarray,
 ) -> float:
-    """Calculates the default boiler size based on high and low temperature loads.
+    """Calculates the default boiler size based on site high and low temperature loads.
 
     Args:
-        freq (epl.Freq): Frequency-related data and conversion functions.
+        freq (epl.Freq):
 
     Returns:
         float: The default boiler size calculated from max high and low temperature loads.
@@ -32,8 +32,8 @@ def get_default_boiler_size(
     )
 
 
-class GeneratorConfig(pydantic.BaseModel):
-    """CHP generator configuration."""
+class CHPConfig(pydantic.BaseModel):
+    """CHP configuration."""
 
     name: str
     electric_power_max_mw: float = 0
@@ -43,6 +43,8 @@ class GeneratorConfig(pydantic.BaseModel):
     high_temperature_efficiency_pct: float = 0
     low_temperature_efficiency_pct: float = 0
 
+    freq_mins: int
+
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
@@ -50,10 +52,10 @@ class GeneratorConfig(pydantic.BaseModel):
         return name
 
 
-class GeneratorOneInterval(AssetOneInterval):
+class CHPOneInterval(AssetOneInterval):
     """CHP generator data for a single interval."""
 
-    cfg: GeneratorConfig
+    cfg: CHPConfig
 
     binary: pulp.LpVariable
     electric_generation_mwh: pulp.LpVariable
@@ -62,8 +64,11 @@ class GeneratorOneInterval(AssetOneInterval):
     low_temperature_generation_mwh: pulp.LpVariable
 
 
-class Generator:
-    """CHP generator asset - handles optimization and plotting of results over many intervals.
+class CHP(epl.Asset):
+    """CHP asset - handles optimization and plotting of results over many intervals.
+
+    A CHP (combined heat and power) generator generates electricity, high temperature
+    and low temperature heat from natural gas.
 
     Args:
         electric_power_max_mw - maximum electric power output of the generator in mega-watts.
@@ -71,34 +76,87 @@ class Generator:
         electric_efficiency_pct - electric efficiency of the generator, measured in percentage.
         high_temperature_efficiency_pct - high temperature efficiency of the generator, measured in percentage.
         low_temperature_efficiency_pct - the low temperature efficiency of the generator, measured in percentage.
+        electricity_prices: the price of electricity in each interval.
+        gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
+        electricity_carbon_intensities: carbon intensity of electricity in each interval.
+        high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
+        low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
+        freq_mins: the size of an interval in minutes.
 
     Make sure to get your efficiencies and gas prices on the same basis (HHV or LHV).
     """
 
     def __init__(
         self,
+        electric_efficiency_pct: float = 0.0,
         electric_power_max_mw: float = 0.0,
         electric_power_min_mw: float = 0.0,
-        electric_efficiency_pct: float = 0.0,
         high_temperature_efficiency_pct: float = 0.0,
         low_temperature_efficiency_pct: float = 0.0,
         name: str = "generator",
+        freq_mins: int = defaults.freq_mins,
+        electricity_prices: float | list[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        gas_prices: float | list[float] | np.ndarray | None = None,
+        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
+        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
+        low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
     ):
-        """Initialize a Battery asset model."""
-        self.cfg = GeneratorConfig(
+        """Initializes the asset."""
+        self.cfg = CHPConfig(
             name=name,
             electric_power_min_mw=electric_power_min_mw,
             electric_power_max_mw=electric_power_max_mw,
             electric_efficiency_pct=electric_efficiency_pct,
             high_temperature_efficiency_pct=high_temperature_efficiency_pct,
             low_temperature_efficiency_pct=low_temperature_efficiency_pct,
+            freq_mins=freq_mins,
         )
+
+        #  need to create the site interval data ahead of time
+        #  because we need to size the boiler
+        #  we don't put all the interval data in here
+        site_idata = epl.assets.site.SiteIntervalData(
+            electricity_prices=electricity_prices,
+            electricity_carbon_intensities=electricity_carbon_intensities,
+            high_temperature_load_mwh=high_temperature_load_mwh,
+            low_temperature_load_mwh=low_temperature_load_mwh,
+        )
+
+        freq = epl.Freq(freq_mins)
+        assets = [
+            self,
+            epl.Spill(),
+            epl.Valve(),
+            epl.Boiler(
+                high_temperature_generation_max_mw=get_default_boiler_size(
+                    freq,
+                    site_idata.high_temperature_load_mwh,
+                    site_idata.low_temperature_load_mwh,
+                ),
+                high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
+            ),
+        ]
+
+        self.site = epl.Site(
+            assets=assets,
+            electricity_prices=electricity_prices,
+            electricity_carbon_intensities=electricity_carbon_intensities,
+            gas_prices=gas_prices,
+            high_temperature_load_mwh=high_temperature_load_mwh,
+            low_temperature_load_mwh=low_temperature_load_mwh,
+            low_temperature_generation_mwh=low_temperature_generation_mwh,
+        )
+
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<energypylinear.CHP {self.cfg.electric_power_max_mw=}>"
 
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
-    ) -> GeneratorOneInterval:
-        """Create a Generator asset model for one interval."""
-        return GeneratorOneInterval(
+    ) -> CHPOneInterval:
+        """Generate linear program data for one interval."""
+        return CHPOneInterval(
             electric_generation_mwh=optimizer.continuous(
                 f"{self.cfg.name}-electric_generation_mwh-{i}",
                 low=0,
@@ -125,127 +183,64 @@ class Generator:
         self,
         optimizer: Optimizer,
         ivars: "epl.interval_data.IntervalVars",
-        interval_data: "epl.IntervalData",
         i: int,
         freq: Freq,
-        flags: Flags = Flags(),
+        flags: Flags,
     ) -> None:
-        """Constrain generator upper and lower bounds for generating electricity, high & low temperature heat."""
-        assets = ivars.objective_variables[-1]
-        generators = [a for a in assets if isinstance(a, epl.chp.GeneratorOneInterval)]
-        for asset in generators:
-            if asset.cfg.electric_efficiency_pct > 0:
-                optimizer.constrain(
-                    asset.gas_consumption_mwh
-                    == asset.electric_generation_mwh
-                    * (1 / asset.cfg.electric_efficiency_pct)
-                )
+        """Constrain generator upper and lower bounds for generating electricity, high
+        and low temperature heat within a single interval."""
+        chp = ivars.filter_objective_variables(
+            CHPOneInterval, i=i, asset_name=self.cfg.name
+        )[0][0]
+        if chp.cfg.electric_efficiency_pct > 0:
             optimizer.constrain(
-                asset.high_temperature_generation_mwh
-                == asset.gas_consumption_mwh * asset.cfg.high_temperature_efficiency_pct
+                chp.gas_consumption_mwh
+                == chp.electric_generation_mwh * (1 / chp.cfg.electric_efficiency_pct)
             )
-            optimizer.constrain(
-                asset.low_temperature_generation_mwh
-                == asset.gas_consumption_mwh * asset.cfg.low_temperature_efficiency_pct
-            )
-            optimizer.constrain_max(
-                asset.electric_generation_mwh,
-                asset.binary,
-                freq.mw_to_mwh(asset.cfg.electric_power_max_mw),
-            )
-            optimizer.constrain_min(
-                asset.electric_generation_mwh,
-                asset.binary,
-                freq.mw_to_mwh(asset.cfg.electric_power_min_mw),
-            )
+        optimizer.constrain(
+            chp.high_temperature_generation_mwh
+            == chp.gas_consumption_mwh * chp.cfg.high_temperature_efficiency_pct
+        )
+        optimizer.constrain(
+            chp.low_temperature_generation_mwh
+            == chp.gas_consumption_mwh * chp.cfg.low_temperature_efficiency_pct
+        )
+        optimizer.constrain_max(
+            chp.electric_generation_mwh,
+            chp.binary,
+            freq.mw_to_mwh(chp.cfg.electric_power_max_mw),
+        )
+        optimizer.constrain_min(
+            chp.electric_generation_mwh,
+            chp.binary,
+            freq.mw_to_mwh(chp.cfg.electric_power_min_mw),
+        )
 
     def constrain_after_intervals(
         self, *args: typing.Tuple[typing.Any], **kwargs: typing.Any
     ) -> None:
-        """Constrain asset after all interval asset models are created."""
+        """Constrain the asset after all intervals."""
         return
 
     def optimize(
         self,
-        electricity_prices: np.ndarray | typing.Sequence[float],
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
-        gas_prices: float | list[float] | np.ndarray | None = None,
-        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        freq_mins: int = defaults.freq_mins,
         objective: str = "price",
+        verbose: bool = True,
         flags: Flags = Flags(),
     ) -> "epl.results.SimulationResult":
         """
         Optimize the CHP generator's dispatch using a mixed-integer linear program.
 
         Args:
-            electricity_prices: the price of electricity in each interval.
-            gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
-            electricity_carbon_intensities: carbon intensity of electricity in each interval.
-            high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
-            low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
-            freq_mins: the size of an interval in minutes.
             objective: the optimization objective - either "price" or "carbon".
+            verbose: level of printing.
             flags: boolean flags to change simulation and results behaviour.
         """
-        self.optimizer = Optimizer()
-        freq = Freq(freq_mins)
-        interval_data = epl.interval_data.IntervalData(
-            electricity_prices=electricity_prices,
-            gas_prices=gas_prices,
-            electricity_carbon_intensities=electricity_carbon_intensities,
-            high_temperature_load_mwh=high_temperature_load_mwh,
-            low_temperature_load_mwh=low_temperature_load_mwh,
-        )
-        self.site = epl.Site()
-        self.spill = epl.spill.Spill()
-        self.valve = epl.valve.Valve()
-
-        assert interval_data.high_temperature_load_mwh is not None
-        assert interval_data.low_temperature_load_mwh is not None
-
-        self.boiler = epl.Boiler(
-            high_temperature_generation_max_mw=get_default_boiler_size(
-                freq, interval_data
-            ),
-            high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
-        )
-
-        ivars = epl.interval_data.IntervalVars()
-        for i in interval_data.idx:
-            ivars.append(self.site.one_interval(self.optimizer, self.site.cfg, i, freq))
-            ivars.append(
-                [
-                    self.one_interval(self.optimizer, i, freq),
-                    self.boiler.one_interval(self.optimizer, i, freq),
-                    self.spill.one_interval(self.optimizer, i, freq),
-                    self.valve.one_interval(self.optimizer, i, freq),
-                ]
-            )
-
-            self.site.constrain_within_interval(self.optimizer, ivars, interval_data, i)
-            self.constrain_within_interval(
-                self.optimizer, ivars, interval_data, i, freq
-            )
-            self.boiler.constrain_within_interval(
-                self.optimizer, ivars, interval_data, i, freq
-            )
-            self.valve.constrain_within_interval(
-                self.optimizer, ivars, interval_data, i, freq
-            )
-            self.spill.constrain_within_interval(
-                self.optimizer, ivars, interval_data, i, freq
-            )
-
-        assert len(interval_data.idx) == len(ivars.objective_variables)
-
-        objective_fn = epl.objectives[objective]
-        self.optimizer.objective(objective_fn(self.optimizer, ivars, interval_data))
-        status = self.optimizer.solve()
-        self.interval_data = interval_data
-        return epl.results.extract_results(
-            interval_data, ivars, feasible=status.feasible, flags=flags
+        return self.site.optimize(
+            freq_mins=self.cfg.freq_mins,
+            objective=objective,
+            flags=flags,
+            verbose=verbose,
         )
 
     def plot(

@@ -16,7 +16,7 @@ from energypylinear.accounting import get_accounts
 from energypylinear.assets.asset import Asset
 from energypylinear.assets.battery import Battery
 from energypylinear.assets.boiler import Boiler
-from energypylinear.assets.chp import Generator
+from energypylinear.assets.chp import CHP
 from energypylinear.assets.evs import EVs
 from energypylinear.assets.heat_pump import HeatPump
 from energypylinear.assets.renewable_generator import RenewableGenerator
@@ -35,7 +35,7 @@ __all__ = [
     "EVs",
     "Flags",
     "Freq",
-    "Generator",
+    "CHP",
     "HeatPump",
     "IntervalData",
     "IntervalVars",

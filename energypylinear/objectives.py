@@ -41,7 +41,7 @@ def price_objective(
     interval_data: "epl.interval_data.IntervalData",
 ) -> pulp.LpAffineExpression:
     """
-    Linear programming objective for cost minimization.  Equivilant to profit maximization.
+    Linear programming objective for cost minimization.  Equivalent to profit maximization.
 
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
@@ -59,7 +59,7 @@ def price_objective(
     sites = ivars.asset["site"]["site"]
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
     spill_evs = filter_spill_evs(ivars, interval_data)
-    generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
+    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 
     assert isinstance(interval_data.gas_prices, np.ndarray)
@@ -118,7 +118,7 @@ def carbon_objective(
     sites = ivars.asset["site"]["site"]
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
     spill_evs = filter_spill_evs(ivars, interval_data)
-    generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
+    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)

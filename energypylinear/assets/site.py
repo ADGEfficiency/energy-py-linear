@@ -14,14 +14,14 @@ from energypylinear.optimizer import Optimizer
 
 
 class SiteIntervalData(pydantic.BaseModel):
-    electricity_prices: float | list[float] | np.ndarray | None = None
-    electricity_carbon_intensities: float | list[float] | np.ndarray | None = None
-    gas_prices: float | list[float] | np.ndarray | None = None
+    electricity_prices: np.ndarray | list[float] | float | None = None
+    electricity_carbon_intensities: np.ndarray | list[float] | float | None = None
+    gas_prices: np.ndarray | list[float] | float | None = None
 
-    electric_load_mwh: float | list[float] | np.ndarray | None = None
-    high_temperature_load_mwh: float | list[float] | np.ndarray | None = None
-    low_temperature_load_mwh: float | list[float] | np.ndarray | None = None
-    low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None
+    electric_load_mwh: np.ndarray | list[float] | float | None = None
+    high_temperature_load_mwh: np.ndarray | list[float] | float | None = None
+    low_temperature_load_mwh: np.ndarray | list[float] | float | None = None
+    low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None
 
     idx: list[int] | np.ndarray = []
 
@@ -35,13 +35,15 @@ class SiteIntervalData(pydantic.BaseModel):
         fields.remove("idx")
         if values["electricity_prices"] is not None:
             values["idx"] = np.arange(len(values["electricity_prices"]))
-            values["electricity_prices"] = np.array(values["electricity_prices"])
+            values["electricity_prices"] = np.atleast_1d(
+                np.array(values["electricity_prices"])
+            )
             fields.remove("electricity_prices")
 
         elif values["electricity_carbon_intensities"] is not None:
             values["idx"] = np.arange(len(values["electricity_carbon_intensities"]))
-            values["electricity_carbon_intensities"] = np.array(
-                values["electricity_carbon_intensities"]
+            values["electricity_carbon_intensities"] = np.atleast_1d(
+                np.array(values["electricity_carbon_intensities"])
             )
             fields.remove("electricity_carbon_intensities")
 
@@ -66,6 +68,7 @@ class SiteIntervalData(pydantic.BaseModel):
             assert values[field] is not None
             assert isinstance(values[field], np.ndarray)
             assert np.isnan(values[field]).sum() == 0
+            values[field] = np.atleast_1d(values[field])
 
         return values
 
@@ -239,7 +242,7 @@ class Site:
                 electric_load_mwh=electric_load_mwh,
                 high_temperature_load_mwh=high_temperature_load_mwh,
                 low_temperature_load_mwh=low_temperature_load_mwh,
-                low_temperature_generation_mwh=low_temperature_generation_mwh
+                low_temperature_generation_mwh=low_temperature_generation_mwh,
             ),
             import_limit_mw=import_limit_mw,
             export_limit_mw=export_limit_mw,

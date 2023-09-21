@@ -9,9 +9,18 @@ import pydantic
 class Asset(abc.ABC):
     """Abstract Base Class for an Asset."""
 
+    def __init__(self):
+        """Initializes the asset."""
+        pass
+
+    @abc.abstractmethod
+    def __repr__(self):
+        """A string representation of self."""
+        pass
+
     @abc.abstractmethod
     def one_interval(self):
-        """Generate the linear program data for one interval."""
+        """Generate linear program data for one interval."""
         pass
 
     @abc.abstractmethod

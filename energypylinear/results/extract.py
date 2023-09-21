@@ -105,10 +105,10 @@ def extract_generator_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int
 ):
     if generators := ivars.filter_objective_variables(
-        epl.assets.chp.GeneratorOneInterval, i=i
+        epl.assets.chp.CHPOneInterval, i=i
     )[0]:
         for generator in generators:
-            assert isinstance(generator, epl.assets.chp.GeneratorOneInterval)
+            assert isinstance(generator, epl.assets.chp.CHPOneInterval)
             name = f"{generator.cfg.name}"
             for attr in [
                 "electric_generation_mwh",

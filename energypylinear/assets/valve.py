@@ -44,7 +44,7 @@ class Valve:
         return "<energypylinear.Valve>"
 
     def one_interval(
-        self, optimizer: "epl.Optimizer", i: int, freq: "epl.Freq", flags: epl.Flags
+        self, optimizer: "epl.Optimizer", i: int, freq: "epl.Freq", flags: "epl.Flags"
     ) -> ValveOneInterval:
         """Create asset data for a single interval."""
         return ValveOneInterval(

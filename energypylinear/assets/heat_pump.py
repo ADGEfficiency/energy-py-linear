@@ -191,7 +191,7 @@ class HeatPump(epl.Asset):
         optimizer: "epl.Optimizer",
         ivars: "epl.IntervalVars",
     ) -> None:
-        """Constrain dispatch after all interval asset models are created."""
+        """Constrain the asset after all intervals."""
         pass
 
     def optimize(
