@@ -6,13 +6,13 @@ from energypylinear.debug import debug_asset, debug_balances, debug_simulation
 
 def test_debug() -> None:
     """Tests that the debugging tools work correctly."""
-    asset = epl.Battery()
-    results = asset.optimize(
+    asset = epl.Battery(
         electricity_prices=[100, 100],
+    )
+    simulation = asset.optimize(
         verbose=True,
     )
-    simulation = results.simulation
 
-    debug_simulation(simulation)
-    debug_balances(simulation)
-    debug_asset(simulation, asset.cfg.name, True)
+    debug_simulation(simulation.results)
+    debug_balances(simulation.results)
+    debug_asset(simulation.results, asset.cfg.name, True)

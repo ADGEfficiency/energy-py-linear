@@ -6,12 +6,13 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
+from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
-class BoilerConfig(AssetOneInterval):
+class BoilerConfig(pydantic.BaseModel):
     """Boiler configuration."""
 
     name: str
@@ -29,10 +30,10 @@ class BoilerConfig(AssetOneInterval):
 class BoilerOneInterval(AssetOneInterval):
     """Boiler data for a single interval."""
 
-    cfg: BoilerConfig
     high_temperature_generation_mwh: pulp.LpVariable
     gas_consumption_mwh: pulp.LpVariable
     binary: pulp.LpVariable
+    cfg: BoilerConfig
 
 
 class Boiler(epl.Asset):
@@ -41,9 +42,9 @@ class Boiler(epl.Asset):
     def __init__(
         self,
         name: str = "boiler",
-        high_temperature_generation_max_mw: float = 0,
+        high_temperature_generation_max_mw: float = defaults.boiler_high_temperature_generation_max_mw,
         high_temperature_generation_min_mw: float = 0,
-        high_temperature_efficiency_pct: float = 0.8,
+        high_temperature_efficiency_pct: float = defaults.boiler_efficiency_pct,
     ):
         """Initialize the asset model."""
         self.cfg = BoilerConfig(

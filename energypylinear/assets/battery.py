@@ -178,13 +178,13 @@ class Battery:
             freq_mins=freq_mins,
         )
 
-        assets = [self, epl.Spill()]
-
-        self.site = epl.Site(
-            assets=assets,
-            electricity_prices=electricity_prices,
-            electricity_carbon_intensities=electricity_carbon_intensities,
-        )
+        if electricity_prices is not None or electricity_carbon_intensities is not None:
+            assets = [self, epl.Spill()]
+            self.site = epl.Site(
+                assets=assets,
+                electricity_prices=electricity_prices,
+                electricity_carbon_intensities=electricity_carbon_intensities,
+            )
 
     def __repr__(self) -> str:
         """A string representation of self."""

@@ -483,9 +483,9 @@ class EVs:
 
     def __init__(
         self,
-        charge_events: list[list[int]] | np.ndarray | None = None,
-        chargers_power_mw: list[float] | None = None,
-        charge_events_capacity_mwh: typing.Sequence[float] | None = None,
+        charge_events: np.ndarray | list[list[int]],
+        chargers_power_mw: np.ndarray | list[float],
+        charge_events_capacity_mwh: np.ndarray | list[float],
         charge_event_efficiency: float = 0.9,
         charger_turndown: float = 0.1,
         name: str = "evs",
@@ -494,18 +494,6 @@ class EVs:
         freq_mins: int = defaults.freq_mins,
     ):
         """Initialize an electric vehicle asset model."""
-
-        #  TODO maybe remove this - not sure
-        if chargers_power_mw is None or charge_events is None:
-            ds = epl.data_generation.generate_random_ev_input_data(
-                48, n_chargers=3, charge_length=3, n_charge_events=12, seed=42
-            )
-            chargers_power_mw = ds["chargers_power_mw"]
-            charge_events_capacity_mwh = ds["charge_events_capacity_mwh"]
-            charge_events = ds["charge_events"]
-
-        assert chargers_power_mw is not None
-        assert charge_events_capacity_mwh is not None
 
         charger_cfgs = np.array(
             [
@@ -547,13 +535,14 @@ class EVs:
             freq_mins=freq_mins
         )
 
-        assets = [self, epl.Spill()]
 
-        self.site = epl.Site(
-            assets=assets,
-            electricity_prices=electricity_prices,
-            electricity_carbon_intensities=electricity_carbon_intensities,
-        )
+        if electricity_prices is not None or electricity_carbon_intensities is not None:
+            assets = [self, epl.Spill()]
+            self.site = epl.Site(
+                assets=assets,
+                electricity_prices=electricity_prices,
+                electricity_carbon_intensities=electricity_carbon_intensities,
+            )
 
         # self.site = epl.Site()
         # self.spill = epl.spill.Spill()
@@ -704,4 +693,8 @@ class EVs:
         self, results: "epl.SimulationResult", path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
-        return epl.plot.plot_evs(results, pathlib.Path(path))
+        return epl.plot.plot_evs(
+            results,
+            pathlib.Path(path),
+            asset_name=self.cfg.name
+        )

@@ -13,6 +13,35 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
+def repeat_to_match_length(a, b):
+    #  TODO unit test and move to utils
+    quotient, remainder = divmod(len(b), len(a))
+    return np.concatenate([np.tile(a, quotient), a[:remainder]])
+
+
+def validate_interval_data(assets, site, repeat_interval_data: bool = True):
+    if not repeat_interval_data:
+        for asset in assets:
+            if hasattr(asset.cfg, "interval_data"):
+                assert len(asset.cfg.interval_data.idx) == len(site.cfg.interval_data.idx)
+
+    else:
+        for asset in assets:
+            if hasattr(asset.cfg, "interval_data"):
+                if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
+
+                    idata = asset.cfg.interval_data.dict(exclude={"idx"})
+                    for name, data in idata.items():
+                        setattr(
+                            asset.cfg.interval_data,
+                            name,
+                            repeat_to_match_length(
+                                data,
+                                site.cfg.interval_data.idx,
+                            ),
+                        )
+
+
 class SiteIntervalData(pydantic.BaseModel):
     electricity_prices: np.ndarray | list[float] | float | None = None
     electricity_carbon_intensities: np.ndarray | list[float] | float | None = None
@@ -216,7 +245,7 @@ class Site:
 
     def __init__(
         self,
-        assets: list | None = None,
+        assets: list,
         electricity_prices: float | list[float] | np.ndarray | None = None,
         electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
         electric_load_mwh: float | list[float] | np.ndarray | None = None,
@@ -229,8 +258,6 @@ class Site:
         export_limit_mw: float = 10000,
     ):
         """Initialize a Site asset model."""
-        if assets is None:
-            assets = []
         self.assets = assets
 
         self.cfg = SiteConfig(
@@ -247,6 +274,8 @@ class Site:
             import_limit_mw=import_limit_mw,
             export_limit_mw=export_limit_mw,
         )
+
+        validate_interval_data(assets, self)
 
     def __repr__(self) -> str:
         """A string representation of self."""

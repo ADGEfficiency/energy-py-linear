@@ -15,12 +15,12 @@ def test_battery_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
     asset = epl.Battery(
         power_mw=2, capacity_mwh=4, electricity_prices=np.random.normal(100, 10, 10)
     )
-    results = asset.optimize()
+    simulation = asset.optimize()
 
     assert not (path / "battery.png").exists()
-    asset.plot(results, path=path)
+    asset.plot(simulation, path=path)
     assert (path / "battery.png").exists()
-    asset.plot(results, path=path / "battery-custom.png")
+    asset.plot(simulation, path=path / "battery-custom.png")
     assert (path / "battery-custom.png").exists()
 
 

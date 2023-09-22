@@ -14,24 +14,6 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
-def get_default_boiler_size(
-    freq: "epl.Freq",
-    high_temperature_load_mwh: np.ndarray,
-    low_temperature_load_mwh: np.ndarray,
-) -> float:
-    """Calculates the default boiler size based on site high and low temperature loads.
-
-    Args:
-        freq (epl.Freq):
-
-    Returns:
-        float: The default boiler size calculated from max high and low temperature loads.
-    """
-    return freq.mw_to_mwh(
-        max(high_temperature_load_mwh) + max(low_temperature_load_mwh)
-    )
-
-
 class CHPConfig(pydantic.BaseModel):
     """CHP configuration."""
 
@@ -116,40 +98,17 @@ class CHP(epl.Asset):
             freq_mins=freq_mins,
         )
 
-        #  need to create the site interval data ahead of time
-        #  because we need to size the boiler
-        #  we don't put all the interval data in here
-        site_idata = epl.assets.site.SiteIntervalData(
-            electricity_prices=electricity_prices,
-            electricity_carbon_intensities=electricity_carbon_intensities,
-            high_temperature_load_mwh=high_temperature_load_mwh,
-            low_temperature_load_mwh=low_temperature_load_mwh,
-        )
-
-        freq = epl.Freq(freq_mins)
-        assets = [
-            self,
-            epl.Spill(),
-            epl.Valve(),
-            epl.Boiler(
-                high_temperature_generation_max_mw=get_default_boiler_size(
-                    freq,
-                    site_idata.high_temperature_load_mwh,
-                    site_idata.low_temperature_load_mwh,
-                ),
-                high_temperature_efficiency_pct=defaults.default_boiler_efficiency_pct,
-            ),
-        ]
-
-        self.site = epl.Site(
-            assets=assets,
-            electricity_prices=electricity_prices,
-            electricity_carbon_intensities=electricity_carbon_intensities,
-            gas_prices=gas_prices,
-            high_temperature_load_mwh=high_temperature_load_mwh,
-            low_temperature_load_mwh=low_temperature_load_mwh,
-            low_temperature_generation_mwh=low_temperature_generation_mwh,
-        )
+        if electricity_prices is not None or electricity_carbon_intensities is not None:
+            assets = [self, epl.Spill(), epl.Valve(), epl.Boiler()]
+            self.site = epl.Site(
+                assets=assets,
+                electricity_prices=electricity_prices,
+                electricity_carbon_intensities=electricity_carbon_intensities,
+                gas_prices=gas_prices,
+                high_temperature_load_mwh=high_temperature_load_mwh,
+                low_temperature_load_mwh=low_temperature_load_mwh,
+                low_temperature_generation_mwh=low_temperature_generation_mwh,
+            )
 
     def __repr__(self) -> str:
         """A string representation of self."""

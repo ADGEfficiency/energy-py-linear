@@ -12,34 +12,6 @@ from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 
 
-def repeat_to_match_length(a, b):
-    #  TODO unit test and move to utils
-    quotient, remainder = divmod(len(b), len(a))
-    return np.concatenate([np.tile(a, quotient), a[:remainder]])
-
-
-def validate_interval_data(assets, site, repeat_interval_data: bool = True):
-
-    if not repeat_interval_data:
-        for asset in assets:
-            assert len(asset.cfg.interval_data.idx) == len(site.cfg.interval_data.idx)
-
-    else:
-        for asset in assets:
-            if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
-
-                idata = asset.cfg.interval_data.dict(exclude={"idx"})
-                for name, data in idata.items():
-                    setattr(
-                        asset.cfg.interval_data,
-                        name,
-                        repeat_to_match_length(
-                            data,
-                            site.cfg.interval_data.idx,
-                        ),
-                    )
-
-
 class RenewableGeneratorIntervalData(pydantic.BaseModel):
     electric_generation_mwh: float | list[float] | np.ndarray
     idx: list[int] | np.ndarray = pydantic.Field(default_factory=list)
@@ -113,16 +85,15 @@ class RenewableGenerator(epl.Asset):
             freq_mins=freq_mins,
         )
 
-        assets = [self]
+        if electricity_prices is not None or electricity_carbon_intensities is not None:
+            assets = [self]
 
-        self.site = epl.Site(
-            assets=assets,
-            electric_load_mwh=electric_load_mwh,
-            electricity_prices=electricity_prices,
-            electricity_carbon_intensities=electricity_carbon_intensities,
-        )
-
-        validate_interval_data(assets, self.site)
+            self.site = epl.Site(
+                assets=assets,
+                electric_load_mwh=electric_load_mwh,
+                electricity_prices=electricity_prices,
+                electricity_carbon_intensities=electricity_carbon_intensities,
+            )
 
     def __repr__(self) -> str:
         """A string representation of self."""
