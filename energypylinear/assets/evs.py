@@ -19,7 +19,8 @@ def validate_charge_events(
 ) -> None:
     """Helper used to handle charge events.
 
-    This is a bit of a smell - will probably be reworked once I see a way.
+    This is a bit of a smell - will probably be reworked once I see a way
+    to avoid the duplicate of the arrays and list version of the events.
     """
     assert charge_event_cfgs.shape[0] == charge_events.shape[1]
 
@@ -50,6 +51,8 @@ class EVsConfig(pydantic.BaseModel):
     charger_cfgs: np.ndarray
     spill_charger_cfgs: np.ndarray
     charge_event_cfgs: np.ndarray
+    charge_events: np.ndarray
+    freq_mins: int
 
     class Config:
         """pydantic.BaseModel configuration."""
@@ -61,6 +64,14 @@ class EVsConfig(pydantic.BaseModel):
         """Ensure we can identify this asset correctly."""
         assert "evs" in name
         return name
+
+    @pydantic.validator("charge_events")
+    def validate_charge_events(cls, charge_events, values):
+        validate_charge_events(
+            values['charge_event_cfgs'],
+            charge_events
+        )
+        return charge_events
 
 
 class EVOneInterval(AssetOneInterval):
@@ -361,7 +372,7 @@ def constrain_charge_event_electricity_balance(
 ) -> None:
     """Constrain the electricity balance across the battery.  This is within one interval.
 
-    This constrant is applied once per interval."""
+    This constraint is applied once per interval."""
     for charge_event_idx, charge_event_cfg in enumerate(
         evs_array.cfg.charge_event_cfgs
     ):
@@ -405,7 +416,7 @@ def constrain_connection_charge_events_between_intervals(
 
     This uses data from two adjacent intervals.
 
-    This constrant is conditionally applied once per interval."""
+    This constraint is conditionally applied once per interval."""
     if i == 0:
         return None
 
@@ -428,7 +439,7 @@ def constrain_initial_final_charge(
     """Constrain state of charge at the beginning and end of the simulation."""
 
     for charge_event_idx, charge_event_cfg in enumerate(charge_event_cfgs):
-        #  constrain the intial soc
+        #  constrain the initial soc
         optimizer.constrain(evs[0].initial_soc_mwh[0, charge_event_idx] == 0)
 
         #  constrain the final soc
@@ -464,15 +475,19 @@ class EVs:
 
     def __init__(
         self,
+        charge_events: list[list[int]] | np.ndarray,
         chargers_power_mw: list[float] | None = None,
         charge_events_capacity_mwh: typing.Sequence[float] | None = None,
         charge_event_efficiency: float = 0.9,
         charger_turndown: float = 0.1,
         name: str = "evs",
-        charge_events: list | None = None,
+        electricity_prices: float | list[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        freq_mins: int = defaults.freq_mins,
     ):
         """Initialize an electric vehicle asset model."""
 
+        #  TODO maybe remove this - not sure
         if chargers_power_mw is None:
             ds = epl.data_generation.generate_random_ev_input_data(
                 48, n_chargers=3, charge_length=3, n_charge_events=12, seed=42
@@ -519,24 +534,34 @@ class EVs:
             charger_cfgs=charger_cfgs,
             spill_charger_cfgs=spill_charger_config,
             charge_event_cfgs=charge_event_cfgs,
+            # transpose charge_events to have time as first dimension
+            charge_events=np.array(charge_events).T,
+            freq_mins=freq_mins
         )
 
-        self.site = epl.Site()
-        self.spill = epl.spill.Spill()
+        assets = [self, epl.Spill()]
 
-        #  this feels a bit wierd, because `charge_events` is interval data
-        #  interval data is usually input with the `asset.optimize()` call
-        #  we need this shortcut to get the site API working
-        if charge_events is not None:
-            # transpose charge_events to have time as first dimension
-            # equivilant to the batch dimension in neural nets
-            self.charge_events: np.ndarray | None = np.array(charge_events).T
-            validate_charge_events(
-                self.cfg.charge_event_cfgs,
-                self.charge_events
-            )
-        else:
-            self.charge_events = None
+        self.site = epl.Site(
+            assets=assets,
+            electricity_prices=electricity_prices,
+            electricity_carbon_intensities=electricity_carbon_intensities,
+        )
+
+        # self.site = epl.Site()
+        # self.spill = epl.spill.Spill()
+
+        # #  this feels a bit weird, because `charge_events` is interval data
+        # #  interval data is usually input with the `asset.optimize()` call
+        # #  we need this shortcut to get the site API working
+        # if charge_events is not None:
+        #     # equivalent to the batch dimension in neural nets
+        #     self.charge_events: np.ndarray | None = np.array(charge_events).T
+        #     validate_charge_events(
+        #         self.cfg.charge_event_cfgs,
+        #         self.charge_events
+        #     )
+        # else:
+        #     self.charge_events = None
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -550,14 +575,14 @@ class EVs:
         assert isinstance(self.cfg.charge_event_cfgs, np.ndarray)
         assert isinstance(self.cfg.charger_cfgs, np.ndarray)
         assert isinstance(self.cfg.spill_charger_cfgs, np.ndarray)
-        assert isinstance(self.charge_events, np.ndarray)
+        assert isinstance(self.cfg.charge_events, np.ndarray)
 
         evs, evs_array = evs_one_interval(
             optimizer,
             self.cfg,
             self.cfg.charger_cfgs,
             self.cfg.charge_event_cfgs,
-            self.charge_events,
+            self.cfg.charge_events,
             i,
             freq,
             asset_name=self.cfg.name,
@@ -568,7 +593,7 @@ class EVs:
             self.cfg,
             self.cfg.spill_charger_cfgs,
             self.cfg.charge_event_cfgs,
-            self.charge_events,
+            self.cfg.charge_events,
             i,
             freq,
             asset_name=self.cfg.name,
@@ -583,19 +608,18 @@ class EVs:
         self,
         optimizer: Optimizer,
         ivars: "epl.interval_data.IntervalVars",
-        interval_data: "epl.IntervalData",
         i: int,
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
         """Constrain EVs dispatch within a single interval"""
 
-        assert self.charge_events is not None
+        assert self.cfg.charge_events is not None
 
         constrain_charge_discharge_min_max(
             optimizer,
             ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
-            self.charge_events,
+            self.cfg.charge_events,
             freq,
             self.cfg.charger_cfgs,
             self.cfg.charge_event_cfgs,
@@ -606,7 +630,7 @@ class EVs:
         constrain_charge_discharge_min_max(
             optimizer,
             ivars.filter_evs_array(is_spill=True, i=i, asset_name=self.cfg.name),
-            self.charge_events,
+            self.cfg.charge_events,
             freq,
             self.cfg.spill_charger_cfgs,
             self.cfg.charge_event_cfgs,
@@ -635,7 +659,6 @@ class EVs:
         self,
         optimizer: Optimizer,
         ivars: "epl.interval_data.IntervalVars",
-        interval_data: "epl.IntervalData",
     ) -> None:
         """Constrain EVs after all interval asset models are created."""
         assert isinstance(self.cfg.charge_event_cfgs, np.ndarray)
@@ -647,11 +670,6 @@ class EVs:
 
     def optimize(
         self,
-        electricity_prices: list[float] | np.ndarray,
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
-        gas_prices: float | list[float] | np.ndarray | None = None,
-        charge_events: list[list[int]] | np.ndarray | None = None,
-        freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
@@ -681,20 +699,13 @@ class EVs:
         Returns:
             epl.results.SimulationResult
         """
-        self.optimizer = Optimizer()
-        freq = Freq(freq_mins)
-
+        return self.site.optimize(
+            freq_mins=self.cfg.freq_mins,
+            objective=objective,
+            flags=flags,
+            verbose=verbose,
+        )
         """
-        complexity here is to be able to accept `charge_events` as an input in either the class init or in optimize()
-
-        - want class init during site api,
-        - want optimize during asset api
-        """
-        if self.charge_events is None:
-            assert charge_events is not None
-            self.charge_events = np.array(charge_events).T
-            validate_charge_events(self.cfg.charge_event_cfgs, self.charge_events)
-
         self.interval_data = epl.interval_data.IntervalData(
             electricity_prices=electricity_prices,
             gas_prices=gas_prices,
@@ -761,6 +772,7 @@ class EVs:
             flags=flags,
             verbose=verbose,
         )
+        """
 
     def plot(
         self, results: "epl.results.SimulationResult", path: pathlib.Path | str

@@ -65,6 +65,7 @@ class RenewableGeneratorConfig(pydantic.BaseModel):
     name: str
     electric_generation_lower_bound_pct: float = pydantic.Field(..., ge=0, le=1)
     interval_data: RenewableGeneratorIntervalData
+    freq_mins: int
 
 
 class RenewableGeneratorOneInterval(AssetOneInterval):

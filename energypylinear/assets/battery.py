@@ -14,6 +14,19 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
+def setup_initial_final_charge(
+    initial_charge_mwh: float, final_charge_mwh: float | None, capacity_mwh: float
+) -> tuple[float, float]:
+    """Processes the battery config for initial and final charge."""
+    initial_charge_mwh = min(initial_charge_mwh, capacity_mwh)
+    final_charge_mwh = (
+        initial_charge_mwh
+        if final_charge_mwh is None
+        else min(final_charge_mwh, capacity_mwh)
+    )
+    return initial_charge_mwh, final_charge_mwh
+
+
 class BatteryConfig(pydantic.BaseModel):
     """Battery asset configuration."""
 
@@ -23,6 +36,7 @@ class BatteryConfig(pydantic.BaseModel):
     efficiency_pct: float
     initial_charge_mwh: float = 0.0
     final_charge_mwh: float | None = 0.0
+    freq_mins: int
 
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
@@ -136,54 +150,41 @@ class Battery:
         self,
         power_mw: float = 2.0,
         capacity_mwh: float = 4.0,
-        efficiency: float = 0.9,
+        efficiency_pct: float = 0.9,
         name: str = "battery",
         electricity_prices: float | list[float] | np.ndarray | None = None,
         electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
-        gas_prices: float | list[float] | np.ndarray | None = None,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: float | None = None,
         freq_mins: int = defaults.freq_mins,
     ):
         """Initialize a Battery asset model."""
+
+        initial_charge_mwh, final_charge_mwh = setup_initial_final_charge(
+            initial_charge_mwh, final_charge_mwh, capacity_mwh
+        )
+
         self.cfg = BatteryConfig(
             name=name,
             power_mw=power_mw,
             capacity_mwh=capacity_mwh,
-            efficiency_pct=efficiency,
+            efficiency_pct=efficiency_pct,
             initial_charge_mwh=initial_charge_mwh,
             final_charge_mwh=final_charge_mwh,
+            freq_mins=freq_mins,
         )
 
-        freq = epl.Freq(freq_mins)
         assets = [self, epl.Spill()]
 
         self.site = epl.Site(
             assets=assets,
             electricity_prices=electricity_prices,
             electricity_carbon_intensities=electricity_carbon_intensities,
-            gas_prices=gas_prices,
-            high_temperature_load_mwh=high_temperature_load_mwh,
-            low_temperature_load_mwh=low_temperature_load_mwh,
-            low_temperature_generation_mwh=low_temperature_generation_mwh,
         )
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        return f"<energypylinear.Battery power: {self.cfg.power_mw} MW, capacity: {self.cfg.capacity_mwh} MWh>"
-
-    def setup_initial_final_charge(
-        self, initial_charge_mwh: float, final_charge_mwh: float | None
-    ) -> None:
-        """Processes the options for initial and final charge."""
-        #  TODO move off the asset
-        #  TODO move
-        self.cfg.initial_charge_mwh = min(initial_charge_mwh, self.cfg.capacity_mwh)
-        self.cfg.final_charge_mwh = (
-            self.cfg.initial_charge_mwh
-            if final_charge_mwh is None
-            else min(final_charge_mwh, self.cfg.capacity_mwh)
-        )
+        return f"<energypylinear.Battery {self.cfg.power_mw=} {self.cfg.capacity_mwh=}>"
 
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags
@@ -244,14 +245,12 @@ class Battery:
             BatteryOneInterval, i=None, asset_name=self.cfg.name
         )
         assert isinstance(all_batteries, list)
-        # assert type(all_batteries) == list[list[BatteryOneInterval]]
         constrain_connection_batteries_between_intervals(optimizer, all_batteries)
 
     def constrain_after_intervals(
         self,
         optimizer: Optimizer,
         ivars: "epl.interval_data.IntervalVars",
-        interval_data: "epl.IntervalData",
     ) -> None:
         """Constrain dispatch after all interval asset models are created."""
         initial = ivars.filter_objective_variables(
@@ -265,9 +264,9 @@ class Battery:
     def optimize(
         self,
         objective: str = "price",
-        flags: Flags = Flags(),
         verbose: bool = True,
-    ) -> "epl.results.SimulationResult":
+        flags: Flags = Flags(),
+    ) -> "epl.SimulationResult":
         """Optimize the asset dispatch using a mixed-integer linear program.
 
         Args:
@@ -284,44 +283,11 @@ class Battery:
         Returns:
             epl.results.SimulationResult
         """
-        self.optimizer = Optimizer(verbose=verbose)
-        freq = Freq(freq_mins)
-        interval_data = epl.interval_data.IntervalData(
-            electricity_prices=electricity_prices,
-            gas_prices=gas_prices,
-            electricity_carbon_intensities=electricity_carbon_intensities,
-        )
-        self.site = epl.Site()
-        self.spill = epl.spill.Spill()
-
-        self.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
-
-        ivars = epl.interval_data.IntervalVars()
-        for i in interval_data.idx:
-            ivars.append(self.site.one_interval(self.optimizer, self.site.cfg, i, freq))
-            ivars.append(
-                [
-                    self.one_interval(self.optimizer, i, freq, flags),
-                    self.spill.one_interval(self.optimizer, i, freq),
-                ]
-            )
-
-            self.site.constrain_within_interval(self.optimizer, ivars, interval_data, i)
-            self.constrain_within_interval(
-                self.optimizer, ivars, interval_data, i, freq, flags=flags
-            )
-
-        self.constrain_after_intervals(self.optimizer, ivars, interval_data)
-
-        assert len(interval_data.idx) == len(ivars.objective_variables)
-
-        objective_fn = epl.objectives[objective]
-        self.optimizer.objective(objective_fn(self.optimizer, ivars, interval_data))
-        status = self.optimizer.solve(verbose=verbose)
-
-        self.interval_data = interval_data
-        return epl.results.extract_results(
-            interval_data, ivars, feasible=status.feasible, verbose=verbose
+        return self.site.optimize(
+            freq_mins=self.cfg.freq_mins,
+            objective=objective,
+            flags=flags,
+            verbose=verbose,
         )
 
     def plot(
