@@ -96,7 +96,7 @@ class CHP(epl.Asset):
         electric_power_min_mw: float = 0.0,
         high_temperature_efficiency_pct: float = 0.0,
         low_temperature_efficiency_pct: float = 0.0,
-        name: str = "generator",
+        name: str = "chp",
         freq_mins: int = defaults.freq_mins,
         electricity_prices: float | list[float] | np.ndarray | None = None,
         electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,

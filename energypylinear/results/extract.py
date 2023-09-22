@@ -463,7 +463,7 @@ def extract_results(
     check_array_lengths(lp_results)
     results = pd.DataFrame(lp_results)
 
-    #  add total columns
+    #  add total columns to the results df
     total_mapper = add_totals(results)
 
     if verbose:
@@ -471,9 +471,14 @@ def extract_results(
     else:
         logger.debug("total_mapper", mapper=total_mapper)
 
-
     simulation_schema.validate(results)
-    check_results(total_mapper, assets, results, verbose=verbose)
+    check_results(
+        results,
+        total_mapper=total_mapper,
+        verbose=verbose,
+        check_valve=any([isinstance(a, epl.assets.valve.Valve) for a in assets])    ,
+        check_evs=any([isinstance(a, epl.assets.evs.EVs) for a in assets])
+    )
     spill_occured = warn_spills(results, flags, verbose=verbose)
 
     return SimulationResult(

@@ -11,8 +11,6 @@ from energypylinear import (
     results,
 )
 from energypylinear.accounting import get_accounts
-
-# from energypylinear.assets import asset, battery, chp, site, spill, valve
 from energypylinear.assets.asset import Asset
 from energypylinear.assets.battery import Battery
 from energypylinear.assets.boiler import Boiler
@@ -28,6 +26,8 @@ from energypylinear.freq import Freq
 from energypylinear.interval_data import IntervalData, IntervalVars
 from energypylinear.objectives import objectives
 from energypylinear.optimizer import Optimizer
+from energypylinear.results.checks import check_results
+from energypylinear.results.extract import SimulationResult
 
 __all__ = [
     "Battery",
@@ -40,6 +40,7 @@ __all__ = [
     "IntervalData",
     "IntervalVars",
     "Optimizer",
+    "SimulationResult",
     "Site",
     "get_accounts",
     "objectives",

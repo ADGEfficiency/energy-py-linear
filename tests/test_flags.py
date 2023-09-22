@@ -8,21 +8,21 @@ from energypylinear.flags import Flags
 def test_flags() -> None:
     """Test that we can correctly use flags in our assets."""
 
-    asset = epl.battery.Battery(
+    asset = epl.Battery(
         power_mw=2.0,
         capacity_mwh=4.0,
+        electricity_prices=np.random.normal(10, 5, 100),
     )
     asset.optimize(
-        electricity_prices=np.random.normal(10, 5, 100),
         flags=Flags(include_charge_discharge_binary_variables=True),
     )
 
-    evs = epl.EVs()
-    evs.optimize(
+    evs = epl.EVs(
         electricity_prices=np.random.normal(10, 5, 48),
+    )
+    evs.optimize(
         flags=Flags(limit_charge_variables_to_valid_events=True),
     )
     evs.optimize(
-        electricity_prices=np.random.normal(10, 5, 48),
         flags=Flags(limit_charge_variables_to_valid_events=False),
     )

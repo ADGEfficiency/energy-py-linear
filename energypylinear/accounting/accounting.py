@@ -87,12 +87,12 @@ class Accounts(Account):
 
 
 def get_one_gas_account(
-    interval_data: "epl.interval_data.IntervalData",
     results: pd.DataFrame,
+    price_results: pd.DataFrame,
 ) -> GasAccount:
-    """Calculate a single gas account from interval data and results."""
+    """Calculate a single gas account."""
     return GasAccount(
-        cost=(interval_data.gas_prices * results["total-gas_consumption_mwh"]).sum(),
+        cost=(price_results["gas_prices"] * results["total-gas_consumption_mwh"]).sum(),
         emissions=(
             defaults.gas_carbon_intensity * results["total-gas_consumption_mwh"]
         ).sum(),
@@ -100,22 +100,24 @@ def get_one_gas_account(
 
 
 def get_one_electricity_account(
-    interval_data: "epl.interval_data.IntervalData",
     results: pd.DataFrame,
+    price_results: pd.DataFrame,
 ) -> ElectricityAccount:
-    """Calculate a single electricity account from interval data and results."""
+    """Calculate a single electricity account."""
     import_cost = (
-        interval_data.electricity_prices * results["site-import_power_mwh"]
+        price_results["electricity_prices"] * results["site-import_power_mwh"]
     ).sum()
     export_cost = -(
-        interval_data.electricity_prices * results["site-export_power_mwh"]
+        price_results["electricity_prices"] * results["site-export_power_mwh"]
     ).sum()
 
     import_emissions = (
-        interval_data.electricity_carbon_intensities * results["site-import_power_mwh"]
+        price_results["electricity_carbon_intensities"]
+        * results["site-import_power_mwh"]
     ).sum()
     export_emissions = -(
-        interval_data.electricity_carbon_intensities * results["site-export_power_mwh"]
+        price_results["electricity_carbon_intensities"]
+        * results["site-export_power_mwh"]
     ).sum()
 
     return ElectricityAccount(
@@ -129,29 +131,28 @@ def get_one_electricity_account(
 
 
 def get_accounts(
-    interval_data: "epl.interval_data.IntervalData",
-    simulation: pd.DataFrame,
+    results: pd.DataFrame,
+    price_results: pd.DataFrame | None = None,
     validate: bool = True,
     verbose: bool = True,
 ) -> Accounts:
-    """
-    Create one pair of gas and electricity accounts.
-    for given of interval data and simulation results.
-
-    `interval_data` gives the prices ($/MWh) and carbon intensities (tC/MWh) used
-    in the calculation of cost and carbon emissions.
-
-    `simulation` gives the energy quantities (MWh) used in the
-    calculation of cost and carbon emissions.
+    """Create a pair of gas and electricity accounts.
 
     Args:
-        interval_data: holds prices and carbon intensities.
-        simulation: simulation results.
+        results: (pd.DataFrame)
+            Simulation results used for accounts.
+        price_results: (pd.DataFrame | None)
+            Optional source of electricity & gas prices or carbon intensities.
     """
+    if price_results is None:
+        price_results = results
+
     if validate:
-        epl.results.validate_results(interval_data, simulation, verbose=verbose)
-    electricity = get_one_electricity_account(interval_data, simulation)
-    gas = get_one_gas_account(interval_data, simulation)
+        epl.check_results(results, verbose=verbose)
+        epl.check_results(price_results, verbose=verbose)
+
+    electricity = get_one_electricity_account(results, price_results)
+    gas = get_one_gas_account(results, price_results)
 
     return Accounts(
         electricity=electricity,

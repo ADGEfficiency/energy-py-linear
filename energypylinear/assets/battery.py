@@ -142,8 +142,12 @@ class Battery:
     Args:
         power_mw: the maximum power output of the battery in mega-watts, used for both charge and discharge.
         capacity_mwh: battery capacity in mega-watt hours.
-        efficiency: round-trip efficiency of the battery, with a default value of 90% efficient.
+        efficiency_pct: round-trip efficiency of the battery, with a default value of 90% efficient.
         name: the asset name.
+        electricity_prices: the price of electricity in each interval.
+        electricity_carbon_intensities: carbon intensity of electricity in each interval.
+        initial_charge_mwh: initial charge state of the battery in mega-watt hours.
+        final_charge_mwh: final charge state of the battery in mega-watt hours.
     """
 
     def __init__(
@@ -158,7 +162,7 @@ class Battery:
         final_charge_mwh: float | None = None,
         freq_mins: int = defaults.freq_mins,
     ):
-        """Initialize a Battery asset model."""
+        """Initializes the asset."""
 
         initial_charge_mwh, final_charge_mwh = setup_initial_final_charge(
             initial_charge_mwh, final_charge_mwh, capacity_mwh
@@ -189,7 +193,7 @@ class Battery:
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags
     ) -> BatteryOneInterval:
-        """Creates asset data for a single interval."""
+        """Generate linear program data for one interval."""
         return BatteryOneInterval(
             cfg=self.cfg,
             electric_charge_mwh=optimizer.continuous(
@@ -231,7 +235,7 @@ class Battery:
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
-        """Constrain asset dispatch within a single interval."""
+        """Constrain asset within an interval."""
         battery = ivars.filter_objective_variables(
             BatteryOneInterval, i=-1, asset_name=self.cfg.name
         )[0][0]
@@ -252,7 +256,7 @@ class Battery:
         optimizer: Optimizer,
         ivars: "epl.interval_data.IntervalVars",
     ) -> None:
-        """Constrain dispatch after all interval asset models are created."""
+        """Constrain asset after all intervals."""
         initial = ivars.filter_objective_variables(
             BatteryOneInterval, i=0, asset_name=self.cfg.name
         )[0][0]
@@ -267,15 +271,10 @@ class Battery:
         verbose: bool = True,
         flags: Flags = Flags(),
     ) -> "epl.SimulationResult":
-        """Optimize the asset dispatch using a mixed-integer linear program.
+        """Optimize the asset.
 
         Args:
-            electricity_prices: the price of electricity in each interval.
-            gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
-            electricity_carbon_intensities: carbon intensity of electricity in each interval.
             freq_mins: the size of an interval in minutes.
-            initial_charge_mwh: initial charge state of the battery in mega-watt hours.
-            final_charge_mwh: final charge state of the battery in mega-watt hours.
             objective: the optimization objective - either "price" or "carbon".
             flags: boolean flags to change simulation and results behaviour.
             verbose: level of printing.
@@ -290,8 +289,6 @@ class Battery:
             verbose=verbose,
         )
 
-    def plot(
-        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
-    ) -> None:
+    def plot(self, results: "epl.SimulationResult", path: pathlib.Path | str) -> None:
         """Plot simulation results."""
         return epl.plot.plot_battery(results, pathlib.Path(path))

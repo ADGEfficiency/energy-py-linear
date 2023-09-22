@@ -57,7 +57,7 @@ def check_electricity_balance(
 
 
 def check_high_temperature_heat_balance(
-    total_mapper: dict, simulation: pd.DataFrame, verbose: bool = True
+    simulation: pd.DataFrame, total_mapper: dict | None = None, verbose: bool = True
 ) -> None:
     """Checks the high temperature heat balance."""
     inp = simulation["total-high_temperature_generation_mwh"]
@@ -71,9 +71,10 @@ def check_high_temperature_heat_balance(
             "balance": balance,
         }
     )
-    for key in ["high_temperature_generation_mwh", "high_temperature_load_mwh"]:
-        for col in total_mapper[key]:
-            dbg[col] = simulation[col]
+    if total_mapper:
+        for key in ["high_temperature_generation_mwh", "high_temperature_load_mwh"]:
+            for col in total_mapper[key]:
+                dbg[col] = simulation[col]
 
     if verbose:
         logger.info(
@@ -83,7 +84,7 @@ def check_high_temperature_heat_balance(
 
 
 def check_low_temperature_heat_balance(
-    total_mapper: dict, simulation: pd.DataFrame, verbose: bool = True
+    simulation: pd.DataFrame, total_mapper: dict | None = None, verbose: bool = True
 ) -> None:
     """Checks the high temperature heat balance."""
     inp = simulation["total-low_temperature_generation_mwh"]
@@ -97,9 +98,10 @@ def check_low_temperature_heat_balance(
             "balance": balance,
         }
     )
-    for key in ["low_temperature_generation_mwh", "low_temperature_load_mwh"]:
-        for col in total_mapper[key]:
-            dbg[col] = simulation[col]
+    if total_mapper:
+        for key in ["low_temperature_generation_mwh", "low_temperature_load_mwh"]:
+            for col in total_mapper[key]:
+                dbg[col] = simulation[col]
 
     if verbose:
         logger.info(
@@ -109,7 +111,11 @@ def check_low_temperature_heat_balance(
 
 
 def check_results(
-    total_mapper, assets: list, results: pd.DataFrame, verbose: bool = True
+    results: pd.DataFrame,
+    total_mapper: dict | None = None,
+    verbose: bool = True,
+    check_valve: bool = False,
+    check_evs: bool = False,
 ) -> None:
     """Check that our simulation results make sense.
 
@@ -118,18 +124,25 @@ def check_results(
         simulation: simulation results.
     """
     check_electricity_balance(results, verbose)
-    check_high_temperature_heat_balance(total_mapper, results, verbose)
-    check_low_temperature_heat_balance(total_mapper, results, verbose)
+    check_high_temperature_heat_balance(
+        results,
+        total_mapper,
+        verbose,
+    )
+    check_low_temperature_heat_balance(
+        results,
+        total_mapper,
+        verbose,
+    )
 
     #  TODO could be refactored into `check_valve_heat_balance`
-    if any([isinstance(a, epl.assets.valve.Valve) for a in assets]):
+    if check_valve:
         assert all(
             results["valve-low_temperature_generation_mwh"]
             == results["valve-high_temperature_load_mwh"]
         )
 
-    if any([isinstance(a, epl.assets.evs.EVs) for a in assets]):
-
+    if check_valve:
         #  TODO replace with a check on SOC
 
         # for charge_event_idx, charge_event_mwh in enumerate(

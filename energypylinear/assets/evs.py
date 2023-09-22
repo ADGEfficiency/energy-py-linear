@@ -467,15 +467,23 @@ class EVs:
         charger_turndown:
             minimum charger output as a percent of the
             charger size in mega-watts.
-        name
-        charge_events:
-            An optional 2D array of charge events.  The epl.Site API
-            makes use of this to pass in charge events from epl.Site.optimize.
+        name: asset name
+        electricity_prices - the price of electricity in each interval.
+        electricity_carbon_intensities - carbon intensity of electricity in each interval.
+        charge_events: 2D matrix representing when a charge event is active.
+            Shape is (n_charge_events, n_timesteps).
+            A charge events matrix for 4 charge events over 5 intervals:
+            charge_events = [
+                [1, 0, 0, 0, 0],
+                [0, 1, 1, 1, 0],
+                [0, 0, 0, 1, 1],
+                [0, 1, 0, 0, 0],
+            ]
     """
 
     def __init__(
         self,
-        charge_events: list[list[int]] | np.ndarray,
+        charge_events: list[list[int]] | np.ndarray | None = None,
         chargers_power_mw: list[float] | None = None,
         charge_events_capacity_mwh: typing.Sequence[float] | None = None,
         charge_event_efficiency: float = 0.9,
@@ -488,11 +496,11 @@ class EVs:
         """Initialize an electric vehicle asset model."""
 
         #  TODO maybe remove this - not sure
-        if chargers_power_mw is None:
+        if chargers_power_mw is None or charge_events is None:
             ds = epl.data_generation.generate_random_ev_input_data(
                 48, n_chargers=3, charge_length=3, n_charge_events=12, seed=42
             )
-            chargers_power_mw = ds["charger_mws"]
+            chargers_power_mw = ds["chargers_power_mw"]
             charge_events_capacity_mwh = ds["charge_events_capacity_mwh"]
             charge_events = ds["charge_events"]
 
@@ -677,20 +685,6 @@ class EVs:
         """Optimize the EVs's dispatch using a mixed-integer linear program.
 
         Args:
-            electricity_prices - the price of electricity in each interval.
-            gas_prices - the prices of natural gas, used in CHP and boilers in each interval.
-            electricity_carbon_intensities - carbon intensity of electricity in each interval.
-            charge_events: 2D matrix representing when a charge event is active.
-                Shape is (n_charge_events, n_timesteps).
-                A charge events matrix for 4 charge events over 5 intervals.
-                ```
-                charge_events = [
-                    [1, 0, 0, 0, 0],
-                    [0, 1, 1, 1, 0],
-                    [0, 0, 0, 1, 1],
-                    [0, 1, 0, 0, 0],
-                ]
-                ```
 
             freq_mins - the size of an interval in minutes.
             objective - the optimization objective - either "price" or "carbon".
@@ -705,77 +699,9 @@ class EVs:
             flags=flags,
             verbose=verbose,
         )
-        """
-        self.interval_data = epl.interval_data.IntervalData(
-            electricity_prices=electricity_prices,
-            gas_prices=gas_prices,
-            electricity_carbon_intensities=electricity_carbon_intensities,
-            evs=epl.interval_data.EVIntervalData(
-                charge_events=self.charge_events,
-                charge_events_capacity_mwh=[
-                    cfg.capacity_mwh for cfg in self.cfg.charge_event_cfgs
-                ],
-            ),
-        )
-
-        ivars = epl.interval_data.IntervalVars()
-        for i in self.interval_data.idx:
-            ivars.append(self.site.one_interval(self.optimizer, self.site.cfg, i, freq))
-            assert isinstance(self.charge_events, np.ndarray)
-            evs, evs_array, spill_evs, spill_evs_array = self.one_interval(
-                self.optimizer,
-                i,
-                freq,
-                flags=flags,
-            )
-
-            #  this is a bit confusing
-            #  ivars has special logic for append
-            #  the EVsArrayOneInterval deals with them separately
-            ivars.append(evs_array)
-            ivars.append(spill_evs_array)
-            ivars.append(
-                [
-                    *evs,
-                    *spill_evs,
-                    self.spill.one_interval(self.optimizer, i, freq),
-                ]
-            )
-
-            self.site.constrain_within_interval(
-                self.optimizer, ivars, self.interval_data, i
-            )
-
-            self.constrain_within_interval(
-                self.optimizer, ivars, self.interval_data, i, freq=freq, flags=flags
-            )
-
-        assert isinstance(self.charge_events, np.ndarray)
-        assert isinstance(self.cfg.charger_cfgs, np.ndarray)
-        assert isinstance(self.cfg.spill_charger_cfgs, np.ndarray)
-        self.constrain_after_intervals(
-            self.optimizer,
-            ivars,
-            self.interval_data,
-        )
-
-        objective_fn = epl.objectives[objective]
-        self.optimizer.objective(
-            objective_fn(self.optimizer, ivars, self.interval_data)
-        )
-
-        status = self.optimizer.solve(verbose=verbose)
-        return epl.results.extract_results(
-            self.interval_data,
-            ivars,
-            feasible=status.feasible,
-            flags=flags,
-            verbose=verbose,
-        )
-        """
 
     def plot(
-        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
+        self, results: "epl.SimulationResult", path: pathlib.Path | str
     ) -> None:
         """Plot simulation results."""
         return epl.plot.plot_evs(results, pathlib.Path(path))

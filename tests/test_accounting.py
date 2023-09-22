@@ -27,14 +27,12 @@ def test_accounting_actuals() -> None:
             "load-high_temperature_load_mwh": [0, 0, 0],
             "load-low_temperature_load_mwh": [0, 0, 0],
             "load-low_temperature_generation_mwh": [0, 0, 0],
+            "electricity_prices": [100, 200, -300],
+            "gas_prices": 15,
+            "electricity_carbon_intensities": 0.5,
         }
     )
-    actuals_data = epl.interval_data.IntervalData(
-        electricity_prices=[100, 200, -300],
-        gas_prices=15,
-        electricity_carbon_intensities=0.5,
-    )
-    actuals = epl.accounting.get_accounts(actuals_data, results, validate=True)
+    actuals = epl.accounting.get_accounts(results, validate=True)
 
     assert actuals.electricity.import_cost == 100 * 100 + 200 * 50
     assert actuals.electricity.export_cost == -20 * -300
@@ -72,18 +70,26 @@ def test_accounting_forecasts() -> None:
             "total-electric_load_mwh": [20, 30, 40],
         }
     )
-    actuals_data = epl.interval_data.IntervalData(
-        electricity_prices=[100, 200, -300],
-        gas_prices=15,
-        electricity_carbon_intensities=0.5,
+    price_results_actuals = pd.DataFrame(
+        {
+            "electricity_prices": [100, 200, -300],
+            "gas_prices": 15,
+            "electricity_carbon_intensities": 0.5,
+        }
     )
-    forecasts_data = epl.interval_data.IntervalData(
-        electricity_prices=[200, -100, 100],
-        gas_prices=10,
-        electricity_carbon_intensities=0.4,
+    price_results_forecasts = pd.DataFrame(
+        {
+            "electricity_prices": [200, -100, 100],
+            "gas_prices": 10,
+            "electricity_carbon_intensities": 0.4,
+        }
     )
-    actuals = epl.accounting.get_accounts(actuals_data, results, validate=False)
-    forecasts = epl.accounting.get_accounts(forecasts_data, results, validate=False)
+    actuals = epl.accounting.get_accounts(
+        results, price_results_actuals, validate=False
+    )
+    forecasts = epl.accounting.get_accounts(
+        results, price_results_forecasts, validate=False
+    )
 
     assert forecasts.electricity.import_cost == 200 * 100 + -100 * 50
     assert forecasts.electricity.export_cost == -20 * 100
