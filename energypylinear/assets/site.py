@@ -62,14 +62,14 @@ class SiteIntervalData(pydantic.BaseModel):
 
         fields = list(cls.__fields__.keys())
         fields.remove("idx")
-        if values["electricity_prices"] is not None:
+        if values.get("electricity_prices") is not None:
             values["idx"] = np.arange(len(values["electricity_prices"]))
             values["electricity_prices"] = np.atleast_1d(
                 np.array(values["electricity_prices"])
             )
             fields.remove("electricity_prices")
 
-        elif values["electricity_carbon_intensities"] is not None:
+        elif values.get("electricity_carbon_intensities") is not None:
             values["idx"] = np.arange(len(values["electricity_carbon_intensities"]))
             values["electricity_carbon_intensities"] = np.atleast_1d(
                 np.array(values["electricity_carbon_intensities"])
@@ -435,4 +435,5 @@ class Site:
             ivars,
             feasible=status.feasible,
             verbose=verbose,
+            flags=flags
         )

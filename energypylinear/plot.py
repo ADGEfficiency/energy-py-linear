@@ -321,7 +321,7 @@ def plot_heat_pump(
     results["index"] = np.arange(results.shape[0]).tolist()
 
     for col in [
-        "load-high_temperature_load_mwh",
+        f"{simulation.site.cfg.name}-high_temperature_load_mwh",
         f"{asset_name}-high_temperature_generation_mwh",
     ]:
         results.plot(ax=axes[0], x="index", y=col)
@@ -334,8 +334,8 @@ def plot_heat_pump(
 
     out_cols = [
         "spill-low_temperature_load_mwh",
-        "load-low_temperature_load_mwh",
-        "heat-pump-low_temperature_load_mwh",
+        f"{simulation.site.cfg.name}-low_temperature_load_mwh",
+        f"{asset_name}-low_temperature_load_mwh",
     ]
     neg_bottom = np.zeros_like(results["index"]).astype(float)
     width = 0.3
@@ -353,7 +353,7 @@ def plot_heat_pump(
 
     bottom = np.zeros_like(results["index"]).astype(float)
     in_cols = [
-        "load-low_temperature_generation_mwh",
+        f"{simulation.site.cfg.name}-low_temperature_generation_mwh",
         "spill-low_temperature_generation_mwh",
         "valve-low_temperature_generation_mwh",
     ]

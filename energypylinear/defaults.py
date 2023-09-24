@@ -19,7 +19,7 @@ class Defaults(pydantic.BaseModel):
     spill_objective_penalty: float = 1e11
 
     boiler_efficiency_pct: float = 0.8
-    boiler_high_temperature_generation_max_mw: float = 100.0
+    boiler_high_temperature_generation_max_mw: float = 10000.0
 
     gas_carbon_intensity: float = 0.185
 

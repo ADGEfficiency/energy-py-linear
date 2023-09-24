@@ -1,4 +1,4 @@
-"""Test CHP generator asset."""
+"""Test CHP asset."""
 import numpy as np
 
 import energypylinear as epl
@@ -16,14 +16,15 @@ def test_chp_gas_turbine_price() -> None:
         gas_prices=20,
         high_temperature_load_mwh=[20, 20, 1000],
         freq_mins=60,
+        name="chp",
     )
     simulation = asset.optimize()
     """
     - high electricity price, low heat demand
-    - expect generator to run full load and dump heat to low temperature
+    - expect chp to run full load and dump heat to low temperature
     """
     row = simulation.results.iloc[0, :]
-    assert row["generator-electric_generation_mwh"] == 100
+    assert row["chp-electric_generation_mwh"] == 100
 
     np.testing.assert_almost_equal(
         row["spill-low_temperature_load_mwh"],
@@ -35,15 +36,15 @@ def test_chp_gas_turbine_price() -> None:
     - expect all heat demand met from boiler
     """
     row = simulation.results.iloc[1, :]
-    assert row["generator-electric_generation_mwh"] == 0
+    assert row["chp-electric_generation_mwh"] == 0
     assert row["boiler-high_temperature_generation_mwh"] == 20
 
     """
     - high electricity price, high heat demand
-    - expect generator to run full load and boiler to pick up slack
+    - expect chp to run full load and boiler to pick up slack
     """
     row = simulation.results.iloc[2, :]
-    assert row["generator-electric_generation_mwh"] == 100
+    assert row["chp-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
         row["boiler-high_temperature_generation_mwh"],
         1000 - (100 / 0.3) * 0.5,
@@ -72,10 +73,10 @@ def test_chp_gas_turbine_carbon() -> None:
     )
     """
     - high carbon intensity, low heat demand
-    - expect generator to run full load and dump heat to low temperature
+    - expect chp to run full load and dump heat to low temperature
     """
     row = simulation.results.iloc[0, :]
-    assert row["generator-electric_generation_mwh"] == 100
+    assert row["chp-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
         row["spill-low_temperature_load_mwh"],
         (100 / 0.3) * 0.5 - 20,
@@ -86,15 +87,15 @@ def test_chp_gas_turbine_carbon() -> None:
     - expect all heat demand met from boiler
     """
     row = simulation.results.iloc[1, :]
-    assert row["generator-electric_generation_mwh"] == 0
+    assert row["chp-electric_generation_mwh"] == 0
     assert row["boiler-high_temperature_generation_mwh"] == 20
 
     """
     - high carbon intensity, high heat demand
-    - expect generator to run full load and boiler to pick up slack
+    - expect chp to run full load and boiler to pick up slack
     """
     row = simulation.results.iloc[2, :]
-    assert row["generator-electric_generation_mwh"] == 100
+    assert row["chp-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
         row["boiler-high_temperature_generation_mwh"],
         1000 - (100 / 0.3) * 0.5,
@@ -125,10 +126,10 @@ def test_chp_gas_engine_price() -> None:
     simulation = asset.optimize()
     """
     - high electricity price, low heat demand
-    - expect generator to run full load and dump heat
+    - expect chp to run full load and dump heat
     """
     row = simulation.results.iloc[0, :]
-    assert row["generator-electric_generation_mwh"] == 100
+    assert row["chp-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
         row["spill-low_temperature_load_mwh"],
         (100 / 0.4) * 0.4 - 40,
@@ -138,6 +139,7 @@ def test_chp_gas_engine_price() -> None:
 
 def test_chp_gas_engine_carbon() -> None:
     """Test gas engine optimization for carbon."""
+    name = "chp"
     asset = epl.CHP(
         electric_power_max_mw=100,
         electric_power_min_mw=10,
@@ -156,10 +158,10 @@ def test_chp_gas_engine_carbon() -> None:
     )
     """
     - high carbon intensity, low heat demand
-    - expect generator to run full load and dump heat
+    - expect chp to run full load and dump heat
     """
     row = simulation.results.iloc[0, :]
-    assert row["generator-electric_generation_mwh"] == 100
+    assert row["chp-electric_generation_mwh"] == 100
     np.testing.assert_almost_equal(
         row["spill-low_temperature_load_mwh"],
         (100 / 0.4) * 0.4 - 40,
@@ -167,10 +169,10 @@ def test_chp_gas_engine_carbon() -> None:
     )
     """
     - low carbon intensity, low heat demand
-    - expect generator to not run at all
+    - expect chp to not run at all
     """
     row = simulation.results.iloc[1, :]
-    assert row["generator-electric_generation_mwh"] == 0
+    assert row["chp-electric_generation_mwh"] == 0
     np.testing.assert_almost_equal(
         row["spill-low_temperature_load_mwh"],
         0,

@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 import energypylinear as epl
+from energypylinear.assets.site import validate_interval_data
 from energypylinear.data_generation import generate_random_ev_input_data
 from energypylinear.debug import debug_simulation
 from energypylinear.defaults import defaults
@@ -29,32 +30,31 @@ def test_site() -> None:
                 electric_power_max_mw=50,
                 electric_efficiency_pct=0.4,
                 high_temperature_efficiency_pct=0.4,
-                name="gas-engine-CHP",
+                name="gas-engine-chp",
             ),
             epl.Boiler(high_temperature_generation_max_mw=100),
+            epl.Spill(),
+            epl.Valve(),
         ],
         electricity_prices=[100, 1000, -20, 40, 50],
     )
 
-    results = site.optimize()
-    simulation = results.simulation
+    simulation = site.optimize()
 
     """
     first interval we both charge and generate max electricity
     second interval we discharge and generate
     """
     np.testing.assert_array_almost_equal(
-        simulation["site-import_power_mwh"],
-        [0, 0, 4.6, 0.2222, 0.0],
+        simulation.results["site-import_power_mwh"],
+        [0.0, 0, 4.6, 0.2222, 0.0],
         decimal=defaults.decimal_tolerance,
     )
-    #  bit flaky - TODO
-    # np.testing.assert_array_almost_equal(
-    #     simulation["site-export_power_mwh"],
-    #     [100.0, 100.0, 0.0, 0.0, 53.0],
-    #     # [ 96.75, 102.8 ,   0.  ,   0.  ,  53.  ])
-    #     decimal=defaults.decimal_tolerance,
-    # )
+    np.testing.assert_array_almost_equal(
+        simulation.results["site-export_power_mwh"],
+        [96.75, 102.8, 0.0, 0.0, 53.0],
+        decimal=defaults.decimal_tolerance,
+    )
 
 
 @pytest.mark.parametrize("seed", range(10))
@@ -132,21 +132,19 @@ def test_interval_data():
     with pytest.raises(Exception):
         epl.interval_data.IntervalData()
 
-    from energypylinear.assets.renewable_generator import validate_interval_data
-
     #  test that things work correctly when the assets have the same length data as the site index
-    site = epl.Site(electricity_carbon_intensities=[1.0, 2.0])
+    site = epl.Site(assets=[], electricity_carbon_intensities=[1.0, 2.0])
     assets = [epl.RenewableGenerator(electric_generation_mwh=[1.0, 2.0])]
     validate_interval_data(assets, site)
 
     #  test that things work correctly when the assets have different length data as the site index
     with pytest.raises(AssertionError):
-        site = epl.Site(electricity_carbon_intensities=[1.0, 2.0])
+        site = epl.Site(assets=[], electricity_carbon_intensities=[1.0, 2.0])
         assets = [epl.RenewableGenerator(electric_generation_mwh=2.0)]
         validate_interval_data(assets, site, repeat_interval_data=False)
 
     #  test that things work correctly when the assets have different length data as the site index
-    site = epl.Site(electricity_carbon_intensities=[1.0, 2.0])
+    site = epl.Site(assets=[], electricity_carbon_intensities=[1.0, 2.0])
     assets = [epl.RenewableGenerator(electric_generation_mwh=2.0, name="solar")]
     validate_interval_data(assets, site, repeat_interval_data=True)
 
@@ -155,7 +153,7 @@ def test_interval_data():
     assert all(asset.cfg.interval_data.electric_generation_mwh == [2.0, 2.0])
 
     #  test that the repeat works correctly
-    from energypylinear.assets.renewable_generator import repeat_to_match_length
+    from energypylinear.assets.site import repeat_to_match_length
 
     assert all(
         repeat_to_match_length([1.0, 2.0, 3.0], np.zeros(5))
