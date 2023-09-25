@@ -11,13 +11,19 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
-def repeat_to_match_length(a, b):
+def repeat_to_match_length(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Repeats an array to match the length of another array."""
     #  TODO unit test and move to utils
     quotient, remainder = divmod(len(b), len(a))
     return np.concatenate([np.tile(a, quotient), a[:remainder]])
 
 
-def validate_interval_data(assets, site, repeat_interval_data: bool = True):
+def validate_interval_data(
+    assets: list,
+    site: "epl.Site",
+    repeat_interval_data: bool = True
+) -> None:
+    """Validates asset interval data against the site."""
     if not repeat_interval_data:
         for asset in assets:
             if hasattr(asset.cfg, "interval_data"):
@@ -30,6 +36,9 @@ def validate_interval_data(assets, site, repeat_interval_data: bool = True):
 
                     idata = asset.cfg.interval_data.dict(exclude={"idx"})
                     for name, data in idata.items():
+                        assert isinstance(
+                            site.cfg.interval_data.idx, np.ndarray
+                        )
                         setattr(
                             asset.cfg.interval_data,
                             name,
@@ -41,6 +50,7 @@ def validate_interval_data(assets, site, repeat_interval_data: bool = True):
 
 
 class SiteIntervalData(pydantic.BaseModel):
+    """Site interval data."""
     electricity_prices: np.ndarray | list[float] | float | None = None
     electricity_carbon_intensities: np.ndarray | list[float] | float | None = None
     gas_prices: np.ndarray | list[float] | float | None = None
@@ -53,10 +63,12 @@ class SiteIntervalData(pydantic.BaseModel):
     idx: list[int] | np.ndarray = []
 
     class Config:
+        """Configure the pydantic.BaseModel."""
         arbitrary_types_allowed: bool = True
 
     @pydantic.root_validator(pre=True)
     def validate_all_things(cls, values: dict) -> dict:
+        """Validates site interval data."""
 
         fields = list(cls.__fields__.keys())
         fields.remove("idx")
@@ -133,7 +145,7 @@ def constrain_site_electricity_balance(
     optimizer: Optimizer,
     cfg: SiteConfig,
     ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.interval_data.IntervalData",
+    interval_data: SiteIntervalData,
     i: int,
 ) -> None:
     """Constrain site electricity balance.
@@ -149,6 +161,7 @@ def constrain_site_electricity_balance(
     ]
 
     assert interval_data.electric_load_mwh is not None
+    assert isinstance(interval_data.electric_load_mwh, np.ndarray)
     optimizer.constrain(
         (
             site.import_power_mwh
@@ -185,7 +198,7 @@ def constrain_site_high_temperature_heat_balance(
     optimizer: Optimizer,
     cfg: SiteConfig,
     ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.interval_data.IntervalData",
+    interval_data: SiteIntervalData,
     i: int,
 ) -> None:
     """Constrain high temperature energy balance.
@@ -208,7 +221,7 @@ def constrain_site_low_temperature_heat_balance(
     optimizer: Optimizer,
     cfg: SiteConfig,
     ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.interval_data.IntervalData",
+    interval_data: SiteIntervalData,
     i: int,
 ) -> None:
     """Constrain low temperature energy balance.
@@ -301,7 +314,7 @@ class Site:
         self,
         optimizer: Optimizer,
         ivars: "epl.interval_data.IntervalVars",
-        interval_data: "epl.interval_data.IntervalData",
+        interval_data: SiteIntervalData,
         i: int,
     ) -> None:
         """Constrain site within a single interval."""
@@ -316,60 +329,19 @@ class Site:
 
     def optimize(
         self,
-        # electricity_prices: typing.Union[float, typing.Iterable[float]],
-        # gas_prices: typing.Optional[typing.Union[float, typing.Iterable[float]]] = None,
-        # electricity_carbon_intensities: typing.Optional[
-        #     typing.Union[float, typing.Iterable[float]]
-        # ] = None,
-        # high_temperature_load_mwh: typing.Optional[
-        #     typing.Union[float, typing.Iterable[float]]
-        # ] = None,
-        # low_temperature_load_mwh: typing.Optional[
-        #     typing.Union[float, typing.Iterable[float]]
-        # ] = None,
-        # charge_events: typing.Union[list[list[int]], typing.Iterable[int], None] = None,
-        # initial_charge_mwh: float = 0.0,
-        # final_charge_mwh: typing.Union[float, None] = None,
         freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         flags: Flags = Flags(),
         verbose: bool = True,
-    ) -> "epl.results.SimulationResult":
+    ) -> "epl.SimulationResult":
         """Optimize sites dispatch using a mixed-integer linear program.
 
         Returns:
             epl.results.SimulationResult
         """
 
-        #  TODO could be `asset.before_intervals()`
-        # for asset in self.assets:
-        #     if isinstance(asset, epl.Battery):
-        #         asset.setup_initial_final_charge(initial_charge_mwh, final_charge_mwh)
-
-        #     if isinstance(asset, epl.EVs):
-        #         assert (
-        #             asset.charge_events is not None
-        #         ), "EV asset should have charge events defined in it's __init__"
-
         self.optimizer = Optimizer()
         freq = Freq(freq_mins)
-
-        # #  not using the evs' interval data here
-        # #  instead that data structure is only made inside the ev assets
-        # interval_data = epl.interval_data.IntervalData(
-        #     electricity_prices=electricity_prices,
-        #     gas_prices=gas_prices,
-        #     electricity_carbon_intensities=electricity_carbon_intensities,
-        #     high_temperature_load_mwh=high_temperature_load_mwh,
-        #     low_temperature_load_mwh=low_temperature_load_mwh,
-        #     evs=None,
-        # )
-
-        # self.spill = epl.spill.Spill()
-        # self.valve = epl.valve.Valve()
-
-        # self.assets.append(self.spill)
-        # self.assets.append(self.valve)
 
         #  TODO this is repeated in `validate_interval_data`
         #  should reuse that here - TODO when I do the site again
@@ -378,7 +350,7 @@ class Site:
             set(names)
         ), f"Asset names must be unique, your assets are called {names}"
 
-        #  warn about sites without boilers?  warn sites without valve / spill?
+        #  TODO warn about sites without boilers?  warn sites without valve / spill?
 
         ivars = epl.interval_data.IntervalVars()
         for i in self.cfg.interval_data.idx:

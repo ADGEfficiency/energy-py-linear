@@ -189,7 +189,7 @@ class CHP(epl.Asset):
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
-    ) -> "epl.results.SimulationResult":
+    ) -> "epl.SimulationResult":
         """
         Optimize the CHP generator's dispatch using a mixed-integer linear program.
 
@@ -205,8 +205,6 @@ class CHP(epl.Asset):
             verbose=verbose,
         )
 
-    def plot(
-        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
-    ) -> None:
+    def plot(self, results: "epl.SimulationResult", path: pathlib.Path | str) -> None:
         """Plot simulation results."""
         return epl.plot.plot_chp(results, pathlib.Path(path))

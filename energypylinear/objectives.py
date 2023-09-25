@@ -8,7 +8,7 @@ from energypylinear.defaults import defaults
 
 def filter_spill_evs(
     ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.interval_data.IntervalData",
+    interval_data: "epl.assets.site.SiteIntervalData",
 ) -> "list[list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]]":
     """
     Complexity here comes from the need to extract only the spill EVs linear program
@@ -37,8 +37,8 @@ def filter_spill_evs(
 
 def price_objective(
     optimizer: "epl.Optimizer",
-    ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.interval_data.IntervalData",
+    ivars: "epl.IntervalVars",
+    interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
     """
     Linear programming objective for cost minimization.  Equivalent to profit maximization.
@@ -97,7 +97,7 @@ def price_objective(
 def carbon_objective(
     optimizer: "epl.Optimizer",
     ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.interval_data.IntervalData",
+    interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
     """
     Linear programming objective for carbon emission minimization.

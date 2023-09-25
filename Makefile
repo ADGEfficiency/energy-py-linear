@@ -75,11 +75,12 @@ test-docs: clean-test-docs create-test-docs
 
 check: lint static
 
+MYPY_ARGS="--pretty"
 static: setup-static
 	rm -rf ./tests/phmdoctest
-	mypy --pretty ./energypylinear
-	mypy --pretty ./tests
-	mypy --pretty ./examples
+	mypy $(MYPY_ARGS) ./energypylinear
+	mypy $(MYPY_ARGS) ./tests
+	mypy $(MYPY_ARGS) ./examples
 
 lint: setup-check
 	rm -rf ./tests/phmdoctest

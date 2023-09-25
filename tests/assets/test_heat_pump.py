@@ -146,7 +146,7 @@ def test_heat_pump_heat_balance() -> None:
     asset = epl.HeatPump(
         electric_power_mw=2.0,
         cop=cop,
-        electricity_prices=3 * [-100],
+        electricity_prices=[-100.0, -100.0, -100.0],
         gas_prices=gas_price,
         high_temperature_load_mwh=[1, 2.0, 4.0],
         low_temperature_generation_mwh=[100, 100, 100],

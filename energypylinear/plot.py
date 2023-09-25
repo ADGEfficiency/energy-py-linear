@@ -21,9 +21,7 @@ def find_column(df: pd.DataFrame, start: str, end: str) -> str:
     return cols[0]
 
 
-def plot_battery(
-    simulation: "epl.results.SimulationResult", path: pathlib.Path | str
-) -> None:
+def plot_battery(simulation: "epl.SimulationResult", path: pathlib.Path | str) -> None:
     """Plot battery simulation results."""
     path = pathlib.Path(path)
     path.parent.mkdir(exist_ok=True, parents=True)
@@ -94,9 +92,7 @@ def plot_battery(
 
 
 def plot_evs(
-    simulation: "epl.results.SimulationResult",
-    path: pathlib.Path,
-    asset_name: str
+    simulation: "epl.SimulationResult", path: pathlib.Path, asset_name: str
 ) -> None:
     """Plot electric vehicle simulation results."""
     results = simulation.results
@@ -189,9 +185,7 @@ def plot_evs(
     print(result_array)
     charge_event_heatmap_config["annot"] = result_array
 
-    assets = [
-        a for a in simulation.assets if a.cfg.name == asset_name
-    ]
+    assets = [a for a in simulation.assets if a.cfg.name == asset_name]
     assert len(assets) == 1
     asset = assets[0]
     seaborn.heatmap(
@@ -219,9 +213,9 @@ def plot_evs(
     )
 
     seaborn.heatmap(
-        np.array(results[
-            f"{simulation.site.cfg.name}-electricity_prices"
-        ]).reshape(-1, 1),
+        np.array(results[f"{simulation.site.cfg.name}-electricity_prices"]).reshape(
+            -1, 1
+        ),
         ax=axes[3],
         **(heatmap_config | {"cmap": ["white"]}),
         xticklabels=["price"],
@@ -255,7 +249,7 @@ def plot_evs(
     fig.savefig(path)
 
 
-def plot_chp(simulation: "epl.results.SimulationResult", path: pathlib.Path) -> None:
+def plot_chp(simulation: "epl.SimulationResult", path: pathlib.Path) -> None:
     """Plot CHP generator simulation results."""
     results = simulation.results
     fig, axes = plt.subplots(nrows=5, sharex=True, figsize=(12, 8))
@@ -373,7 +367,7 @@ def plot_heat_pump(
 
     for col in [
         f"{simulation.site.cfg.name}-electricity_prices",
-        f"{simulation.site.cfg.name}-electricity_carbon_intensities"
+        f"{simulation.site.cfg.name}-electricity_carbon_intensities",
     ]:
         results.plot(ax=axes[2], x="index", y=col)
 

@@ -114,7 +114,9 @@ def test_sites(seed: int) -> None:
     debug_simulation(simulation.results)
 
 
-def test_interval_data():
+def test_interval_data() -> None:
+    """Test site interval data."""
+
     #  test we use electricity_prices to create the index
     electricity_prices = [1.0, 2.0]
     idata = epl.assets.site.SiteIntervalData(electricity_prices=electricity_prices)
@@ -150,12 +152,13 @@ def test_interval_data():
 
     asset = assets[0]
     assert asset.cfg.name == "solar"
+    assert isinstance(asset.cfg.interval_data.electric_generation_mwh, np.ndarray)
     assert all(asset.cfg.interval_data.electric_generation_mwh == [2.0, 2.0])
 
     #  test that the repeat works correctly
     from energypylinear.assets.site import repeat_to_match_length
 
     assert all(
-        repeat_to_match_length([1.0, 2.0, 3.0], np.zeros(5))
+        repeat_to_match_length(np.array([1.0, 2.0, 3.0]), np.zeros(5))
         == np.array([1.0, 2.0, 3.0, 1.0, 2.0])
     )

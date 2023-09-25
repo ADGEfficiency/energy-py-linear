@@ -84,12 +84,9 @@ def test_battery_carbon(
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
 
-
 def test_battery_charge_discharge_binary_variables() -> None:
     """Test optimization with hypothesis."""
-    electricity_prices = (
-        np.random.normal(100, 1000, 1024)
-    )
+    electricity_prices = np.random.normal(100, 1000, 1024)
     power_mw = 400
     capacity_mwh = 100
     initial_charge_mwh = 0
@@ -170,9 +167,7 @@ def test_battery_hypothesis(
         final_charge_mwh=final_charge_mwh,
     )
 
-    #  this flag is needed for the check that losses are zero
-    #  when we discharge
-    flags = Flags(include_charge_discharge_binary_variables=True)
+    flags = Flags(include_charge_discharge_binary_variables=False)
     simulation = asset.optimize(flags=flags)
 
     freq = epl.Freq(freq_mins)
@@ -203,6 +198,7 @@ def test_battery_hypothesis(
         asset.cfg.initial_charge_mwh,
         decimal=4,
     )
+    assert isinstance(asset.cfg.final_charge_mwh, float)
     np.testing.assert_almost_equal(
         simulation.results[f"{name}-final_charge_mwh"].iloc[-1],
         asset.cfg.final_charge_mwh,
@@ -217,11 +213,3 @@ def test_battery_hypothesis(
         (1 - efficiency) * subset[f"{name}-electric_charge_mwh"].values,
         decimal=4,
     )
-
-    #  check losses are always zero when we discharge
-    #  this requires flag `include_charge_discharge_binary_variables`
-    #  TODO - separate out this check into a separate test
-    #  to keep the binary variables out of this longer test
-    mask = simulation.results[f"{name}-electric_discharge_mwh"] > 0
-    subset = simulation.results[mask]
-    assert all(subset[f"{name}-electric_loss_mwh"] == 0)

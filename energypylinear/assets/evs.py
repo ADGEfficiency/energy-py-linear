@@ -65,7 +65,7 @@ class EVsConfig(pydantic.BaseModel):
         return name
 
     @pydantic.validator("charge_events")
-    def validate_charge_events(cls, charge_events, values):
+    def validate_charge_events(cls, charge_events: np.ndarray, values: dict) -> np.ndarray:
         """Check charge events match the configs"""
         validate_charge_events(
             values['charge_event_cfgs'],
@@ -653,7 +653,7 @@ class EVs:
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
-    ) -> "epl.results.SimulationResult":
+    ) -> "epl.SimulationResult":
         """Optimize the EVs's dispatch using a mixed-integer linear program.
 
         Args:

@@ -1,10 +1,8 @@
 """Tests for the Renewable Generator asset."""
-import hypothesis
 import numpy as np
 import pytest
 
 import energypylinear as epl
-from energypylinear.debug import debug_asset
 
 
 def test_optimization_price() -> None:
@@ -38,7 +36,8 @@ def test_optimization_price() -> None:
     np.testing.assert_array_equal(results["wind-electric_generation_mwh"], expected)
 
 
-def test_interval_data():
+def test_interval_data() -> None:
+    """Tests the epl.RenewableGenerator and epl.Site interval data."""
 
     epl.assets.renewable_generator.RenewableGeneratorIntervalData(
         electric_generation_mwh=[1.0, 2.0]

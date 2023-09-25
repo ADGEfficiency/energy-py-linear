@@ -180,7 +180,7 @@ class HeatPump(epl.Asset):
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
-    ) -> "epl.results.SimulationResult":
+    ) -> "epl.SimulationResult":
         """Optimize the asset dispatch using a mixed-integer linear program.
             objective: the optimization objective - either "price" or "carbon".
             verbose: level of printing.
@@ -196,9 +196,7 @@ class HeatPump(epl.Asset):
             verbose=verbose,
         )
 
-    def plot(
-        self, results: "epl.results.SimulationResult", path: pathlib.Path | str
-    ) -> None:
+    def plot(self, results: "epl.SimulationResult", path: pathlib.Path | str) -> None:
         """Plot simulation results."""
         return epl.plot.plot_heat_pump(
             results, pathlib.Path(path), asset_name=self.cfg.name

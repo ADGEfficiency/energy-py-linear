@@ -139,7 +139,6 @@ def test_chp_gas_engine_price() -> None:
 
 def test_chp_gas_engine_carbon() -> None:
     """Test gas engine optimization for carbon."""
-    name = "chp"
     asset = epl.CHP(
         electric_power_max_mw=100,
         electric_power_min_mw=10,

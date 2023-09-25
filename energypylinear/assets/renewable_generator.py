@@ -24,7 +24,7 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
         return np.arange(len(values["electric_generation_mwh"]))
 
     @pydantic.validator("electric_generation_mwh", pre=True, always=True)
-    def handle_single_float(cls, value) -> list | np.ndarray:
+    def handle_single_float(cls, value: float | list | np.ndarray) -> list | np.ndarray:
         """Handles case where we want a single value broadcast to the length
         of the interval data.
         """
@@ -82,9 +82,9 @@ class RenewableGenerator(epl.Asset):
         electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
         electric_load_mwh: float | list[float] | np.ndarray | None = None,
         electric_generation_lower_bound_pct: float = 1.0,
-        name="str",
+        name: str = "renewable-generator",
         freq_mins: int = defaults.freq_mins,
-    ):
+    ) -> None:
         """Initializes the asset."""
         self.cfg = RenewableGeneratorConfig(
             name=name,
@@ -114,7 +114,7 @@ class RenewableGenerator(epl.Asset):
 
     def one_interval(
         self, optimizer: "epl.Optimizer", i: int, freq: "epl.Freq", flags: "epl.Flags"
-    ):
+    ) -> RenewableGeneratorOneInterval:
         """Create asset data for a single interval."""
         name = f"i:{i},asset:{self.cfg.name}"
         assert isinstance(self.cfg.interval_data.electric_generation_mwh, np.ndarray)
@@ -135,7 +135,7 @@ class RenewableGenerator(epl.Asset):
         i: int,
         freq: "epl.Freq",
         flags: "epl.Flags",
-    ):
+    ) -> None:
         """Constrain optimization within a single interval."""
         pass
 
@@ -143,7 +143,7 @@ class RenewableGenerator(epl.Asset):
         self,
         optimizer: "epl.Optimizer",
         ivars: "epl.IntervalVars",
-    ):
+    ) -> None:
         """Constrain asset after all intervals."""
         pass
 
@@ -152,7 +152,7 @@ class RenewableGenerator(epl.Asset):
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
-    ) -> "epl.results.extract.SimulationResult":
+    ) -> "epl.SimulationResult":
         """Optimize the asset."""
         return self.site.optimize(
             freq_mins=self.cfg.freq_mins,

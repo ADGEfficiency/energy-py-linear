@@ -5,36 +5,49 @@ import typing
 import pulp
 import pydantic
 
+import energypylinear as epl
+
 
 class Asset(abc.ABC):
     """Abstract Base Class for an Asset."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the asset."""
         pass
 
     @abc.abstractmethod
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of self."""
         pass
 
     @abc.abstractmethod
-    def one_interval(self):
+    def one_interval(
+        self, optimizer: "epl.Optimizer", i: int, freq: "epl.Freq", flags: "epl.Flags"
+    ) -> typing.Any:
         """Generate linear program data for one interval."""
         pass
 
     @abc.abstractmethod
-    def constrain_within_interval(self):
+    def constrain_within_interval(
+        self,
+        optimizer: "epl.Optimizer",
+        ivars: "epl.IntervalVars",
+        i: int,
+        freq: "epl.Freq",
+        flags: "epl.Flags",
+    ) -> None:
         """Constrain asset within an interval."""
         pass
 
     @abc.abstractmethod
-    def constrain_after_intervals(self):
+    def constrain_after_intervals(
+        self, optimizer: "epl.Optimizer", ivars: "epl.IntervalVars"
+    ) -> None:
         """Constrain asset after all intervals."""
         pass
 
     @abc.abstractmethod
-    def optimize(self):
+    def optimize(self) -> typing.Any | None:
         """Optimize the asset."""
         pass
 
@@ -68,6 +81,8 @@ class AssetOneInterval(pydantic.BaseModel):
     electric_charge_mwh: pulp.LpVariable | float = 0
     electric_discharge_mwh: pulp.LpVariable | float = 0
     gas_consumption_mwh: pulp.LpVariable | float = 0
+
+    binary: pulp.LpVariable | int = 0
 
     class Config:
         """pydantic.BaseModel configuration."""

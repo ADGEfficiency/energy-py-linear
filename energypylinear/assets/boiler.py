@@ -6,9 +6,6 @@ import pydantic
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
-from energypylinear.flags import Flags
-from energypylinear.freq import Freq
-from energypylinear.optimizer import Optimizer
 
 
 class BoilerConfig(pydantic.BaseModel):
@@ -58,7 +55,7 @@ class Boiler(epl.Asset):
         return f"<energypylinear.Boiler {self.cfg.high_temperature_generation_max_mw=}>"
 
     def one_interval(
-        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
+        self, optimizer: "epl.Optimizer", i: int, freq: "epl.Freq", flags: "epl.Flags"
     ) -> BoilerOneInterval:
         """Create asset data for a single interval."""
         return BoilerOneInterval(
@@ -78,11 +75,11 @@ class Boiler(epl.Asset):
 
     def constrain_within_interval(
         self,
-        optimizer: Optimizer,
-        ivars: "epl.interval_data.IntervalVars",
+        optimizer: "epl.Optimizer",
+        ivars: "epl.IntervalVars",
         i: int,
-        freq: Freq,
-        flags: Flags,
+        freq: "epl.Freq",
+        flags: "epl.Flags",
     ) -> None:
         """Constrain boiler for generation of high temperature heat."""
         boiler = ivars.filter_objective_variables(
@@ -111,6 +108,6 @@ class Boiler(epl.Asset):
         """Constrain the asset after all intervals."""
         return
 
-    def optimize(self):
+    def optimize(self) -> None:
         """Optimize the dispatch of the asset."""
         raise NotImplementedError()

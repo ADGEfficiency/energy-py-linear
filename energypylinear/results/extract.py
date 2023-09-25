@@ -1,6 +1,5 @@
 """Extract results from a solved linear program to pd.DataFrame's."""
 import collections
-import typing
 
 import numpy as np
 import pandas as pd
@@ -8,7 +7,6 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear.flags import Flags
-from energypylinear.interval_data import IntervalData
 from energypylinear.logger import logger
 from energypylinear.optimizer import Optimizer
 from energypylinear.results.checks import check_results
@@ -20,7 +18,6 @@ from energypylinear.results.schema import (
 from energypylinear.results.warnings import warn_spills
 
 optimizer = Optimizer()
-
 
 
 def check_array_lengths(results: dict[str, list]) -> None:
@@ -67,7 +64,8 @@ class SimulationResult(pydantic.BaseModel):
 
 def extract_site_results(
     site: "epl.Site", ivars: "epl.interval_data.IntervalVars", results: dict, i: int
-):
+) -> None:
+    """Extract simulation result data for epl.Site."""
     site_one_interval = ivars.filter_site(i, site.cfg.name)
     results["site-import_power_mwh"].append(site_one_interval.import_power_mwh.value())
     results["site-export_power_mwh"].append(site_one_interval.export_power_mwh.value())
@@ -90,7 +88,8 @@ def extract_site_results(
 
 def extract_spill_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int
-):
+) -> None:
+    """Extract simulation result data for epl.Spill."""
     if spills := ivars.filter_objective_variables(
         epl.assets.spill.SpillOneInterval, i=i
     )[0]:
@@ -104,7 +103,8 @@ def extract_spill_results(
 
 def extract_chp_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int
-):
+) -> None:
+    """Extract simulation result data for epl.CHP."""
     if generators := ivars.filter_objective_variables(
         epl.assets.chp.CHPOneInterval, i=i
     )[0]:
@@ -121,7 +121,8 @@ def extract_chp_results(
 
 def extract_boiler_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int
-):
+) -> None:
+    """Extract simulation result data for epl.Boiler."""
     if boilers := ivars.filter_objective_variables(
         epl.assets.boiler.BoilerOneInterval, i=i
     )[0]:
@@ -133,8 +134,8 @@ def extract_boiler_results(
 
 def extract_valve_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int
-):
-    #  add results from the valve
+) -> None:
+    """Extract simulation result data for epl.Valve."""
     if valves := ivars.filter_objective_variables(
         epl.assets.valve.ValveOneInterval, i=i
     )[0]:
@@ -151,7 +152,8 @@ def extract_valve_results(
 
 def extract_battery_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int
-):
+) -> None:
+    """Extract simulation result data for epl.Battery."""
     if batteries := ivars.filter_objective_variables(
         epl.assets.battery.BatteryOneInterval, i=i
     )[0]:
@@ -176,7 +178,7 @@ def extract_battery_results(
 def extract_evs_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int, verbose: bool = True
 ) -> None:
-    """Extract simulation result data for the EV asset."""
+    """Extract simulation result data for epl.EVs."""
     if ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
         pkg = []
         for asset_name in ivars.asset.keys():
@@ -363,7 +365,7 @@ def extract_evs_results(
 def extract_heat_pump_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int, verbose: bool = True
 ) -> None:
-    """Extract simulation result data for the Heat Pump asset."""
+    """Extract simulation result data for epl.HeatPump."""
     if heat_pumps := ivars.filter_objective_variables(
         epl.assets.heat_pump.HeatPumpOneInterval, i=i
     )[0]:
@@ -379,7 +381,8 @@ def extract_heat_pump_results(
 
 def extract_renewable_generator_results(
     ivars: "epl.interval_data.IntervalVars", results: dict, i: int, verbose: bool = True
-):
+) -> None:
+    """Extract simulation result data for epl.RenewableGenerator."""
     if renewables := ivars.filter_objective_variables(
         epl.assets.renewable_generator.RenewableGeneratorOneInterval, i=i
     )[0]:
@@ -399,6 +402,7 @@ def extract_renewable_generator_results(
 def add_totals(
     results: pd.DataFrame,
 ) -> dict:
+    """Creates total columns in the simulation.results pd.DataFrame"""
     total_mapper = {}
     for col in quantities:
         cols = [
@@ -449,7 +453,7 @@ def extract_results(
             assert len(asset.cfg.interval_data.idx) == len(ivars.objective_variables)
 
     #  extract linear program results from the assets
-    lp_results = collections.defaultdict(list)
+    lp_results: dict[str, list] = collections.defaultdict(list)
     for i in site.cfg.interval_data.idx:
         extract_site_results(site, ivars, lp_results, i)
         extract_spill_results(ivars, lp_results, i)
@@ -477,7 +481,7 @@ def extract_results(
         results,
         total_mapper=total_mapper,
         verbose=verbose,
-        check_valve=any([isinstance(a, epl.assets.valve.Valve) for a in assets])    ,
+        check_valve=any([isinstance(a, epl.assets.valve.Valve) for a in assets]),
         check_evs=any([isinstance(a, epl.assets.evs.EVs) for a in assets])
     )
     spill_occured = warn_spills(results, flags, verbose=verbose)
