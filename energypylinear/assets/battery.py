@@ -241,8 +241,8 @@ class Battery:
         constrain_only_charge_or_discharge(optimizer, battery, flags)
         constrain_battery_electricity_balance(optimizer, battery)
 
-        #  this is one battery asset, all intervals
-        #  TODO maybe refactor into the after intervals?
+        #  TODO this is one battery asset, all intervals
+        #  maybe refactor into the after intervals?
         #  bit of a weird case really
         all_batteries = ivars.filter_objective_variables(
             BatteryOneInterval, i=None, asset_name=self.cfg.name

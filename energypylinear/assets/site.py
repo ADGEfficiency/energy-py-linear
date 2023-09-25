@@ -9,13 +9,7 @@ from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
-
-
-def repeat_to_match_length(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """Repeats an array to match the length of another array."""
-    #  TODO unit test and move to utils
-    quotient, remainder = divmod(len(b), len(a))
-    return np.concatenate([np.tile(a, quotient), a[:remainder]])
+from energypylinear.utils import repeat_to_match_length
 
 
 def validate_interval_data(
@@ -399,7 +393,7 @@ class Site:
 
         status = self.optimizer.solve(verbose=verbose)
 
-        return epl.results.extract_results(
+        return epl.extract_results(
             self,
             self.assets,
             ivars,

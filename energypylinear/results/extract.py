@@ -16,27 +16,10 @@ from energypylinear.results.schema import (
     spill_quantities,
 )
 from energypylinear.results.warnings import warn_spills
+from energypylinear.utils import check_array_lengths
+
 
 optimizer = Optimizer()
-
-
-def check_array_lengths(results: dict[str, list]) -> None:
-    """Check that all lists in the results dictionary have the same length.
-
-    Args:
-        results (dict[str, list]):
-            Dictionary containing lists whose lengths need to be checked.
-
-    Raises:
-        AssertionError: If lists in the dictionary have different lengths.
-    """
-    #  TODO move to utils
-    lens = []
-    dbg = []
-    for k, v in results.items():
-        lens.append(len(v))
-        dbg.append((k, len(v)))
-    assert len(set(lens)) == 1, f"{len(set(lens))} {dbg}"
 
 
 class SimulationResult(pydantic.BaseModel):
@@ -63,7 +46,7 @@ class SimulationResult(pydantic.BaseModel):
 
 
 def extract_site_results(
-    site: "epl.Site", ivars: "epl.interval_data.IntervalVars", results: dict, i: int
+    site: "epl.Site", ivars: "epl.IntervalVars", results: dict, i: int
 ) -> None:
     """Extract simulation result data for epl.Site."""
     site_one_interval = ivars.filter_site(i, site.cfg.name)
@@ -386,13 +369,9 @@ def extract_renewable_generator_results(
     if renewables := ivars.filter_objective_variables(
         epl.assets.renewable_generator.RenewableGeneratorOneInterval, i=i
     )[0]:
-        #  TODO this could be made generic
-        from energypylinear.assets.renewable_generator import (
-            RenewableGeneratorIntervalData,
-        )
-
-        fields = list(RenewableGeneratorIntervalData.__fields__.keys())
-        fields.remove("idx")
+        fields = [
+            "electric_generation_mwh"
+        ]
         for renewable in renewables:
             for attr in fields:
                 name = f"{renewable.cfg.name}-{attr}"

@@ -1,15 +1,7 @@
 """A library for mixed-integer linear optimization of energy assets."""
 from pulp import LpVariable
 
-from energypylinear import (
-    accounting,
-    assets,
-    data_generation,
-    defaults,
-    interval_data,
-    plot,
-    results,
-)
+from energypylinear import plot
 from energypylinear.accounting import get_accounts
 from energypylinear.assets.asset import Asset
 from energypylinear.assets.battery import Battery
@@ -27,7 +19,7 @@ from energypylinear.interval_data import IntervalData, IntervalVars
 from energypylinear.objectives import objectives
 from energypylinear.optimizer import Optimizer
 from energypylinear.results.checks import check_results
-from energypylinear.results.extract import SimulationResult
+from energypylinear.results.extract import SimulationResult, extract_results
 
 __all__ = [
     "Battery",

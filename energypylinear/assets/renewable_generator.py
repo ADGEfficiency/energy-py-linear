@@ -19,7 +19,7 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
     idx: list[int] | np.ndarray = pydantic.Field(default_factory=list)
 
     @pydantic.validator("idx", always=True)
-    def create_idx(cls, _: list, values: dict) -> np.ndarray:
+    def create_idx_renewable(cls, _: list, values: dict) -> np.ndarray:
         """Creates an integer index."""
         return np.arange(len(values["electric_generation_mwh"]))
 

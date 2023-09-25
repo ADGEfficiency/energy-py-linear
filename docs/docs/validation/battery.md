@@ -62,7 +62,7 @@ Let's return to our original set of prices and check the energy balance of the b
 import pandas as pd
 import energypylinear as epl
 
-pd.set_option("display.max_columns", 15)
+pd.set_option("display.max_columns", 30)
 pd.set_option("display.width", 400)
 
 asset = epl.Battery(
@@ -76,12 +76,12 @@ print(balance)
 ```
 
 ```
-      input  accumulation  output  raw_balance  balance    import  generation  export  load    charge  discharge      loss  spills  soc
-0  0.444444     -0.444444     0.0         True     True  0.444444         0.0     0.0   0.0  0.444444        0.0  0.044444     0.0  0.0
-1  2.000000     -2.000000     0.0         True     True  2.000000         0.0     0.0   0.0  2.000000        0.0  0.200000     0.0  0.0
-2  0.000000      2.000000     2.0         True     True  0.000000         0.0     2.0   0.0  0.000000        2.0  0.000000     0.0  0.0
-3  2.000000     -2.000000     0.0         True     True  2.000000         0.0     0.0   0.0  2.000000        0.0  0.200000     0.0  0.0
-4  0.000000      2.000000     2.0         True     True  0.000000         0.0     2.0   0.0  0.000000        2.0  0.000000     0.0  0.0
+      input  accumulation  output  balance    import  generation  export  load    charge  discharge      loss  spills  soc
+0  0.444444     -0.444444     0.0     True  0.444444         0.0     0.0   0.0  0.444444        0.0  0.044444     0.0  0.0
+1  2.000000     -2.000000     0.0     True  2.000000         0.0     0.0   0.0  2.000000        0.0  0.200000     0.0  0.0
+2  0.000000      2.000000     2.0     True  0.000000         0.0     2.0   0.0  0.000000        2.0  0.000000     0.0  0.0
+3  2.000000     -2.000000     0.0     True  2.000000         0.0     0.0   0.0  2.000000        0.0  0.200000     0.0  0.0
+4  0.000000      2.000000     2.0     True  0.000000         0.0     2.0   0.0  0.000000        2.0  0.000000     0.0  0.0
 ```
 
 In the first interval, we charge the battery with `0.444444 MWh` - `0.4 MWh` goes into increasing the battery state of charge from `0.0 MWh` to `0.4 MWh`, with the balance `0.044444 MWh` going to battery losses.

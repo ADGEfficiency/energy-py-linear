@@ -44,7 +44,6 @@ def plot_battery(simulation: "epl.SimulationResult", path: pathlib.Path | str) -
     axes[0].set_title("Power Balance MWh (Import Positive)")
     axes[0].set_ylabel("MWh")
 
-    #  TODO will need some work in a multi-battery world
     results["net-battery-charge"] = (
         results[find_column(results, "battery-", "-electric_charge_mwh")]
         - results[find_column(results, "battery-", "-electric_discharge_mwh")]
@@ -199,9 +198,8 @@ def plot_evs(
     )
     axes[1].set_xlabel("Charge Events Net Charge (Discharge is Negative)")
 
-    #   hardcoded asset name here TODO
     spill_charge_usage = results[
-        "evs-charger-spill-evs-electric_charge_mwh"
+        f"{asset.cfg.name}-charger-spill-evs-electric_charge_mwh"
     ].values.reshape(-1, 1)
     data = spill_charge_usage
     seaborn.heatmap(

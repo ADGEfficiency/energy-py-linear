@@ -24,9 +24,6 @@ def check_electricity_balance(
         - simulation["total-electric_charge_mwh"]
     )
 
-    #  TODO - bunch of debt here
-    #  have this idea of wanting to show the balance without the spill effect
-    raw_balance = abs(inp + accumulation - out) < 1e-4
     balance = abs(inp + accumulation - out) < 1e-4
 
     soc = simulation[[c for c in simulation.columns if "final_soc" in c]].sum(axis=1)
@@ -35,7 +32,6 @@ def check_electricity_balance(
             "input": inp,
             "accumulation": accumulation,
             "output": out,
-            "raw_balance": raw_balance,
             "balance": balance,
             "import": simulation["site-import_power_mwh"],
             "generation": simulation["total-electric_generation_mwh"],

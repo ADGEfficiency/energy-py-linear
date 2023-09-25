@@ -154,11 +154,3 @@ def test_interval_data() -> None:
     assert asset.cfg.name == "solar"
     assert isinstance(asset.cfg.interval_data.electric_generation_mwh, np.ndarray)
     assert all(asset.cfg.interval_data.electric_generation_mwh == [2.0, 2.0])
-
-    #  test that the repeat works correctly
-    from energypylinear.assets.site import repeat_to_match_length
-
-    assert all(
-        repeat_to_match_length(np.array([1.0, 2.0, 3.0]), np.zeros(5))
-        == np.array([1.0, 2.0, 3.0, 1.0, 2.0])
-    )

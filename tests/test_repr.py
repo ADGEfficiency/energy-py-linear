@@ -13,6 +13,7 @@ def test_repr() -> None:
     things = [
         epl.HeatPump(electric_power_mw=1.0, cop=3),
         epl.Battery(),
+        epl.CHP(),
         epl.EVs(**ds),
         epl.assets.evs.EVsArrayOneInterval(
             i=0,
