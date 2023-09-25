@@ -1,7 +1,5 @@
 """Site asset for optimizing dispatch of combined heat and power (CHP) generators."""
 
-import typing
-
 import numpy as np
 import pulp
 import pydantic

@@ -15,17 +15,18 @@ import energypylinear as epl
 pd.set_option("display.max_columns", 4)
 pd.set_option('display.width', 1000)
 
-asset = epl.HeatPump(electric_power_mw=1.0, cop=2)
-results = asset.optimize(
+asset = epl.HeatPump(
+    electric_power_mw=1.0,
+    cop=2,
     gas_prices=20,
     electricity_prices=[100, -100],
     high_temperature_load_mwh=3.0,
     low_temperature_generation_mwh=4.0,
-    verbose=False
 )
-print(results.simulation[
+simulation = asset.optimize(verbose=False)
+print(simulation.results[
     [
-        "electricity_prices",
+        "site-electricity_prices",
         "heat-pump-electric_load_mwh",
         "boiler-high_temperature_generation_mwh"
     ]
@@ -33,9 +34,9 @@ print(results.simulation[
 ```
 
 ```
-   electricity_prices  heat-pump-electric_load_mwh  boiler-high_temperature_generation_mwh
-0                 100                          0.0                                     3.0
-1                -100                          1.0                                     1.0
+   site-electricity_prices  heat-pump-electric_load_mwh  boiler-high_temperature_generation_mwh
+0                      100                          0.0                                     3.0
+1                     -100                          1.0                                     1.0
 ```
 
 For the first interval, with an electricity price of `100`, we see that:
@@ -59,19 +60,22 @@ We use a negative electricity price of `-100` for each interval, to force the he
 ```python
 import energypylinear as epl
 
-asset = epl.HeatPump(electric_power_mw=1.0, cop=2)
-results = asset.optimize(
+asset = epl.HeatPump(
+    electric_power_mw=1.0,
+    cop=2,
     gas_prices=20,
     electricity_prices=[-100, -100, -100],
     high_temperature_load_mwh=[3.0, 0.5, 3.0],
     low_temperature_generation_mwh=[4.0, 4.0, 0.5],
-    verbose=False,
     include_valve=False
 )
-print(results.simulation[
+simulation = asset.optimize(
+    verbose=False,
+)
+print(simulation.results[
     [
-        "load-high_temperature_load_mwh",
-        "load-low_temperature_generation_mwh",
+        "site-high_temperature_load_mwh",
+        "site-low_temperature_generation_mwh",
         "spill-low_temperature_load_mwh",
         "heat-pump-electric_load_mwh",
         "heat-pump-high_temperature_generation_mwh",
@@ -81,7 +85,7 @@ print(results.simulation[
 ```
 
 ```
-   load-high_temperature_load_mwh  load-low_temperature_generation_mwh  spill-low_temperature_load_mwh  heat-pump-electric_load_mwh  heat-pump-high_temperature_generation_mwh  boiler-high_temperature_generation_mwh
+   site-high_temperature_load_mwh  site-low_temperature_generation_mwh  spill-low_temperature_load_mwh  heat-pump-electric_load_mwh  heat-pump-high_temperature_generation_mwh  boiler-high_temperature_generation_mwh
 0                             3.0                                  4.0                            3.00                         1.00                                        2.0                                     1.0
 1                             0.5                                  4.0                            3.75                         0.25                                        0.5                                     0.0
 2                             3.0                                  0.5                            0.00                         0.50                                        1.0                                     2.0
@@ -95,28 +99,31 @@ In the third interval we have a limited amount of low temperature heat generatio
 
 ### With a Valve
 
-Lets now optimize a heat pump with a high temperature to low temperature valve.  
+Lets now optimize a heat pump with a high temperature to low temperature valve.
 
-This allows heat to flow from high to low temperature, which means our boiler can generate high temperature heat that ends up as low temperature heat input into the heat pump. 
+This allows heat to flow from high to low temperature, which means our boiler can generate high temperature heat that ends up as low temperature heat input into the heat pump.
 
 This is a pretty bizarre situation, that is optimal because of our negative electricity price.
 
 ```python
 import energypylinear as epl
 
-asset = epl.HeatPump(electric_power_mw=1.0, cop=2)
-results = asset.optimize(
+asset = epl.HeatPump(
+    electric_power_mw=1.0,
+    cop=2,
     gas_prices=20,
     electricity_prices=[-100, -100, -100],
     high_temperature_load_mwh=[3.0, 0.5, 3.0],
     low_temperature_generation_mwh=[4.0, 4.0, 0.0],
-    verbose=False,
     include_valve=True
 )
-print(results.simulation[
+simulation = asset.optimize(
+    verbose=False,
+)
+print(simulation.results[
     [
-        "load-high_temperature_load_mwh",
-        "load-low_temperature_generation_mwh",
+        "site-high_temperature_load_mwh",
+        "site-low_temperature_generation_mwh",
         "spill-low_temperature_load_mwh",
         "heat-pump-electric_load_mwh",
         "heat-pump-high_temperature_generation_mwh",
@@ -126,7 +133,7 @@ print(results.simulation[
 ```
 
 ```
-   load-high_temperature_load_mwh  load-low_temperature_generation_mwh  spill-low_temperature_load_mwh  heat-pump-electric_load_mwh  heat-pump-high_temperature_generation_mwh  boiler-high_temperature_generation_mwh
+   site-high_temperature_load_mwh  site-low_temperature_generation_mwh  spill-low_temperature_load_mwh  heat-pump-electric_load_mwh  heat-pump-high_temperature_generation_mwh  boiler-high_temperature_generation_mwh
 0                             3.0                                  4.0                             3.0                          1.0                                        2.0                                     1.0
 1                             0.5                                  4.0                             4.5                          1.0                                        2.0                                     0.0
 2                             3.0                                  0.0                             0.0                          1.0                                        2.0                                     2.0

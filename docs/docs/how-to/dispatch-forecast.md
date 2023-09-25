@@ -2,29 +2,28 @@
 
 An asset (or site) can be used to model the variance between optimizing for actual & forecast prices.
 
-## Setup Battery Asset
+## Setup Interval Data
 
 <!--phmdoctest-share-names-->
 ```python
-import energypylinear as epl
-
-#  interval data
 electricity_prices = [100, 50, 200, -100, 0, 200, 100, -100]
 forecasts = [-100, 0, 200, 100, -100, 100, 50, 200]
-
-#  battery asset
-asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
 ```
 
 ## Optimize with Perfect Foresight
 
 <!--phmdoctest-share-names-->
 ```python
-#  optimize with perfect foresight
-actual = asset.optimize(electricity_prices=electricity_prices, verbose=False)
+import energypylinear as epl
 
-# create accounts for the two scenarios 
-perfect_foresight = epl.get_accounts(actual.interval_data, actual.simulation, verbose=False)
+asset = epl.Battery(
+    power_mw=2,
+    capacity_mwh=4,
+    efficiency_pct=0.9,
+    electricity_prices=electricity_prices
+)
+actual = asset.optimize(verbose=False)
+perfect_foresight = epl.get_accounts(actual.results, verbose=False)
 print(f"{perfect_foresight=}")
 ```
 
@@ -36,11 +35,20 @@ perfect_foresight=<Accounts profit=1057.78 emissions=0.0822>
 
 <!--phmdoctest-share-names-->
 ```python
-#  optimize to the forecast
-forecast = asset.optimize(electricity_prices=forecasts, verbose=False)
+import energypylinear as epl
 
-# in the forecast we use the actual interval_data, not the forecast interval_data
-forecast_account = epl.get_accounts(actual.interval_data, forecast.simulation, verbose=False)
+asset = epl.Battery(
+    power_mw=2,
+    capacity_mwh=4,
+    efficiency_pct=0.9,
+    electricity_prices=forecasts
+)
+forecast = asset.optimize(verbose=False)
+forecast_account = epl.get_accounts(
+    forecast.results,
+    price_results=actual.results,
+    verbose=False
+)
 print(f"{forecast_account=}")
 ```
 

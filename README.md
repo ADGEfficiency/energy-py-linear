@@ -15,7 +15,7 @@ A Python library for optimizing energy assets with mixed-integer linear programm
 - electric vehicle smart charging,
 - heat pumps.
 
-Assets can be optimized to either maximize profit or minimize carbon emissions.  
+Assets can be optimized to either maximize profit or minimize carbon emissions.
 
 Energy balances are performed on electricity, high & low temperature heat.
 
@@ -39,14 +39,17 @@ We can optimize an electric battery operating in wholesale price arbitrage using
 import energypylinear as epl
 
 #  2.0 MW, 4.0 MWh battery
-asset = epl.battery.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
-
-results = asset.optimize(
+asset = epl.Battery(
+    power_mw=2,
+    capacity_mwh=4,
+    efficiency_pct=0.9,
   electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100]
 )
+
+results = asset.optimize()
 ```
 
-See how to optimize other asset types in [how-to/optimize-assets](https://energypylinear.adgefficiency.com/latest/how-to/dispatch-assets/). 
+See how to optimize other asset types in [how-to/optimize-assets](https://energypylinear.adgefficiency.com/latest/how-to/dispatch-assets/).
 
 ### Site API
 
@@ -55,36 +58,44 @@ The site API allows optimizing multiple assets at once:
 ```python
 import energypylinear as epl
 
-site = epl.Site(assets=[
-  #  2.0 MW, 4.0 MWh battery
-  epl.Battery(power_mw=2.0, capacity_mwh=4.0),
-  #  30 MW generator
-  epl.Generator(
-    electric_power_max_mw=100,
-    electric_power_min_mw=30,
-    electric_efficiency_pct=0.4
-  ),
-  #  2 EV chargers & 4 charge events
-  epl.EVs(
-      chargers_power_mw=[100, 100],
-      charge_events_capacity_mwh=[50, 100, 30, 40],
-      charge_events=[
-          [1, 0, 0, 0, 0],
-          [0, 1, 1, 1, 0],
-          [0, 0, 0, 1, 1],
-          [0, 1, 0, 0, 0]
-      ]
-  )
-])
+assets = [
+    #  2.0 MW, 4.0 MWh battery
+    epl.Battery(
+        power_mw=2.0,
+        capacity_mwh=4.0
+    ),
+    #  30 MW open cycle generator
+    epl.CHP(
+        electric_power_max_mw=100,
+        electric_power_min_mw=30,
+        electric_efficiency_pct=0.4
+    ),
+    #  2 EV chargers & 4 charge events
+    epl.EVs(
+        chargers_power_mw=[100, 100],
+        charge_events_capacity_mwh=[50, 100, 30, 40],
+        charge_events=[
+            [1, 0, 0, 0, 0],
+            [0, 1, 1, 1, 0],
+            [0, 0, 0, 1, 1],
+            [0, 1, 0, 0, 0],
+        ],
+    ),
+    epl.Boiler(),
+    epl.Valve()
+]
 
-results = site.optimize(
+site = epl.Site(
+  assets=assets,
   electricity_prices=[100, 50, 200, -100, 0],
   high_temperature_load_mwh=[105, 110, 120, 110, 105],
   low_temperature_load_mwh=[105, 110, 120, 110, 105]
 )
+
+results = site.optimize()
 ```
 
-The site API will optimize the assets together, and return the results for each asset. 
+The site API will optimize the assets together, and return the results for each asset.
 
 ### Examples
 
@@ -105,6 +116,6 @@ $ ls ./examples
 $ make test
 ```
 
-## Documentation 
+## Documentation
 
 Hosted at [energypylinear.adgefficiency.com/latest](https://energypylinear.adgefficiency.com/latest).

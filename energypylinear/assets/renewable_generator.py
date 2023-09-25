@@ -13,6 +13,8 @@ from energypylinear.flags import Flags
 
 
 class RenewableGeneratorIntervalData(pydantic.BaseModel):
+    """Renewable Generator interval data."""
+
     electric_generation_mwh: float | list[float] | np.ndarray
     idx: list[int] | np.ndarray = pydantic.Field(default_factory=list)
 
@@ -23,11 +25,16 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
 
     @pydantic.validator("electric_generation_mwh", pre=True, always=True)
     def handle_single_float(cls, value) -> list | np.ndarray:
+        """Handles case where we want a single value broadcast to the length
+        of the interval data.
+        """
         if isinstance(value, float):
             return [value]
         return np.array(value)
 
     class Config:
+        """Configure the pydantic.BaseModel."""
+
         arbitrary_types_allowed: bool = True
 
 
@@ -41,6 +48,8 @@ class RenewableGeneratorConfig(pydantic.BaseModel):
 
 
 class RenewableGeneratorOneInterval(AssetOneInterval):
+    """Contains linear program data for a single interval."""
+
     cfg: RenewableGeneratorConfig
     electric_generation_mwh: epl.LpVariable
 
@@ -76,6 +85,7 @@ class RenewableGenerator(epl.Asset):
         name="str",
         freq_mins: int = defaults.freq_mins,
     ):
+        """Initializes the asset."""
         self.cfg = RenewableGeneratorConfig(
             name=name,
             electric_generation_lower_bound_pct=electric_generation_lower_bound_pct,
@@ -134,6 +144,7 @@ class RenewableGenerator(epl.Asset):
         optimizer: "epl.Optimizer",
         ivars: "epl.IntervalVars",
     ):
+        """Constrain asset after all intervals."""
         pass
 
     def optimize(
@@ -142,6 +153,7 @@ class RenewableGenerator(epl.Asset):
         verbose: bool = True,
         flags: Flags = Flags(),
     ) -> "epl.results.extract.SimulationResult":
+        """Optimize the asset."""
         return self.site.optimize(
             freq_mins=self.cfg.freq_mins,
             objective=objective,

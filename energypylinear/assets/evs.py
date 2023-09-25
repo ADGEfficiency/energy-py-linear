@@ -1,6 +1,5 @@
 """Electric vehicle asset for optimizing the smart charging of electric vehicles."""
 import pathlib
-import typing
 
 import numpy as np
 import pulp
@@ -67,6 +66,7 @@ class EVsConfig(pydantic.BaseModel):
 
     @pydantic.validator("charge_events")
     def validate_charge_events(cls, charge_events, values):
+        """Check charge events match the configs"""
         validate_charge_events(
             values['charge_event_cfgs'],
             charge_events
@@ -535,7 +535,6 @@ class EVs:
             freq_mins=freq_mins
         )
 
-
         if electricity_prices is not None or electricity_carbon_intensities is not None:
             assets = [self, epl.Spill()]
             self.site = epl.Site(
@@ -543,22 +542,6 @@ class EVs:
                 electricity_prices=electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
             )
-
-        # self.site = epl.Site()
-        # self.spill = epl.spill.Spill()
-
-        # #  this feels a bit weird, because `charge_events` is interval data
-        # #  interval data is usually input with the `asset.optimize()` call
-        # #  we need this shortcut to get the site API working
-        # if charge_events is not None:
-        #     # equivalent to the batch dimension in neural nets
-        #     self.charge_events: np.ndarray | None = np.array(charge_events).T
-        #     validate_charge_events(
-        #         self.cfg.charge_event_cfgs,
-        #         self.charge_events
-        #     )
-        # else:
-        #     self.charge_events = None
 
     def __repr__(self) -> str:
         """A string representation of self."""

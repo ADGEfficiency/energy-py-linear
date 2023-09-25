@@ -1,6 +1,5 @@
 """Heat Pump asset."""
 import pathlib
-import typing
 
 import numpy as np
 import pulp

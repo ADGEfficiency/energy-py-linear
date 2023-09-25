@@ -1,6 +1,5 @@
 """Battery asset for optimizing battery dispatch for price or carbon arbitrage."""
 import pathlib
-import typing
 
 import numpy as np
 import pulp

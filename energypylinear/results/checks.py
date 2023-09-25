@@ -116,20 +116,20 @@ def check_results(
     verbose: bool = True,
     check_valve: bool = False,
     check_evs: bool = False,
-) -> None:
+) -> dict:
     """Check that our simulation results make sense.
 
     Args:
         interval_data: input interval data to the simulation.
         simulation: simulation results.
     """
-    check_electricity_balance(results, verbose)
-    check_high_temperature_heat_balance(
+    electricity_balance = check_electricity_balance(results, verbose)
+    ht_balance = check_high_temperature_heat_balance(
         results,
         total_mapper,
         verbose,
     )
-    check_low_temperature_heat_balance(
+    lt_balance = check_low_temperature_heat_balance(
         results,
         total_mapper,
         verbose,
@@ -166,3 +166,9 @@ def check_results(
         ]
         subset = results[cols]
         assert (subset <= 1).all().all()
+
+    return {
+        "electricity-balance": electricity_balance,
+        "high-temperature-heat-balance": ht_balance,
+        "low-temperature-heat-balance": lt_balance,
+    }

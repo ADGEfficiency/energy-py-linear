@@ -1,5 +1,4 @@
 """Boiler asset for optimizing dispatch of gas fired boilers"""
-import typing
 
 import pulp
 import pydantic

@@ -80,7 +80,8 @@ def extract_site_results(
         "electricity_carbon_intensities",
         "high_temperature_load_mwh",
         "low_temperature_load_mwh",
-        "low_temperature_generation_mwh"
+        "low_temperature_generation_mwh",
+        "gas_prices"
     ]:
         results[f"{site.cfg.name}-{attr}"].append(
             getattr(site.cfg.interval_data, attr)[i]

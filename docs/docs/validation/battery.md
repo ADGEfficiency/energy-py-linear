@@ -13,23 +13,20 @@ In `energypylinear`, a positive site electricity balance is importing, and a neg
 ```python
 import energypylinear as epl
 
-asset = epl.Battery()
-results = asset.optimize(
+asset = epl.Battery(
     electricity_prices=[10, -50, 200, -50, 200],
-    verbose=False
 )
-print(results.simulation[
-    ["electricity_prices", "site-electricity_balance_mwh"]
-])
+simulation = asset.optimize(verbose=False)
+print(simulation.results[["site-electricity_prices", "site-electricity_balance_mwh"]])
 ```
 
 ```
-   electricity_prices  site-electricity_balance_mwh
-0                  10                      0.444444
-1                 -50                      2.000000
-2                 200                     -2.000000
-3                 -50                      2.000000
-4                 200                     -2.000000
+   site-electricity_prices  site-electricity_balance_mwh
+0                       10                      0.444444
+1                      -50                      2.000000
+2                      200                     -2.000000
+3                      -50                      2.000000
+4                      200                     -2.000000
 ```
 
 As expected, the battery charges (with a site that is positive) when prices are low and discharges (with a negative site electricity balance) when prices are high.
@@ -39,23 +36,20 @@ Now let's change the prices and see how the dispatch changes:
 ```python
 import energypylinear as epl
 
-asset = epl.Battery()
-results = asset.optimize(
+asset = epl.Battery(
     electricity_prices=[200, -50, -50, 200, 200],
-    verbose=False
 )
-print(results.simulation[
-    ["electricity_prices", "site-electricity_balance_mwh"]
-])
+simulation = asset.optimize(verbose=False)
+print(simulation.results[["site-electricity_prices", "site-electricity_balance_mwh"]])
 ```
 
 ```
-   electricity_prices  site-electricity_balance_mwh
-0                 200                           0.0
-1                 -50                           2.0
-2                 -50                           2.0
-3                 200                          -2.0
-4                 200                          -1.6
+   site-electricity_prices  site-electricity_balance_mwh
+0                      200                           0.0
+1                      -50                           2.0
+2                      -50                           2.0
+3                      200                          -2.0
+4                      200                          -1.6
 ```
 
 As expected, the battery continues to charge during low electricity price intervals, and discharge when electricity prices are high.
@@ -68,16 +62,16 @@ Let's return to our original set of prices and check the energy balance of the b
 import pandas as pd
 import energypylinear as epl
 
-pd.set_option('display.max_columns', 15)
-pd.set_option('display.width', 400)
+pd.set_option("display.max_columns", 15)
+pd.set_option("display.width", 400)
 
-asset = epl.Battery()
-results = asset.optimize(
+asset = epl.Battery(
     electricity_prices=[10, -50, 200, -50, 200],
-    verbose=False
 )
+simulation = asset.optimize(verbose=False)
 
-balance = epl.results.checks.check_electricity_balance(results.simulation, verbose=False)
+checks = epl.check_results(simulation.results, verbose=False)
+balance = checks["electricity-balance"]
 print(balance)
 ```
 
@@ -102,29 +96,30 @@ import pandas as pd
 import energypylinear as epl
 
 np.random.seed(42)
-prices = (np.random.uniform(-100, 100, 12) + 100).tolist()
+prices = np.random.uniform(-100, 100, 12) + 100
 
 out = []
 for efficiency_pct in [1.0, 0.9, 0.8]:
-    asset = epl.battery.Battery(
+    asset = epl.Battery(
         power_mw=4,
         capacity_mwh=10,
-        efficiency=efficiency_pct
-    )
-    results = asset.optimize(
+        efficiency_pct=efficiency_pct,
         electricity_prices=prices,
+    )
+    simulation = asset.optimize(
         objective="price",
         verbose=False
     )
+    results = simulation.results
     out.append(
         {
             "eff_pct": efficiency_pct,
-            "charge_mwh": results.simulation["battery-electric_charge_mwh"].sum(),
-            "discharge_mwh": results.simulation["battery-electric_discharge_mwh"].sum(),
-            "loss_mwh": results.simulation["battery-electric_loss_mwh"].sum(),
-            "prices_$_mwh": results.simulation["electricity_prices"].mean(),
-            "import_mwh": results.simulation["site-import_power_mwh"].sum(),
-            "objective": (results.simulation["site-import_power_mwh"] - results.simulation["site-export_power_mwh"] * results.simulation["electricity_prices"]).sum(),
+            "charge_mwh": results["battery-electric_charge_mwh"].sum(),
+            "discharge_mwh": results["battery-electric_discharge_mwh"].sum(),
+            "loss_mwh": results["battery-electric_loss_mwh"].sum(),
+            "prices_$_mwh": results["site-electricity_prices"].mean(),
+            "import_mwh": results["site-import_power_mwh"].sum(),
+            "objective": (results["site-import_power_mwh"] - results["site-export_power_mwh"] * results["site-electricity_prices"]).sum(),
         }
     )
 
@@ -155,8 +150,8 @@ import energypylinear as epl
 np.random.seed(42)
 electricity_prices = np.random.normal(100, 10, 10).tolist()
 
-asset = epl.battery.Battery(power_mw=2, capacity_mwh=4)
-results = asset.optimize(electricity_prices=electricity_prices)
+asset = epl.Battery(power_mw=2, capacity_mwh=4, electricity_prices=electricity_prices)
+results = asset.optimize()
 asset.plot(results, path="./docs/docs/static/battery.png")
 ```
 
@@ -173,17 +168,15 @@ import numpy as np
 import energypylinear as epl
 
 np.random.seed(42)
-electricity_prices = np.random.normal(100, 10, 10).tolist()
 
-asset = epl.battery.Battery(
+asset = epl.Battery(
     power_mw=4,
     capacity_mwh=8,
-)
-results = asset.optimize(
-    electricity_prices=electricity_prices,
+    electricity_prices=np.random.normal(100, 10, 10),
     initial_charge_mwh=1.0,
     final_charge_mwh=3.0
 )
+results = asset.optimize()
 asset.plot(results, path="./docs/docs/static/battery-fast.png")
 ```
 
@@ -192,4 +185,3 @@ asset.plot(results, path="./docs/docs/static/battery-fast.png")
 Takeaways:
 
 - battery SOC starts at 1 MWh and ends at 3 MWh.
-

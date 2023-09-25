@@ -27,9 +27,9 @@ def test_accounting_actuals() -> None:
             "load-high_temperature_load_mwh": [0, 0, 0],
             "load-low_temperature_load_mwh": [0, 0, 0],
             "load-low_temperature_generation_mwh": [0, 0, 0],
-            "electricity_prices": [100, 200, -300],
-            "gas_prices": 15,
-            "electricity_carbon_intensities": 0.5,
+            "site-electricity_prices": [100, 200, -300],
+            "site-gas_prices": 15,
+            "site-electricity_carbon_intensities": 0.5,
         }
     )
     actuals = epl.accounting.get_accounts(results, validate=True)
@@ -72,16 +72,16 @@ def test_accounting_forecasts() -> None:
     )
     price_results_actuals = pd.DataFrame(
         {
-            "electricity_prices": [100, 200, -300],
-            "gas_prices": 15,
-            "electricity_carbon_intensities": 0.5,
+            "site-electricity_prices": [100, 200, -300],
+            "site-gas_prices": 15,
+            "site-electricity_carbon_intensities": 0.5,
         }
     )
     price_results_forecasts = pd.DataFrame(
         {
-            "electricity_prices": [200, -100, 100],
-            "gas_prices": 10,
-            "electricity_carbon_intensities": 0.4,
+            "site-electricity_prices": [200, -100, 100],
+            "site-gas_prices": 10,
+            "site-electricity_carbon_intensities": 0.4,
         }
     )
     actuals = epl.accounting.get_accounts(

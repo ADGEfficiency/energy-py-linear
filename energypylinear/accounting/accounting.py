@@ -92,7 +92,9 @@ def get_one_gas_account(
 ) -> GasAccount:
     """Calculate a single gas account."""
     return GasAccount(
-        cost=(price_results["gas_prices"] * results["total-gas_consumption_mwh"]).sum(),
+        cost=(
+            price_results["site-gas_prices"] * results["total-gas_consumption_mwh"]
+        ).sum(),
         emissions=(
             defaults.gas_carbon_intensity * results["total-gas_consumption_mwh"]
         ).sum(),
@@ -105,18 +107,18 @@ def get_one_electricity_account(
 ) -> ElectricityAccount:
     """Calculate a single electricity account."""
     import_cost = (
-        price_results["electricity_prices"] * results["site-import_power_mwh"]
+        price_results["site-electricity_prices"] * results["site-import_power_mwh"]
     ).sum()
     export_cost = -(
-        price_results["electricity_prices"] * results["site-export_power_mwh"]
+        price_results["site-electricity_prices"] * results["site-export_power_mwh"]
     ).sum()
 
     import_emissions = (
-        price_results["electricity_carbon_intensities"]
+        price_results["site-electricity_carbon_intensities"]
         * results["site-import_power_mwh"]
     ).sum()
     export_emissions = -(
-        price_results["electricity_carbon_intensities"]
+        price_results["site-electricity_carbon_intensities"]
         * results["site-export_power_mwh"]
     ).sum()
 
