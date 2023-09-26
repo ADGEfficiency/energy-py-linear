@@ -14,7 +14,7 @@ from energypylinear.flags import Flags
 def test_evs_optimization_price() -> None:
     """Test EV optimization for price."""
 
-    charge_events_capacity_mwh = [50, 100, 30, 40]
+    charge_events_capacity_mwh = [50.0, 100, 30, 40]
     evs = epl.EVs(
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
@@ -57,7 +57,7 @@ def test_evs_optimization_price() -> None:
 
 def test_evs_optimization_carbon() -> None:
     """Test EV optimization for carbon."""
-    charge_events_capacity_mwh = [50, 100, 30, 40]
+    charge_events_capacity_mwh = [50.0, 100, 30, 40]
     evs = epl.EVs(
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
