@@ -66,7 +66,6 @@ print(simulation.results[
 ```
 
 ```
-
    site-electricity_carbon_intensities  site-export_power_mwh  wind-electric_generation_mwh
 0                                  1.0                  100.0                         100.0
 1                                 -0.5                   50.0                          50.0

@@ -22,7 +22,7 @@ site = epl.Site(assets=[
   )
 ])
 
-results = site.optimize(
+simulation = site.optimize(
   electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
   freq_mins=60,
   initial_charge_mwh=1,
@@ -42,7 +42,7 @@ site = epl.Site(assets=[
   epl.Battery(power_mw=2.0, capacity_mwh=4.0),
 ])
 
-results = site.optimize(
+simulation = site.optimize(
   electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
   freq_mins=60,
   initial_charge_mwh=1,
@@ -62,7 +62,7 @@ site = epl.Site(assets=[
   epl.EVs(charger_mws=[100, 100], charger_turndown=0.1)
 ])
 
-results = site.optimize(
+simulation = site.optimize(
   electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
   freq_mins=60,
   initial_charge_mwh=1,

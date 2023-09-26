@@ -52,15 +52,22 @@ markdown_extensions:
   - pymdownx.details
 nav:
   - Getting Started: index.md
-  - Optimization:
-      - Optimize Assets: how-to/dispatch-assets.md
-      - Optimize a Site: how-to/dispatch-site.md
+  - Assets:
+      - Battery: assets/battery.md
+      - Combined Heat & Power: assets/chp.md
+      - Electric Vehicles: assets/evs.md
+      - Heat Pump: assets/evs.md
+      - Renewable Generator: assets/renewable-generator.md
+  - How To:
+      - Optimize Multiple Assets: how-to/dispatch-site.md
       - Optimize for Carbon: how-to/price-carbon.md
       - Optimize for a Forecast: how-to/dispatch-forecast.md
   - Validation:
       - Battery: validation/battery.md
+      - CHP: validation/chp.md
       - EVs: validation/evs.md
       - Heat Pump: validation/heat-pump.md
+      - Renewable Generator: validation/renewable-generator.md
   - Changelog: changelog.md
   # - Performance: performance.md
   # - Measure Forecast Quality: index.md
