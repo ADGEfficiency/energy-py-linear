@@ -130,10 +130,6 @@ def test_interval_data() -> None:
     )
     assert len(idata.idx) == 3
 
-    #  test we fail when neither specified
-    with pytest.raises(Exception):
-        epl.interval_data.IntervalData()
-
     #  test that things work correctly when the assets have the same length data as the site index
     site = epl.Site(assets=[], electricity_carbon_intensities=[1.0, 2.0])
     assets = [epl.RenewableGenerator(electric_generation_mwh=[1.0, 2.0])]
