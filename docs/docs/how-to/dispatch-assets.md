@@ -2,8 +2,6 @@
 
 The asset API allows optimizing a single asset at once.  Internally the assets are using the `epl.Site`, but this is hidden when using the asset API.
 
-[You can find full examples for each asset here](https://github.com/ADGEfficiency/energy-py-linear/tree/main/examples).
-
 ## Battery
 
 Dispatch an electric battery operating in wholesale price arbitrage using `epl.Battery`:
@@ -11,7 +9,7 @@ Dispatch an electric battery operating in wholesale price arbitrage using `epl.B
 ```python
 import energypylinear as epl
 
-#  2.0 MW, 4.0 MWh battery
+#  optimize a 2.0 MW, 4.0 MWh battery for money
 asset = epl.Battery(
     power_mw=2,
     capacity_mwh=4,
@@ -21,8 +19,19 @@ asset = epl.Battery(
     initial_charge_mwh=1,
     final_charge_mwh=3,
 )
-
 simulation = asset.optimize(objective="price")
+
+#  optimize a 1.0 MW, 3.0 MWh battery for carbon
+asset = epl.Battery(
+    power_mw=1,
+    capacity_mwh=3,
+    efficiency_pct=0.9,
+    electricity_carbon_intensities = [0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01],
+    freq_mins=60,
+    initial_charge_mwh=0,
+    final_charge_mwh=0,
+)
+simulation = asset.optimize(objective="carbon")
 
 assert all(
     simulation.results.columns
@@ -65,7 +74,9 @@ assert all(
 )
 ```
 
-The battery will charge with electricity at low prices, and discharge at high prices.  An efficiency penalty is applied to the battery charge energy (energy is lost during charging).
+The battery will charge with electricity at low prices & carbon intensities, and discharge at high prices & carbon intensities.
+
+An efficiency penalty is applied to the battery charge energy (energy is lost during charging).
 
 ## CHP
 

@@ -46,7 +46,7 @@ asset = epl.Battery(
   electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100]
 )
 
-results = asset.optimize()
+simulation = asset.optimize()
 ```
 
 See how to optimize other asset types in [how-to/optimize-assets](https://energypylinear.adgefficiency.com/latest/how-to/dispatch-assets/).
@@ -92,23 +92,10 @@ site = epl.Site(
   low_temperature_load_mwh=[105, 110, 120, 110, 105]
 )
 
-results = site.optimize()
+simulation = site.optimize()
 ```
 
 The site API will optimize the assets together, and return the results for each asset.
-
-### Examples
-
-Examples as independent scripts are `./examples`:
-
-```shell
-$ ls ./examples
-./examples
-├── battery.py
-├── chp.py
-├── evs.py
-└── forecast-accuracy.py
-```
 
 ## Test
 

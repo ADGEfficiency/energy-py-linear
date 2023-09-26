@@ -13,5 +13,5 @@ if __name__ == "__main__":
     coverage = float(coverage_percentage.replace("%", ""))
     assert (
         coverage >= threshold
-    ), f"FAILED: {coverage_percentage=} {coverage=} {threshold=}"
-    print(f"PASSED: {coverage=} {threshold=}")
+    ), f"FAILED: coverage test: {coverage_percentage=} {coverage=} {threshold=}"
+    print(f"PASSED: coverage test: {coverage=} {threshold=}")

@@ -97,7 +97,7 @@ def test_sites(seed: int) -> None:
             charger_turndown=0.4,
             name="evs2",
         ),
-        epl.HeatPump(name="heat-pump1"),
+        epl.HeatPump(cop=2.0, electric_power_mw=5.0),
         epl.HeatPump(name="heat-pump2"),
         epl.RenewableGenerator(
             electric_generation_mwh=np.random.uniform(0, 100, 48), name="wind"
