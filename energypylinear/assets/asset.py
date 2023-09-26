@@ -11,6 +11,7 @@ import energypylinear as epl
 class Asset(abc.ABC):
     """Abstract Base Class for an Asset."""
 
+    @abc.abstractmethod
     def __init__(self) -> None:
         """Initializes the asset."""
         pass
@@ -46,10 +47,12 @@ class Asset(abc.ABC):
         """Constrain asset after all intervals."""
         pass
 
-    @abc.abstractmethod
-    def optimize(self) -> typing.Any | None:
-        """Optimize the asset."""
-        pass
+
+#  TODO - maybe have a separate OptimizeableAsset
+#     @abc.abstractmethod
+#     def optimize(self) -> typing.Any | None:
+#         """Optimize the asset."""
+#         pass
 
 
 class AssetOneInterval(pydantic.BaseModel):

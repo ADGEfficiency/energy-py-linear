@@ -18,7 +18,6 @@ from energypylinear.results.schema import (
 from energypylinear.results.warnings import warn_spills
 from energypylinear.utils import check_array_lengths
 
-
 optimizer = Optimizer()
 
 
@@ -62,7 +61,7 @@ def extract_site_results(
         "high_temperature_load_mwh",
         "low_temperature_load_mwh",
         "low_temperature_generation_mwh",
-        "gas_prices"
+        "gas_prices",
     ]:
         results[f"{site.cfg.name}-{attr}"].append(
             getattr(site.cfg.interval_data, attr)[i]
@@ -99,7 +98,9 @@ def extract_chp_results(
                 "high_temperature_generation_mwh",
                 "low_temperature_generation_mwh",
             ]:
-                results[f"{generator.cfg.name}-{attr}"].append(getattr(generator, attr).value())
+                results[f"{generator.cfg.name}-{attr}"].append(
+                    getattr(generator, attr).value()
+                )
 
 
 def extract_boiler_results(
@@ -112,7 +113,9 @@ def extract_boiler_results(
         for boiler in boilers:
             assert isinstance(boiler, epl.assets.boiler.BoilerOneInterval)
             for attr in ["high_temperature_generation_mwh", "gas_consumption_mwh"]:
-                results[f"{boiler.cfg.name}-{attr}"].append(getattr(boiler, attr).value())
+                results[f"{boiler.cfg.name}-{attr}"].append(
+                    getattr(boiler, attr).value()
+                )
 
 
 def extract_valve_results(
@@ -166,8 +169,8 @@ def extract_evs_results(
         pkg = []
         for asset_name in ivars.asset.keys():
             try:
-                vas = ivars.filter_evs_array(is_spill=False, i=i, asset_name=asset_name)
-                pkg.append(vas)
+                was = ivars.filter_evs_array(is_spill=False, i=i, asset_name=asset_name)
+                pkg.append(was)
                 if verbose:
                     logger.info(
                         "filtering evs-array",
@@ -304,8 +307,8 @@ def extract_evs_results(
         pkg = []
         for asset_name in ivars.asset.keys():
             try:
-                vas = ivars.filter_evs_array(is_spill=True, i=i, asset_name=asset_name)
-                pkg.append(vas)
+                was = ivars.filter_evs_array(is_spill=True, i=i, asset_name=asset_name)
+                pkg.append(was)
             except IndexError:
                 pass
 
@@ -369,9 +372,7 @@ def extract_renewable_generator_results(
     if renewables := ivars.filter_objective_variables(
         epl.assets.renewable_generator.RenewableGeneratorOneInterval, i=i
     )[0]:
-        fields = [
-            "electric_generation_mwh"
-        ]
+        fields = ["electric_generation_mwh"]
         for renewable in renewables:
             for attr in fields:
                 name = f"{renewable.cfg.name}-{attr}"
@@ -385,9 +386,7 @@ def add_totals(
     total_mapper = {}
     for col in quantities:
         cols = [
-            c
-            for c in results.columns
-            if ("-" + col in c) and ("charge-event" not in c)
+            c for c in results.columns if ("-" + col in c) and ("charge-event" not in c)
         ]
         results[f"total-{col}"] = results[cols].sum(axis=1)
         total_mapper[col] = cols
@@ -401,9 +400,7 @@ def add_totals(
     results["total-spills_mwh"] = results[total_mapper["spills"]].sum(axis=1)
 
     total_mapper["losses"] = [c for c in results.columns if "electric_loss_mwh" in c]
-    results["total-electric_loss_mwh"] = results[total_mapper["losses"]].sum(
-        axis=1
-    )
+    results["total-electric_loss_mwh"] = results[total_mapper["losses"]].sum(axis=1)
     results["site-electricity_balance_mwh"] = (
         results["site-import_power_mwh"] - results["site-export_power_mwh"]
     )
@@ -425,11 +422,31 @@ def extract_results(
     This function returns the output simulation results as a single pd.DataFrame.
     """
 
+    """
+    TODO
+
+    if we have asset data that is longer than the anchor input data (prices or carbon intensities)
+    this gets automatically clipped
+
+    not sure what to do here yet...
+
+    ```
+    electricity_carbon_intensities = [-1.0, 0.1, 1.0]
+    electric_generation_mwh=[50, 50, 50, 50],
+    asset = epl.RenewableGenerator(
+        electric_generation_mwh=electric_generation_mwh,
+        name="wind",
+        electric_generation_lower_bound_pct=0.0,
+        electricity_carbon_intensities=electricity_carbon_intensities,
+    )
+    ```
+
     #  validate that we have all the data we need
-    assert len(site.cfg.interval_data.idx) == len(ivars.objective_variables)
-    for asset in assets:
-        if hasattr(asset.cfg, "interval_data"):
-            assert len(asset.cfg.interval_data.idx) == len(ivars.objective_variables)
+    # assert len(site.cfg.interval_data.idx) == len(ivars.objective_variables)
+    # for asset in assets:
+    #     if hasattr(asset.cfg, "interval_data"):
+    #         assert len(asset.cfg.interval_data.idx) == len(ivars.objective_variables)
+    """
 
     #  extract linear program results from the assets
     lp_results: dict[str, list] = collections.defaultdict(list)
@@ -461,7 +478,7 @@ def extract_results(
         total_mapper=total_mapper,
         verbose=verbose,
         check_valve=any([isinstance(a, epl.assets.valve.Valve) for a in assets]),
-        check_evs=any([isinstance(a, epl.assets.evs.EVs) for a in assets])
+        check_evs=any([isinstance(a, epl.assets.evs.EVs) for a in assets]),
     )
     spill_occured = warn_spills(results, flags, verbose=verbose)
 

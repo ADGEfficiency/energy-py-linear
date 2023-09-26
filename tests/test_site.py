@@ -154,3 +154,14 @@ def test_interval_data() -> None:
     assert asset.cfg.name == "solar"
     assert isinstance(asset.cfg.interval_data.electric_generation_mwh, np.ndarray)
     assert all(asset.cfg.interval_data.electric_generation_mwh == [2.0, 2.0])
+
+    #  test that we fail when we don't supply electricity prices or carbon
+    with pytest.raises(ValueError):
+        epl.assets.site.SiteIntervalData()
+
+    #  test the validation routes
+    epl.assets.site.SiteIntervalData(
+        electricity_prices=[10, 10],
+        high_temperature_load_mwh=5.0,
+        high_temperature_generation_mwh=[5, 5],
+    )

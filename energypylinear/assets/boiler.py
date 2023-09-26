@@ -107,7 +107,3 @@ class Boiler(epl.Asset):
     ) -> None:
         """Constrain the asset after all intervals."""
         return
-
-    def optimize(self) -> None:
-        """Optimize the dispatch of the asset."""
-        raise NotImplementedError()

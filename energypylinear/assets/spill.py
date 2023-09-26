@@ -82,7 +82,3 @@ class Spill(epl.Asset):
     ) -> None:
         """Constrain asset after all intervals."""
         return
-
-    def optimize(self) -> None:
-        """Optimize the asset."""
-        raise NotImplementedError()

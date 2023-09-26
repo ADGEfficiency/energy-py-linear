@@ -14,7 +14,9 @@ def test_repr() -> None:
         epl.HeatPump(electric_power_mw=1.0, cop=3),
         epl.Battery(),
         epl.CHP(),
+        epl.Boiler(),
         epl.EVs(**ds),
+        epl.RenewableGenerator(electric_generation_mwh=[10]),
         epl.assets.evs.EVsArrayOneInterval(
             i=0,
             cfg=epl.assets.evs.EVsConfig(
@@ -36,8 +38,6 @@ def test_repr() -> None:
         epl.Site(assets=[], electricity_prices=np.array([0, 0])),
         epl.Spill(),
         epl.Valve(),
-        epl.Boiler(),
-        epl.interval_data.IntervalData(electricity_prices=[10]),
         epl.Optimizer(),
         epl.accounting.accounting.Account(cost=0, emissions=0),
         epl.accounting.accounting.Accounts(

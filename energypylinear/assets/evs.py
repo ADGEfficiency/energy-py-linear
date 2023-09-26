@@ -13,6 +13,18 @@ from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
 
 
+def validate_ev_interval_data(
+    idx: np.ndarray,
+    charge_events: np.ndarray,
+) -> None:
+    """Helper used to validate EV interval data.
+
+    TODO move into an EVsIntervalData model.
+    """
+    assert idx.shape[0] == charge_events.shape[0]
+    assert all(np.array(charge_events).sum(axis=0) > 0), "sum across axis=0"
+
+
 def validate_charge_events(
     charge_event_cfgs: np.ndarray, charge_events: np.ndarray
 ) -> None:
@@ -65,12 +77,11 @@ class EVsConfig(pydantic.BaseModel):
         return name
 
     @pydantic.validator("charge_events")
-    def validate_charge_events(cls, charge_events: np.ndarray, values: dict) -> np.ndarray:
+    def validate_charge_events(
+        cls, charge_events: np.ndarray, values: dict
+    ) -> np.ndarray:
         """Check charge events match the configs"""
-        validate_charge_events(
-            values['charge_event_cfgs'],
-            charge_events
-        )
+        validate_charge_events(values["charge_event_cfgs"], charge_events)
         return charge_events
 
 
@@ -532,7 +543,7 @@ class EVs:
             charge_event_cfgs=charge_event_cfgs,
             # transpose charge_events to have time as first dimension
             charge_events=np.array(charge_events).T,
-            freq_mins=freq_mins
+            freq_mins=freq_mins,
         )
 
         if electricity_prices is not None or electricity_carbon_intensities is not None:
@@ -541,6 +552,10 @@ class EVs:
                 assets=assets,
                 electricity_prices=electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
+            )
+            assert isinstance(self.site.cfg.interval_data.idx, np.ndarray)
+            validate_ev_interval_data(
+                self.site.cfg.interval_data.idx, self.cfg.charge_events
             )
 
     def __repr__(self) -> str:
@@ -672,12 +687,6 @@ class EVs:
             verbose=verbose,
         )
 
-    def plot(
-        self, results: "epl.SimulationResult", path: pathlib.Path | str
-    ) -> None:
+    def plot(self, results: "epl.SimulationResult", path: pathlib.Path | str) -> None:
         """Plot simulation results."""
-        return epl.plot.plot_evs(
-            results,
-            pathlib.Path(path),
-            asset_name=self.cfg.name
-        )
+        return epl.plot.plot_evs(results, pathlib.Path(path), asset_name=self.cfg.name)

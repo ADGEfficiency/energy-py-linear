@@ -15,11 +15,11 @@ from energypylinear.flags import Flags
 class RenewableGeneratorIntervalData(pydantic.BaseModel):
     """Renewable Generator interval data."""
 
-    electric_generation_mwh: float | list[float] | np.ndarray
+    electric_generation_mwh: np.ndarray | list[float] | float
     idx: list[int] | np.ndarray = pydantic.Field(default_factory=list)
 
     @pydantic.validator("idx", always=True)
-    def create_idx_renewable(cls, _: list, values: dict) -> np.ndarray:
+    def create_idx(cls, _: list, values: dict) -> np.ndarray:
         """Creates an integer index."""
         return np.arange(len(values["electric_generation_mwh"]))
 
@@ -31,6 +31,14 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
         if isinstance(value, float):
             return [value]
         return np.array(value)
+
+    @pydantic.validator("electric_generation_mwh", always=True)
+    def validate_greater_zero(cls, value: np.ndarray | list) -> np.ndarray | list:
+        """Handles case where we want a single value broadcast to the length
+        of the interval data.
+        """
+        assert np.array(value).min() >= 0.0
+        return value
 
     class Config:
         """Configure the pydantic.BaseModel."""
@@ -77,10 +85,10 @@ class RenewableGenerator(epl.Asset):
 
     def __init__(
         self,
-        electric_generation_mwh: float | list[float] | np.ndarray,
-        electricity_prices: float | list[float] | np.ndarray | None = None,
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
-        electric_load_mwh: float | list[float] | np.ndarray | None = None,
+        electric_generation_mwh: np.ndarray | list[float] | float,
+        electricity_prices: np.ndarray | list[float] | float | None = None,
+        electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
+        electric_load_mwh: np.ndarray | list[float] | float | None = None,
         electric_generation_lower_bound_pct: float = 1.0,
         name: str = "renewable-generator",
         freq_mins: int = defaults.freq_mins,
@@ -107,10 +115,7 @@ class RenewableGenerator(epl.Asset):
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        raise NotImplementedError()
-        # return (
-        #     f"<energypylinear.HeatPump {self.cfg.electric_power_mw=}, {self.cfg.cop=}>"
-        # )
+        return "<energypylinear.RenewableGenerator>"
 
     def one_interval(
         self, optimizer: "epl.Optimizer", i: int, freq: "epl.Freq", flags: "epl.Flags"
