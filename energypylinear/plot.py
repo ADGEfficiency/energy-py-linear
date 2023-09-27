@@ -58,7 +58,7 @@ def plot_battery(simulation: "epl.SimulationResult", path: pathlib.Path | str) -
 
     results.plot(
         "Index",
-        "battery-final_charge_mwh",
+        "battery-electric_final_charge_mwh",
         ax=axes[2],
         kind="bar",
     )

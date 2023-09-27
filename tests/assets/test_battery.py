@@ -19,7 +19,7 @@ tol = 1e-5
         ([10, 50, 10, 5000, 10], 0, [4, -4, 4, -4, 0]),
     ],
 )
-def test_battery_price(
+def test_price_optimization(
     electricity_prices: list[float],
     initial_charge_mwh: float,
     expected_dispatch: list[float],
@@ -55,7 +55,7 @@ def test_battery_price(
         ([0.9, 0.1, 0.2, 0.9], 0, [0, 4, 0, -4]),
     ],
 )
-def test_battery_carbon(
+def test_carbon_optimization(
     carbon_intensities: list[float],
     initial_charge_mwh: float,
     expected_dispatch: list[float],
@@ -136,7 +136,7 @@ def test_battery_charge_discharge_binary_variables() -> None:
     prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=1000),
     prices_offset=hypothesis.strategies.floats(min_value=-250, max_value=250),
 )
-def test_battery_hypothesis(
+def test_hypothesis(
     idx_length: int,
     power_mw: float,
     capacity_mwh: float,
@@ -188,19 +188,19 @@ def test_battery_hypothesis(
 
     #  check we don't exceed battery capacity
     name = "battery"
-    for var in ["initial_charge_mwh", "final_charge_mwh"]:
+    for var in ["electric_initial_charge_mwh", "electric_final_charge_mwh"]:
         assert all(simulation.results[f"{name}-{var}"] <= capacity_mwh + tol)
         assert all(simulation.results[f"{name}-{var}"] >= 0 - tol)
 
     #  check we set initial and final charge correctly
     np.testing.assert_almost_equal(
-        simulation.results[f"{name}-initial_charge_mwh"].iloc[0],
+        simulation.results[f"{name}-electric_initial_charge_mwh"].iloc[0],
         asset.cfg.initial_charge_mwh,
         decimal=4,
     )
     assert isinstance(asset.cfg.final_charge_mwh, float)
     np.testing.assert_almost_equal(
-        simulation.results[f"{name}-final_charge_mwh"].iloc[-1],
+        simulation.results[f"{name}-electric_final_charge_mwh"].iloc[-1],
         asset.cfg.final_charge_mwh,
         decimal=4,
     )
