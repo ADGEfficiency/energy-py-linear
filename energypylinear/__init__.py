@@ -22,18 +22,22 @@ from energypylinear.results.checks import check_results
 from energypylinear.results.extract import SimulationResult, extract_results
 
 __all__ = [
+    "Asset",
     "Battery",
     "Boiler",
+    "CHP",
     "EVs",
     "Flags",
     "Freq",
-    "CHP",
     "HeatPump",
-    "IntervalData",
     "IntervalVars",
+    "LpVariable",
     "Optimizer",
     "SimulationResult",
     "Site",
+    "Spill",
+    "Valve",
+    "check_results",
+    "extract_results",
     "get_accounts",
-    "objectives",
 ]
