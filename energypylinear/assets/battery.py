@@ -16,7 +16,7 @@ from energypylinear.optimizer import Optimizer
 def setup_initial_final_charge(
     initial_charge_mwh: float, final_charge_mwh: float | None, capacity_mwh: float
 ) -> tuple[float, float]:
-    """Processes the battery config for initial and final charge."""
+    """Processes the initial and final charge of battery storage."""
     initial_charge_mwh = min(initial_charge_mwh, capacity_mwh)
     final_charge_mwh = (
         initial_charge_mwh
@@ -54,8 +54,8 @@ class BatteryOneInterval(AssetOneInterval):
     electric_discharge_mwh: pulp.LpVariable
     electric_discharge_binary: pulp.LpVariable | int
     electric_loss_mwh: pulp.LpVariable
-    initial_charge_mwh: pulp.LpVariable
-    final_charge_mwh: pulp.LpVariable
+    electric_initial_charge_mwh: pulp.LpVariable
+    electric_final_charge_mwh: pulp.LpVariable
     efficiency_pct: float
 
 
@@ -66,8 +66,10 @@ def constrain_only_charge_or_discharge(
 ) -> None:
     """Constrain battery to only charge or discharge.
 
-    Usually flagged off - slows things down a lot (~2x as slow).  Instead of forcing only charge or
-    discharge, the objective function just takes the difference to calculate net charge.
+    Usually flagged off - slows things down a lot (~2x as slow).
+
+    Instead of forcing only charge or discharge, the objective function just takes the
+    difference to calculate net charge.
     """
     assert isinstance(battery, BatteryOneInterval)
     if flags.include_charge_discharge_binary_variables:
@@ -92,11 +94,11 @@ def constrain_battery_electricity_balance(
     """Constrain energy balance in a single interval - also calculates losses."""
     assert isinstance(battery, BatteryOneInterval)
     optimizer.constrain(
-        battery.initial_charge_mwh
+        battery.electric_initial_charge_mwh
         + battery.electric_charge_mwh
         - battery.electric_discharge_mwh
         - battery.electric_loss_mwh
-        == battery.final_charge_mwh
+        == battery.electric_final_charge_mwh
     )
     optimizer.constrain(
         battery.electric_loss_mwh
@@ -121,7 +123,9 @@ def constrain_connection_batteries_between_intervals(
         for alt, neu in zip(old, new, strict=True):
             assert isinstance(alt, BatteryOneInterval)
             assert isinstance(neu, BatteryOneInterval)
-            optimizer.constrain(alt.final_charge_mwh == neu.initial_charge_mwh)
+            optimizer.constrain(
+                alt.electric_final_charge_mwh == neu.electric_initial_charge_mwh
+            )
 
 
 def constrain_initial_final_charge(
@@ -131,12 +135,14 @@ def constrain_initial_final_charge(
     assert isinstance(initial, BatteryOneInterval)
     assert isinstance(final, BatteryOneInterval)
 
-    optimizer.constrain(initial.initial_charge_mwh == initial.cfg.initial_charge_mwh)
-    optimizer.constrain(final.final_charge_mwh == final.cfg.final_charge_mwh)
+    optimizer.constrain(
+        initial.electric_initial_charge_mwh == initial.cfg.initial_charge_mwh
+    )
+    optimizer.constrain(final.electric_final_charge_mwh == final.cfg.final_charge_mwh)
 
 
 class Battery:
-    """Battery asset - handles optimization and plotting of results over many intervals.
+    """Electric battery asset, able to charge and discharge electricity.
 
     Args:
         power_mw: the maximum power output of the battery in mega-watts, used for both charge and discharge.
@@ -196,32 +202,35 @@ class Battery:
         return BatteryOneInterval(
             cfg=self.cfg,
             electric_charge_mwh=optimizer.continuous(
-                f"{self.cfg.name}-charge_mwh-{i}", up=freq.mw_to_mwh(self.cfg.power_mw)
+                f"{self.cfg.name}-electric_charge_mwh-{i}",
+                up=freq.mw_to_mwh(self.cfg.power_mw),
             ),
             electric_discharge_mwh=optimizer.continuous(
-                f"{self.cfg.name}-discharge_mwh-{i}",
+                f"{self.cfg.name}-electric_discharge_mwh-{i}",
                 up=freq.mw_to_mwh(self.cfg.power_mw),
             ),
             electric_charge_binary=optimizer.binary(
-                f"{self.cfg.name}-charge_binary-{i}"
+                f"{self.cfg.name}-electric_charge_binary-{i}"
             )
             if flags.include_charge_discharge_binary_variables
             else 0,
             electric_discharge_binary=optimizer.binary(
-                f"{self.cfg.name}-discharge_binary-{i}"
+                f"{self.cfg.name}-electric_discharge_binary-{i}"
             )
             if flags.include_charge_discharge_binary_variables
             else 0,
             electric_loss_mwh=optimizer.continuous(
                 f"{self.cfg.name}-electric_loss_mwh-{i}"
             ),
-            initial_charge_mwh=optimizer.continuous(
-                f"{self.cfg.name}-initial_charge_mwh-{i}",
+            electric_initial_charge_mwh=optimizer.continuous(
+                f"{self.cfg.name}-electric_initial_charge_mwh-{i}",
                 low=0,
                 up=self.cfg.capacity_mwh,
             ),
-            final_charge_mwh=optimizer.continuous(
-                f"{self.cfg.name}-final_charge_mwh-{i}", low=0, up=self.cfg.capacity_mwh
+            electric_final_charge_mwh=optimizer.continuous(
+                f"{self.cfg.name}-electric_final_charge_mwh-{i}",
+                low=0,
+                up=self.cfg.capacity_mwh,
             ),
             efficiency_pct=self.cfg.efficiency_pct,
         )
@@ -229,7 +238,7 @@ class Battery:
     def constrain_within_interval(
         self,
         optimizer: Optimizer,
-        ivars: "epl.interval_data.IntervalVars",
+        ivars: "epl.IntervalVars",
         i: int,
         freq: Freq,
         flags: Flags = Flags(),
@@ -253,7 +262,7 @@ class Battery:
     def constrain_after_intervals(
         self,
         optimizer: Optimizer,
-        ivars: "epl.interval_data.IntervalVars",
+        ivars: "epl.IntervalVars",
     ) -> None:
         """Constrain asset after all intervals."""
         initial = ivars.filter_objective_variables(
