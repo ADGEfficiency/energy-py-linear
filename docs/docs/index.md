@@ -1,3 +1,3 @@
 # energy-py-linear
 
-{!../../README.md!lines=11-99}
+{!../../README.md!lines=11-93}

@@ -14,9 +14,9 @@ A Python library for optimizing energy assets with mixed-integer linear programm
 - combined heat & power (CHP) generators,
 - electric vehicle smart charging,
 - heat pumps,
-- renewable generators.
+- renewable (wind & solar) generators.
 
-Assets can be optimized to either maximize profit or minimize carbon emissions.
+Assets & sites can be optimized to either maximize profit or minimize carbon emissions.
 
 Energy balances are performed on electricity, high & low temperature heat.
 
@@ -32,9 +32,7 @@ $ pip install energypylinear
 
 ### Asset API
 
-The asset API allows optimizing a single asset at once.
-
-We can optimize an electric battery operating in wholesale price arbitrage using `epl.Battery`:
+The asset API allows optimizing a single asset at once:
 
 ```python
 import energypylinear as epl
@@ -50,11 +48,9 @@ asset = epl.Battery(
 simulation = asset.optimize()
 ```
 
-See how to optimize other asset types in [how-to/optimize-assets](https://energypylinear.adgefficiency.com/latest/how-to/dispatch-assets/).
-
 ### Site API
 
-The site API allows optimizing multiple assets at once:
+The site API allows optimizing multiple assets together:
 
 ```python
 import energypylinear as epl
@@ -96,14 +92,12 @@ site = epl.Site(
 simulation = site.optimize()
 ```
 
-The site API will optimize the assets together, and return the results for each asset.
+## Documentation
+
+[See more asset types & use cases in the documentation](https://energypylinear.adgefficiency.com/latest).
 
 ## Test
 
 ```shell
 $ make test
 ```
-
-## Documentation
-
-Hosted at [energypylinear.adgefficiency.com/latest](https://energypylinear.adgefficiency.com/latest).
