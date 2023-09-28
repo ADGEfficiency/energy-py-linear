@@ -7,7 +7,6 @@ clean:
 
 
 #  ----- SETUP -----
-#  installs dependencies
 
 .PHONY: setup-pip-poetry setup-test setup-static setup-check setup-docs
 QUIET := -q
@@ -31,14 +30,13 @@ setup-check: setup-pip-poetry
 #  manage docs dependencies separately because
 #  we build docs on netlify
 #  netlify only has Python 3.8
-#  maybe could change this now we use mike
+#  TODO could change this now we use mike
 #  as we don't run a build on netlify anymore
 setup-docs:
 	pip install -r ./docs/requirements.txt $(QUIET)
 
 
 #  ----- TEST -----
-#  unit, integration and system tests
 
 .PHONY: test test-ci test-docs clean-test-docs test-validate create-test-docs
 PARALLEL = auto
@@ -57,9 +55,15 @@ create-test-docs: setup-test clean-test-docs
 	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
 	python -m phmdoctest ./docs/docs/validation/evs.md --outfile tests/phmdoctest/test_validate_evs.py
 	python -m phmdoctest ./docs/docs/validation/heat-pump.md --outfile tests/phmdoctest/test_validate_heat-pump.py
+	python -m phmdoctest ./docs/docs/validation/renewable-generator.md --outfile tests/phmdoctest/test_validate_renewable_generator.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-forecast.md --outfile tests/phmdoctest/test_forecast.py
 	python -m phmdoctest ./docs/docs/how-to/price-carbon.md --outfile tests/phmdoctest/test_carbon.py
-	python -m phmdoctest ./docs/docs/how-to/dispatch-assets.md --outfile tests/phmdoctest/test_dispatch_assets.py
+	python -m phmdoctest ./docs/docs/assets/chp.md --outfile tests/phmdoctest/test_optimize_chp.py
+	python -m phmdoctest ./docs/docs/assets/battery.md --outfile tests/phmdoctest/test_optimize_battery.py
+	python -m phmdoctest ./docs/docs/assets/evs.md --outfile tests/phmdoctest/test_optimize_evs.py
+	python -m phmdoctest ./docs/docs/assets/heat-pump.md --outfile tests/phmdoctest/test_optimize_heat_pump.py
+	python -m phmdoctest ./docs/docs/assets/chp.md --outfile tests/phmdoctest/test_optimize_chp.py
+	python -m phmdoctest ./docs/docs/assets/renewable-generator.md --outfile tests/phmdoctest/test_optimize_renewable_generator.py
 
 clean-test-docs:
 	rm -rf ./tests/phmdoctest
@@ -69,17 +73,18 @@ test-docs: clean-test-docs create-test-docs
 
 
 #  ----- CHECK -----
-#  linting and static typing checks
+#  linting and static typing
 
 .PHONY: check lint static
 
 check: lint static
 
+MYPY_ARGS=--pretty
 static: setup-static
 	rm -rf ./tests/phmdoctest
-	mypy --pretty ./energypylinear
-	mypy --pretty ./tests
-	mypy --pretty ./examples
+	mypy --version
+	mypy $(MYPY_ARGS) ./energypylinear
+	mypy $(MYPY_ARGS) ./tests
 
 lint: setup-check
 	rm -rf ./tests/phmdoctest
@@ -112,6 +117,7 @@ publish: setup
 
 
 #  ----- DOCS ------
+
 .PHONY: docs mike-deploy
 
 generate-docs-images: setup
@@ -131,5 +137,5 @@ docs: setup-docs
 #  -p = push
 #  TODO - get VERSION from pyproject.toml
 #  TODO - this is not used in CI anywhere yet
-mike-deploy: setup-docs
+mike-deploy: setup-docs generate-plots
 	cd docs; mike deploy $(VERSION) latest -u -b mike-pages -r origin -p

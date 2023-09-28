@@ -8,7 +8,7 @@ from energypylinear.defaults import defaults
 
 def filter_spill_evs(
     ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.interval_data.IntervalData",
+    interval_data: "epl.assets.site.SiteIntervalData",
 ) -> "list[list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]]":
     """
     Complexity here comes from the need to extract only the spill EVs linear program
@@ -37,11 +37,11 @@ def filter_spill_evs(
 
 def price_objective(
     optimizer: "epl.Optimizer",
-    ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.interval_data.IntervalData",
+    ivars: "epl.IntervalVars",
+    interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
     """
-    Linear programming objective for cost minimization.  Equivilant to profit maximization.
+    Linear programming objective for cost minimization.  Equivalent to profit maximization.
 
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
@@ -59,7 +59,7 @@ def price_objective(
     sites = ivars.asset["site"]["site"]
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
     spill_evs = filter_spill_evs(ivars, interval_data)
-    generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
+    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 
     assert isinstance(interval_data.gas_prices, np.ndarray)
@@ -72,8 +72,7 @@ def price_objective(
             spill.electric_generation_mwh * defaults.spill_objective_penalty
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
             + spill.electric_load_mwh * defaults.spill_objective_penalty
-            #  don't think I need this - this is dumping of HT heat - was in here - TODO test
-            # + spill.high_temperature_load_mwh
+            + spill.high_temperature_load_mwh * defaults.spill_objective_penalty
             for spill in spills[i]
         ]
         + [
@@ -97,7 +96,7 @@ def price_objective(
 def carbon_objective(
     optimizer: "epl.Optimizer",
     ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.interval_data.IntervalData",
+    interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
     """
     Linear programming objective for carbon emission minimization.
@@ -118,7 +117,7 @@ def carbon_objective(
     sites = ivars.asset["site"]["site"]
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
     spill_evs = filter_spill_evs(ivars, interval_data)
-    generators = ivars.filter_objective_variables(epl.assets.chp.GeneratorOneInterval)
+    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)

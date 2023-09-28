@@ -36,11 +36,11 @@ class SpillOneInterval(AssetOneInterval):
     electric_discharge_mwh: float = 0.0
 
 
-class Spill:
+class Spill(epl.Asset):
     """Spill asset - allows excess or insufficient balances to be filled in."""
 
     def __init__(self, name: str = "spill"):
-        """Initialize a Spill asset model."""
+        """Initializes the asset."""
         self.cfg = SpillConfig(name=name)
 
     def __repr__(self) -> str:
@@ -54,7 +54,7 @@ class Spill:
         freq: epl.freq.Freq,
         flags: epl.flags.Flags = epl.flags.Flags(),
     ) -> SpillOneInterval:
-        """Create Spill asset data for a single interval."""
+        """Generate linear program data for one interval."""
         return SpillOneInterval(
             cfg=self.cfg,
             electric_generation_mwh=optimizer.continuous(
@@ -80,5 +80,5 @@ class Spill:
     def constrain_after_intervals(
         self, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
-        """Constrain asset after all interval asset models are created."""
+        """Constrain asset after all intervals."""
         return

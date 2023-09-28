@@ -14,14 +14,12 @@ from energypylinear.flags import Flags
 def test_evs_optimization_price() -> None:
     """Test EV optimization for price."""
 
-    charge_events_capacity_mwh = [50, 100, 30, 40]
+    charge_events_capacity_mwh = [50.0, 100, 30, 40]
     evs = epl.EVs(
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
         charger_turndown=0.0,
         charge_event_efficiency=1.0,
-    )
-    results = evs.optimize(
         electricity_prices=[-100, 50, 30, 50, 40],
         charge_events=[
             [1, 0, 0, 0, 0],
@@ -29,42 +27,42 @@ def test_evs_optimization_price() -> None:
             [0, 0, 0, 1, 1],
             [0, 1, 0, 0, 0],
         ],
+        freq_mins=60,
+    )
+    simulation = evs.optimize(
         flags=Flags(
             allow_evs_discharge=False,
             fail_on_spill_asset_use=True,
             allow_infeasible=False,
         ),
-        freq_mins=60,
         verbose=False,
     )
-    simulation = results.simulation
     # print(simulation[[c for c in simulation.columns if "soc" in c]])
 
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
     np.testing.assert_equal(
-        simulation["site-import_power_mwh"].sum(), sum(charge_events_capacity_mwh)
+        simulation.results["site-import_power_mwh"].sum(),
+        sum(charge_events_capacity_mwh),
     )
 
     #  no exporting at all
-    np.testing.assert_equal(simulation["site-export_power_mwh"].sum(), 0)
+    np.testing.assert_equal(simulation.results["site-export_power_mwh"].sum(), 0)
 
     #  test dispatch exactly as we expect
     np.testing.assert_array_equal(
-        simulation["site-import_power_mwh"], [50, 40, 100, 0, 30]
+        simulation.results["site-import_power_mwh"], [50, 40, 100, 0, 30]
     )
 
 
 def test_evs_optimization_carbon() -> None:
     """Test EV optimization for carbon."""
-    charge_events_capacity_mwh = [50, 100, 30, 40]
+    charge_events_capacity_mwh = [50.0, 100, 30, 40]
     evs = epl.EVs(
         chargers_power_mw=[100, 100],
         charge_events_capacity_mwh=charge_events_capacity_mwh,
         charger_turndown=0.0,
         charge_event_efficiency=1.0,
-    )
-    results = evs.optimize(
         electricity_prices=[-100, 50, 30, 50, 40, 10],
         electricity_carbon_intensities=[0.1, 0.3, -0.5, 0.95, 0.9, 0.0],
         charge_events=[
@@ -73,28 +71,30 @@ def test_evs_optimization_carbon() -> None:
             [0, 0, 0, 1, 1, 0],
             [0, 0, 0, 0, 1, 1],
         ],
+        freq_mins=60,
+    )
+    simulation = evs.optimize(
         flags=Flags(
             allow_evs_discharge=False,
             fail_on_spill_asset_use=True,
             allow_infeasible=False,
         ),
-        freq_mins=60,
         objective="carbon",
         verbose=False,
     )
-    simulation = results.simulation
     #  test total import power equal to total charge event mwh
     #  requires efficiency to be 100%
     np.testing.assert_equal(
-        simulation["site-import_power_mwh"].sum(), sum(charge_events_capacity_mwh)
+        simulation.results["site-import_power_mwh"].sum(),
+        sum(charge_events_capacity_mwh),
     )
 
     #  no exporting at all
-    np.testing.assert_equal(simulation["site-export_power_mwh"].sum(), 0)
+    np.testing.assert_equal(simulation.results["site-export_power_mwh"].sum(), 0)
 
     #  test dispatch exactly as we expect
     np.testing.assert_array_equal(
-        simulation["site-import_power_mwh"], [50.0, 0.0, 100.0, 0.0, 30.0, 40]
+        simulation.results["site-import_power_mwh"], [50.0, 0.0, 100.0, 0.0, 30.0, 40]
     )
 
 
@@ -116,8 +116,6 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
         charge_events_capacity_mwh=charge_events_capacity_mwh,
         charger_turndown=0.0,
         charge_event_efficiency=efficiency,
-    )
-    results = evs.optimize(
         electricity_prices=[-100, 50, 30, 50, 40],
         charge_events=[
             [1, 0, 0, 0, 0],
@@ -125,33 +123,34 @@ def test_evs_efficiency_losses(efficiency: float) -> None:
             [0, 0, 0, 1, 1],
             [0, 1, 0, 0, 0],
         ],
+        freq_mins=60,
+    )
+    simulation = evs.optimize(
         flags=Flags(
             allow_evs_discharge=False,
             fail_on_spill_asset_use=True,
             allow_infeasible=False,
         ),
-        freq_mins=60,
         verbose=False,
     )
-    simulation = results.simulation
-    # print(simulation[[c for c in simulation.columns if "soc" in c]])
 
     #  test total import versus charge event mwh
     #  a less efficient charge event should mean we import more power
     #  our expected losses are a function of the amount we charge a charge event
 
-    _ = simulation["total-electric_loss_mwh"].sum()
+    #  TODO
+    _ = simulation.results["total-electric_loss_mwh"].sum()
     # np.testing.assert_equal(
-    #     simulation["site-import_power_mwh"].sum(),
+    #     simulation.results["site-import_power_mwh"].sum(),
     #     sum(charge_events_capacity_mwh) + losses_mwh,
     # )
     # print(
-    #     f'import power: {simulation["site-import_power_mwh"].sum()}, charge event {sum(charge_events_capacity_mwh)}, {losses_mwh=}'
+    #     f'import power: {simulation.results["site-import_power_mwh"].sum()}, charge event {sum(charge_events_capacity_mwh)}, {losses_mwh=}'
     # )
 
     np.testing.assert_allclose(
-        simulation["total-electric_charge_mwh"] * (1 - efficiency),
-        simulation["total-electric_loss_mwh"],
+        simulation.results["total-electric_charge_mwh"] * (1 - efficiency),
+        simulation.results["total-electric_loss_mwh"],
     )
     #  TODO in future add charger efficiency
     #  this would allow matching of different efficiency chargers and charge events
@@ -175,35 +174,32 @@ def _one_v2g(args: tuple) -> tuple:
         seed=seed,
     )
     evs = epl.EVs(
-        chargers_power_mw=ds["charger_mws"].tolist(),
-        charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+        **ds,
         charger_turndown=0.0,
         charge_event_efficiency=1.0,
+        freq_mins=60,
     )
-    ds.pop("charger_mws")
-    charge_events_capacity_mwh = ds.pop("charge_events_capacity_mwh")
-    results = evs.optimize(
-        **ds,
+    charge_events_capacity_mwh = ds["charge_events_capacity_mwh"]
+    simulation = evs.optimize(
         flags=Flags(
             allow_evs_discharge=True,
             fail_on_spill_asset_use=True,
             allow_infeasible=False,
         ),
-        freq_mins=60,
         verbose=False,
     )
 
     #  test that the initial and final socs are correct
     cols = [
         c
-        for c in results.simulation
+        for c in simulation.results
         if "evs-charge-event" in c and "final_soc_mwh" in c
     ]
-    subset = results.simulation[cols]
+    subset = simulation.results[cols]
     np.testing.assert_array_almost_equal(
         subset.iloc[-1, :].values, charge_events_capacity_mwh
     )
-    return (results.simulation, charge_event_length, seed)
+    return (simulation.results, charge_event_length, seed)
 
 
 def test_v2g() -> None:
@@ -268,14 +264,10 @@ def test_evs_hypothesis(
         prices_std=prices_std,
     )
     evs = epl.EVs(
-        chargers_power_mw=ds["charger_mws"].tolist(),
-        charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
+        **ds,
         charger_turndown=charger_turndown,
     )
-    ds.pop("charger_mws")
-    ds.pop("charge_events_capacity_mwh")
     evs.optimize(
-        **ds,
         verbose=True,
         flags=Flags(
             allow_evs_discharge=v2g,

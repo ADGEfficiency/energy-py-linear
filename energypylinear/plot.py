@@ -21,22 +21,21 @@ def find_column(df: pd.DataFrame, start: str, end: str) -> str:
     return cols[0]
 
 
-def plot_battery(
-    results: "epl.results.SimulationResult", path: pathlib.Path | str
-) -> None:
+def plot_battery(simulation: "epl.SimulationResult", path: pathlib.Path | str) -> None:
     """Plot battery simulation results."""
     path = pathlib.Path(path)
     path.parent.mkdir(exist_ok=True, parents=True)
 
     fig, axes = plt.subplots(nrows=5, sharex=True, figsize=(12, 8))
-    simulation = results.simulation
 
-    simulation["Index"] = np.arange(simulation.shape[0]).tolist()
+    results = simulation.results
 
-    simulation["import-export-balance"] = (
-        simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
+    results["Index"] = np.arange(results.shape[0]).tolist()
+
+    results["import-export-balance"] = (
+        results["site-import_power_mwh"] - results["site-export_power_mwh"]
     )
-    simulation.plot(
+    results.plot(
         ax=axes[0],
         x="Index",
         y="import-export-balance",
@@ -45,12 +44,11 @@ def plot_battery(
     axes[0].set_title("Power Balance MWh (Import Positive)")
     axes[0].set_ylabel("MWh")
 
-    #  TODO will need some work in a multi-battery world
-    simulation["net-battery-charge"] = (
-        simulation[find_column(simulation, "battery-", "-electric_charge_mwh")]
-        - simulation[find_column(simulation, "battery-", "-electric_discharge_mwh")]
+    results["net-battery-charge"] = (
+        results[find_column(results, "battery-", "-electric_charge_mwh")]
+        - results[find_column(results, "battery-", "-electric_discharge_mwh")]
     )
-    simulation.plot(
+    results.plot(
         ax=axes[1],
         x="Index",
         y="net-battery-charge",
@@ -58,25 +56,25 @@ def plot_battery(
     axes[1].set_title("Battery Charge / Discharge MWh (Charge Positive)")
     axes[1].set_ylabel("MWh")
 
-    simulation.plot(
+    results.plot(
         "Index",
-        "battery-final_charge_mwh",
+        "battery-electric_final_charge_mwh",
         ax=axes[2],
         kind="bar",
     )
     axes[2].set_title("Battery SOC MWh (End of Interval)")
     axes[2].set_ylabel("MWh")
 
-    simulation.plot(
+    results.plot(
         "Index",
-        "electricity_prices",
+        f"{simulation.site.cfg.name}-electricity_prices",
         ax=axes[3],
     )
     axes[3].set_title("Electricity Prices")
     axes[3].set_ylabel("$/MWh")
-    simulation.plot(
+    results.plot(
         "Index",
-        "electricity_carbon_intensities",
+        f"{simulation.site.cfg.name}-electricity_carbon_intensities",
         ax=axes[4],
         label="Carbon Intensities",
     )
@@ -92,53 +90,55 @@ def plot_battery(
     fig.savefig(path)
 
 
-def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
+def plot_evs(
+    simulation: "epl.SimulationResult", path: pathlib.Path, asset_name: str
+) -> None:
     """Plot electric vehicle simulation results."""
-    simulation = results.simulation
+    results = simulation.results
 
-    charger_charge = simulation[
+    charger_charge = results[
         [
             c
-            for c in simulation.columns
+            for c in results.columns
             if "charger-" in c and c.endswith("-electric_charge_mwh")
         ]
     ].values
-    charger_discharge = simulation[
+    charger_discharge = results[
         [
             c
-            for c in simulation.columns
+            for c in results.columns
             if "charger-" in c and c.endswith("-electric_discharge_mwh")
         ]
     ].values
     charger_usage = charger_charge - charger_discharge
 
-    charge_event_usage = simulation[
+    charge_event_usage = results[
         [
             c
-            for c in simulation.columns
+            for c in results.columns
             if "charge-event-" in c and c.endswith("electric_charge_mwh")
         ]
     ].values
-    discharge_event_usage = simulation[
+    discharge_event_usage = results[
         [
             c
-            for c in simulation.columns
+            for c in results.columns
             if "charge-event-" in c and c.endswith("electric_discharge_mwh")
         ]
     ].values
     charge_event_usage = charge_event_usage - discharge_event_usage
 
-    charge_event_initial_soc = simulation[
+    charge_event_initial_soc = results[
         [
             c
-            for c in simulation.columns
+            for c in results.columns
             if "charge-event-" in c and c.endswith("initial_soc_mwh")
         ]
     ].values
-    charge_event_final_soc = simulation[
+    charge_event_final_soc = results[
         [
             c
-            for c in simulation.columns
+            for c in results.columns
             if "charge-event-" in c and c.endswith("final_soc_mwh")
         ]
     ].values
@@ -170,7 +170,6 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     axes[0].set_xlabel("Chargers")
 
     data = charge_event_usage
-    assert results.interval_data.evs is not None
     charge_event_heatmap_config = heatmap_config.copy()
     result_array = np.empty_like(charge_event_initial_soc, dtype=object)
 
@@ -184,19 +183,23 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
 
     print(result_array)
     charge_event_heatmap_config["annot"] = result_array
+
+    assets = [a for a in simulation.assets if a.cfg.name == asset_name]
+    assert len(assets) == 1
+    asset = assets[0]
     seaborn.heatmap(
         data,
         ax=axes[1],
         **charge_event_heatmap_config,
         #  unmask out the periods where charge_event was positive
-        mask=results.interval_data.evs.charge_events == 0,
+        # mask=results.interval_data.evs.charge_events == 0,
+        mask=asset.cfg.charge_events == 0,
         fmt="",
     )
     axes[1].set_xlabel("Charge Events Net Charge (Discharge is Negative)")
 
-    #   hardcoded asset name here TODO
-    spill_charge_usage = simulation[
-        "evs-charger-spill-evs-electric_charge_mwh"
+    spill_charge_usage = results[
+        f"{asset.cfg.name}-charger-spill-evs-electric_charge_mwh"
     ].values.reshape(-1, 1)
     data = spill_charge_usage
     seaborn.heatmap(
@@ -208,7 +211,9 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     )
 
     seaborn.heatmap(
-        np.array(simulation["electricity_prices"]).reshape(-1, 1),
+        np.array(results[f"{simulation.site.cfg.name}-electricity_prices"]).reshape(
+            -1, 1
+        ),
         ax=axes[3],
         **(heatmap_config | {"cmap": ["white"]}),
         xticklabels=["price"],
@@ -242,46 +247,46 @@ def plot_evs(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
     fig.savefig(path)
 
 
-def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> None:
+def plot_chp(simulation: "epl.SimulationResult", path: pathlib.Path) -> None:
     """Plot CHP generator simulation results."""
-    simulation = results.simulation
+    results = simulation.results
     fig, axes = plt.subplots(nrows=5, sharex=True, figsize=(12, 8))
-    simulation["Index"] = np.arange(simulation.shape[0]).tolist()
+    results["Index"] = np.arange(results.shape[0]).tolist()
 
-    simulation["import-export-balance"] = (
-        simulation["site-import_power_mwh"] - simulation["site-export_power_mwh"]
+    results["import-export-balance"] = (
+        results["site-import_power_mwh"] - results["site-export_power_mwh"]
     )
-    simulation.plot(
+    results.plot(
         ax=axes[0],
         x="Index",
         y="import-export-balance",
     )
     axes[0].set_ylabel("MWh")
     axes[0].set_title("Power Balance MWh (Import Positive)")
-    simulation.plot(
+    results.plot(
         ax=axes[1],
         x="Index",
         y="boiler-high_temperature_generation_mwh",
     )
     axes[1].set_ylabel("MWh")
     axes[1].set_title("Boiler Heat Generation MWh")
-    simulation.plot(
+    results.plot(
         ax=axes[2],
         x="Index",
         y="spill-low_temperature_load_mwh",
     )
     axes[2].set_ylabel("MWh")
     axes[2].set_title("Low Temperature Heat Dump MWh")
-    simulation.plot(
+    results.plot(
         "Index",
-        "electricity_prices",
+        f"{simulation.site.cfg.name}-electricity_prices",
         ax=axes[3],
     )
     axes[3].set_ylabel("$/MWh")
     axes[3].set_title("Electricity Prices")
-    simulation.plot(
+    results.plot(
         "Index",
-        "electricity_carbon_intensities",
+        f"{simulation.site.cfg.name}-electricity_carbon_intensities",
         ax=axes[4],
     )
     axes[4].set_ylabel("tC/MWh")
@@ -297,21 +302,21 @@ def plot_chp(results: "epl.results.SimulationResult", path: pathlib.Path) -> Non
 
 
 def plot_heat_pump(
-    results: "epl.results.SimulationResult", path: pathlib.Path | str, asset_name: str
+    simulation: "epl.SimulationResult", path: pathlib.Path | str, asset_name: str
 ) -> None:
     """Plot Heat Pump simulation results."""
     path = pathlib.Path(path)
     path.parent.mkdir(exist_ok=True, parents=True)
 
     fig, axes = plt.subplots(nrows=3, sharex=True, figsize=(12, 12))
-    simulation = results.simulation
-    simulation["index"] = np.arange(simulation.shape[0]).tolist()
+    results = simulation.results
+    results["index"] = np.arange(results.shape[0]).tolist()
 
     for col in [
-        "load-high_temperature_load_mwh",
+        f"{simulation.site.cfg.name}-high_temperature_load_mwh",
         f"{asset_name}-high_temperature_generation_mwh",
     ]:
-        simulation.plot(ax=axes[0], x="index", y=col)
+        results.plot(ax=axes[0], x="index", y=col)
     axes[0].set_ylabel("MWh")
     axes[0].set_title("Heat Pump")
 
@@ -321,35 +326,35 @@ def plot_heat_pump(
 
     out_cols = [
         "spill-low_temperature_load_mwh",
-        "load-low_temperature_load_mwh",
-        "heat-pump-low_temperature_load_mwh",
+        f"{simulation.site.cfg.name}-low_temperature_load_mwh",
+        f"{asset_name}-low_temperature_load_mwh",
     ]
-    neg_bottom = np.zeros_like(simulation["index"]).astype(float)
+    neg_bottom = np.zeros_like(results["index"]).astype(float)
     width = 0.3
     adj = 0.15
     for col in out_cols:
-        simulation[col] = simulation[col].round(4)
+        results[col] = results[col].round(4)
         axes[1].bar(
-            simulation["index"] - adj,
-            simulation[col],
+            results["index"] - adj,
+            results[col],
             width,
             label=col,
             bottom=neg_bottom,
         )
-        neg_bottom += simulation[col]
+        neg_bottom += results[col]
 
-    bottom = np.zeros_like(simulation["index"]).astype(float)
+    bottom = np.zeros_like(results["index"]).astype(float)
     in_cols = [
-        "load-low_temperature_generation_mwh",
+        f"{simulation.site.cfg.name}-low_temperature_generation_mwh",
         "spill-low_temperature_generation_mwh",
         "valve-low_temperature_generation_mwh",
     ]
     for col in in_cols:
-        simulation[col] = simulation[col].round(4)
+        results[col] = results[col].round(4)
         axes[1].bar(
-            simulation["index"] + adj, simulation[col], width, label=col, bottom=bottom
+            results["index"] + adj, results[col], width, label=col, bottom=bottom
         )
-        bottom += simulation[col]
+        bottom += results[col]
 
     axes[1].set_ylabel("MWh")
     axes[1].set_title("Low Temperature Heat Balance")
@@ -358,8 +363,11 @@ def plot_heat_pump(
     axes[1].set_position([box.x0, box.y0 + box.y0 * 0.2, box.width, box.height * 0.8])
     axes[1].legend(loc="lower center", bbox_to_anchor=(0.5, -0.5), ncol=2)
 
-    for col in ["electricity_prices", "electricity_carbon_intensities"]:
-        simulation.plot(ax=axes[2], x="index", y=col)
+    for col in [
+        f"{simulation.site.cfg.name}-electricity_prices",
+        f"{simulation.site.cfg.name}-electricity_carbon_intensities",
+    ]:
+        results.plot(ax=axes[2], x="index", y=col)
 
     axes[2].set_ylabel("$/MWh or tC/MWh")
     axes[2].set_title("Electricity Prices & Carbon Intensities")

@@ -12,6 +12,7 @@ def warn_spills(simulation: pd.DataFrame, flags: Flags, verbose: bool = True) ->
     """Prints warnings if we have spilled."""
     #  add warnings on the use of any spill asset
     spill_columns = [c for c in simulation.columns if "spill" in c]
+
     #  filter out binary columns - TODO separate loop while dev
     spill_columns = [c for c in spill_columns if "charge_binary" not in c]
     spill_results = simulation[spill_columns]

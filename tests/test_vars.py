@@ -14,12 +14,15 @@ def test_var() -> None:
     get the evs objects for spill and non-spill
     """
 
+    ds = epl.data_generation.generate_random_ev_input_data(
+        48, n_chargers=3, charge_length=3, n_charge_events=12, seed=42
+    )
+    asset = epl.EVs(**ds)
+
     optimizer = epl.Optimizer()
 
-    asset = epl.EVs()
-
     evs, evs_array, spill_evs, spill_evs_array = asset.one_interval(
-        optimizer, i=0, freq=epl.freq.Freq(60)
+        optimizer, i=0, freq=epl.Freq(60)
     )
 
     ivars = IntervalVars()

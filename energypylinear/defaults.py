@@ -18,7 +18,8 @@ class Defaults(pydantic.BaseModel):
     #   setting this too high will break the evs... was as 1e10
     spill_objective_penalty: float = 1e11
 
-    default_boiler_efficiency_pct: float = 0.8
+    boiler_efficiency_pct: float = 0.8
+    boiler_high_temperature_generation_max_mw: float = 10000.0
 
     gas_carbon_intensity: float = 0.185
 

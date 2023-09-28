@@ -23,7 +23,7 @@ def debug_simulation(simulation: pd.DataFrame) -> None:
     debug = [
         "site-import_power_mwh",
         "site-export_power_mwh",
-        "electricity_carbon_intensities",
+        "site-electricity_carbon_intensities",
     ]
     print(simulation[debug])
 
@@ -36,8 +36,8 @@ def debug_simulation(simulation: pd.DataFrame) -> None:
 
 def debug_balances(simulation: pd.DataFrame) -> None:
     """runs balance checks"""
-    check_high_temperature_heat_balance(simulation, True)
-    check_low_temperature_heat_balance(simulation, True)
+    check_high_temperature_heat_balance(simulation, verbose=True)
+    check_low_temperature_heat_balance(simulation, verbose=True)
 
 
 def debug_asset(

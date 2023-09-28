@@ -1,4 +1,4 @@
-"""Utilites for generating interval data"""
+"""Utilities for generating interval data"""
 import numpy as np
 
 
@@ -35,7 +35,7 @@ def generate_random_ev_input_data(
 
     return {
         "electricity_prices": electricity_prices.tolist(),
-        "charger_mws": charger_mws,
+        "chargers_power_mw": charger_mws,
         "charge_events_capacity_mwh": charge_event_mwh,
         "charge_events": charge_events,
     }

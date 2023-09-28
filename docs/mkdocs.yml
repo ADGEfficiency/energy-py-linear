@@ -1,3 +1,4 @@
+---
 site_name: energy-py-linear
 site_url: https://energypylinear.adgefficiency.com
 repo_url: https://github.com/ADGEfficiency/energy-py-linear
@@ -33,9 +34,9 @@ plugins:
   - social
   - mike:
       alias_type: symlink
-      redirect_template: null
+      redirect_template:
       deploy_prefix: ''
-      canonical_version: null
+      canonical_version:
       version_selector: true
       css_dir: css
       javascript_dir: js
@@ -51,15 +52,23 @@ markdown_extensions:
   - pymdownx.details
 nav:
   - Getting Started: index.md
-  - Optimization:
-      - Optimize Assets: how-to/dispatch-assets.md
-      - Optimize a Site: how-to/dispatch-site.md
+  - Assets:
+      - Battery: assets/battery.md
+      - Combined Heat & Power: assets/chp.md
+      - Electric Vehicles: assets/evs.md
+      - Heat Pump: assets/evs.md
+      - Renewable Generator: assets/renewable-generator.md
+  - How To:
+      - Optimize Multiple Assets: how-to/dispatch-site.md
       - Optimize for Carbon: how-to/price-carbon.md
       - Optimize for a Forecast: how-to/dispatch-forecast.md
   - Validation:
       - Battery: validation/battery.md
-      - EVs: validation/evs.md
+      - Combined Heat & Power: validation/chp.md
+      - Electric Vehicles: validation/evs.md
       - Heat Pump: validation/heat-pump.md
+      - Renewable Generator: validation/renewable-generator.md
+  - Changelog: changelog.md
   # - Performance: performance.md
   # - Measure Forecast Quality: index.md
 

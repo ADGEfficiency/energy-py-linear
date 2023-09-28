@@ -14,7 +14,7 @@ from energypylinear.logger import logger
 
 
 def test_battery_performance() -> None:
-    """Test the Battery run time perforamnce."""
+    """Test the Battery run time performance."""
     idx_lengths = [
         6,
         # one day 60 min freq
@@ -38,10 +38,14 @@ def test_battery_performance() -> None:
                 st = time.perf_counter()
 
                 ds = {"electricity_prices": np.random.uniform(-1000, 1000, idx_length)}
-                asset = epl.Battery(power_mw=2, capacity_mwh=4, efficiency=0.9)
+                asset = epl.Battery(
+                    power_mw=2,
+                    capacity_mwh=4,
+                    efficiency_pct=0.9,
+                    electricity_prices=ds["electricity_prices"],
+                )
 
                 asset.optimize(
-                    electricity_prices=ds["electricity_prices"],
                     verbose=False,
                     flags=Flags(
                         allow_evs_discharge=True,
@@ -85,7 +89,7 @@ def test_battery_performance() -> None:
 
 
 def test_evs_performance() -> None:
-    """Test the Battery run time perforamnce."""
+    """Test the Battery run time performance."""
     idx_lengths = [
         6,
         #  one day 60 min freq
@@ -94,7 +98,7 @@ def test_evs_performance() -> None:
         168,
         #  one week 15 min freq
         672,
-        #  two weeks
+        #  two weeks 15 min freq
         1344,
     ]
     data = collections.defaultdict(list)
@@ -111,14 +115,10 @@ def test_evs_performance() -> None:
                 prices_std=10,
             )
             asset = epl.EVs(
-                chargers_power_mw=ds["charger_mws"].tolist(),
-                charge_events_capacity_mwh=ds["charge_events_capacity_mwh"].tolist(),
                 charger_turndown=0.2,
-            )
-            ds.pop("charger_mws")
-            ds.pop("charge_events_capacity_mwh")
-            asset.optimize(
                 **ds,
+            )
+            asset.optimize(
                 verbose=False,
                 flags=Flags(
                     allow_evs_discharge=True,
@@ -158,5 +158,5 @@ def test_evs_performance() -> None:
 
 
 if __name__ == "__main__":
-    test_battery_performance()
+    # test_battery_performance()
     test_evs_performance()
