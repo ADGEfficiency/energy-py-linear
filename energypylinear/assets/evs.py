@@ -552,6 +552,7 @@ class EVs:
                 assets=assets,
                 electricity_prices=electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
+                freq_mins=self.cfg.freq_mins,
             )
             assert isinstance(self.site.cfg.interval_data.idx, np.ndarray)
             validate_ev_interval_data(
@@ -672,16 +673,14 @@ class EVs:
         """Optimize the EVs's dispatch using a mixed-integer linear program.
 
         Args:
-
-            freq_mins - the size of an interval in minutes.
-            objective - the optimization objective - either "price" or "carbon".
+            objective: the optimization objective - either "price" or "carbon".
+            flags: boolean flags to change simulation and results behaviour.
             verbose: level of printing.
 
         Returns:
             epl.results.SimulationResult
         """
         return self.site.optimize(
-            freq_mins=self.cfg.freq_mins,
             objective=objective,
             flags=flags,
             verbose=verbose,

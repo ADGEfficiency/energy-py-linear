@@ -189,6 +189,7 @@ class Battery:
                 assets=assets,
                 electricity_prices=electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
+                freq_mins=self.cfg.freq_mins,
             )
 
     def __repr__(self) -> str:
@@ -282,7 +283,6 @@ class Battery:
         """Optimize the asset.
 
         Args:
-            freq_mins: the size of an interval in minutes.
             objective: the optimization objective - either "price" or "carbon".
             flags: boolean flags to change simulation and results behaviour.
             verbose: level of printing.
@@ -291,7 +291,6 @@ class Battery:
             epl.results.SimulationResult
         """
         return self.site.optimize(
-            freq_mins=self.cfg.freq_mins,
             objective=objective,
             flags=flags,
             verbose=verbose,

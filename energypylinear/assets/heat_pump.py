@@ -107,6 +107,7 @@ class HeatPump(epl.Asset):
                 high_temperature_load_mwh=high_temperature_load_mwh,
                 low_temperature_load_mwh=low_temperature_load_mwh,
                 low_temperature_generation_mwh=low_temperature_generation_mwh,
+                freq_mins=self.cfg.freq_mins,
             )
 
     def __repr__(self) -> str:
@@ -182,15 +183,16 @@ class HeatPump(epl.Asset):
         flags: Flags = Flags(),
     ) -> "epl.SimulationResult":
         """Optimize the asset dispatch using a mixed-integer linear program.
+
+        Args:
             objective: the optimization objective - either "price" or "carbon".
-            verbose: level of printing.
             flags: boolean flags to change simulation and results behaviour.
+            verbose: level of printing.
 
         Returns:
             epl.results.SimulationResult
         """
         return self.site.optimize(
-            freq_mins=self.cfg.freq_mins,
             objective=objective,
             flags=flags,
             verbose=verbose,
