@@ -72,6 +72,7 @@ module = [
   'seaborn',
   'bs4',
   'pytest',
+  '_pytest',
   'hypothesis'
 ]
 ignore_missing_imports = true
