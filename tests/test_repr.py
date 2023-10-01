@@ -49,7 +49,7 @@ def test_repr() -> None:
                 export_emissions=0,
                 emissions=0,
             ),
-            gas=epl.accounting.accounting.ElectricityAccount(
+            gas=epl.accounting.accounting.GasAccount(
                 import_cost=0,
                 export_cost=0,
                 cost=0,

@@ -73,7 +73,7 @@ class AssetOneInterval(pydantic.BaseModel):
     Charge and discharge are handled as explicit accumulation terms.
     """
 
-    cfg: typing.Any
+    cfg: typing.Any = None
 
     electric_generation_mwh: pulp.LpVariable | float = 0
     high_temperature_generation_mwh: pulp.LpVariable | float = 0
@@ -86,8 +86,4 @@ class AssetOneInterval(pydantic.BaseModel):
     gas_consumption_mwh: pulp.LpVariable | float = 0
 
     binary: pulp.LpVariable | int = 0
-
-    class Config:
-        """pydantic.BaseModel configuration."""
-
-        arbitrary_types_allowed: bool = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)

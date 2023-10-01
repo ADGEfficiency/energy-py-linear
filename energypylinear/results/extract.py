@@ -33,11 +33,7 @@ class SimulationResult(pydantic.BaseModel):
     results: pd.DataFrame
     feasible: bool
     spill: bool
-
-    class Config:
-        """pydantic.BaseModel configuration."""
-
-        arbitrary_types_allowed: bool = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
 
 def extract_site_results(

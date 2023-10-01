@@ -5,6 +5,7 @@ Suitable for modelling either turndownable wind or solar."""
 
 import numpy as np
 import pydantic
+from pydantic import ConfigDict
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
@@ -40,10 +41,7 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
         assert np.array(value).min() >= 0.0
         return value
 
-    class Config:
-        """Configure the pydantic.BaseModel."""
-
-        arbitrary_types_allowed: bool = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class RenewableGeneratorConfig(pydantic.BaseModel):

@@ -54,11 +54,7 @@ class SiteIntervalData(pydantic.BaseModel):
     low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None
 
     idx: list[int] | np.ndarray = []
-
-    class Config:
-        """Configure the pydantic.BaseModel."""
-
-        arbitrary_types_allowed: bool = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     @pydantic.root_validator(pre=True)
     def validate_all_things(cls, values: dict) -> dict:
@@ -129,11 +125,7 @@ class SiteOneInterval(pydantic.BaseModel):
 
     import_limit_mwh: float
     export_limit_mwh: float
-
-    class Config:
-        """pydantic.BaseModel configuration."""
-
-        arbitrary_types_allowed: bool = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
 
 def constrain_site_electricity_balance(
