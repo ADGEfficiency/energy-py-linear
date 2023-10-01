@@ -57,7 +57,7 @@ def test_site() -> None:
     )
 
 
-@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("seed", range(24))
 def test_sites(seed: int) -> None:
     """Tests various random combinations of assets."""
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=seed)
