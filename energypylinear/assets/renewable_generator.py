@@ -5,6 +5,7 @@ Suitable for modelling either turndownable wind or solar."""
 
 import numpy as np
 import pydantic
+from pydantic import ConfigDict
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
@@ -40,10 +41,7 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
         assert np.array(value).min() >= 0.0
         return value
 
-    class Config:
-        """Configure the pydantic.BaseModel."""
-
-        arbitrary_types_allowed: bool = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class RenewableGeneratorConfig(pydantic.BaseModel):
@@ -111,6 +109,7 @@ class RenewableGenerator(epl.Asset):
                 electric_load_mwh=electric_load_mwh,
                 electricity_prices=electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
+                freq_mins=self.cfg.freq_mins,
             )
 
     def __repr__(self) -> str:
@@ -127,9 +126,9 @@ class RenewableGenerator(epl.Asset):
             cfg=self.cfg,
             electric_generation_mwh=optimizer.continuous(
                 f"electric_generation_mwh,{name}",
-                low=freq.mw_to_mwh(self.cfg.interval_data.electric_generation_mwh[i])
+                low=self.cfg.interval_data.electric_generation_mwh[i]
                 * self.cfg.electric_generation_lower_bound_pct,
-                up=freq.mw_to_mwh(self.cfg.interval_data.electric_generation_mwh[i]),
+                up=self.cfg.interval_data.electric_generation_mwh[i],
             ),
         )
 
@@ -158,9 +157,17 @@ class RenewableGenerator(epl.Asset):
         verbose: bool = True,
         flags: Flags = Flags(),
     ) -> "epl.SimulationResult":
-        """Optimize the asset."""
+        """Optimize the asset.
+
+        Args:
+            objective: the optimization objective - either "price" or "carbon".
+            flags: boolean flags to change simulation and results behaviour.
+            verbose: level of printing.
+
+        Returns:
+            epl.results.SimulationResult
+        """
         return self.site.optimize(
-            freq_mins=self.cfg.freq_mins,
             objective=objective,
             flags=flags,
             verbose=verbose,

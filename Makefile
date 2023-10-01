@@ -13,7 +13,7 @@ QUIET := -q
 
 setup-pip-poetry:
 	pip install --upgrade pip $(QUIET)
-	pip install poetry -c ./constraints.txt $(QUIET)
+	pip install poetry==1.6.1 $(QUIET)
 
 setup: setup-pip-poetry
 	poetry install --with main $(QUIET)
@@ -58,6 +58,7 @@ create-test-docs: setup-test clean-test-docs
 	python -m phmdoctest ./docs/docs/validation/renewable-generator.md --outfile tests/phmdoctest/test_validate_renewable_generator.py
 	python -m phmdoctest ./docs/docs/how-to/dispatch-forecast.md --outfile tests/phmdoctest/test_forecast.py
 	python -m phmdoctest ./docs/docs/how-to/price-carbon.md --outfile tests/phmdoctest/test_carbon.py
+	python -m phmdoctest ./docs/docs/how-to/dispatch-site.md --outfile tests/phmdoctest/test_dispatch_site.py
 	python -m phmdoctest ./docs/docs/assets/chp.md --outfile tests/phmdoctest/test_optimize_chp.py
 	python -m phmdoctest ./docs/docs/assets/battery.md --outfile tests/phmdoctest/test_optimize_battery.py
 	python -m phmdoctest ./docs/docs/assets/evs.md --outfile tests/phmdoctest/test_optimize_evs.py
@@ -92,7 +93,7 @@ lint: setup-check
 	ruff check . --ignore E501 --extend-exclude=__init__.py,poc
 	isort --check **/*.py --profile black
 	black --check **/*.py
-	poetry lock --check
+	poetry check
 
 
 #  ----- FORMATTING -----

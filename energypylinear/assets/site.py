@@ -13,15 +13,15 @@ from energypylinear.utils import repeat_to_match_length
 
 
 def validate_interval_data(
-    assets: list,
-    site: "epl.Site",
-    repeat_interval_data: bool = True
+    assets: list, site: "epl.Site", repeat_interval_data: bool = True
 ) -> None:
     """Validates asset interval data against the site."""
     if not repeat_interval_data:
         for asset in assets:
             if hasattr(asset.cfg, "interval_data"):
-                assert len(asset.cfg.interval_data.idx) == len(site.cfg.interval_data.idx)
+                assert len(asset.cfg.interval_data.idx) == len(
+                    site.cfg.interval_data.idx
+                )
 
     else:
         for asset in assets:
@@ -30,9 +30,7 @@ def validate_interval_data(
 
                     idata = asset.cfg.interval_data.dict(exclude={"idx"})
                     for name, data in idata.items():
-                        assert isinstance(
-                            site.cfg.interval_data.idx, np.ndarray
-                        )
+                        assert isinstance(site.cfg.interval_data.idx, np.ndarray)
                         setattr(
                             asset.cfg.interval_data,
                             name,
@@ -45,6 +43,7 @@ def validate_interval_data(
 
 class SiteIntervalData(pydantic.BaseModel):
     """Site interval data."""
+
     electricity_prices: np.ndarray | list[float] | float | None = None
     electricity_carbon_intensities: np.ndarray | list[float] | float | None = None
     gas_prices: np.ndarray | list[float] | float | None = None
@@ -55,10 +54,7 @@ class SiteIntervalData(pydantic.BaseModel):
     low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None
 
     idx: list[int] | np.ndarray = []
-
-    class Config:
-        """Configure the pydantic.BaseModel."""
-        arbitrary_types_allowed: bool = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     @pydantic.root_validator(pre=True)
     def validate_all_things(cls, values: dict) -> dict:
@@ -111,6 +107,7 @@ class SiteConfig(pydantic.BaseModel):
 
     name: str
     interval_data: SiteIntervalData
+    freq_mins: int
 
     import_limit_mw: float
     export_limit_mw: float
@@ -128,11 +125,7 @@ class SiteOneInterval(pydantic.BaseModel):
 
     import_limit_mwh: float
     export_limit_mwh: float
-
-    class Config:
-        """pydantic.BaseModel configuration."""
-
-        arbitrary_types_allowed: bool = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
 
 def constrain_site_electricity_balance(
@@ -259,6 +252,7 @@ class Site:
         low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
         low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
         name: str = "site",
+        freq_mins: int = defaults.freq_mins,
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
     ):
@@ -278,6 +272,7 @@ class Site:
             ),
             import_limit_mw=import_limit_mw,
             export_limit_mw=export_limit_mw,
+            freq_mins=freq_mins,
         )
 
         validate_interval_data(assets, self)
@@ -323,7 +318,6 @@ class Site:
 
     def optimize(
         self,
-        freq_mins: int = defaults.freq_mins,
         objective: str = "price",
         flags: Flags = Flags(),
         verbose: bool = True,
@@ -335,7 +329,7 @@ class Site:
         """
 
         self.optimizer = Optimizer()
-        freq = Freq(freq_mins)
+        freq = Freq(self.cfg.freq_mins)
 
         #  TODO this is repeated in `validate_interval_data`
         #  should reuse that here - TODO when I do the site again
@@ -346,7 +340,7 @@ class Site:
 
         #  TODO warn about sites without boilers?  warn sites without valve / spill?
 
-        ivars = epl.interval_data.IntervalVars()
+        ivars = epl.IntervalVars()
         for i in self.cfg.interval_data.idx:
             ivars.append(self.one_interval(self.optimizer, self.cfg, i, freq))
 
@@ -399,5 +393,5 @@ class Site:
             ivars,
             feasible=status.feasible,
             verbose=verbose,
-            flags=flags
+            flags=flags,
         )

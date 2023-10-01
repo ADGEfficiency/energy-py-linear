@@ -1,6 +1,7 @@
 """Schema for simulation results."""
 import pandera as pa
 
+from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.optimizer import Optimizer
 
@@ -33,7 +34,8 @@ quantities = [
     "electric_charge_mwh",
     "electric_discharge_mwh",
 ]
-for qu in quantities:
+
+for qu in [q for q in AssetOneInterval.__fields__ if (q != "cfg") and (q != "binary")]:
     schema[rf"\w+-{qu}"] = pa.Column(
         pa.Float, checks=[pa.Check.ge(defaults.epsilon)], coerce=True, regex=True
     )
@@ -45,14 +47,3 @@ for qu in quantities:
         required=True,
     )
 simulation_schema = pa.DataFrameSchema(schema)
-
-
-spill_quantities = [
-    "electric_generation_mwh",
-    "electric_load_mwh",
-    "high_temperature_generation_mwh",
-    "low_temperature_generation_mwh",
-    "high_temperature_load_mwh",
-    "low_temperature_load_mwh",
-    "gas_consumption_mwh",
-]

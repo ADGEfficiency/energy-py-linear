@@ -57,9 +57,9 @@ def test_site() -> None:
     )
 
 
-@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("seed", range(24))
 def test_sites(seed: int) -> None:
-    """Tests various hardcoded combinations of assets."""
+    """Tests various random combinations of assets."""
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=seed)
     assets = [
         epl.Battery(
@@ -105,11 +105,20 @@ def test_sites(seed: int) -> None:
         epl.RenewableGenerator(
             electric_generation_mwh=np.random.uniform(0, 100, 48), name="solar"
         ),
+        epl.Spill(),
     ]
 
     n_assets = random.randint(len(assets), len(assets))
     sampled_assets = random.sample(assets, n_assets)
-    site = epl.Site(assets=sampled_assets, electricity_prices=ds["electricity_prices"])
+    site = epl.Site(
+        assets=sampled_assets,
+        electricity_prices=ds["electricity_prices"],
+        gas_prices=30,
+        electric_load_mwh=30,
+        high_temperature_load_mwh=100,
+        low_temperature_load_mwh=100,
+        low_temperature_generation_mwh=100,
+    )
     simulation = site.optimize(verbose=True)
     debug_simulation(simulation.results)
 
@@ -161,3 +170,24 @@ def test_interval_data() -> None:
         high_temperature_load_mwh=5.0,
         high_temperature_generation_mwh=[5, 5],
     )
+
+
+def test_site_freq_mins() -> None:
+    """Tests different freq mins in the site."""
+
+    mins = np.array([5, 15, 30, 60])
+    for freq_mins in mins:
+        generation = np.full_like(mins, 5)
+        load = np.full_like(mins, 10)
+        prices = np.full_like(mins, 100)
+        assets = [epl.RenewableGenerator(electric_generation_mwh=generation)]
+        site = epl.Site(
+            assets=assets,
+            electric_load_mwh=load,
+            electricity_prices=prices,
+            freq_mins=freq_mins,
+        )
+        simulation = site.optimize()
+        np.testing.assert_array_equal(
+            simulation.results["site-import_power_mwh"], 10 - 5
+        )

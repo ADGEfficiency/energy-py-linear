@@ -11,6 +11,7 @@ from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
+from pydantic import ConfigDict
 
 
 def validate_ev_interval_data(
@@ -64,11 +65,7 @@ class EVsConfig(pydantic.BaseModel):
     charge_event_cfgs: np.ndarray
     charge_events: np.ndarray
     freq_mins: int
-
-    class Config:
-        """pydantic.BaseModel configuration."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @pydantic.validator("name")
     def check_name(cls, name: str) -> str:
@@ -103,11 +100,7 @@ class EVOneInterval(AssetOneInterval):
     electric_loss_mwh: pulp.LpVariable
 
     is_spill: bool = False
-
-    class Config:
-        """pydantic.BaseModel configuration."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class EVsArrayOneInterval(AssetOneInterval):
@@ -128,11 +121,7 @@ class EVsArrayOneInterval(AssetOneInterval):
     electric_discharge_mwh: np.ndarray
     electric_discharge_binary: np.ndarray
     electric_loss_mwh: np.ndarray
-
-    class Config:
-        """pydantic.BaseModel configuration."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -552,6 +541,7 @@ class EVs:
                 assets=assets,
                 electricity_prices=electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
+                freq_mins=self.cfg.freq_mins,
             )
             assert isinstance(self.site.cfg.interval_data.idx, np.ndarray)
             validate_ev_interval_data(
@@ -672,16 +662,14 @@ class EVs:
         """Optimize the EVs's dispatch using a mixed-integer linear program.
 
         Args:
-
-            freq_mins - the size of an interval in minutes.
-            objective - the optimization objective - either "price" or "carbon".
+            objective: the optimization objective - either "price" or "carbon".
+            flags: boolean flags to change simulation and results behaviour.
             verbose: level of printing.
 
         Returns:
             epl.results.SimulationResult
         """
         return self.site.optimize(
-            freq_mins=self.cfg.freq_mins,
             objective=objective,
             flags=flags,
             verbose=verbose,
