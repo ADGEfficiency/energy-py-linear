@@ -70,7 +70,9 @@ module = [
   'matplotlib.patches',
   'pulp',
   'seaborn',
-  'bs4'
+  'bs4',
+  'pytest',
+  'hypothesis'
 ]
 ignore_missing_imports = true
 
