@@ -93,7 +93,7 @@ lint: setup-check
 	ruff check . --ignore E501 --extend-exclude=__init__.py,poc
 	isort --check **/*.py --profile black
 	black --check **/*.py
-	poetry lock --check
+	poetry check
 
 
 #  ----- FORMATTING -----
