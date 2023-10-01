@@ -64,7 +64,7 @@ nav:
       - Optimize for a Forecast: how-to/dispatch-forecast.md
   - Validation:
       - Battery: validation/battery.md
-      - Combined Heat & Power: validation/chp.md
+      # - Combined Heat & Power: validation/chp.md
       - Electric Vehicles: validation/evs.md
       - Heat Pump: validation/heat-pump.md
       - Renewable Generator: validation/renewable-generator.md

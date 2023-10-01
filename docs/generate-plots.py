@@ -158,5 +158,5 @@ def test_evs_performance() -> None:
 
 
 if __name__ == "__main__":
-    # test_battery_performance()
+    test_battery_performance()
     test_evs_performance()
