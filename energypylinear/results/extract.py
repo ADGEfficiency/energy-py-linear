@@ -10,11 +10,7 @@ from energypylinear.flags import Flags
 from energypylinear.logger import logger
 from energypylinear.optimizer import Optimizer
 from energypylinear.results.checks import check_results
-from energypylinear.results.schema import (
-    quantities,
-    simulation_schema,
-    spill_quantities,
-)
+from energypylinear.results.schema import quantities, simulation_schema
 from energypylinear.results.warnings import warn_spills
 from energypylinear.utils import check_array_lengths
 
@@ -62,6 +58,7 @@ def extract_site_results(
         "low_temperature_load_mwh",
         "low_temperature_generation_mwh",
         "gas_prices",
+        "electric_load_mwh",
     ]:
         results[f"{site.cfg.name}-{attr}"].append(
             getattr(site.cfg.interval_data, attr)[i]
@@ -75,6 +72,16 @@ def extract_spill_results(ivars: "epl.IntervalVars", results: dict, i: int) -> N
     )[0]:
         for spill in spills:
             assert isinstance(spill, epl.assets.spill.SpillOneInterval)
+
+            spill_quantities = [
+                "electric_generation_mwh",
+                "electric_load_mwh",
+                "high_temperature_generation_mwh",
+                "low_temperature_generation_mwh",
+                "high_temperature_load_mwh",
+                "low_temperature_load_mwh",
+                "gas_consumption_mwh",
+            ]
             for attr in spill_quantities:
                 results[f"{spill.cfg.name}-{attr}"].append(
                     optimizer.value(getattr(spill, attr))
@@ -161,22 +168,6 @@ def extract_evs_results(
             try:
                 was = ivars.filter_evs_array(is_spill=False, i=i, asset_name=asset_name)
                 pkg.append(was)
-                if verbose:
-                    logger.info(
-                        "filtering evs-array",
-                        func="extract_evs_results",
-                        i=i,
-                        is_spill=False,
-                        asset_name=asset_name,
-                    )
-                else:
-                    logger.debug(
-                        "filtering evs-array",
-                        func="extract_evs_results",
-                        i=i,
-                        is_spill=False,
-                        asset_name=asset_name,
-                    )
 
             except IndexError:
                 pass
@@ -192,28 +183,10 @@ def extract_evs_results(
                 "electric_discharge_binary",
             ]
 
-            #  chargers are summed acress each charg event
+            #  chargers are summed across each charge event
             for charger_idx, charger_cfg in enumerate(evs.cfg.charger_cfgs):
                 for attr in ev_cols:
                     name = f"{asset_name}-{charger_cfg.name}-{attr}"
-                    if verbose:
-                        logger.info(
-                            "extracting evs-array",
-                            func="extract_evs_results",
-                            i=i,
-                            is_spill=False,
-                            asset_name=asset_name,
-                            column=name,
-                        )
-                    else:
-                        logger.debug(
-                            "extracting evs-array",
-                            func="extract_evs_results",
-                            i=i,
-                            is_spill=False,
-                            asset_name=asset_name,
-                            column=name,
-                        )
                     results[name].append(
                         sum(
                             [
@@ -234,24 +207,6 @@ def extract_evs_results(
                     "electric_loss_mwh",
                 ]:
                     name = f"{asset_name}-{charge_event_cfg.name}-{attr}"
-                    if verbose:
-                        logger.info(
-                            "extracting evs-array",
-                            func="extract_evs_results",
-                            i=i,
-                            is_spill=False,
-                            asset_name=asset_name,
-                            column=name,
-                        )
-                    else:
-                        logger.debug(
-                            "extracting evs-array",
-                            func="extract_evs_results",
-                            i=i,
-                            is_spill=False,
-                            asset_name=asset_name,
-                            column=name,
-                        )
                     results[name].append(
                         sum(
                             [
@@ -274,24 +229,6 @@ def extract_evs_results(
 
                 for charge_event_idx, soc in enumerate(socs):
                     name = f"{asset_name}-charge-event-{charge_event_idx}-{attr}"
-                    if verbose:
-                        logger.info(
-                            "extracting evs-array",
-                            func="extract_evs_results",
-                            i=i,
-                            is_spill=evs.is_spill,
-                            asset_name=asset_name,
-                            column=name,
-                        )
-                    else:
-                        logger.debug(
-                            "extracting evs-array",
-                            func="extract_evs_results",
-                            i=i,
-                            is_spill=evs.is_spill,
-                            asset_name=asset_name,
-                            column=name,
-                        )
                     results[name].append(soc.value())
 
         pkg = []
@@ -309,24 +246,6 @@ def extract_evs_results(
             for charger_idx, spill_cfg in enumerate(spill_evs.cfg.spill_charger_cfgs):
                 for attr in ev_cols:
                     name = f"{spill_evs.cfg.name}-{spill_cfg.name}-{attr}"
-                    if verbose:
-                        logger.info(
-                            "extracting evs-array",
-                            func="extract_evs_results",
-                            i=i,
-                            is_spill=spill_evs.is_spill,
-                            asset_name=asset_name,
-                            column=name,
-                        )
-                    else:
-                        logger.debug(
-                            "extracting evs-array",
-                            func="extract_evs_results",
-                            i=i,
-                            is_spill=spill_evs.is_spill,
-                            asset_name=asset_name,
-                            column=name,
-                        )
 
                     results[name].append(
                         sum(

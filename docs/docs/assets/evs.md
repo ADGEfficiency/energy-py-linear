@@ -43,6 +43,7 @@ assert all(
         "site-low_temperature_load_mwh",
         "site-low_temperature_generation_mwh",
         "site-gas_prices",
+        "site-electric_load_mwh",
         "spill-electric_generation_mwh",
         "spill-electric_load_mwh",
         "spill-high_temperature_generation_mwh",

@@ -75,7 +75,6 @@ def configure_logger(enable_file_logging: bool = False) -> None:
         show_path=False,
     )
     stream_handler.setLevel(logging.INFO)
-
     root_logger.addHandler(stream_handler)
     pulp_logger = logging.getLogger("pulp")
 

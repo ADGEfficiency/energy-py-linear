@@ -128,9 +128,9 @@ class RenewableGenerator(epl.Asset):
             cfg=self.cfg,
             electric_generation_mwh=optimizer.continuous(
                 f"electric_generation_mwh,{name}",
-                low=freq.mw_to_mwh(self.cfg.interval_data.electric_generation_mwh[i])
+                low=self.cfg.interval_data.electric_generation_mwh[i]
                 * self.cfg.electric_generation_lower_bound_pct,
-                up=freq.mw_to_mwh(self.cfg.interval_data.electric_generation_mwh[i]),
+                up=self.cfg.interval_data.electric_generation_mwh[i],
             ),
         )
 

@@ -13,7 +13,7 @@ QUIET := -q
 
 setup-pip-poetry:
 	pip install --upgrade pip $(QUIET)
-	pip install poetry -c ./constraints.txt $(QUIET)
+	pip install poetry==1.6.1 $(QUIET)
 
 setup: setup-pip-poetry
 	poetry install --with main $(QUIET)
