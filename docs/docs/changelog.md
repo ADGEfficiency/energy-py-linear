@@ -4,7 +4,7 @@
 
 ### Add Renewable Generator Asset
 
-The `epl.RenewableGenerator` asset models controllable generation, renewable generation like solar or wind.
+The `epl.RenewableGenerator` asset models controllable renewable generation like solar or wind.
 
 ```python
 import energypylinear as epl
@@ -73,7 +73,7 @@ results = simulation.results
 
 ### Bug Fixes
 
-Fixed a bug in the documentation for [optimizing for price and carbon](how-to/price-carbon/).
+Fixed a bug in the documentation for [optimizing for price and carbon](https://energypylinear.adgefficiency.com/latest/how-to/price-carbon/).
 
 Added the heat pump asset to the `epl.Site` API.
 
@@ -88,6 +88,8 @@ Renamed the optimization section into `How To`.
 Adopted [semantic versioning](https://semver.org).
 
 Moved changelog into [docs/changelog](https://energypylinear.adgefficiency.com/latest/changelog).
+
+Updated versions of Pydantic, Pandas & Numpy.
 
 ## [0.2.1](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v0.2.1)
 

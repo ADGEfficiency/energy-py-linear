@@ -138,5 +138,5 @@ docs: setup-docs
 #  -p = push
 #  TODO - get VERSION from pyproject.toml
 #  TODO - this is not used in CI anywhere yet
-mike-deploy: setup-docs generate-plots
+mike-deploy: setup-docs generate-docs-images
 	cd docs; mike deploy $(VERSION) latest -u -b mike-pages -r origin -p
