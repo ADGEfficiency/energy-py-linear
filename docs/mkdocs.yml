@@ -56,7 +56,7 @@ nav:
       - Battery: assets/battery.md
       - Combined Heat & Power: assets/chp.md
       - Electric Vehicles: assets/evs.md
-      - Heat Pump: assets/evs.md
+      - Heat Pump: assets/heat-pump.md
       - Renewable Generator: assets/renewable-generator.md
   - How To:
       - Optimize Multiple Assets: how-to/dispatch-site.md
