@@ -162,6 +162,7 @@ class Battery:
         efficiency_pct: float = 0.9,
         name: str = "battery",
         electricity_prices: float | list[float] | np.ndarray | None = None,
+        export_electricity_prices: float | list[float] | np.ndarray | None = None,
         electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: float | None = None,
@@ -188,6 +189,7 @@ class Battery:
             self.site = epl.Site(
                 assets=assets,
                 electricity_prices=electricity_prices,
+                export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
             )

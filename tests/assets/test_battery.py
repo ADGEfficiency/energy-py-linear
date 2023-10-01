@@ -213,3 +213,26 @@ def test_hypothesis(
         (1 - efficiency) * subset[f"{name}-electric_charge_mwh"].values,
         decimal=4,
     )
+
+
+def test_import_export_prices() -> None:
+
+    # test that when we have no export value, we never arbitrage
+    electricity_prices = np.random.normal(100, 1000, 1024)
+    export_electricity_prices = 0.0
+
+    power_mw = 400
+    capacity_mwh = 100
+    initial_charge_mwh = 0
+    final_charge_mwh = 0
+
+    asset = epl.Battery(
+        power_mw=power_mw,
+        capacity_mwh=capacity_mwh,
+        electricity_prices=electricity_prices,
+        export_electricity_prices=export_electricity_prices,
+        initial_charge_mwh=initial_charge_mwh,
+        final_charge_mwh=final_charge_mwh,
+    )
+    simulation = asset.optimize()
+    assert simulation.results["battery-electric_charge_mwh"].sum() == 0

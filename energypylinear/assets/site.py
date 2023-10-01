@@ -45,6 +45,7 @@ class SiteIntervalData(pydantic.BaseModel):
     """Site interval data."""
 
     electricity_prices: np.ndarray | list[float] | float | None = None
+    export_electricity_prices: np.ndarray | list[float] | float | None = None
     electricity_carbon_intensities: np.ndarray | list[float] | float | None = None
     gas_prices: np.ndarray | list[float] | float | None = None
 
@@ -69,6 +70,10 @@ class SiteIntervalData(pydantic.BaseModel):
             )
             fields.remove("electricity_prices")
 
+            if values.get("export_electricity_prices") is None:
+                values["export_electricity_prices"] = values["electricity_prices"]
+                fields.remove("export_electricity_prices")
+
         elif values.get("electricity_carbon_intensities") is not None:
             values["idx"] = np.arange(len(values["electricity_carbon_intensities"]))
             values["electricity_carbon_intensities"] = np.atleast_1d(
@@ -91,7 +96,9 @@ class SiteIntervalData(pydantic.BaseModel):
                 values[field] = np.array([getattr(defaults, field)] * len(idx))
 
             else:
-                assert len(value) == len(idx)
+                assert len(value) == len(
+                    idx
+                ), f"{field} has len {len(value)}, index has {len(idx)}"
                 values[field] = np.array(value)
 
             assert values[field] is not None
@@ -245,6 +252,7 @@ class Site:
         self,
         assets: list,
         electricity_prices: float | list[float] | np.ndarray | None = None,
+        export_electricity_prices: float | list[float] | np.ndarray | None = None,
         electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
         electric_load_mwh: float | list[float] | np.ndarray | None = None,
         gas_prices: float | list[float] | np.ndarray | None = None,
@@ -263,6 +271,7 @@ class Site:
             name=name,
             interval_data=SiteIntervalData(
                 electricity_prices=electricity_prices,
+                export_electricity_prices=electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 gas_prices=gas_prices,
                 electric_load_mwh=electric_load_mwh,
