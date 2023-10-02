@@ -27,7 +27,7 @@ class OptimizerConfig:
     See https://coin-or.github.io/pulp/technical/solvers.html#pulp.apis.PULP_CBC_CMD
     """
 
-    msg: bool = False
+    verbose: bool = False
     presolve: bool = True
     relative_tolerance: float = 0.02
     timeout: int = 60 * 3
@@ -53,7 +53,7 @@ class Optimizer:
         name = name.replace(" ", "-")
         self.prob = pulp.LpProblem(name, pulp.LpMinimize)
         self.solver = pulp.PULP_CBC_CMD(
-            msg=self.cfg.msg,
+            msg=self.cfg.verbose,
             presolve=self.cfg.presolve,
             gapRel=self.cfg.relative_tolerance,
             maxSeconds=self.cfg.timeout,
