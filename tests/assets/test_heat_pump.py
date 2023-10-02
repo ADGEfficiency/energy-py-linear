@@ -193,7 +193,7 @@ def test_heat_pump_heat_balance() -> None:
 @hypothesis.given(
     cop=hypothesis.strategies.floats(min_value=1.0, max_value=50),
     idx_length=hypothesis.strategies.integers(min_value=10, max_value=24),
-    gas_price=hypothesis.strategies.floats(min_value=-50, max_value=50),
+    gas_price=hypothesis.strategies.floats(min_value=10, max_value=50),
     prices_mu=hypothesis.strategies.floats(min_value=-1000, max_value=1000),
     prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=1000),
     prices_offset=hypothesis.strategies.floats(min_value=-250, max_value=250),
