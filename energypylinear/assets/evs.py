@@ -4,6 +4,7 @@ import pathlib
 import numpy as np
 import pulp
 import pydantic
+from pydantic import ConfigDict
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
@@ -11,7 +12,6 @@ from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.optimizer import Optimizer
-from pydantic import ConfigDict
 
 
 def validate_ev_interval_data(
@@ -489,9 +489,11 @@ class EVs:
         charge_event_efficiency: float = 0.9,
         charger_turndown: float = 0.1,
         name: str = "evs",
-        electricity_prices: float | list[float] | np.ndarray | None = None,
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        electricity_prices: np.ndarray | list[float] | np.ndarray | None = None,
+        export_electricity_prices: np.ndarray | list[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: np.ndarray | list[float] | np.ndarray | None = None,
         freq_mins: int = defaults.freq_mins,
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initialize an electric vehicle asset model."""
 
@@ -540,8 +542,10 @@ class EVs:
             self.site = epl.Site(
                 assets=assets,
                 electricity_prices=electricity_prices,
+                export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
+                optimizer_config=optimizer_config,
             )
             assert isinstance(self.site.cfg.interval_data.idx, np.ndarray)
             validate_ev_interval_data(

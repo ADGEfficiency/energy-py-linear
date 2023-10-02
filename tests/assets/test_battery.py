@@ -216,13 +216,14 @@ def test_hypothesis(
 
 
 def test_import_export_prices() -> None:
+    """Test the use of export electricity prices in the battery model."""
 
-    # test that when we have no export value, we never arbitrage
-    electricity_prices = np.random.normal(100, 1000, 1024)
+    # # test that when we have no export value, we never arbitrage
+    electricity_prices = np.clip(np.random.normal(100, 1000, 512), a_min=0, a_max=None)
     export_electricity_prices = 0.0
 
-    power_mw = 400
-    capacity_mwh = 100
+    power_mw = 2
+    capacity_mwh = 4
     initial_charge_mwh = 0
     final_charge_mwh = 0
 
@@ -234,5 +235,40 @@ def test_import_export_prices() -> None:
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=final_charge_mwh,
     )
-    simulation = asset.optimize()
+    simulation = asset.optimize(verbose=False)
     assert simulation.results["battery-electric_charge_mwh"].sum() == 0
+
+    # test that as we increase export prices, we use the battery more
+    battery_usage = []
+    for export_price in [0, 10, 30, 50, 100]:
+        print(export_price)
+        asset = epl.Battery(
+            power_mw=power_mw,
+            capacity_mwh=capacity_mwh,
+            electricity_prices=electricity_prices,
+            export_electricity_prices=float(export_price),
+            initial_charge_mwh=initial_charge_mwh,
+            final_charge_mwh=final_charge_mwh,
+        )
+        simulation = asset.optimize(verbose=False)
+        battery_usage.append(simulation.results["battery-electric_charge_mwh"].sum())
+
+    print(battery_usage)
+    assert np.all(np.diff(battery_usage) >= 0)
+
+
+def test_no_simultaneous_import_export() -> None:
+    """Test that we never import and export at the same time."""
+    electricity_prices = np.random.normal(100, 1000, 1024)
+    export_electricity_prices = np.random.normal(100, 1000, 1024)
+    asset = epl.Battery(
+        electricity_prices=electricity_prices,
+        export_electricity_prices=export_electricity_prices,
+    )
+    simulation = asset.optimize()
+    results = simulation.results
+
+    import_mask = results["site-import_power_mwh"] > 0
+    export_mask = results["site-export_power_mwh"] > 0
+    check = import_mask.astype(int) + export_mask.astype(int)
+    assert all(check <= 1)

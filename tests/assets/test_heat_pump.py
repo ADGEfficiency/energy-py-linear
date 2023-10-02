@@ -10,7 +10,7 @@ from energypylinear.debug import debug_asset
 def test_heat_pump_optimization_price() -> None:
     """Test optimization for price."""
 
-    gas_price = 20
+    gas_price = 20.0
     #  TODO pass this into model
     blr_effy = 0.8
     cop = 3.0
@@ -42,8 +42,8 @@ def test_heat_pump_optimization_price() -> None:
         #  these are a bit hacky - will be expanded on in later tests
         #  the low temperature generation is a free source of low temperature heat
         #  which can be dumped or used by the heat pump to make high temperature heat
-        high_temperature_load_mwh=100,
-        low_temperature_generation_mwh=100,
+        high_temperature_load_mwh=100.0,
+        low_temperature_generation_mwh=100.0,
     )
     simulation = asset.optimize()
     results = simulation.results

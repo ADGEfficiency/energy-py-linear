@@ -84,12 +84,17 @@ class RenewableGenerator(epl.Asset):
     def __init__(
         self,
         electric_generation_mwh: np.ndarray | list[float] | float,
-        electricity_prices: np.ndarray | list[float] | float | None = None,
-        electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
-        electric_load_mwh: np.ndarray | list[float] | float | None = None,
+        electricity_prices: np.ndarray | list[float] | np.ndarray | None = None,
+        export_electricity_prices: np.ndarray | list[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: np.ndarray
+        | list[float]
+        | np.ndarray
+        | None = None,
+        electric_load_mwh: np.ndarray | list[float] | np.ndarray | None = None,
         electric_generation_lower_bound_pct: float = 1.0,
         name: str = "renewable-generator",
         freq_mins: int = defaults.freq_mins,
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> None:
         """Initializes the asset."""
         self.cfg = RenewableGeneratorConfig(
@@ -108,8 +113,10 @@ class RenewableGenerator(epl.Asset):
                 assets=assets,
                 electric_load_mwh=electric_load_mwh,
                 electricity_prices=electricity_prices,
+                export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
+                optimizer_config=optimizer_config,
             )
 
     def __repr__(self) -> str:

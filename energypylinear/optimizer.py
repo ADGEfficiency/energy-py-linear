@@ -20,6 +20,23 @@ class OptimizationStatus:
     feasible: bool
 
 
+@dataclasses.dataclass
+class OptimizerConfig:
+    """Configures the CBC optimizer.
+
+    See https://coin-or.github.io/pulp/technical/solvers.html#pulp.apis.PULP_CBC_CMD
+    """
+
+    msg: bool = False
+    presolve: bool = True
+    relative_tolerance: float = 0.02
+    timeout: int = 60 * 3
+
+    def dict(self) -> dict:
+        """Creates a dictionary - matching the pydantic.dict() API."""
+        return dataclasses.asdict(self)
+
+
 class Optimizer:
     """
     Solver for linear programs. Interfaces with `pulp`.
@@ -29,16 +46,22 @@ class Optimizer:
         solver: solver to use for solving the optimization problem.
     """
 
-    def __init__(self, verbose: bool = True) -> None:
+    def __init__(self, cfg: OptimizerConfig = OptimizerConfig()) -> None:
         """Initialize an Optimizer."""
+        self.cfg = cfg
         name = str(datetime.datetime.now())
         name = name.replace(" ", "-")
         self.prob = pulp.LpProblem(name, pulp.LpMinimize)
-        self.solver = pulp.PULP_CBC_CMD(msg=0)
+        self.solver = pulp.PULP_CBC_CMD(
+            msg=self.cfg.msg,
+            presolve=self.cfg.presolve,
+            gapRel=self.cfg.relative_tolerance,
+            maxSeconds=self.cfg.timeout,
+        )
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        return f"<energypylinear.Optimizer variables: {len(self.variables())} constraints: {len(self.constraints())}>"
+        return f"<energypylinear.Optimizer cfg: {self.cfg} variables: {len(self.variables())} constraints: {len(self.constraints())}>"
 
     def continuous(
         self, name: str, low: float = 0, up: float | None = None

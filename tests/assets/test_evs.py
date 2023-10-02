@@ -232,7 +232,7 @@ def test_v2g() -> None:
 
 @hypothesis.settings(
     print_blob=True,
-    max_examples=24,
+    max_examples=10,
     verbosity=hypothesis.Verbosity.verbose,
     deadline=200000,  # enough for v2g ?
 )

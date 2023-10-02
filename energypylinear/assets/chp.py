@@ -80,12 +80,14 @@ class CHP(epl.Asset):
         low_temperature_efficiency_pct: float = 0.0,
         name: str = "chp",
         freq_mins: int = defaults.freq_mins,
-        electricity_prices: float | list[float] | np.ndarray | None = None,
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
-        gas_prices: float | list[float] | np.ndarray | None = None,
-        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
+        electricity_prices: np.ndarray | list[float] | float | None = None,
+        export_electricity_prices: np.ndarray | list[float] | float | None = None,
+        electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
+        gas_prices: np.ndarray | list[float] | float | None = None,
+        high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
+        low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
+        low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initializes the asset."""
         self.cfg = CHPConfig(
@@ -103,12 +105,14 @@ class CHP(epl.Asset):
             self.site = epl.Site(
                 assets=assets,
                 electricity_prices=electricity_prices,
+                export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 gas_prices=gas_prices,
                 high_temperature_load_mwh=high_temperature_load_mwh,
                 low_temperature_load_mwh=low_temperature_load_mwh,
                 low_temperature_generation_mwh=low_temperature_generation_mwh,
                 freq_mins=self.cfg.freq_mins,
+                optimizer_config=optimizer_config,
             )
 
     def __repr__(self) -> str:

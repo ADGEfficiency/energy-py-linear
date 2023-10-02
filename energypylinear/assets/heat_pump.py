@@ -74,12 +74,14 @@ class HeatPump(epl.Asset):
         freq_mins: int = defaults.freq_mins,
         include_valve: bool = True,
         name: str = "heat-pump",
-        electricity_prices: float | list[float] | np.ndarray | None = None,
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
-        gas_prices: float | list[float] | np.ndarray | None = None,
-        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
+        electricity_prices: np.ndarray | list[float] | float | None = None,
+        export_electricity_prices: np.ndarray | list[float] | float | None = None,
+        electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
+        gas_prices: np.ndarray | list[float] | float | None = None,
+        high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
+        low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
+        low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initializes the asset."""
         self.cfg = HeatPumpConfig(
@@ -103,11 +105,13 @@ class HeatPump(epl.Asset):
                 assets=assets,
                 electricity_prices=electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
+                export_electricity_prices=export_electricity_prices,
                 gas_prices=gas_prices,
                 high_temperature_load_mwh=high_temperature_load_mwh,
                 low_temperature_load_mwh=low_temperature_load_mwh,
                 low_temperature_generation_mwh=low_temperature_generation_mwh,
                 freq_mins=self.cfg.freq_mins,
+                optimizer_config=optimizer_config,
             )
 
     def __repr__(self) -> str:

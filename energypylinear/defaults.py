@@ -6,6 +6,7 @@ class Defaults(pydantic.BaseModel):
     """Collection of constant values."""
 
     electricity_prices: float = 100.0
+    export_electricity_prices: float = 100.0
     electricity_carbon_intensities: float = 0.1
     gas_prices: float = 20
     freq_mins: int = 60

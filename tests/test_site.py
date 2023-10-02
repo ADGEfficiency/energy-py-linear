@@ -195,22 +195,30 @@ def test_site_freq_mins() -> None:
 
 
 def test_site_interval_data_export_prices() -> None:
+    """Test we validate export electricity prices in the SiteIntervalData."""
 
     # when we don't specify export prices, they are the same as import prices
     id = SiteIntervalData(
         electricity_prices=[10, 20, 30], export_electricity_prices=None
     )
-    assert all(id.export_electricity_prices == [10, 20, 30])
+    assert isinstance(id.export_electricity_prices, np.ndarray)
+    np.testing.assert_array_equal(id.export_electricity_prices, [10, 20, 30])
 
     # when we specify export prices as a constant, it works as expected
     id = SiteIntervalData(electricity_prices=[10, 20, 30], export_electricity_prices=70)
-    assert all(id.export_electricity_prices == [70, 70, 70])
+    assert isinstance(id.export_electricity_prices, np.ndarray)
+    np.testing.assert_array_equal(id.export_electricity_prices, [70, 70, 70])
+
+    id = SiteIntervalData(electricity_prices=[10, 20, 30], export_electricity_prices=0)
+    assert isinstance(id.export_electricity_prices, np.ndarray)
+    np.testing.assert_array_equal(id.export_electricity_prices, [0, 0, 0])
 
     # when we specify export prices as interval data, it works as expected
     id = SiteIntervalData(
         electricity_prices=[10, 20, 30], export_electricity_prices=[30, 20, 10]
     )
-    assert all(id.export_electricity_prices == [30, 20, 10])
+    assert isinstance(id.export_electricity_prices, np.ndarray)
+    np.testing.assert_array_equal(id.export_electricity_prices, [30, 20, 10])
 
     # when we specify export prices as interval data, it fails as expected
     with pytest.raises(pydantic_core._pydantic_core.ValidationError):

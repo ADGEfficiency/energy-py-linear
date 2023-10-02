@@ -64,10 +64,11 @@ def price_objective(
 
     assert isinstance(interval_data.gas_prices, np.ndarray)
     assert isinstance(interval_data.electricity_prices, np.ndarray)
+    assert isinstance(interval_data.export_electricity_prices, np.ndarray)
 
     obj = [
         sites[i].import_power_mwh * interval_data.electricity_prices[i]
-        - sites[i].export_power_mwh * interval_data.electricity_prices[i]
+        - sites[i].export_power_mwh * interval_data.export_electricity_prices[i]
         + [
             spill.electric_generation_mwh * defaults.spill_objective_penalty
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
