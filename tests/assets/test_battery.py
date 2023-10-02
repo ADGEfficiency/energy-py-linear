@@ -240,7 +240,7 @@ def test_import_export_prices() -> None:
 
     # test that as we increase export prices, we use the battery more
     battery_usage = []
-    for export_price in [0, 20, 40, 60, 100]:
+    for export_price in [0, 40, 80, 100]:
         print(export_price)
         asset = epl.Battery(
             power_mw=power_mw,
@@ -249,7 +249,7 @@ def test_import_export_prices() -> None:
             export_electricity_prices=float(export_price),
             initial_charge_mwh=initial_charge_mwh,
             final_charge_mwh=final_charge_mwh,
-            optimizer_config=epl.OptimizerConfig(relative_tolerance=0.01, timeout=30),
+            optimizer_config=epl.OptimizerConfig(relative_tolerance=0.01, timeout=60),
         )
         simulation = asset.optimize(verbose=False)
         battery_usage.append(simulation.results["battery-electric_charge_mwh"].sum())

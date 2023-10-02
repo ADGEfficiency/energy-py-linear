@@ -24,3 +24,5 @@ def test_optimizer_config() -> None:
         optimizer_config=opt_cfg,
     )
     asset.optimize()
+
+    asset.site.optimizer.cfg.dict()
