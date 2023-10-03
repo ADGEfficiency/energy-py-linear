@@ -377,14 +377,15 @@ def extract_results(
     else:
         logger.debug("total_mapper", mapper=total_mapper)
 
-    simulation_schema.validate(results)
-    check_results(
-        results,
-        total_mapper=total_mapper,
-        verbose=verbose,
-        check_valve=any([isinstance(a, epl.Valve) for a in assets]),
-        check_evs=any([isinstance(a, epl.EVs) for a in assets]),
-    )
+    if feasible:
+        simulation_schema.validate(results)
+        check_results(
+            results,
+            total_mapper=total_mapper,
+            verbose=verbose,
+            check_valve=any([isinstance(a, epl.Valve) for a in assets]),
+            check_evs=any([isinstance(a, epl.EVs) for a in assets]),
+        )
     spill_occured = warn_spills(results, flags, verbose=verbose)
 
     return SimulationResult(
