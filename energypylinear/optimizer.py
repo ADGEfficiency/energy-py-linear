@@ -56,7 +56,7 @@ class Optimizer:
             msg=self.cfg.verbose,
             presolve=self.cfg.presolve,
             gapRel=self.cfg.relative_tolerance,
-            maxSeconds=self.cfg.timeout,
+            timeLimit=self.cfg.timeout,
         )
 
     def __repr__(self) -> str:
