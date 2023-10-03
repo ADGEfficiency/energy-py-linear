@@ -45,6 +45,7 @@ class SiteIntervalData(pydantic.BaseModel):
     """Site interval data."""
 
     electricity_prices: np.ndarray | list[float] | float | None = None
+    export_electricity_prices: np.ndarray | list[float] | float | None = None
     electricity_carbon_intensities: np.ndarray | list[float] | float | None = None
     gas_prices: np.ndarray | list[float] | float | None = None
 
@@ -69,6 +70,10 @@ class SiteIntervalData(pydantic.BaseModel):
             )
             fields.remove("electricity_prices")
 
+            if values.get("export_electricity_prices") is None:
+                values["export_electricity_prices"] = values["electricity_prices"]
+                fields.remove("export_electricity_prices")
+
         elif values.get("electricity_carbon_intensities") is not None:
             values["idx"] = np.arange(len(values["electricity_carbon_intensities"]))
             values["electricity_carbon_intensities"] = np.atleast_1d(
@@ -91,7 +96,9 @@ class SiteIntervalData(pydantic.BaseModel):
                 values[field] = np.array([getattr(defaults, field)] * len(idx))
 
             else:
-                assert len(value) == len(idx)
+                assert len(value) == len(
+                    idx
+                ), f"{field} has len {len(value)}, index has {len(idx)}"
                 values[field] = np.array(value)
 
             assert values[field] is not None
@@ -244,17 +251,19 @@ class Site:
     def __init__(
         self,
         assets: list,
-        electricity_prices: float | list[float] | np.ndarray | None = None,
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
-        electric_load_mwh: float | list[float] | np.ndarray | None = None,
-        gas_prices: float | list[float] | np.ndarray | None = None,
-        high_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_load_mwh: float | list[float] | np.ndarray | None = None,
-        low_temperature_generation_mwh: float | list[float] | np.ndarray | None = None,
+        electricity_prices: np.ndarray | list[float] | float | None = None,
+        export_electricity_prices: np.ndarray | list[float] | float | None = None,
+        electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
+        electric_load_mwh: np.ndarray | list[float] | float | None = None,
+        gas_prices: np.ndarray | list[float] | float | None = None,
+        high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
+        low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
+        low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
         name: str = "site",
         freq_mins: int = defaults.freq_mins,
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initialize a Site asset model."""
         self.assets = assets
@@ -263,6 +272,7 @@ class Site:
             name=name,
             interval_data=SiteIntervalData(
                 electricity_prices=electricity_prices,
+                export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 gas_prices=gas_prices,
                 electric_load_mwh=electric_load_mwh,
@@ -276,6 +286,8 @@ class Site:
         )
 
         validate_interval_data(assets, self)
+
+        self.optimizer_cfg = optimizer_config
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -328,7 +340,7 @@ class Site:
             epl.results.SimulationResult
         """
 
-        self.optimizer = Optimizer()
+        self.optimizer = Optimizer(self.optimizer_cfg)
         freq = Freq(self.cfg.freq_mins)
 
         #  TODO this is repeated in `validate_interval_data`

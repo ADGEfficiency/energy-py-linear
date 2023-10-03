@@ -17,7 +17,7 @@ from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.interval_data import IntervalVars
 from energypylinear.objectives import objectives
-from energypylinear.optimizer import Optimizer
+from energypylinear.optimizer import Optimizer, OptimizerConfig
 from energypylinear.results.checks import check_results
 from energypylinear.results.extract import SimulationResult, extract_results
 

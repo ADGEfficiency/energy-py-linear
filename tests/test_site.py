@@ -2,10 +2,11 @@
 import random
 
 import numpy as np
+import pydantic_core
 import pytest
 
 import energypylinear as epl
-from energypylinear.assets.site import validate_interval_data
+from energypylinear.assets.site import SiteIntervalData, validate_interval_data
 from energypylinear.data_generation import generate_random_ev_input_data
 from energypylinear.debug import debug_simulation
 from energypylinear.defaults import defaults
@@ -190,4 +191,42 @@ def test_site_freq_mins() -> None:
         simulation = site.optimize()
         np.testing.assert_array_equal(
             simulation.results["site-import_power_mwh"], 10 - 5
+        )
+
+
+def test_site_interval_data_export_prices() -> None:
+    """Test we validate export electricity prices in the SiteIntervalData."""
+
+    # when we don't specify export prices, they are the same as import prices
+    id = SiteIntervalData(
+        electricity_prices=[10, 20, 30], export_electricity_prices=None
+    )
+    assert isinstance(id.export_electricity_prices, np.ndarray)
+    np.testing.assert_array_equal(id.export_electricity_prices, [10, 20, 30])
+
+    # when we specify export prices as a constant, it works as expected
+    id = SiteIntervalData(electricity_prices=[10, 20, 30], export_electricity_prices=70)
+    assert isinstance(id.export_electricity_prices, np.ndarray)
+    np.testing.assert_array_equal(id.export_electricity_prices, [70, 70, 70])
+
+    id = SiteIntervalData(electricity_prices=[10, 20, 30], export_electricity_prices=0)
+    assert isinstance(id.export_electricity_prices, np.ndarray)
+    np.testing.assert_array_equal(id.export_electricity_prices, [0, 0, 0])
+
+    # when we specify export prices as interval data, it works as expected
+    id = SiteIntervalData(
+        electricity_prices=[10, 20, 30], export_electricity_prices=[30, 20, 10]
+    )
+    assert isinstance(id.export_electricity_prices, np.ndarray)
+    np.testing.assert_array_equal(id.export_electricity_prices, [30, 20, 10])
+
+    # when we specify export prices as interval data, it fails as expected
+    with pytest.raises(pydantic_core._pydantic_core.ValidationError):
+        id = SiteIntervalData(
+            electricity_prices=[10, 20, 30], export_electricity_prices=[30, 20]
+        )
+
+    with pytest.raises(pydantic_core._pydantic_core.ValidationError):
+        id = SiteIntervalData(
+            electricity_prices=[10, 20, 30], export_electricity_prices=[30, 20, 30, 40]
         )

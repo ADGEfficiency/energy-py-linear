@@ -161,11 +161,13 @@ class Battery:
         capacity_mwh: float = 4.0,
         efficiency_pct: float = 0.9,
         name: str = "battery",
-        electricity_prices: float | list[float] | np.ndarray | None = None,
-        electricity_carbon_intensities: float | list[float] | np.ndarray | None = None,
+        electricity_prices: np.ndarray | list[float] | float | None = None,
+        export_electricity_prices: np.ndarray | list[float] | float | None = None,
+        electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: float | None = None,
         freq_mins: int = defaults.freq_mins,
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initializes the asset."""
 
@@ -188,8 +190,10 @@ class Battery:
             self.site = epl.Site(
                 assets=assets,
                 electricity_prices=electricity_prices,
+                export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
+                optimizer_config=optimizer_config,
             )
 
     def __repr__(self) -> str:
