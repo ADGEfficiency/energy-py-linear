@@ -303,7 +303,7 @@ class Site:
                 f"import_power_mw-{i}", up=freq.mw_to_mwh(self.cfg.import_limit_mw)
             ),
             export_power_mwh=optimizer.continuous(
-                f"export_power_mw-{i}", up=freq.mw_to_mwh(self.cfg.import_limit_mw)
+                f"export_power_mw-{i}", up=freq.mw_to_mwh(self.cfg.export_limit_mw)
             ),
             import_power_bin=optimizer.binary(f"import_power_bin-{i}"),
             export_power_bin=optimizer.binary(f"export_power_bin-{i}"),
