@@ -230,3 +230,17 @@ def test_site_interval_data_export_prices() -> None:
         id = SiteIntervalData(
             electricity_prices=[10, 20, 30], export_electricity_prices=[30, 20, 30, 40]
         )
+
+
+def test_allow_infeasible() -> None:
+    """Tests the allow infeasible flag."""
+    site = epl.Site(
+        assets=[],
+        electricity_prices=[100, 1000, -20, 40, 50],
+        electric_load_mwh=1000,
+        import_limit_mw=0,
+    )
+    with pytest.raises(AssertionError, match="Infeasible simulation!"):
+        site.optimize(flags=epl.Flags(allow_infeasible=False))
+
+    site.optimize(flags=epl.Flags(allow_infeasible=True))
