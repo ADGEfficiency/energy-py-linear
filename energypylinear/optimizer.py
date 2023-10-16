@@ -162,7 +162,7 @@ class Optimizer:
         return self.prob.variables()
 
     def constrain_max(
-        self, continuous: pulp.LpVariable, binary: pulp.LpVariable, max: float
+        self, continuous: pulp.LpVariable, binary: pulp.LpVariable | int, max: float
     ) -> pulp.LpConstraint:
         """Constrain the maximum value of a continuous variable.
 

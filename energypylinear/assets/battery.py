@@ -72,20 +72,19 @@ def constrain_only_charge_or_discharge(
     difference to calculate net charge.
     """
     assert isinstance(battery, BatteryOneInterval)
-    if flags.include_charge_discharge_binary_variables:
-        optimizer.constrain_max(
-            battery.electric_charge_mwh,
-            battery.electric_charge_binary,
-            battery.cfg.capacity_mwh,
-        )
-        optimizer.constrain_max(
-            battery.electric_discharge_mwh,
-            battery.electric_discharge_binary,
-            battery.cfg.capacity_mwh,
-        )
-        optimizer.constrain(
-            battery.electric_charge_binary + battery.electric_discharge_binary <= 1
-        )
+    optimizer.constrain_max(
+        battery.electric_charge_mwh,
+        battery.electric_charge_binary,
+        battery.cfg.capacity_mwh,
+    )
+    optimizer.constrain_max(
+        battery.electric_discharge_mwh,
+        battery.electric_discharge_binary,
+        battery.cfg.capacity_mwh,
+    )
+    optimizer.constrain(
+        battery.electric_charge_binary + battery.electric_discharge_binary <= 1
+    )
 
 
 def constrain_battery_electricity_balance(
@@ -216,14 +215,10 @@ class Battery:
             ),
             electric_charge_binary=optimizer.binary(
                 f"{self.cfg.name}-electric_charge_binary-{i}"
-            )
-            if flags.include_charge_discharge_binary_variables
-            else 0,
+            ),
             electric_discharge_binary=optimizer.binary(
                 f"{self.cfg.name}-electric_discharge_binary-{i}"
-            )
-            if flags.include_charge_discharge_binary_variables
-            else 0,
+            ),
             electric_loss_mwh=optimizer.continuous(
                 f"{self.cfg.name}-electric_loss_mwh-{i}"
             ),

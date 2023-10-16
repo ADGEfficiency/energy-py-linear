@@ -84,8 +84,8 @@ def test_carbon_optimization(
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
 
-def test_battery_charge_discharge_binary_variables() -> None:
-    """Test optimization with hypothesis."""
+def test_simultaneous_charge_discharge() -> None:
+    """Test that we don't ever simultaneously charge and discharge."""
     electricity_prices = np.random.normal(100, 1000, 1024)
     power_mw = 400
     capacity_mwh = 100
@@ -100,24 +100,10 @@ def test_battery_charge_discharge_binary_variables() -> None:
         final_charge_mwh=final_charge_mwh,
     )
     simulation = asset.optimize(
-        flags=Flags(include_charge_discharge_binary_variables=True)
+        verbose=False,
     )
 
     name = asset.cfg.name
-
-    #  check losses are a percentage of our charge
-    mask = simulation.results[f"{name}-electric_charge_mwh"] > 0
-    subset = simulation.results[mask]
-    np.testing.assert_almost_equal(
-        subset[f"{name}-electric_loss_mwh"].values,
-        (1 - asset.cfg.efficiency_pct) * subset[f"{name}-electric_charge_mwh"].values,
-        decimal=4,
-    )
-
-    #  check losses are always zero when we discharge
-    mask = simulation.results[f"{name}-electric_discharge_mwh"] > 0
-    subset = simulation.results[mask]
-    assert all(subset[f"{name}-electric_loss_mwh"] == 0)
 
 
 @hypothesis.settings(
@@ -167,8 +153,7 @@ def test_hypothesis(
         final_charge_mwh=final_charge_mwh,
     )
 
-    flags = Flags(include_charge_discharge_binary_variables=False)
-    simulation = asset.optimize(flags=flags)
+    simulation = asset.optimize()
 
     freq = epl.Freq(freq_mins)
 
@@ -213,6 +198,27 @@ def test_hypothesis(
         (1 - efficiency) * subset[f"{name}-electric_charge_mwh"].values,
         decimal=4,
     )
+
+    # check no simultaneous charge and discharge
+    assert (
+        (
+            (simulation.results["battery-electric_charge_mwh"] > 0)
+            & (simulation.results["battery-electric_discharge_mwh"] == 0)
+        )
+        | (
+            (simulation.results["battery-electric_discharge_mwh"] > 0)
+            & (simulation.results["battery-electric_charge_mwh"] == 0)
+        )
+        | (
+            (simulation.results["battery-electric_charge_mwh"] == 0)
+            & (simulation.results["battery-electric_discharge_mwh"] == 0)
+        )
+    ).all()
+
+    #  check losses are always zero when we discharge
+    mask = simulation.results[f"{name}-electric_discharge_mwh"] > 0
+    subset = simulation.results[mask]
+    assert all(subset[f"{name}-electric_loss_mwh"] == 0)
 
 
 def test_import_export_prices() -> None:
