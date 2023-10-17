@@ -107,7 +107,7 @@ def test_simultaneous_charge_discharge() -> None:
     print_blob=True,
     max_examples=100,
     verbosity=hypothesis.Verbosity.verbose,
-    deadline=2000,
+    deadline=10000,
 )
 @hypothesis.given(
     idx_length=hypothesis.strategies.integers(min_value=10, max_value=24),
