@@ -137,7 +137,7 @@ class Optimizer:
 
         feasible = status == "Optimal"
         if not allow_infeasible:
-            assert feasible
+            assert feasible, "Infeasible simulation!"
 
         return OptimizationStatus(status=status, feasible=feasible)
 
