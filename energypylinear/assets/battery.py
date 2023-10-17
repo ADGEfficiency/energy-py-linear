@@ -166,7 +166,6 @@ class Battery:
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: float | None = None,
         freq_mins: int = defaults.freq_mins,
-        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initializes the asset."""
 
@@ -192,7 +191,6 @@ class Battery:
                 export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
-                optimizer_config=optimizer_config,
             )
 
     def __repr__(self) -> str:
@@ -278,6 +276,7 @@ class Battery:
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize the asset.
 
@@ -285,6 +284,7 @@ class Battery:
             objective: the optimization objective - either "price" or "carbon".
             flags: boolean flags to change simulation and results behaviour.
             verbose: level of printing.
+            optimizer_config: configuration options for the optimizer.
 
         Returns:
             epl.results.SimulationResult
@@ -293,6 +293,7 @@ class Battery:
             objective=objective,
             flags=flags,
             verbose=verbose,
+            optimizer_config=optimizer_config,
         )
 
     def plot(self, results: "epl.SimulationResult", path: pathlib.Path | str) -> None:

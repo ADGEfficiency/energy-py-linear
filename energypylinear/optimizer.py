@@ -34,7 +34,7 @@ class OptimizerConfig:
     timeout: int = 60 * 3
 
     def dict(self) -> dict:
-        """Creates a dictionary - matching the pydantic.dict() API."""
+        """Creates a dictionary."""
         return dataclasses.asdict(self)
 
 

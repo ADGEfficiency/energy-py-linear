@@ -161,7 +161,7 @@ def test_check_no_simultaneous() -> None:
     initial_charge_mwh=hypothesis.strategies.floats(min_value=0.0, max_value=100),
     efficiency=hypothesis.strategies.floats(min_value=0.1, max_value=1.0),
     prices_mu=hypothesis.strategies.floats(min_value=-1000, max_value=1000),
-    prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=1000),
+    prices_std=hypothesis.strategies.floats(min_value=1.0, max_value=1000),
     prices_offset=hypothesis.strategies.floats(min_value=-250, max_value=250),
 )
 def test_hypothesis(

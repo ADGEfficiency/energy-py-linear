@@ -81,7 +81,6 @@ class HeatPump(epl.Asset):
         high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
-        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initializes the asset."""
         self.cfg = HeatPumpConfig(
@@ -111,7 +110,6 @@ class HeatPump(epl.Asset):
                 low_temperature_load_mwh=low_temperature_load_mwh,
                 low_temperature_generation_mwh=low_temperature_generation_mwh,
                 freq_mins=self.cfg.freq_mins,
-                optimizer_config=optimizer_config,
             )
 
     def __repr__(self) -> str:
@@ -185,6 +183,7 @@ class HeatPump(epl.Asset):
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize the asset dispatch using a mixed-integer linear program.
 
@@ -192,6 +191,7 @@ class HeatPump(epl.Asset):
             objective: the optimization objective - either "price" or "carbon".
             flags: boolean flags to change simulation and results behaviour.
             verbose: level of printing.
+            optimizer_config: configuration options for the optimizer.
 
         Returns:
             epl.results.SimulationResult
@@ -200,6 +200,7 @@ class HeatPump(epl.Asset):
             objective=objective,
             flags=flags,
             verbose=verbose,
+            optimizer_config=optimizer_config,
         )
 
     def plot(self, results: "epl.SimulationResult", path: pathlib.Path | str) -> None:

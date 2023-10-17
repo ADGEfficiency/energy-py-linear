@@ -87,7 +87,6 @@ class CHP(epl.Asset):
         high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
-        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initializes the asset."""
         self.cfg = CHPConfig(
@@ -112,7 +111,6 @@ class CHP(epl.Asset):
                 low_temperature_load_mwh=low_temperature_load_mwh,
                 low_temperature_generation_mwh=low_temperature_generation_mwh,
                 freq_mins=self.cfg.freq_mins,
-                optimizer_config=optimizer_config,
             )
 
     def __repr__(self) -> str:
@@ -194,6 +192,7 @@ class CHP(epl.Asset):
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """
         Optimize the CHP generator's dispatch using a mixed-integer linear program.
@@ -202,11 +201,16 @@ class CHP(epl.Asset):
             objective: the optimization objective - either "price" or "carbon".
             verbose: level of printing.
             flags: boolean flags to change simulation and results behaviour.
+            optimizer_config: configuration options for the optimizer.
+
+        Returns:
+            epl.results.SimulationResult
         """
         return self.site.optimize(
             objective=objective,
             flags=flags,
             verbose=verbose,
+            optimizer_config=optimizer_config,
         )
 
     def plot(self, results: "epl.SimulationResult", path: pathlib.Path | str) -> None:
