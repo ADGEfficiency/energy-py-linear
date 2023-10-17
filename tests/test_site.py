@@ -230,8 +230,6 @@ def test_site_interval_data_export_prices() -> None:
         id = SiteIntervalData(
             electricity_prices=[10, 20, 30], export_electricity_prices=[30, 20, 30, 40]
         )
-<<<<<<< Updated upstream
-=======
 
 
 def test_allow_infeasible() -> None:
@@ -268,4 +266,3 @@ def test_import_export_limits(import_limit_mw: float, export_limit_mw: float) ->
     assert simulation.feasible
     assert simulation.results["site-import_power_mwh"].max() <= import_limit_mw
     assert simulation.results["site-export_power_mwh"].max() <= export_limit_mw
->>>>>>> Stashed changes
