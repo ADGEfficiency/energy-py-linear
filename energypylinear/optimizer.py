@@ -7,6 +7,7 @@ import dataclasses
 import datetime
 import typing
 
+import numpy as np
 import pulp
 
 from energypylinear.logger import logger
@@ -186,22 +187,22 @@ class Optimizer:
         return self.constrain(-continuous + binary * min <= 0)
 
     def value(
-        self, variable: typing.Union[float, pulp.LpVariable], clip_to_zero: bool = False
+        self,
+        variable: typing.Union[float, pulp.LpVariable],
+        clip_from_zero: bool = False,
     ) -> float:
         """Return the value of a linear program variable.
 
         Args:
             variable: either a pulp variable or number.
+            clip_from_zero: optionally clip the left side at zero.
         """
-        import numpy as np
-
-        if isinstance(variable, pulp.LpVariable):
-            val = variable.value()
-        else:
-            val = float(variable)
-
+        val = (
+            variable.value()
+            if isinstance(variable, pulp.LpVariable)
+            else float(variable)
+        )
         assert val is not None
-        if clip_to_zero:
+        if clip_from_zero:
             val = float(np.clip(val, 0, None))
-
         return val

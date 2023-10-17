@@ -104,45 +104,36 @@ def test_simultaneous_charge_discharge() -> None:
     )
 
 
-def check_no_simultaneous_charge_discharge(
-    df: pd.DataFrame, name: str
+def check_no_simultaneous(
+    df: pd.DataFrame, left_col: str, right_col: str
 ) -> tuple[bool, pd.DataFrame]:
-    """Helper for the hypothesis test."""
-    condition = (
-        (
-            (df[f"{name}-electric_charge_mwh"] > 0)
-            & (df[f"{name}-electric_discharge_mwh"] == 0)
-        )
-        | (
-            (df[f"{name}-electric_discharge_mwh"] > 0)
-            & (df[f"{name}-electric_charge_mwh"] == 0)
-        )
-        | (
-            (df[f"{name}-electric_charge_mwh"] == 0)
-            & (df[f"{name}-electric_discharge_mwh"] == 0)
-        )
+    """Checks that we don't do two things at once."""
+    checks = (
+        ((df[left_col] > 0) & (df[right_col] == 0))
+        | ((df[right_col] > 0) & (df[left_col] == 0))
+        | ((df[left_col] == 0) & (df[right_col] == 0))
     )
     return (
-        condition.all(),
+        checks.all(),
         df.loc[
-            ~condition,
-            [
-                "battery-electric_charge_mwh",
-                "battery-electric_discharge_mwh",
-            ],
+            ~checks,
+            [left_col, right_col],
         ],
     )
 
 
-def test_check_no_simultaneous_charge_discharge() -> None:
-    """Tests the hypothesis test helper."""
+def test_check_no_simultaneous() -> None:
+    """Tests the helper function that checks we don't do two things at once."""
     df = pd.DataFrame(
         {
             "battery-electric_charge_mwh": [10, 0, 0, 0],
             "battery-electric_discharge_mwh": [0, 20, 30, 0],
         }
     )
-    check, errors = check_no_simultaneous_charge_discharge(df, "battery")
+    name = "battery"
+    check, errors = check_no_simultaneous(
+        df, f"{name}-electric_charge_mwh", f"{name}-electric_discharge_mwh"
+    )
     assert check
 
     df = pd.DataFrame(
@@ -151,7 +142,9 @@ def test_check_no_simultaneous_charge_discharge() -> None:
             "battery-electric_discharge_mwh": [0, 20, 30],
         }
     )
-    check, errors = check_no_simultaneous_charge_discharge(df, "battery")
+    check, errors = check_no_simultaneous(
+        df, f"{name}-electric_charge_mwh", f"{name}-electric_discharge_mwh"
+    )
     assert not check
 
 
@@ -313,7 +306,4 @@ def test_no_simultaneous_import_export() -> None:
     simulation = asset.optimize()
     results = simulation.results
 
-    import_mask = results["site-import_power_mwh"] > 0
-    export_mask = results["site-export_power_mwh"] > 0
-    check = import_mask.astype(int) + export_mask.astype(int)
-    assert all(check <= 1)
+    check_no_simultaneous(results, "site-import_power_mwh", "site-export_power_mwh")

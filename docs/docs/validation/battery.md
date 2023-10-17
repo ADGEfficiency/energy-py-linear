@@ -37,7 +37,7 @@ Now let's change the prices and see how the dispatch changes:
 import energypylinear as epl
 
 asset = epl.Battery(
-    electricity_prices=[200, -50, -50, 200, 200],
+    electricity_prices=[200, -50, -50, 200, 220],
 )
 simulation = asset.optimize(verbose=False)
 print(simulation.results[["site-electricity_prices", "site-electricity_balance_mwh"]])
@@ -49,7 +49,7 @@ print(simulation.results[["site-electricity_prices", "site-electricity_balance_m
 1                      -50                           2.0
 2                      -50                           2.0
 3                      200                          -1.6
-4                      200                          -2.0
+4                      220                          -2.0
 ```
 
 As expected, the battery continues to charge during low electricity price intervals, and discharge when electricity prices are high.

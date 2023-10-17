@@ -42,7 +42,8 @@ asset = epl.Battery(
     power_mw=2,
     capacity_mwh=4,
     efficiency_pct=0.9,
-  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100]
+  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
+  export_electricity_prices=40
 )
 
 simulation = asset.optimize()
