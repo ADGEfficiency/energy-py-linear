@@ -105,7 +105,7 @@ def test_simultaneous_charge_discharge() -> None:
 
 @hypothesis.settings(
     print_blob=True,
-    max_examples=100,
+    max_examples=250,
     verbosity=hypothesis.Verbosity.verbose,
     deadline=10000,
 )
