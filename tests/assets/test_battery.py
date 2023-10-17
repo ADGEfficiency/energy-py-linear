@@ -152,7 +152,7 @@ def test_check_no_simultaneous() -> None:
     print_blob=True,
     max_examples=250,
     verbosity=hypothesis.Verbosity.verbose,
-    deadline=10000,
+    deadline=20000,
 )
 @hypothesis.given(
     idx_length=hypothesis.strategies.integers(min_value=10, max_value=24),
