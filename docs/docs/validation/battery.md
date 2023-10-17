@@ -48,8 +48,8 @@ print(simulation.results[["site-electricity_prices", "site-electricity_balance_m
 0                      200                           0.0
 1                      -50                           2.0
 2                      -50                           2.0
-3                      200                          -2.0
-4                      200                          -1.6
+3                      200                          -1.6
+4                      200                          -2.0
 ```
 
 As expected, the battery continues to charge during low electricity price intervals, and discharge when electricity prices are high.

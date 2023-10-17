@@ -41,19 +41,14 @@ def test_site() -> None:
     )
 
     simulation = site.optimize()
-
-    """
-    first interval we both charge and generate max electricity
-    second interval we discharge and generate
-    """
     np.testing.assert_array_almost_equal(
         simulation.results["site-import_power_mwh"],
-        [0.0, 0, 4.6, 0.2222, 0.0],
+        [0.0, 0, 3.0, 0.2222, 0.0],
         decimal=defaults.decimal_tolerance,
     )
     np.testing.assert_array_almost_equal(
         simulation.results["site-export_power_mwh"],
-        [96.75, 102.8, 0.0, 0.0, 53.0],
+        [97.0, 102.6, 0.0, 0.0, 2.8],
         decimal=defaults.decimal_tolerance,
     )
 

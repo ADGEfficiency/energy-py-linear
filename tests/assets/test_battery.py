@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 import energypylinear as epl
-from energypylinear.flags import Flags
 
 #  maybe can move to defaults / constants
 tol = 1e-5
@@ -99,11 +98,9 @@ def test_simultaneous_charge_discharge() -> None:
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=final_charge_mwh,
     )
-    simulation = asset.optimize(
+    asset.optimize(
         verbose=False,
     )
-
-    name = asset.cfg.name
 
 
 @hypothesis.settings(
