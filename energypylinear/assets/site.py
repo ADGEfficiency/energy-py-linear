@@ -398,8 +398,7 @@ class Site:
         )
 
         status = self.optimizer.solve(
-            verbose=verbose,
-            allow_infeasible=flags.allow_infeasible
+            verbose=verbose, allow_infeasible=flags.allow_infeasible
         )
 
         return epl.extract_results(

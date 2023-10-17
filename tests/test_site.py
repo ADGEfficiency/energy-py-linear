@@ -244,3 +244,25 @@ def test_allow_infeasible() -> None:
         site.optimize(flags=epl.Flags(allow_infeasible=False))
 
     site.optimize(flags=epl.Flags(allow_infeasible=True))
+
+
+@pytest.mark.parametrize("import_limit_mw", [0, 10, 20, 30])
+@pytest.mark.parametrize("export_limit_mw", [0, 5, 10, 15])
+def test_import_export_limits(import_limit_mw: float, export_limit_mw: float) -> None:
+    """Test the site import & export limits."""
+    site = epl.Site(
+        assets=[
+            epl.Battery(
+                power_mw=120, capacity_mwh=120, efficiency_pct=1.0, name="big-battery"
+            ),
+        ],
+        electricity_prices=[-1000, 1000, -1000, 1000, -1000, 1000],
+        import_limit_mw=import_limit_mw,
+        export_limit_mw=export_limit_mw,
+        freq_mins=60,
+    )
+
+    simulation = site.optimize()
+    assert simulation.feasible
+    assert simulation.results["site-import_power_mwh"].max() <= import_limit_mw
+    assert simulation.results["site-export_power_mwh"].max() <= export_limit_mw
