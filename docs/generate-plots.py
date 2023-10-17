@@ -69,8 +69,8 @@ def test_battery_performance() -> None:
     print(run_times)
 
     axes.plot(
-        [p["idx_length"] for p in run_times],
-        [p["mean"] for p in run_times],
+        [p["idx_length"] for p in run_times["time"]],
+        [p["mean"] for p in run_times["time"]],
         marker="o",
     )
     axes.set_title(asset.__repr__())

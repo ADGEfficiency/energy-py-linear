@@ -150,7 +150,7 @@ def extract_battery_results(ivars: "epl.IntervalVars", results: dict, i: int) ->
                 # "efficiency_pct",  TODO this is a float
             ]:
                 results[f"{name}-{attr}"].append(
-                    optimizer.value(getattr(battery, attr))
+                    optimizer.value(getattr(battery, attr), clip_to_zero=True)
                 )
 
 

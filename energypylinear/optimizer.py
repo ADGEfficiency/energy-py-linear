@@ -185,13 +185,23 @@ class Optimizer:
         """
         return self.constrain(-continuous + binary * min <= 0)
 
-    def value(self, variable: typing.Union[float, pulp.LpVariable]) -> float:
+    def value(
+        self, variable: typing.Union[float, pulp.LpVariable], clip_to_zero: bool = False
+    ) -> float:
         """Return the value of a linear program variable.
 
         Args:
             variable: either a pulp variable or number.
         """
+        import numpy as np
+
         if isinstance(variable, pulp.LpVariable):
-            return variable.value()
+            val = variable.value()
         else:
-            return float(variable)
+            val = float(variable)
+
+        assert val is not None
+        if clip_to_zero:
+            val = float(np.clip(val, 0, None))
+
+        return val

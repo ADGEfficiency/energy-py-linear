@@ -2,6 +2,7 @@
 
 import hypothesis
 import numpy as np
+import pandas as pd
 import pytest
 
 import energypylinear as epl
@@ -103,6 +104,36 @@ def test_simultaneous_charge_discharge() -> None:
     )
 
 
+def check_no_simultaneous_charge_discharge(
+    df: pd.DataFrame,
+) -> tuple[bool, pd.DataFrame]:
+    """Helper for the hypothesis test."""
+    condition = (
+        (
+            (df["battery-electric_charge_mwh"] > 0)
+            & (df["battery-electric_discharge_mwh"] == 0)
+        )
+        | (
+            (df["battery-electric_discharge_mwh"] > 0)
+            & (df["battery-electric_charge_mwh"] == 0)
+        )
+        | (
+            (df["battery-electric_charge_mwh"] == 0)
+            & (df["battery-electric_discharge_mwh"] == 0)
+        )
+    )
+    return (
+        condition.all(),
+        df.loc[
+            ~condition,
+            [
+                "battery-electric_charge_mwh",
+                "battery-electric_discharge_mwh",
+            ],
+        ],
+    )
+
+
 @hypothesis.settings(
     print_blob=True,
     max_examples=250,
@@ -196,21 +227,8 @@ def test_hypothesis(
         decimal=4,
     )
 
-    # check no simultaneous charge and discharge
-    assert (
-        (
-            (simulation.results["battery-electric_charge_mwh"] > 0)
-            & (simulation.results["battery-electric_discharge_mwh"] == 0)
-        )
-        | (
-            (simulation.results["battery-electric_discharge_mwh"] > 0)
-            & (simulation.results["battery-electric_charge_mwh"] == 0)
-        )
-        | (
-            (simulation.results["battery-electric_charge_mwh"] == 0)
-            & (simulation.results["battery-electric_discharge_mwh"] == 0)
-        )
-    ).all()
+    check, errors = check_no_simultaneous_charge_discharge(simulation.results)
+    assert check, errors
 
     #  check losses are always zero when we discharge
     mask = simulation.results[f"{name}-electric_discharge_mwh"] > 0
