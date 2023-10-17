@@ -105,21 +105,21 @@ def test_simultaneous_charge_discharge() -> None:
 
 
 def check_no_simultaneous_charge_discharge(
-    df: pd.DataFrame,
+    df: pd.DataFrame, name: str
 ) -> tuple[bool, pd.DataFrame]:
     """Helper for the hypothesis test."""
     condition = (
         (
-            (df["battery-electric_charge_mwh"] > 0)
-            & (df["battery-electric_discharge_mwh"] == 0)
+            (df[f"{name}-electric_charge_mwh"] > 0)
+            & (df[f"{name}-electric_discharge_mwh"] == 0)
         )
         | (
-            (df["battery-electric_discharge_mwh"] > 0)
-            & (df["battery-electric_charge_mwh"] == 0)
+            (df[f"{name}-electric_discharge_mwh"] > 0)
+            & (df[f"{name}-electric_charge_mwh"] == 0)
         )
         | (
-            (df["battery-electric_charge_mwh"] == 0)
-            & (df["battery-electric_discharge_mwh"] == 0)
+            (df[f"{name}-electric_charge_mwh"] == 0)
+            & (df[f"{name}-electric_discharge_mwh"] == 0)
         )
     )
     return (
@@ -132,6 +132,27 @@ def check_no_simultaneous_charge_discharge(
             ],
         ],
     )
+
+
+def test_check_no_simultaneous_charge_discharge() -> None:
+    """Tests the hypothesis test helper."""
+    df = pd.DataFrame(
+        {
+            "battery-electric_charge_mwh": [10, 0, 0, 0],
+            "battery-electric_discharge_mwh": [0, 20, 30, 0],
+        }
+    )
+    check, errors = check_no_simultaneous_charge_discharge(df, "battery")
+    assert check
+
+    df = pd.DataFrame(
+        {
+            "battery-electric_charge_mwh": [10, 10, 30],
+            "battery-electric_discharge_mwh": [0, 20, 30],
+        }
+    )
+    check, errors = check_no_simultaneous_charge_discharge(df, "battery")
+    assert not check
 
 
 @hypothesis.settings(
@@ -227,7 +248,7 @@ def test_hypothesis(
         decimal=4,
     )
 
-    check, errors = check_no_simultaneous_charge_discharge(simulation.results)
+    check, errors = check_no_simultaneous_charge_discharge(simulation.results, name)
     assert check, errors
 
     #  check losses are always zero when we discharge
