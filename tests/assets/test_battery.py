@@ -150,7 +150,7 @@ def test_hypothesis(
         final_charge_mwh=final_charge_mwh,
     )
 
-    simulation = asset.optimize()
+    simulation = asset.optimize(verbose=False)
 
     freq = epl.Freq(freq_mins)
 
