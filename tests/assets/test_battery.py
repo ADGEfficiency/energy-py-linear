@@ -241,7 +241,11 @@ def test_hypothesis(
         decimal=4,
     )
 
-    check, errors = check_no_simultaneous_charge_discharge(simulation.results, name)
+    check, errors = check_no_simultaneous(
+        simulation.results,
+        f"{name}-electric_charge_mwh",
+        f"{name}-electric_discharge_mwh",
+    )
     assert check, errors
 
     #  check losses are always zero when we discharge
