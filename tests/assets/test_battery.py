@@ -195,7 +195,10 @@ def test_hypothesis(
         final_charge_mwh=final_charge_mwh,
     )
 
-    simulation = asset.optimize(verbose=False)
+    simulation = asset.optimize(
+        verbose=False,
+        optimizer_config=epl.OptimizerConfig(relative_tolerance=0.01, timeout=18),
+    )
 
     freq = epl.Freq(freq_mins)
 
@@ -288,11 +291,13 @@ def test_import_export_prices() -> None:
             export_electricity_prices=float(export_price),
             initial_charge_mwh=initial_charge_mwh,
             final_charge_mwh=final_charge_mwh,
+        )
+        simulation = asset.optimize(
+            verbose=False,
             optimizer_config=epl.OptimizerConfig(
                 relative_tolerance=0.01, timeout=60 * 2
             ),
         )
-        simulation = asset.optimize(verbose=False)
         battery_usage.append(simulation.results["battery-electric_charge_mwh"].sum())
 
     print(battery_usage)
