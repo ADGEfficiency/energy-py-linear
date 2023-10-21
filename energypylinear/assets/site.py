@@ -263,7 +263,6 @@ class Site:
         freq_mins: int = defaults.freq_mins,
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
-        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initialize a Site asset model."""
         self.assets = assets
@@ -286,8 +285,6 @@ class Site:
         )
 
         validate_interval_data(assets, self)
-
-        self.optimizer_cfg = optimizer_config
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -333,14 +330,21 @@ class Site:
         objective: str = "price",
         flags: Flags = Flags(),
         verbose: bool = True,
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize sites dispatch using a mixed-integer linear program.
+
+        Args:
+            objective: the optimization objective - either "price" or "carbon".
+            flags: boolean flags to change simulation and results behaviour.
+            verbose: level of printing.
+            optimizer_config: configuration options for the optimizer.
 
         Returns:
             epl.results.SimulationResult
         """
 
-        self.optimizer = Optimizer(self.optimizer_cfg)
+        self.optimizer = Optimizer(optimizer_config)
         freq = Freq(self.cfg.freq_mins)
 
         #  TODO this is repeated in `validate_interval_data`

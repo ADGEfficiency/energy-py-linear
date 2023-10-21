@@ -72,20 +72,19 @@ def constrain_only_charge_or_discharge(
     difference to calculate net charge.
     """
     assert isinstance(battery, BatteryOneInterval)
-    if flags.include_charge_discharge_binary_variables:
-        optimizer.constrain_max(
-            battery.electric_charge_mwh,
-            battery.electric_charge_binary,
-            battery.cfg.capacity_mwh,
-        )
-        optimizer.constrain_max(
-            battery.electric_discharge_mwh,
-            battery.electric_discharge_binary,
-            battery.cfg.capacity_mwh,
-        )
-        optimizer.constrain(
-            battery.electric_charge_binary + battery.electric_discharge_binary <= 1
-        )
+    optimizer.constrain_max(
+        battery.electric_charge_mwh,
+        battery.electric_charge_binary,
+        battery.cfg.capacity_mwh,
+    )
+    optimizer.constrain_max(
+        battery.electric_discharge_mwh,
+        battery.electric_discharge_binary,
+        battery.cfg.capacity_mwh,
+    )
+    optimizer.constrain(
+        battery.electric_charge_binary + battery.electric_discharge_binary <= 1
+    )
 
 
 def constrain_battery_electricity_balance(
@@ -167,7 +166,6 @@ class Battery:
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: float | None = None,
         freq_mins: int = defaults.freq_mins,
-        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initializes the asset."""
 
@@ -193,7 +191,6 @@ class Battery:
                 export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
-                optimizer_config=optimizer_config,
             )
 
     def __repr__(self) -> str:
@@ -216,14 +213,10 @@ class Battery:
             ),
             electric_charge_binary=optimizer.binary(
                 f"{self.cfg.name}-electric_charge_binary-{i}"
-            )
-            if flags.include_charge_discharge_binary_variables
-            else 0,
+            ),
             electric_discharge_binary=optimizer.binary(
                 f"{self.cfg.name}-electric_discharge_binary-{i}"
-            )
-            if flags.include_charge_discharge_binary_variables
-            else 0,
+            ),
             electric_loss_mwh=optimizer.continuous(
                 f"{self.cfg.name}-electric_loss_mwh-{i}"
             ),
@@ -283,6 +276,7 @@ class Battery:
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize the asset.
 
@@ -290,6 +284,7 @@ class Battery:
             objective: the optimization objective - either "price" or "carbon".
             flags: boolean flags to change simulation and results behaviour.
             verbose: level of printing.
+            optimizer_config: configuration options for the optimizer.
 
         Returns:
             epl.results.SimulationResult
@@ -298,6 +293,7 @@ class Battery:
             objective=objective,
             flags=flags,
             verbose=verbose,
+            optimizer_config=optimizer_config,
         )
 
     def plot(self, results: "epl.SimulationResult", path: pathlib.Path | str) -> None:

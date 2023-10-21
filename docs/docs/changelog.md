@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.1.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.0)
+
+### Export Electricity Prices
+
+Assets can now accept export electricity prices - these are an optional time series that can either be a constant value or interval data:
+
+```python
+asset = epl.Battery(
+    electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
+    export_electricity_prices=40
+)
+```
+
+These export electricity prices are used to calculate the value of electricity exported from site.
+
+### Optimizer Config
+
+The `.optimize()` method of assets now accepts an `epl.OptimizerConfig` object, which allows configuration of the CBC optimizer used by Pulp:
+
+```python
+asset.optimize(
+    optimizer_config=epl.OptimizerConfig(timeout=60, relative_tolerance=0.05)
+)
+```
+
+### Bugs
+
+Fixed a bug on the `allow_infeasible` flag in `epl.Site.optimize`.
+
+Fixed a bug on the `export_limit_mw` in `epl.Site.__init__`.
+
+#### Netting Off Battery Charge and Discharge
+
+`energypylinear` has the ability to constrain battery charge or discharge into a single interval, using binary variables that are linked to the charge and discharge energy.
+
+By default these were turned off, because it slows down the optimization. The effect on the site electricity balance was zero, as the charge and discharge energy were netted off in the balance.
+
+However, as the battery losses are a percentage of battery charge, this led to situations where when electricity prices were negative, the optimizer would be incentivized to have a large simultaneous charge and discharge.  This would also lead to the situation where the losses calculations were correct as a percentage of battery charge, but not of battery net charge.
+
+The solution is to remove the flag that allowed toggling of these binary variables on and off - this now means that the battery model always runs with binary variables limiting only one of charge or discharge to occur in a single interval.
+
+
 ## [1.0.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.0.0)
 
 ### Add Renewable Generator Asset

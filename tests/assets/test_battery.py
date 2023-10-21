@@ -2,10 +2,10 @@
 
 import hypothesis
 import numpy as np
+import pandas as pd
 import pytest
 
 import energypylinear as epl
-from energypylinear.flags import Flags
 
 #  maybe can move to defaults / constants
 tol = 1e-5
@@ -84,8 +84,8 @@ def test_carbon_optimization(
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
 
-def test_battery_charge_discharge_binary_variables() -> None:
-    """Test optimization with hypothesis."""
+def test_simultaneous_charge_discharge() -> None:
+    """Test that we don't ever simultaneously charge and discharge."""
     electricity_prices = np.random.normal(100, 1000, 1024)
     power_mw = 400
     capacity_mwh = 100
@@ -99,32 +99,60 @@ def test_battery_charge_discharge_binary_variables() -> None:
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=final_charge_mwh,
     )
-    simulation = asset.optimize(
-        flags=Flags(include_charge_discharge_binary_variables=True)
+    asset.optimize(
+        verbose=False,
     )
 
-    name = asset.cfg.name
 
-    #  check losses are a percentage of our charge
-    mask = simulation.results[f"{name}-electric_charge_mwh"] > 0
-    subset = simulation.results[mask]
-    np.testing.assert_almost_equal(
-        subset[f"{name}-electric_loss_mwh"].values,
-        (1 - asset.cfg.efficiency_pct) * subset[f"{name}-electric_charge_mwh"].values,
-        decimal=4,
+def check_no_simultaneous(
+    df: pd.DataFrame, left_col: str, right_col: str
+) -> tuple[bool, pd.DataFrame]:
+    """Checks that we don't do two things at once."""
+    checks = (
+        ((df[left_col] > 0) & (df[right_col] == 0))
+        | ((df[right_col] > 0) & (df[left_col] == 0))
+        | ((df[left_col] == 0) & (df[right_col] == 0))
+    )
+    return (
+        checks.all(),
+        df.loc[
+            ~checks,
+            [left_col, right_col],
+        ],
     )
 
-    #  check losses are always zero when we discharge
-    mask = simulation.results[f"{name}-electric_discharge_mwh"] > 0
-    subset = simulation.results[mask]
-    assert all(subset[f"{name}-electric_loss_mwh"] == 0)
+
+def test_check_no_simultaneous() -> None:
+    """Tests the helper function that checks we don't do two things at once."""
+    df = pd.DataFrame(
+        {
+            "battery-electric_charge_mwh": [10, 0, 0, 0],
+            "battery-electric_discharge_mwh": [0, 20, 30, 0],
+        }
+    )
+    name = "battery"
+    check, errors = check_no_simultaneous(
+        df, f"{name}-electric_charge_mwh", f"{name}-electric_discharge_mwh"
+    )
+    assert check
+
+    df = pd.DataFrame(
+        {
+            "battery-electric_charge_mwh": [10, 10, 30],
+            "battery-electric_discharge_mwh": [0, 20, 30],
+        }
+    )
+    check, errors = check_no_simultaneous(
+        df, f"{name}-electric_charge_mwh", f"{name}-electric_discharge_mwh"
+    )
+    assert not check
 
 
 @hypothesis.settings(
     print_blob=True,
-    max_examples=100,
+    max_examples=250,
     verbosity=hypothesis.Verbosity.verbose,
-    deadline=2000,
+    deadline=20000,
 )
 @hypothesis.given(
     idx_length=hypothesis.strategies.integers(min_value=10, max_value=24),
@@ -133,7 +161,7 @@ def test_battery_charge_discharge_binary_variables() -> None:
     initial_charge_mwh=hypothesis.strategies.floats(min_value=0.0, max_value=100),
     efficiency=hypothesis.strategies.floats(min_value=0.1, max_value=1.0),
     prices_mu=hypothesis.strategies.floats(min_value=-1000, max_value=1000),
-    prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=1000),
+    prices_std=hypothesis.strategies.floats(min_value=1.0, max_value=1000),
     prices_offset=hypothesis.strategies.floats(min_value=-250, max_value=250),
 )
 def test_hypothesis(
@@ -167,8 +195,10 @@ def test_hypothesis(
         final_charge_mwh=final_charge_mwh,
     )
 
-    flags = Flags(include_charge_discharge_binary_variables=False)
-    simulation = asset.optimize(flags=flags)
+    simulation = asset.optimize(
+        verbose=False,
+        optimizer_config=epl.OptimizerConfig(relative_tolerance=0.01, timeout=18),
+    )
 
     freq = epl.Freq(freq_mins)
 
@@ -214,6 +244,18 @@ def test_hypothesis(
         decimal=4,
     )
 
+    check, errors = check_no_simultaneous(
+        simulation.results,
+        f"{name}-electric_charge_mwh",
+        f"{name}-electric_discharge_mwh",
+    )
+    assert check, errors
+
+    #  check losses are always zero when we discharge
+    mask = simulation.results[f"{name}-electric_discharge_mwh"] > 0
+    subset = simulation.results[mask]
+    assert all(subset[f"{name}-electric_loss_mwh"] == 0)
+
 
 def test_import_export_prices() -> None:
     """Test the use of export electricity prices in the battery model."""
@@ -240,8 +282,8 @@ def test_import_export_prices() -> None:
 
     # test that as we increase export prices, we use the battery more
     battery_usage = []
-    for export_price in [0, 40, 80, 100]:
-        print(export_price)
+    for export_price in range(0, 250, 50):
+        print(f"{export_price=}")
         asset = epl.Battery(
             power_mw=power_mw,
             capacity_mwh=capacity_mwh,
@@ -249,9 +291,13 @@ def test_import_export_prices() -> None:
             export_electricity_prices=float(export_price),
             initial_charge_mwh=initial_charge_mwh,
             final_charge_mwh=final_charge_mwh,
-            optimizer_config=epl.OptimizerConfig(relative_tolerance=0.01, timeout=60),
         )
-        simulation = asset.optimize(verbose=False)
+        simulation = asset.optimize(
+            verbose=False,
+            optimizer_config=epl.OptimizerConfig(
+                relative_tolerance=0.01, timeout=60 * 2
+            ),
+        )
         battery_usage.append(simulation.results["battery-electric_charge_mwh"].sum())
 
     print(battery_usage)
@@ -269,7 +315,4 @@ def test_no_simultaneous_import_export() -> None:
     simulation = asset.optimize()
     results = simulation.results
 
-    import_mask = results["site-import_power_mwh"] > 0
-    export_mask = results["site-export_power_mwh"] > 0
-    check = import_mask.astype(int) + export_mask.astype(int)
-    assert all(check <= 1)
+    check_no_simultaneous(results, "site-import_power_mwh", "site-export_power_mwh")

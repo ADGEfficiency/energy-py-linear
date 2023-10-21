@@ -9,9 +9,6 @@ class Flags(pydantic.BaseModel):
     fail_on_spill_asset_use: bool = False
     allow_infeasible: bool = False
 
-    #  battery
-    include_charge_discharge_binary_variables: bool = False
-
     #  evs
     allow_evs_discharge: bool = False
     limit_charge_variables_to_valid_events: bool = False

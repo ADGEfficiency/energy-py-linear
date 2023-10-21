@@ -28,7 +28,7 @@ print(f"{perfect_foresight=}")
 ```
 
 ```
-perfect_foresight=<Accounts profit=1057.78 emissions=0.0822>
+perfect_foresight=<Accounts profit=1037.78 emissions=0.0622>
 ```
 
 ## Optimize to a Forecast
@@ -65,7 +65,7 @@ print(f"{variance=}")
 ```
 
 ```
-variance=<Account profit=1197.78 emissions=0.0022>
+variance=<Account profit=1177.78 emissions=-0.0178>
 ```
 
 ## Full Example

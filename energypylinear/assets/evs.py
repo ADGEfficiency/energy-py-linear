@@ -491,9 +491,11 @@ class EVs:
         name: str = "evs",
         electricity_prices: np.ndarray | list[float] | np.ndarray | None = None,
         export_electricity_prices: np.ndarray | list[float] | np.ndarray | None = None,
-        electricity_carbon_intensities: np.ndarray | list[float] | np.ndarray | None = None,
+        electricity_carbon_intensities: np.ndarray
+        | list[float]
+        | np.ndarray
+        | None = None,
         freq_mins: int = defaults.freq_mins,
-        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ):
         """Initialize an electric vehicle asset model."""
 
@@ -545,7 +547,6 @@ class EVs:
                 export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
-                optimizer_config=optimizer_config,
             )
             assert isinstance(self.site.cfg.interval_data.idx, np.ndarray)
             validate_ev_interval_data(
@@ -662,6 +663,7 @@ class EVs:
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
+        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize the EVs's dispatch using a mixed-integer linear program.
 
@@ -669,6 +671,7 @@ class EVs:
             objective: the optimization objective - either "price" or "carbon".
             flags: boolean flags to change simulation and results behaviour.
             verbose: level of printing.
+            optimizer_config: configuration options for the optimizer.
 
         Returns:
             epl.results.SimulationResult
@@ -677,6 +680,7 @@ class EVs:
             objective=objective,
             flags=flags,
             verbose=verbose,
+            optimizer_config=optimizer_config,
         )
 
     def plot(self, results: "epl.SimulationResult", path: pathlib.Path | str) -> None:

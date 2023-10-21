@@ -62,7 +62,7 @@ print(f"{price_account=}")
 ```
 
 ```
-price_account=<Accounts profit=1057.78 emissions=-1.6558>
+price_account=<Accounts profit=1037.78 emissions=-1.6578>
 ```
 
 ## Calculate Variance Between Accounts
@@ -75,6 +75,6 @@ print(f"{-variance.cost / variance.emissions:.2f} $/tC")
 ```
 
 ```
-variance=<Account profit=923.33 emissions=0.6176>
-1495.14 $/tC
+variance=<Account profit=903.33 emissions=0.6156>
+1467.51 $/tC
 ```

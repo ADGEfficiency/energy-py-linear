@@ -7,6 +7,7 @@ import dataclasses
 import datetime
 import typing
 
+import numpy as np
 import pulp
 
 from energypylinear.logger import logger
@@ -33,7 +34,7 @@ class OptimizerConfig:
     timeout: int = 60 * 3
 
     def dict(self) -> dict:
-        """Creates a dictionary - matching the pydantic.dict() API."""
+        """Creates a dictionary."""
         return dataclasses.asdict(self)
 
 
@@ -162,7 +163,7 @@ class Optimizer:
         return self.prob.variables()
 
     def constrain_max(
-        self, continuous: pulp.LpVariable, binary: pulp.LpVariable, max: float
+        self, continuous: pulp.LpVariable, binary: pulp.LpVariable | int, max: float
     ) -> pulp.LpConstraint:
         """Constrain the maximum value of a continuous variable.
 
@@ -185,13 +186,23 @@ class Optimizer:
         """
         return self.constrain(-continuous + binary * min <= 0)
 
-    def value(self, variable: typing.Union[float, pulp.LpVariable]) -> float:
+    def value(
+        self,
+        variable: typing.Union[float, pulp.LpVariable],
+        clip_from_zero: bool = False,
+    ) -> float:
         """Return the value of a linear program variable.
 
         Args:
             variable: either a pulp variable or number.
+            clip_from_zero: optionally clip the left side at zero.
         """
-        if isinstance(variable, pulp.LpVariable):
-            return variable.value()
-        else:
-            return float(variable)
+        val = (
+            variable.value()
+            if isinstance(variable, pulp.LpVariable)
+            else float(variable)
+        )
+        assert val is not None
+        if clip_from_zero:
+            val = float(np.clip(val, 0, None))
+        return val

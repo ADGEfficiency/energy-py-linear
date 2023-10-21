@@ -7,7 +7,7 @@ import energypylinear as epl
 
 
 def test_optimizer_config() -> None:
-    """Test the use of the optimizer config
+    """Test the use of the optimizer config.
 
     TODO - pulp will still report Optimal status after the timeout, even if the
     relative gap isn't reached.
@@ -21,8 +21,9 @@ def test_optimizer_config() -> None:
     asset = epl.Battery(
         electricity_prices=electricity_prices,
         export_electricity_prices=export_electricity_prices,
+    )
+    asset.optimize(
         optimizer_config=opt_cfg,
     )
-    asset.optimize()
 
     asset.site.optimizer.cfg.dict()
