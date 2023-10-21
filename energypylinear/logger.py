@@ -45,7 +45,6 @@ def configure_logger(enable_file_logging: bool = False) -> None:
         enable_file_logging (bool, optional):
             Whether to enable file logging. Defaults to False.
     """
-    pathlib.Path("logs").mkdir(exist_ok=True)
 
     unix_time = int(time.time())
 
@@ -54,6 +53,7 @@ def configure_logger(enable_file_logging: bool = False) -> None:
     root_logger.setLevel(logging.DEBUG)
 
     if enable_file_logging:
+        pathlib.Path("logs").mkdir(exist_ok=True)
         # Set up the file handler to write debug logs to a file
         file_handler = logging.handlers.TimedRotatingFileHandler(
             f"logs/{unix_time}.log", when="midnight", backupCount=10
