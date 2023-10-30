@@ -47,8 +47,12 @@ class Optimizer:
         solver: solver to use for solving the optimization problem.
     """
 
-    def __init__(self, cfg: OptimizerConfig = OptimizerConfig()) -> None:
+    def __init__(self, cfg: OptimizerConfig | dict = OptimizerConfig()) -> None:
         """Initialize an Optimizer."""
+
+        if isinstance(cfg, dict):
+            cfg = OptimizerConfig(**cfg)
+
         self.cfg = cfg
         name = str(datetime.datetime.now())
         name = name.replace(" ", "-")
@@ -124,17 +128,31 @@ class Optimizer:
             verbose: a flag indicating how verbose the output should be.  0 for no output.
             allow_infeasible: whether an infeasible solution should raise an error.
         """
+<<<<<<< Updated upstream
         logger.debug(
             "optimizer.solve",
             variables=len(self.variables()),
             constraints=len(self.constraints()),
         )
+=======
+        set_logging_level(logger, level=verbose)
+>>>>>>> Stashed changes
         self.assert_no_duplicate_variables()
-        self.solver.solve(self.prob)
 
+        logger.info(
+            f"optimizer.solve: variables={len(self.variables())}, constraints={len(self.constraints())}"
+        )
+
+        self.solver.solve(self.prob)
         status = self.status()
+<<<<<<< Updated upstream
         if verbose > 0:
             logger.info("optimizer.solve", status=status)
+=======
+        logger.info(
+            f"optimizer.solve: {status=}",
+        )
+>>>>>>> Stashed changes
 
         feasible = status == "Optimal"
         if not allow_infeasible:

@@ -25,5 +25,5 @@ def test_optimizer_config() -> None:
     asset.optimize(
         optimizer_config=opt_cfg,
     )
-
+    asset.optimize(optimizer_config={"timeout": 2})
     asset.site.optimizer.cfg.dict()
