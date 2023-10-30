@@ -17,7 +17,6 @@ rich = "^12.0.0"
 seaborn = "^0.12.2"
 pandera = "^0.14.5"
 markdown-include = "^0.8.1"
-structlog = "^23.1.0"
 
 [tool.poetry.group.check]
 optional = true

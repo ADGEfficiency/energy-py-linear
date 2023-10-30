@@ -5,9 +5,11 @@ import logging.handlers
 from rich.console import Console
 from rich.logging import RichHandler
 
+from energypylinear.defaults import defaults
+
 console = Console()
 
-logger = logging.getLogger("default_logger")
+logger = logging.getLogger("energypylinear")
 logger.setLevel(logging.DEBUG)
 
 rich_handler = RichHandler(
@@ -17,11 +19,11 @@ rich_handler = RichHandler(
     show_time=False,
     show_path=False,
 )
-rich_handler.setLevel(logging.INFO)
+rich_handler.setLevel(defaults.log_level * 10)
 logger.addHandler(rich_handler)
 
 
-def set_logging_level(logger, level: int) -> None:
+def set_logging_level(logger: logging.Logger, level: int) -> None:
     """Sets the logging level for the logger handlers.
 
     Args:
