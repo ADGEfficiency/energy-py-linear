@@ -329,7 +329,7 @@ class Site:
         self,
         objective: str = "price",
         flags: Flags = Flags(),
-        verbose: bool = True,
+        verbose: int = 2,
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize sites dispatch using a mixed-integer linear program.

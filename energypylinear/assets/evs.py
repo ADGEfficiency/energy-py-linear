@@ -661,7 +661,7 @@ class EVs:
     def optimize(
         self,
         objective: str = "price",
-        verbose: bool = True,
+        verbose: int = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
