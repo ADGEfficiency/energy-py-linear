@@ -47,7 +47,7 @@ class Optimizer:
         solver: solver to use for solving the optimization problem.
     """
 
-    def __init__(self, cfg: OptimizerConfig = OptimizerConfig()) -> None:
+    def __init__(self, cfg: OptimizerConfig | dict = OptimizerConfig()) -> None:
         """Initialize an Optimizer."""
 
         if isinstance(cfg, dict):
