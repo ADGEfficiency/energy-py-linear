@@ -1,4 +1,4 @@
-"""Structured logging to console and files."""
+"""Logging to console."""
 import logging
 import logging.handlers
 
