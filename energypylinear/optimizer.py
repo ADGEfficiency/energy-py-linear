@@ -128,15 +128,11 @@ class Optimizer:
             verbose: a flag indicating how verbose the output should be.  0 for no output.
             allow_infeasible: whether an infeasible solution should raise an error.
         """
-<<<<<<< Updated upstream
         logger.debug(
             "optimizer.solve",
             variables=len(self.variables()),
             constraints=len(self.constraints()),
         )
-=======
-        set_logging_level(logger, level=verbose)
->>>>>>> Stashed changes
         self.assert_no_duplicate_variables()
 
         logger.info(
@@ -145,14 +141,8 @@ class Optimizer:
 
         self.solver.solve(self.prob)
         status = self.status()
-<<<<<<< Updated upstream
         if verbose > 0:
             logger.info("optimizer.solve", status=status)
-=======
-        logger.info(
-            f"optimizer.solve: {status=}",
-        )
->>>>>>> Stashed changes
 
         feasible = status == "Optimal"
         if not allow_infeasible:

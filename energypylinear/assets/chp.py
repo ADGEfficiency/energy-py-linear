@@ -192,7 +192,7 @@ class CHP(epl.Asset):
         objective: str = "price",
         verbose: bool = True,
         flags: Flags = Flags(),
-        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
+        optimizer_config: "epl.OptimizerConfig | dict" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """
         Optimize the CHP generator's dispatch using a mixed-integer linear program.

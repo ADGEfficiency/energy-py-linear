@@ -2,6 +2,7 @@
 
 
 import numpy as np
+import pytest
 
 import energypylinear as epl
 
@@ -27,3 +28,6 @@ def test_optimizer_config() -> None:
     )
     asset.optimize(optimizer_config={"timeout": 2})
     asset.site.optimizer.cfg.dict()
+
+    with pytest.raises(TypeError):
+        asset.optimize(optimizer_config={"timou": 2})
