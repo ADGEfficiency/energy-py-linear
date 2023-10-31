@@ -33,6 +33,6 @@ def warn_spills(
         raise ValueError(spill_message)
     elif spill_occured and verbose:
         logger.warning(
-            f"warnings.warn_spills, n_spills={len(spills)}, spill_columns={spill_results.shape[1]}, spills={spills}"
+            f"warnings.warn_spills: n_spills={len(spills)}, spill_columns={spill_results.shape[1]}, spills={spills}"
         )
     return spill_occured

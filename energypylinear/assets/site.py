@@ -8,6 +8,7 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
+from energypylinear.logger import logger, set_logging_level
 from energypylinear.optimizer import Optimizer
 from energypylinear.utils import repeat_to_match_length
 
@@ -118,6 +119,12 @@ class SiteConfig(pydantic.BaseModel):
 
     import_limit_mw: float
     export_limit_mw: float
+
+    def __repr__(self):
+        return f"<SiteConfig {self.name=}>"
+
+    def __str__(self):
+        return f"<SiteConfig name={self.name}, freq_mins={self.freq_mins}, import_limit_mw={self.import_limit_mw}, export_limit_mw={self.export_limit_mw}>"
 
 
 class SiteOneInterval(pydantic.BaseModel):
@@ -353,6 +360,10 @@ class Site:
         assert len(names) == len(
             set(names)
         ), f"Asset names must be unique, your assets are called {names}"
+
+        set_logging_level(logger, verbose)
+        logger.info(f"assets.site.optimize: cfg={self.cfg}")
+        logger.info(f"assets.site.optimize: assets={names}")
 
         #  TODO warn about sites without boilers?  warn sites without valve / spill?
 

@@ -16,7 +16,7 @@ rich_handler = RichHandler(
     console=console,
     rich_tracebacks=True,
     show_level=True,
-    show_time=True,
+    show_time=False,
     show_path=False,
 )
 rich_handler.setLevel(defaults.log_level * 10)

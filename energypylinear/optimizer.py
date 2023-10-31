@@ -124,7 +124,7 @@ class Optimizer:
         set_logging_level(logger, level=verbose)
 
         logger.debug(
-            f"optimizer.solve, variables={len(self.variables())}, constraints={len(self.constraints())}"
+            f"optimizer.solve: variables={len(self.variables())}, constraints={len(self.constraints())}"
         )
         self.assert_no_duplicate_variables()
         self.solver.solve(self.prob)
@@ -132,7 +132,7 @@ class Optimizer:
         status = self.status()
         if verbose > 0:
             logger.info(
-                f"optimizer.solve, {status=}",
+                f"optimizer.solve: {status=}",
             )
 
         feasible = status == "Optimal"

@@ -16,7 +16,7 @@ import energypylinear as epl
 asset = epl.Battery(
     electricity_prices=[10, -50, 200, -50, 200],
 )
-simulation = asset.optimize(verbose=False)
+simulation = asset.optimize(verbose=3)
 print(simulation.results[["site-electricity_prices", "site-electricity_balance_mwh"]])
 ```
 
@@ -39,7 +39,7 @@ import energypylinear as epl
 asset = epl.Battery(
     electricity_prices=[200, -50, -50, 200, 220],
 )
-simulation = asset.optimize(verbose=False)
+simulation = asset.optimize(verbose=3)
 print(simulation.results[["site-electricity_prices", "site-electricity_balance_mwh"]])
 ```
 
@@ -68,9 +68,9 @@ pd.set_option("display.width", 400)
 asset = epl.Battery(
     electricity_prices=[10, -50, 200, -50, 200],
 )
-simulation = asset.optimize(verbose=False)
+simulation = asset.optimize(verbose=3)
 
-checks = epl.check_results(simulation.results, verbose=False)
+checks = epl.check_results(simulation.results, verbose=3)
 balance = checks["electricity-balance"]
 print(balance)
 ```
@@ -108,7 +108,7 @@ for efficiency_pct in [1.0, 0.9, 0.8]:
     )
     simulation = asset.optimize(
         objective="price",
-        verbose=False
+        verbose=3
     )
     results = simulation.results
     out.append(

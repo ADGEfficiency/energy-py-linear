@@ -375,7 +375,7 @@ def extract_results(
     #  add total columns to the results df
     total_mapper = add_totals(results)
     pretty = json.dumps(total_mapper, indent=2)
-    logger.debug(f"results.extract, total_mapper={pretty}")
+    logger.debug(f"results.extract: total_mapper={pretty}")
 
     if feasible:
         simulation_schema.validate(results)

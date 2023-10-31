@@ -22,8 +22,8 @@ asset = epl.Battery(
     efficiency_pct=0.9,
     electricity_prices=electricity_prices
 )
-actual = asset.optimize(verbose=False)
-perfect_foresight = epl.get_accounts(actual.results, verbose=False)
+actual = asset.optimize(verbose=3)
+perfect_foresight = epl.get_accounts(actual.results, verbose=3)
 print(f"{perfect_foresight=}")
 ```
 
@@ -43,11 +43,11 @@ asset = epl.Battery(
     efficiency_pct=0.9,
     electricity_prices=forecasts
 )
-forecast = asset.optimize(verbose=False)
+forecast = asset.optimize(verbose=3)
 forecast_account = epl.get_accounts(
     forecast.results,
     price_results=actual.results,
-    verbose=False
+    verbose=3
 )
 print(f"{forecast_account=}")
 ```
@@ -123,7 +123,7 @@ asset = epl.Battery(
     electricity_prices=data["Trading Price [$/MWh]"].values,
     freq_mins=30,
 )
-actuals = asset.optimize(verbose=False)
+actuals = asset.optimize(verbose=3)
 
 #  optimize for forecasts
 asset = epl.Battery(
@@ -133,17 +133,17 @@ asset = epl.Battery(
     electricity_prices=data["Predispatch Forecast [$/MWh]"].values,
     freq_mins=30,
 )
-forecasts = asset.optimize(verbose=False)
+forecasts = asset.optimize(verbose=3)
 
 #  calculate the variance between accounts
 actual_account = epl.get_accounts(
-    actuals.results, verbose=False
+    actuals.results, verbose=3
 
 )
 forecast_account = epl.get_accounts(
     forecasts.results,
     price_results=actuals.results,
-    verbose=False
+    verbose=3
 )
 variance = actual_account - forecast_account
 

@@ -60,7 +60,7 @@ def check_electricity_balance(
     )
 
     aggregated = aggregate_check(debug, {"balance": "all"})
-    logger.debug(f"checks.check_electricity_balance, aggs={aggregated}")
+    logger.debug(f"checks.check_electricity_balance: aggs={aggregated}")
     assert balance.all(), aggregated
     return debug
 
@@ -88,7 +88,7 @@ def check_high_temperature_heat_balance(
                 debug[col] = simulation[col]
 
     aggregated = aggregate_check(debug, {"balance": "all"})
-    logger.debug(f"checks.check_high_temperature_heat_balance, aggs={aggregated}")
+    logger.debug(f"checks.check_high_temperature_heat_balance: aggs={aggregated}")
     assert balance.all(), aggregated
     return debug
 
@@ -116,7 +116,7 @@ def check_low_temperature_heat_balance(
                 debug[col] = simulation[col]
 
     aggregated = aggregate_check(debug, {"balance": "all"})
-    logger.debug(f"checks.check_low_temperature_heat_balance, aggs={aggregated}")
+    logger.debug(f"checks.check_low_temperature_heat_balance: aggs={aggregated}")
     assert balance.all(), aggregated
     return debug
 
