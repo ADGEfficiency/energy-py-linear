@@ -47,7 +47,7 @@ class Optimizer:
         solver: solver to use for solving the optimization problem.
     """
 
-    def __init__(self, cfg: OptimizerConfig | dict = OptimizerConfig()) -> None:
+    def __init__(self, cfg: OptimizerConfig = OptimizerConfig()) -> None:
         """Initialize an Optimizer."""
 
         if isinstance(cfg, dict):
@@ -134,12 +134,8 @@ class Optimizer:
             constraints=len(self.constraints()),
         )
         self.assert_no_duplicate_variables()
-
-        logger.info(
-            f"optimizer.solve: variables={len(self.variables())}, constraints={len(self.constraints())}"
-        )
-
         self.solver.solve(self.prob)
+
         status = self.status()
         if verbose > 0:
             logger.info("optimizer.solve", status=status)
