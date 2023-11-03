@@ -12,8 +12,6 @@ Fixed the flaky test of battery export prices by reducing optimizer tolerance to
 
 Removed documentation `.png` images from `main`.
 
-### Other Changes
-
 ## [1.1.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.0)
 
 ### Export Electricity Prices
