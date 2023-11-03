@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.1](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.0)
+
+### Bugs
+
+Fixed a bug where logger was making a `./logs` directory even when `enable_file_logging` was set to false.
+
+Fixed the flaky test of battery export prices by reducing optimizer tolerance to 0 in the test.
+
+### Other Changes
+
+Removed documentation `.png` images from `main`.
+
+### Other Changes
+
 ## [1.1.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.0)
 
 ### Export Electricity Prices
