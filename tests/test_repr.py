@@ -10,7 +10,10 @@ def test_repr() -> None:
     ds = epl.data_generation.generate_random_ev_input_data(
         48, n_chargers=3, charge_length=3, n_charge_events=12, seed=42
     )
+    site = epl.Site(assets=[], electricity_prices=np.array([0, 0]))
     things = [
+        site,
+        site.cfg,
         epl.HeatPump(electric_power_mw=1.0, cop=3),
         epl.Battery(),
         epl.CHP(),
@@ -35,7 +38,6 @@ def test_repr() -> None:
             electric_discharge_binary=np.array([0]),
             electric_loss_mwh=np.array([0]),
         ),
-        epl.Site(assets=[], electricity_prices=np.array([0, 0])),
         epl.Spill(),
         epl.Valve(),
         epl.Optimizer(),
