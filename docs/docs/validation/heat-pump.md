@@ -35,8 +35,8 @@ print(simulation.results[
 
 ```
    site-electricity_prices  heat-pump-electric_load_mwh  boiler-high_temperature_generation_mwh
-0                      100                          0.0                                     3.0
-1                     -100                          1.0                                     1.0
+0                    100.0                          0.0                                     3.0
+1                   -100.0                          1.0                                     1.0
 ```
 
 For the first interval, with an electricity price of `100`, we see that:

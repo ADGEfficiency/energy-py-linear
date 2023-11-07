@@ -123,9 +123,11 @@ class SiteConfig(pydantic.BaseModel):
     export_limit_mw: float
 
     def __repr__(self) -> str:
+        """A string representation of self."""
         return f"<SiteConfig {self.name=}>"
 
     def __str__(self) -> str:
+        """A string representation of self."""
         return f"<SiteConfig name={self.name}, freq_mins={self.freq_mins}, import_limit_mw={self.import_limit_mw}, export_limit_mw={self.export_limit_mw}>"
 
 

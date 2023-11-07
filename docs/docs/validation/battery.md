@@ -22,11 +22,11 @@ print(simulation.results[["site-electricity_prices", "site-electricity_balance_m
 
 ```
    site-electricity_prices  site-electricity_balance_mwh
-0                       10                      0.444444
-1                      -50                      2.000000
-2                      200                     -2.000000
-3                      -50                      2.000000
-4                      200                     -2.000000
+0                     10.0                      0.444444
+1                    -50.0                      2.000000
+2                    200.0                     -2.000000
+3                    -50.0                      2.000000
+4                    200.0                     -2.000000
 ```
 
 As expected, the battery charges (with a site that is positive) when prices are low and discharges (with a negative site electricity balance) when prices are high.
@@ -45,11 +45,11 @@ print(simulation.results[["site-electricity_prices", "site-electricity_balance_m
 
 ```
    site-electricity_prices  site-electricity_balance_mwh
-0                      200                           0.0
-1                      -50                           2.0
-2                      -50                           2.0
-3                      200                          -1.6
-4                      220                          -2.0
+0                    200.0                           0.0
+1                    -50.0                           2.0
+2                    -50.0                           2.0
+3                    200.0                          -1.6
+4                    220.0                          -2.0
 ```
 
 As expected, the battery continues to charge during low electricity price intervals, and discharge when electricity prices are high.

@@ -12,6 +12,7 @@ optimizer = Optimizer()
 
 
 def aggregate_check(debug: pd.DataFrame, non_sum_aggs: dict | None = None) -> str:
+    """Creates a pretty JSON string of aggregated data from a DataFrame."""
     aggs = {k: "sum" for k in debug.keys()}
 
     if non_sum_aggs:
@@ -59,7 +60,7 @@ def check_electricity_balance(
         }
     )
 
-    aggregated = aggregate_check(debug, {"balance": "all"})
+    aggregated = aggregate_check(debug, {"balance": "all", "soc": "mean"})
     logger.debug(f"checks.check_electricity_balance: aggs={aggregated}")
     assert balance.all(), aggregated
     return debug
