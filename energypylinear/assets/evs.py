@@ -95,10 +95,16 @@ class EVOneInterval(AssetOneInterval):
     electric_discharge_binary: pulp.LpVariable | int
     initial_soc_mwh: pulp.LpVariable | float
     final_soc_mwh: pulp.LpVariable | float
-    electric_loss_mwh: pulp.LpVariable
+    electric_loss_mwh: pulp.LpVariable | float
 
     is_spill: bool = False
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
+    i: int
+
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<EVOneInterval i:{self.i}>"
 
 
 class EVsArrayOneInterval(AssetOneInterval):
@@ -261,6 +267,7 @@ def evs_one_interval(
                     final_soc_mwh=final_charge,
                     electric_loss_mwh=loss_mwh,
                     is_spill=is_spill,
+                    i=i,
                 )
             )
             charges_mwh[0, charge_event_idx, charger_idx] = charge_mwh

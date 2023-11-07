@@ -20,6 +20,24 @@ def test_repr() -> None:
         epl.Boiler(),
         epl.EVs(**ds),
         epl.RenewableGenerator(electric_generation_mwh=[10]),
+        epl.assets.evs.EVOneInterval(
+            i=0,
+            cfg=epl.assets.evs.EVsConfig(
+                name="evs",
+                charger_cfgs=np.array([0]),
+                spill_charger_cfgs=np.array([0]),
+                charge_event_cfgs=np.array([0]),
+                freq_mins=0,
+                charge_events=np.array([[0], [0]]),
+            ),
+            initial_soc_mwh=0.0,
+            final_soc_mwh=0.0,
+            electric_charge_mwh=0.0,
+            electric_charge_binary=0,
+            electric_discharge_mwh=0.0,
+            electric_discharge_binary=0,
+            electric_loss_mwh=0.0,
+        ),
         epl.assets.evs.EVsArrayOneInterval(
             i=0,
             cfg=epl.assets.evs.EVsConfig(
