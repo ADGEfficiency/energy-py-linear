@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "energypylinear"
-version = "1.1.0"
+version = "1.1.1"
 description = "Optimizing energy assets with mixed-integer linear programming."
 authors = ["Adam Green <adam.green@adgefficiency.com>"]
 license = "MIT"

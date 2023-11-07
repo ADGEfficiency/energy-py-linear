@@ -1,5 +1,7 @@
 """Test Battery asset."""
 
+import time
+
 import hypothesis
 import numpy as np
 import pandas as pd
@@ -261,7 +263,7 @@ def test_import_export_prices() -> None:
     """Test the use of export electricity prices in the battery model."""
 
     # # test that when we have no export value, we never arbitrage
-    electricity_prices = np.clip(np.random.normal(100, 1000, 512), a_min=0, a_max=None)
+    electricity_prices = np.clip(np.random.normal(100, 1000, 128), a_min=0, a_max=None)
     export_electricity_prices = 0.0
 
     power_mw = 2
@@ -282,25 +284,23 @@ def test_import_export_prices() -> None:
 
     # test that as we increase export prices, we use the battery more
     battery_usage = []
-    for export_price in range(0, 250, 50):
-        print(f"{export_price=}")
+
+    for export_price_delta in range(-30, 60, 10):
+        tic = time.perf_counter()
         asset = epl.Battery(
             power_mw=power_mw,
             capacity_mwh=capacity_mwh,
             electricity_prices=electricity_prices,
-            export_electricity_prices=float(export_price),
+            export_electricity_prices=electricity_prices + export_price_delta,
             initial_charge_mwh=initial_charge_mwh,
             final_charge_mwh=final_charge_mwh,
         )
         simulation = asset.optimize(
             verbose=False,
-            optimizer_config=epl.OptimizerConfig(
-                relative_tolerance=0.01, timeout=60 * 2
-            ),
+            optimizer_config=epl.OptimizerConfig(relative_tolerance=0, timeout=60 * 2),
         )
         battery_usage.append(simulation.results["battery-electric_charge_mwh"].sum())
-
-    print(battery_usage)
+        print(f"{export_price_delta=}, time={time.perf_counter() - tic} sec")
     assert np.all(np.diff(battery_usage) >= 0)
 
 
