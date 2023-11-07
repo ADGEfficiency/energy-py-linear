@@ -4,7 +4,6 @@ import pathlib
 import numpy as np
 import pulp
 import pydantic
-from pydantic import ConfigDict
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
@@ -65,21 +64,20 @@ class EVsConfig(pydantic.BaseModel):
     charge_event_cfgs: np.ndarray
     charge_events: np.ndarray
     freq_mins: int
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
         assert "evs" in name
         return name
 
-    @pydantic.validator("charge_events")
-    def validate_charge_events(
-        cls, charge_events: np.ndarray, values: dict
-    ) -> np.ndarray:
+    @pydantic.model_validator(mode="after")
+    def validate_charge_events(self) -> "EVsConfig":
         """Check charge events match the configs"""
-        validate_charge_events(values["charge_event_cfgs"], charge_events)
-        return charge_events
+        validate_charge_events(self.charge_event_cfgs, self.charge_events)
+        return self
 
 
 class EVOneInterval(AssetOneInterval):
@@ -100,7 +98,7 @@ class EVOneInterval(AssetOneInterval):
     electric_loss_mwh: pulp.LpVariable
 
     is_spill: bool = False
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
 
 class EVsArrayOneInterval(AssetOneInterval):
@@ -121,7 +119,7 @@ class EVsArrayOneInterval(AssetOneInterval):
     electric_discharge_mwh: np.ndarray
     electric_discharge_binary: np.ndarray
     electric_loss_mwh: np.ndarray
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     def __repr__(self) -> str:
         """A string representation of self."""

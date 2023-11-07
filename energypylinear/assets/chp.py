@@ -27,7 +27,8 @@ class CHPConfig(pydantic.BaseModel):
 
     freq_mins: int
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
         assert "chp" in name

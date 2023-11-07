@@ -20,7 +20,8 @@ class HeatPumpConfig(pydantic.BaseModel):
     include_valve: bool
     name: str
 
-    @pydantic.validator("cop", pre=True, always=True)
+    @pydantic.field_validator("cop", mode="after")
+    @classmethod
     def validate_cop(cls, value: float) -> float:
         """Check COP is greater than 1.0.
 

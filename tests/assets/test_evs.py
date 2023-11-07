@@ -245,7 +245,7 @@ def test_v2g() -> None:
     prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=25),
     v2g=hypothesis.strategies.booleans(),
 )
-def test_evs_hypothesis(
+def test_hypothesis(
     idx_length: int,
     n_charge_events: int,
     charger_turndown: float,

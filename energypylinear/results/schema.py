@@ -35,7 +35,9 @@ quantities = [
     "electric_discharge_mwh",
 ]
 
-for qu in [q for q in AssetOneInterval.__fields__ if (q != "cfg") and (q != "binary")]:
+for qu in [
+    q for q in AssetOneInterval.model_fields if (q != "cfg") and (q != "binary")
+]:
     schema[rf"\w+-{qu}"] = pa.Column(
         pa.Float, checks=[pa.Check.ge(defaults.epsilon)], coerce=True, regex=True
     )
