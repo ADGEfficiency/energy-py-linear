@@ -1,8 +1,6 @@
-"""
-Interface to the `pulp` optimization library to solve linear programming problems.
+"""Interface to the `pulp` optimization library to solve linear programming problems.
 
-The `Optimizer` allows creating linear constraints, variables, and objectives, along with a linear program solver.
-"""
+The `Optimizer` allows creating linear constraints, variables, and objectives, along with a linear program solver."""
 import dataclasses
 import datetime
 import typing
@@ -114,7 +112,9 @@ class Optimizer:
         """
         return self.prob.setObjective(objective)
 
-    def solve(self, verbose: int | bool, allow_infeasible: bool = False) -> OptimizationStatus:
+    def solve(
+        self, verbose: int | bool, allow_infeasible: bool = False
+    ) -> OptimizationStatus:
         """Solve the optimization problem.
 
         Args:
