@@ -114,7 +114,7 @@ class Optimizer:
         """
         return self.prob.setObjective(objective)
 
-    def solve(self, verbose: int, allow_infeasible: bool = False) -> OptimizationStatus:
+    def solve(self, verbose: int | bool, allow_infeasible: bool = False) -> OptimizationStatus:
         """Solve the optimization problem.
 
         Args:

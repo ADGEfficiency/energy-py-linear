@@ -23,12 +23,22 @@ rich_handler.setLevel(defaults.log_level * 10)
 logger.addHandler(rich_handler)
 
 
-def set_logging_level(logger: logging.Logger, level: int) -> None:
+def set_logging_level(logger: logging.Logger, level: int | bool) -> None:
     """Sets the logging level for the logger handlers.
 
     Args:
         level (int): The new logging level to set.
     """
+    if isinstance(level, bool):
+        if level is True:
+            level = defaults.log_level
+        else:
+            # error
+            level = 4
+
     for handler in logger.handlers:
         if isinstance(handler, RichHandler):
-            handler.setLevel(level * 10)
+            if level < 10:
+                level = level * 10
+
+            handler.setLevel(level)

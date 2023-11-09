@@ -26,7 +26,7 @@ def aggregate_check(debug: pd.DataFrame, non_sum_aggs: dict | None = None) -> st
 
 def check_electricity_balance(
     simulation: pd.DataFrame,
-    verbose: int = defaults.log_level,
+    verbose: int | bool = defaults.log_level,
 ) -> pd.DataFrame:
     """Checks the electricity balance."""
     inp = (
@@ -69,7 +69,7 @@ def check_electricity_balance(
 def check_high_temperature_heat_balance(
     simulation: pd.DataFrame,
     total_mapper: dict | None = None,
-    verbose: int = defaults.log_level,
+    verbose: int | bool = defaults.log_level,
 ) -> pd.DataFrame:
     """Checks the high temperature heat balance."""
     inp = simulation["total-high_temperature_generation_mwh"]
@@ -97,7 +97,7 @@ def check_high_temperature_heat_balance(
 def check_low_temperature_heat_balance(
     simulation: pd.DataFrame,
     total_mapper: dict | None = None,
-    verbose: int = defaults.log_level,
+    verbose: int | bool = defaults.log_level,
 ) -> pd.DataFrame:
     """Checks the high temperature heat balance."""
     inp = simulation["total-low_temperature_generation_mwh"]
@@ -125,7 +125,7 @@ def check_low_temperature_heat_balance(
 def check_results(
     results: pd.DataFrame,
     total_mapper: dict | None = None,
-    verbose: int = defaults.log_level,
+    verbose: int | bool = defaults.log_level,
     check_valve: bool = False,
     check_evs: bool = False,
 ) -> dict:

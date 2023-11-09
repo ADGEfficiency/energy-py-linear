@@ -10,7 +10,7 @@ optimizer = Optimizer()
 
 
 def warn_spills(
-    simulation: pd.DataFrame, flags: Flags, verbose: int = defaults.log_level
+    simulation: pd.DataFrame, flags: Flags, verbose: int | bool = defaults.log_level
 ) -> bool:
     """Prints warnings if we have spilled."""
     #  add warnings on the use of any spill asset
