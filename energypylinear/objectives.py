@@ -57,6 +57,7 @@ def price_objective(
 
     #  cheating here with the site name (the second `site`)
     sites = ivars.asset["site"]["site"]
+    sites = ivars.filter_site()
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
     spill_evs = filter_spill_evs(ivars, interval_data)
     generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
@@ -158,3 +159,46 @@ def carbon_objective(
 
 
 objectives = {"price": price_objective, "carbon": carbon_objective}
+
+import dataclasses
+
+
+@dataclasses.dataclass
+class Term:
+    asset_type: str
+    variable: str
+    interval_data: str
+    coefficient: float = 1.0
+
+
+@dataclasses.dataclass
+class CustomObjectiveFunction:
+    terms: list[Term] = dataclasses.field(default_factory=list)
+
+
+def get_objective(
+    objective: str | dict | CustomObjectiveFunction,
+    optimizer: "epl.Optimizer",
+    ivars: "epl.interval_data.IntervalVars",
+    interval_data: "epl.assets.site.SiteIntervalData",
+) -> pulp.LpAffineExpression:
+
+    if isinstance(objective, str):
+
+        if objective in objectives:
+            return objectives[objective]
+        else:
+            raise ValueError(
+                f"objective {objective} not in objectives, available objectives: {objectives.keys()}"
+            )
+
+    elif isinstance(objective, dict):
+        objective = CustomObjectiveFunction(
+            terms=[Term(**t) for t in objective["terms"]]
+        )
+
+    else:
+        assert isinstance(objective, CustomObjectiveFunction)
+
+    for term in objective.terms:
+        breakpoint()  # fmt: skip

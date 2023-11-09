@@ -392,13 +392,8 @@ class Site:
                 ivars,
             )
 
-        objective_fn = epl.objectives[objective]
         self.optimizer.objective(
-            objective_fn(
-                self.optimizer,
-                ivars,
-                self.cfg.interval_data,
-            )
+            epl.get_objective(objective, self.optimizer, ivars, self.cfg.interval_data)
         )
 
         status = self.optimizer.solve(
