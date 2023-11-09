@@ -157,7 +157,10 @@ def extract_battery_results(ivars: "epl.IntervalVars", results: dict, i: int) ->
 
 
 def extract_evs_results(
-    ivars: "epl.IntervalVars", results: dict, i: int, verbose: int | bool = defaults.log_level
+    ivars: "epl.IntervalVars",
+    results: dict,
+    i: int,
+    verbose: int | bool = defaults.log_level,
 ) -> None:
     """Extract simulation result data for epl.EVs."""
     if ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
@@ -256,7 +259,10 @@ def extract_evs_results(
 
 
 def extract_heat_pump_results(
-    ivars: "epl.IntervalVars", results: dict, i: int, verbose: int | bool = defaults.log_level
+    ivars: "epl.IntervalVars",
+    results: dict,
+    i: int,
+    verbose: int | bool = defaults.log_level,
 ) -> None:
     """Extract simulation result data for epl.HeatPump."""
     if heat_pumps := ivars.filter_objective_variables(
@@ -273,7 +279,10 @@ def extract_heat_pump_results(
 
 
 def extract_renewable_generator_results(
-    ivars: "epl.IntervalVars", results: dict, i: int, verbose: int | bool = defaults.log_level
+    ivars: "epl.IntervalVars",
+    results: dict,
+    i: int,
+    verbose: int | bool = defaults.log_level,
 ) -> None:
     """Extract simulation result data for epl.RenewableGenerator."""
     if renewables := ivars.filter_objective_variables(
