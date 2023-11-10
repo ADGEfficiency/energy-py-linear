@@ -67,7 +67,8 @@ class Valve(epl.Asset):
         """Constrain thermal balance across the valve."""
         valve = ivars.filter_objective_variables(
             ValveOneInterval, i=-1, asset_name=self.cfg.name
-        )[0][0]
+        )[0]
+        assert isinstance(valve, ValveOneInterval)
         optimizer.constrain(
             valve.high_temperature_load_mwh == valve.low_temperature_generation_mwh
         )

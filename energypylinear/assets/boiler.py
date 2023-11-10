@@ -85,7 +85,7 @@ class Boiler(epl.Asset):
         """Constrain boiler for generation of high temperature heat."""
         boiler = ivars.filter_objective_variables(
             BoilerOneInterval, i=-1, asset_name=self.cfg.name
-        )[0][0]
+        )[0]
         assert isinstance(boiler, BoilerOneInterval)
         optimizer.constrain(
             boiler.gas_consumption_mwh

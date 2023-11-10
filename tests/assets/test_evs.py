@@ -7,7 +7,6 @@ import hypothesis
 import numpy as np
 import pulp
 import pytest
-from rich import print
 
 import energypylinear as epl
 from energypylinear.assets.evs import create_evs_array

@@ -161,8 +161,6 @@ def constrain_site_electricity_balance(
     """
     assets = ivars.objective_variables[-1]
     site = ivars.filter_site(i=-1, site_name=cfg.name)
-    # spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval, i=-1)
-
     assert interval_data.electric_load_mwh is not None
     assert isinstance(interval_data.electric_load_mwh, np.ndarray)
     optimizer.constrain(
@@ -174,8 +172,6 @@ def constrain_site_electricity_balance(
             - optimizer.sum([a.electric_load_mwh for a in assets])
             - optimizer.sum([a.electric_charge_mwh for a in assets])
             + optimizer.sum([a.electric_discharge_mwh for a in assets])
-            # + (spills[-1].electric_generation_mwh if spills else 0)
-            # - (spills[-1].electric_load_mwh if spills else 0)
         )
         == 0,
         name=f"site_electricity_balance,i:{i}",
@@ -377,9 +373,7 @@ class Site:
             assets = []
             for asset in self.assets:
                 neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
-                #  tech debt TODO
-                #  EV is special because it returns many one interval blocks per step
-                if isinstance(asset, epl.EVs):
+                if isinstance(neu_assets, list):
                     assets.extend(neu_assets)
                 else:
                     assets.append(neu_assets)

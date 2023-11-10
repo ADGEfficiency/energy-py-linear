@@ -42,62 +42,13 @@ class IntervalVars:
 
         Args:
             one_interval (Union[AssetOneInterval, SiteOneInterval, list[AssetOneInterval]]): The interval data to append.
-
-        Raises:
-            AssertionError: If one_interval is not a recognized type.
         """
-        #  some OneInterval objects are special
-        #  is this case it is the Array EV data structures
-        #  TODO in future don't save these separately and
-        #  dynamically create as needed from the objective variables
-        # if isinstance(one_interval, EVsArrayOneInterval):
-        #     if one_interval.is_spill:
-        #         self.asset[one_interval.cfg.name]["spill_evs_array"].append(
-        #             one_interval
-        #         )
-        #     else:
-        #         self.asset[one_interval.cfg.name]["evs_array"].append(one_interval)
         if isinstance(one_interval, SiteOneInterval):
             self.asset[one_interval.cfg.name]["site"].append(one_interval)
 
         else:
             assert isinstance(one_interval, list)
             self.objective_variables.append(one_interval)
-
-    def filter_evs_array(
-        self, is_spill: bool, i: int, asset_name: str
-    ) -> EVsArrayOneInterval:
-        """Filters and returns EVsArrayOneInterval data based on criteria.
-
-        Args:
-            is_spill (bool): Whether to filter spill EVs or regular EVs.
-            i (int): Interval index.
-            asset_name (str): Name of the asset.
-
-        Returns:
-            EVsArrayOneInterval: The filtered EVsArrayOneInterval object.
-        """
-        if is_spill:
-            return self.asset[asset_name]["spill_evs_array"][i]
-        else:
-            return self.asset[asset_name]["evs_array"][i]
-
-    def filter_all_evs_array(
-        self, is_spill: bool, asset_name: str
-    ) -> list[EVsArrayOneInterval]:
-        """Filters EVsArrayOneInterval instances based on spill status and asset name.
-
-        Args:
-            is_spill (bool): Whether to filter by spill or not.
-            asset_name (str): Name of the asset to filter by.
-
-        Returns:
-            list[EVsArrayOneInterval]: Filtered list of EVsArrayOneInterval instances.
-        """
-        if is_spill:
-            return self.asset[asset_name]["spill_evs_array"]
-        else:
-            return self.asset[asset_name]["evs_array"]
 
     def filter_site(self, i: int, site_name: str) -> SiteOneInterval:
         """Filters and a SiteOneInterval based on interval index and site name.
