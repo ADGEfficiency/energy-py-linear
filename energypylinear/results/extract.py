@@ -1,13 +1,15 @@
 """Extract results from a solved linear program to a pd.DataFrame."""
 import collections
+import json
 
 import numpy as np
 import pandas as pd
 import pydantic
 
 import energypylinear as epl
+from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
-from energypylinear.logger import logger
+from energypylinear.logger import logger, set_logging_level
 from energypylinear.optimizer import Optimizer
 from energypylinear.results.checks import check_results
 from energypylinear.results.schema import quantities, simulation_schema
@@ -159,7 +161,7 @@ def extract_evs_results(
     results: dict,
     i: int,
     asset_names: set,
-    verbose: bool = True,
+    verbose: int | bool = defaults.log_level,
 ) -> None:
     """Extract simulation result data for epl.EVs."""
     if ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
@@ -179,6 +181,7 @@ def extract_evs_results(
                 "electric_charge_binary",
                 "electric_discharge_mwh",
                 "electric_discharge_binary",
+                "electric_loss_mwh",
             ]
 
             #  chargers are summed across each charge event
@@ -255,7 +258,10 @@ def extract_evs_results(
 
 
 def extract_heat_pump_results(
-    ivars: "epl.IntervalVars", results: dict, i: int, verbose: bool = True
+    ivars: "epl.IntervalVars",
+    results: dict,
+    i: int,
+    verbose: int | bool = defaults.log_level,
 ) -> None:
     """Extract simulation result data for epl.HeatPump."""
     if heat_pumps := ivars.filter_objective_variables(
@@ -272,7 +278,10 @@ def extract_heat_pump_results(
 
 
 def extract_renewable_generator_results(
-    ivars: "epl.IntervalVars", results: dict, i: int, verbose: bool = True
+    ivars: "epl.IntervalVars",
+    results: dict,
+    i: int,
+    verbose: int | bool = defaults.log_level,
 ) -> None:
     """Extract simulation result data for epl.RenewableGenerator."""
     if renewables := ivars.filter_objective_variables(
@@ -305,7 +314,11 @@ def add_totals(
     ]
     results["total-spills_mwh"] = results[total_mapper["spills"]].sum(axis=1)
 
-    total_mapper["losses"] = [c for c in results.columns if "electric_loss_mwh" in c]
+    total_mapper["losses"] = [
+        c
+        for c in results.columns
+        if "electric_loss_mwh" in c and "evs-charger" not in c
+    ]
     results["total-electric_loss_mwh"] = results[total_mapper["losses"]].sum(axis=1)
     results["site-electricity_balance_mwh"] = (
         results["site-import_power_mwh"] - results["site-export_power_mwh"]
@@ -319,7 +332,7 @@ def extract_results(
     ivars: "epl.IntervalVars",
     feasible: bool,
     flags: Flags = Flags(),
-    verbose: bool = True,
+    verbose: int | bool = defaults.log_level,
 ) -> SimulationResult:
     """Extracts simulation results from the site, assets and linear program data.
 
@@ -327,6 +340,7 @@ def extract_results(
 
     This function returns the output simulation results as a single pd.DataFrame.
     """
+    set_logging_level(logger, level=verbose)
 
     """
     TODO
@@ -354,6 +368,12 @@ def extract_results(
     #         assert len(asset.cfg.interval_data.idx) == len(ivars.objective_variables)
     """
 
+    # constraints = site.optimizer.constraints()
+    # name = "site_electricity_balance,i:0"
+    # constraint = constraints[name]
+    # for var, coeff in constraint.items():
+    #     print(f"{var.name}: Value={var.value()}, Coefficient={coeff}")
+
     #  extract linear program results from the assets
     lp_results: dict[str, list] = collections.defaultdict(list)
     for i in site.cfg.interval_data.idx:
@@ -378,11 +398,8 @@ def extract_results(
 
     #  add total columns to the results df
     total_mapper = add_totals(results)
-
-    if verbose:
-        logger.info("total_mapper", mapper=total_mapper)
-    else:
-        logger.debug("total_mapper", mapper=total_mapper)
+    pretty = json.dumps(total_mapper, indent=2)
+    logger.debug(f"results.extract: total_mapper={pretty}")
 
     if feasible:
         simulation_schema.validate(results)

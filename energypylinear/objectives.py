@@ -6,35 +6,6 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
-def filter_spill_evs(
-    ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.assets.site.SiteIntervalData",
-) -> "list[list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]]":
-    """
-    Complexity here comes from the need to extract only the spill EVs linear program
-    variables.
-
-    """
-    evs = ivars.filter_objective_variables(epl.assets.evs.EVOneInterval)
-    spill_evs: list[
-        list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]
-    ] = []
-    for i, assets_one_interval in enumerate(evs):
-        spill_evs_one_interval: list[
-            epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval
-        ] = []
-        for ev in assets_one_interval:
-            assert isinstance(ev, epl.assets.evs.EVOneInterval)
-            if ev.is_spill:
-                spill_evs_one_interval.append(ev)
-        spill_evs.append(spill_evs_one_interval)
-
-    #  hmm
-    # if len(spill_evs) == 0:
-    #     spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
-    return spill_evs
-
-
 def price_objective(
     optimizer: "epl.Optimizer",
     ivars: "epl.IntervalVars",
@@ -58,7 +29,7 @@ def price_objective(
     #  cheating here with the site name (the second `site`)
     sites = ivars.asset["site"]["site"]
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-    spill_evs = filter_spill_evs(ivars, interval_data)
+    spill_evs = ivars.filter_objective_variables(epl.assets.evs.EVSpillOneInterval)
     generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 
@@ -117,7 +88,7 @@ def carbon_objective(
     #  cheating here with the site name (the second `site`)
     sites = ivars.asset["site"]["site"]
     spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-    spill_evs = filter_spill_evs(ivars, interval_data)
+    spill_evs = ivars.filter_objective_variables(epl.assets.evs.EVSpillOneInterval)
     generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
     boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
 

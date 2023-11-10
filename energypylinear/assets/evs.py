@@ -1,10 +1,10 @@
 """Electric vehicle asset for optimizing the smart charging of electric vehicles."""
 import pathlib
+import typing
 
 import numpy as np
 import pulp
 import pydantic
-from pydantic import ConfigDict
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
@@ -65,7 +65,7 @@ class EVsConfig(pydantic.BaseModel):
     charge_event_cfgs: np.ndarray
     charge_events: np.ndarray
     freq_mins: int
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -75,19 +75,18 @@ class EVsConfig(pydantic.BaseModel):
         """A string representation of self."""
         return repr(self)
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
         assert "evs" in name
         return name
 
-    @pydantic.validator("charge_events")
-    def validate_charge_events(
-        cls, charge_events: np.ndarray, values: dict
-    ) -> np.ndarray:
+    @pydantic.model_validator(mode="after")
+    def validate_charge_events(self) -> "EVsConfig":
         """Check charge events match the configs"""
-        validate_charge_events(values["charge_event_cfgs"], charge_events)
-        return charge_events
+        validate_charge_events(self.charge_event_cfgs, self.charge_events)
+        return self
 
 
 class EVOneInterval(AssetOneInterval):
@@ -109,10 +108,10 @@ class EVOneInterval(AssetOneInterval):
     electric_discharge_binary: pulp.LpVariable | int
     initial_soc_mwh: pulp.LpVariable | float
     final_soc_mwh: pulp.LpVariable | float
-    electric_loss_mwh: pulp.LpVariable
+    electric_loss_mwh: pulp.LpVariable | float
 
     is_spill: bool = False
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -121,6 +120,14 @@ class EVOneInterval(AssetOneInterval):
     def __str__(self) -> str:
         """A string representation of self."""
         return repr(self)
+
+
+class EVSpillOneInterval(EVOneInterval):
+    is_spill: typing.Literal[True] = True
+
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<EVSpillOneInterval i: {self.i} charge_event_idx: {self.charge_event_idx} charger_idx: {self.charger_idx}, is_spill: {self.is_spill}>"
 
 
 class EVsArrayOneInterval(AssetOneInterval):
@@ -141,10 +148,10 @@ class EVsArrayOneInterval(AssetOneInterval):
     electric_discharge_mwh: np.ndarray
     electric_discharge_binary: np.ndarray
     electric_loss_mwh: np.ndarray
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    charge_event_idxs: np.ndarray | None = None
-    charger_idxs: np.ndarray | None = None
+    charge_event_idxs: np.ndarray
+    charger_idxs: np.ndarray
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -196,7 +203,7 @@ def create_evs_array(
         ] = oi.electric_charge_binary
         discharges_mwh[
             0, oi.charge_event_idx, oi.charger_idx
-        ] = oi.electric_discharge_binary
+        ] = oi.electric_discharge_mwh
         discharges_binary[
             0, oi.charge_event_idx, oi.charger_idx
         ] = oi.electric_discharge_binary
@@ -329,8 +336,15 @@ def evs_one_interval(
                 low=0,
             )
 
+            Model: EVOneInterval | EVSpillOneInterval
+
+            if is_spill:
+                Model = EVSpillOneInterval
+            else:
+                Model = EVOneInterval
+
             evs.append(
-                EVOneInterval(
+                Model(
                     i=i,
                     cfg=cfg,
                     charge_event_idx=charge_event_idx,
@@ -455,20 +469,17 @@ def constrain_charge_event_electricity_balance(
         )
 
         #  losses
-        """
-        used to not do the iteration over chargers here and just take the sum
-        means less constraints
-        """
-        for charger_idx, _ in enumerate(evs_array.cfg.charger_cfgs):
-            optimizer.constrain(
-                optimizer.sum(
-                    evs_array.electric_charge_mwh[0, charge_event_idx, charger_idx]
+        for arr in [evs_array, spill_evs_array]:
+            for charger_idx, _ in enumerate(arr.cfg.charger_cfgs):
+                optimizer.constrain(
+                    optimizer.sum(
+                        arr.electric_charge_mwh[0, charge_event_idx, charger_idx]
+                    )
+                    * (1 - charge_event_cfg.efficiency_pct)
+                    == optimizer.sum(
+                        arr.electric_loss_mwh[0, charge_event_idx, charger_idx]
+                    )
                 )
-                * (1 - charge_event_cfg.efficiency_pct)
-                == optimizer.sum(
-                    evs_array.electric_loss_mwh[0, charge_event_idx, charger_idx]
-                )
-            )
 
 
 def constrain_connection_charge_events_between_intervals(
@@ -734,7 +745,7 @@ class EVs:
     def optimize(
         self,
         objective: str = "price",
-        verbose: bool = True,
+        verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":

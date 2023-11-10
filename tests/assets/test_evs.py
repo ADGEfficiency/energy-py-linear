@@ -2,10 +2,10 @@
 import collections
 import random
 import statistics
-from concurrent.futures import ProcessPoolExecutor
 
 import hypothesis
 import numpy as np
+import pulp
 import pytest
 from rich import print
 
@@ -214,8 +214,12 @@ def test_v2g() -> None:
         for charge_event_length in charge_event_lengths
         for seed in np.random.randint(0, 1000, size=num_trials)
     ]
-    with ProcessPoolExecutor() as executor:
-        trials = list(executor.map(_one_v2g, args))
+    # with ProcessPoolExecutor() as executor:
+    #     trials = list(executor.map(_one_v2g, args))
+
+    trials = []
+    for arg in args:
+        trials.append(_one_v2g(arg))
 
     discharge = collections.defaultdict(list)
     for charge_event_length in charge_event_lengths:
@@ -237,11 +241,11 @@ def test_create_evs_array() -> None:
     """Test the creation of the EVsArrayOneInterval from a list of OneInterval objects."""
     from energypylinear.assets.evs import EVs
 
-    idx_length = 10
+    idx_length = 100
 
     n_chargers = 3
-    charge_length = 4
-    n_charge_events = 10
+    charge_length = 6
+    n_charge_events = 100
     ds = epl.data_generation.generate_random_ev_input_data(
         idx_length,
         n_chargers=n_chargers,
@@ -261,7 +265,12 @@ def test_create_evs_array() -> None:
     for i in range(idx_length):
         one_interval = []
         for ev in [evs_one, evs_two]:
-            evs_assets = ev.one_interval(optimizer, i=i, freq=freq)
+            evs_assets = ev.one_interval(
+                optimizer,
+                i=i,
+                freq=freq,
+                flags=epl.Flags(allow_evs_discharge=True),
+            )
             one_interval.extend(evs_assets)
 
         assert len(one_interval) == 2 * (n_charge_events * (n_chargers + 1))
@@ -276,7 +285,7 @@ def test_create_evs_array() -> None:
 
     evs_array = create_evs_array(ivars, 0, evs_one.cfg.name, is_spill=False)
     assert evs_array.is_spill is False
-    assert evs_array.electric_charges_mwh.shape == (1, n_charge_events, n_chargers)
+    assert evs_array.electric_charge_mwh.shape == (1, n_charge_events, n_chargers)
     for n_charge_event in range(n_charge_events):
         for n_charger in range(n_chargers):
             assert (
@@ -284,6 +293,19 @@ def test_create_evs_array() -> None:
                 == n_charge_event
             )
             assert evs_array.charger_idxs[0, n_charge_event, n_charger] == n_charger
+
+    for attr in [
+        "electric_charge_mwh",
+        "electric_discharge_mwh",
+        "electric_charge_binary",
+        "electric_discharge_binary",
+        "electric_loss_mwh",
+        "initial_soc_mwh",
+        "final_soc_mwh",
+    ]:
+        for var in getattr(evs_array, attr).flatten():
+            if isinstance(var, pulp.LpVariable):
+                assert attr in var.name
 
 
 @hypothesis.settings(

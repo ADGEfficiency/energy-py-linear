@@ -37,7 +37,8 @@ class BatteryConfig(pydantic.BaseModel):
     final_charge_mwh: float | None = 0.0
     freq_mins: int
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
 
@@ -274,7 +275,7 @@ class Battery:
     def optimize(
         self,
         objective: str = "price",
-        verbose: bool = True,
+        verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
