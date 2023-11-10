@@ -198,7 +198,7 @@ class Battery:
         return f"<energypylinear.Battery {self.cfg.power_mw=} {self.cfg.capacity_mwh=}>"
 
     def one_interval(
-        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags
+        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> BatteryOneInterval:
         """Generate linear program data for one interval."""
         return BatteryOneInterval(

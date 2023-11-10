@@ -1,17 +1,20 @@
 """Test electric vehicle asset."""
 import collections
+import random
 import statistics
 from concurrent.futures import ProcessPoolExecutor
 
 import hypothesis
 import numpy as np
 import pytest
+from rich import print
 
 import energypylinear as epl
+from energypylinear.assets.evs import create_evs_array
 from energypylinear.flags import Flags
 
 
-def test_evs_optimization_price() -> None:
+def test_optimization_price() -> None:
     """Test EV optimization for price."""
 
     charge_events_capacity_mwh = [50.0, 100, 30, 40]
@@ -230,6 +233,59 @@ def test_v2g() -> None:
     ), "discharge should be increasing always as charge event increases"
 
 
+def test_create_evs_array() -> None:
+    """Test the creation of the EVsArrayOneInterval from a list of OneInterval objects."""
+    from energypylinear.assets.evs import EVs
+
+    idx_length = 10
+
+    n_chargers = 3
+    charge_length = 4
+    n_charge_events = 10
+    ds = epl.data_generation.generate_random_ev_input_data(
+        idx_length,
+        n_chargers=n_chargers,
+        n_charge_events=n_charge_events,
+        charge_length=charge_length,
+        prices_mu=100,
+        prices_std=50,
+    )
+
+    evs_one = EVs(**ds, name="evs-one")
+    evs_two = EVs(**ds, name="evs-two")
+    battery = epl.Battery(electricity_prices=ds["electricity_prices"])
+
+    optimizer = epl.Optimizer()
+    freq = epl.Freq(30)
+    ivars = epl.IntervalVars()
+    for i in range(idx_length):
+        one_interval = []
+        for ev in [evs_one, evs_two]:
+            evs_assets = ev.one_interval(optimizer, i=i, freq=freq)
+            one_interval.extend(evs_assets)
+
+        assert len(one_interval) == 2 * (n_charge_events * (n_chargers + 1))
+
+        one_interval.append(battery.one_interval(optimizer, i=i, freq=freq))
+        assert len(one_interval) == 2 * (n_charge_events * (n_chargers + 1)) + 1
+
+        random.shuffle(one_interval)
+        ivars.append(one_interval)
+
+    assert len(ivars) == idx_length
+
+    evs_array = create_evs_array(ivars, 0, evs_one.cfg.name, is_spill=False)
+    assert evs_array.is_spill is False
+    assert evs_array.electric_charges_mwh.shape == (1, n_charge_events, n_chargers)
+    for n_charge_event in range(n_charge_events):
+        for n_charger in range(n_chargers):
+            assert (
+                evs_array.charge_event_idxs[0, n_charge_event, n_charger]
+                == n_charge_event
+            )
+            assert evs_array.charger_idxs[0, n_charge_event, n_charger] == n_charger
+
+
 @hypothesis.settings(
     print_blob=True,
     max_examples=10,
@@ -245,7 +301,7 @@ def test_v2g() -> None:
     prices_std=hypothesis.strategies.floats(min_value=0.1, max_value=25),
     v2g=hypothesis.strategies.booleans(),
 )
-def test_evs_hypothesis(
+def test_hypothesis(
     idx_length: int,
     n_charge_events: int,
     charger_turndown: float,

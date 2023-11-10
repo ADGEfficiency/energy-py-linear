@@ -150,9 +150,7 @@ def constrain_site_electricity_balance(
     """
     assets = ivars.objective_variables[-1]
     site = ivars.filter_site(i=-1, site_name=cfg.name)
-    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval, i=-1)[
-        0
-    ]
+    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval, i=-1)
 
     assert interval_data.electric_load_mwh is not None
     assert isinstance(interval_data.electric_load_mwh, np.ndarray)
@@ -366,13 +364,7 @@ class Site:
                 #  tech debt TODO
                 #  EV is special because it returns many one interval blocks per step
                 if isinstance(asset, epl.EVs):
-                    evs, evs_array, spill_evs, spill_evs_array = neu_assets
-                    assets.extend(evs)
-                    assets.extend(spill_evs)
-                    #  ivars has special logic for append
-                    #  the EVsArrayOneInterval deals with them separately
-                    ivars.append(evs_array)
-                    ivars.append(spill_evs_array)
+                    assets.extend(neu_assets)
                 else:
                     assets.append(neu_assets)
 

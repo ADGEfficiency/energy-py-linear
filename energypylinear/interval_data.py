@@ -27,6 +27,14 @@ class IntervalVars:
         """A string representation of self."""
         return f"<epl.IntervalVars i: {len(self.objective_variables)}>"
 
+    def __len__(self) -> int:
+        """Return the number of objective variable lists."""
+        return len(self.objective_variables)
+
+    def __getitem__(self, index: int) -> list[AssetOneInterval]:
+        """Enable subscripting to get a list of AssetOneInterval at a given index."""
+        return self.objective_variables[index]
+
     def append(
         self, one_interval: AssetOneInterval | SiteOneInterval | list[AssetOneInterval]
     ) -> None:
@@ -42,14 +50,14 @@ class IntervalVars:
         #  is this case it is the Array EV data structures
         #  TODO in future don't save these separately and
         #  dynamically create as needed from the objective variables
-        if isinstance(one_interval, EVsArrayOneInterval):
-            if one_interval.is_spill:
-                self.asset[one_interval.cfg.name]["spill_evs_array"].append(
-                    one_interval
-                )
-            else:
-                self.asset[one_interval.cfg.name]["evs_array"].append(one_interval)
-        elif isinstance(one_interval, SiteOneInterval):
+        # if isinstance(one_interval, EVsArrayOneInterval):
+        #     if one_interval.is_spill:
+        #         self.asset[one_interval.cfg.name]["spill_evs_array"].append(
+        #             one_interval
+        #         )
+        #     else:
+        #         self.asset[one_interval.cfg.name]["evs_array"].append(one_interval)
+        if isinstance(one_interval, SiteOneInterval):
             self.asset[one_interval.cfg.name]["site"].append(one_interval)
 
         else:
@@ -108,7 +116,7 @@ class IntervalVars:
         instance_type: type[AssetOneInterval],
         i: int | None = None,
         asset_name: str | None = None,
-    ) -> list[list[AssetOneInterval]]:
+    ) -> list[list[AssetOneInterval]] | list[AssetOneInterval]:
         """Filters objective variables based on type, interval index, and asset name.
 
         Args:
@@ -146,15 +154,11 @@ class IntervalVars:
         #  here we return data for one interval
         else:
 
-            #  why a list of lists??????????
+            # used to return list of lists
             assets = self.objective_variables[i]
             return [
-                [
-                    asset
-                    for asset in assets
-                    if isinstance(asset, instance_type)
-                    and (
-                        asset.cfg.name == asset_name if asset_name is not None else True
-                    )
-                ]
+                asset
+                for asset in assets
+                if isinstance(asset, instance_type)
+                and (asset.cfg.name == asset_name if asset_name is not None else True)
             ]
