@@ -93,8 +93,7 @@ class EVOneInterval(AssetOneInterval):
     """EV asset data for a single interval.
 
     This single data structure contains data for one asset
-    in one interval.
-    """
+    in one interval."""
 
     i: int
     charge_event_idx: int
@@ -123,6 +122,11 @@ class EVOneInterval(AssetOneInterval):
 
 
 class EVSpillOneInterval(EVOneInterval):
+    """Spill EV asset data for a single interval.
+
+    This single data structure contains data for one asset
+    in one interval."""
+
     is_spill: typing.Literal[True] = True
 
     def __repr__(self) -> str:

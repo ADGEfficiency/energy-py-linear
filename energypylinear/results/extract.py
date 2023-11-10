@@ -7,6 +7,7 @@ import pandas as pd
 import pydantic
 
 import energypylinear as epl
+from energypylinear.assets.evs import create_evs_array
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.logger import logger, set_logging_level
@@ -167,8 +168,6 @@ def extract_evs_results(
     if ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
         pkg = []
         for asset_name in [n for n in asset_names if "evs" in n]:
-            from energypylinear.assets.evs import create_evs_array
-
             evs_array = create_evs_array(ivars, i, asset_name, is_spill=False)
             pkg.append(evs_array)
 
@@ -234,8 +233,6 @@ def extract_evs_results(
 
         pkg = []
         for asset_name in [n for n in asset_names if "evs" in n]:
-            from energypylinear.assets.evs import create_evs_array
-
             evs_array = create_evs_array(ivars, i, asset_name, is_spill=True)
             pkg.append(evs_array)
 

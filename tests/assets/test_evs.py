@@ -2,6 +2,7 @@
 import collections
 import random
 import statistics
+from concurrent.futures import ProcessPoolExecutor
 
 import hypothesis
 import numpy as np
@@ -204,7 +205,7 @@ def _one_v2g(args: tuple) -> tuple:
     return (simulation.results, charge_event_length, seed)
 
 
-def test_v2g() -> None:
+def test_v2g(multiprocess: bool = True) -> None:
     """Test that we discharge more power as the charge events get longer."""
     num_trials = 25
     charge_event_lengths = range(3, 24, 5)
@@ -213,12 +214,14 @@ def test_v2g() -> None:
         for charge_event_length in charge_event_lengths
         for seed in np.random.randint(0, 1000, size=num_trials)
     ]
-    # with ProcessPoolExecutor() as executor:
-    #     trials = list(executor.map(_one_v2g, args))
 
-    trials = []
-    for arg in args:
-        trials.append(_one_v2g(arg))
+    if multiprocess:
+        with ProcessPoolExecutor() as executor:
+            trials = list(executor.map(_one_v2g, args))
+    else:
+        trials = []
+        for arg in args:
+            trials.append(_one_v2g(arg))
 
     discharge = collections.defaultdict(list)
     for charge_event_length in charge_event_lengths:

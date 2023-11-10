@@ -5,7 +5,6 @@ import typing
 import numpy as np
 
 from energypylinear.assets.asset import AssetOneInterval
-from energypylinear.assets.evs import EVsArrayOneInterval
 from energypylinear.assets.site import SiteOneInterval
 
 floats = typing.Union[float, np.ndarray, typing.Sequence[float], list[float]]
