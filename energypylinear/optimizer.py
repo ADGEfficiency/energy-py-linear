@@ -28,7 +28,7 @@ class OptimizerConfig:
 
     verbose: bool = False
     presolve: bool = True
-    relative_tolerance: float = 0.02
+    relative_tolerance: float = 0.0
     timeout: int = 60 * 3
 
     def dict(self) -> dict:

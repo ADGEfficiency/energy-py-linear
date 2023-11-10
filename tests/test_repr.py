@@ -22,6 +22,14 @@ def test_repr() -> None:
         epl.RenewableGenerator(electric_generation_mwh=[10]),
         epl.assets.evs.EVOneInterval(
             i=0,
+            charge_event_idx=0,
+            charge_event_cfg=epl.assets.evs.ChargeEventConfig(
+                name="ce", capacity_mwh=10, efficiency_pct=0.5
+            ),
+            charger_idx=0,
+            charger_cfg=epl.assets.evs.ChargerConfig(
+                name="ca", power_min_mw=0, power_max_mw=0
+            ),
             cfg=epl.assets.evs.EVsConfig(
                 name="evs",
                 charger_cfgs=np.array([0]),
@@ -55,6 +63,8 @@ def test_repr() -> None:
             electric_discharge_mwh=np.array([0]),
             electric_discharge_binary=np.array([0]),
             electric_loss_mwh=np.array([0]),
+            charge_event_idxs=np.array([0]),
+            charger_idxs=np.array([0]),
         ),
         epl.Spill(),
         epl.Valve(),
