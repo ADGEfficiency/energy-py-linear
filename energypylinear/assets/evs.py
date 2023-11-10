@@ -4,7 +4,6 @@ import pathlib
 import numpy as np
 import pulp
 import pydantic
-from pydantic import ConfigDict
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
@@ -65,21 +64,20 @@ class EVsConfig(pydantic.BaseModel):
     charge_event_cfgs: np.ndarray
     charge_events: np.ndarray
     freq_mins: int
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
         assert "evs" in name
         return name
 
-    @pydantic.validator("charge_events")
-    def validate_charge_events(
-        cls, charge_events: np.ndarray, values: dict
-    ) -> np.ndarray:
+    @pydantic.model_validator(mode="after")
+    def validate_charge_events(self) -> "EVsConfig":
         """Check charge events match the configs"""
-        validate_charge_events(values["charge_event_cfgs"], charge_events)
-        return charge_events
+        validate_charge_events(self.charge_event_cfgs, self.charge_events)
+        return self
 
 
 class EVOneInterval(AssetOneInterval):
@@ -97,10 +95,16 @@ class EVOneInterval(AssetOneInterval):
     electric_discharge_binary: pulp.LpVariable | int
     initial_soc_mwh: pulp.LpVariable | float
     final_soc_mwh: pulp.LpVariable | float
-    electric_loss_mwh: pulp.LpVariable
+    electric_loss_mwh: pulp.LpVariable | float
 
     is_spill: bool = False
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
+    i: int
+
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<EVOneInterval i:{self.i}>"
 
 
 class EVsArrayOneInterval(AssetOneInterval):
@@ -121,7 +125,7 @@ class EVsArrayOneInterval(AssetOneInterval):
     electric_discharge_mwh: np.ndarray
     electric_discharge_binary: np.ndarray
     electric_loss_mwh: np.ndarray
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -263,6 +267,7 @@ def evs_one_interval(
                     final_soc_mwh=final_charge,
                     electric_loss_mwh=loss_mwh,
                     is_spill=is_spill,
+                    i=i,
                 )
             )
             charges_mwh[0, charge_event_idx, charger_idx] = charge_mwh
@@ -661,7 +666,7 @@ class EVs:
     def optimize(
         self,
         objective: str = "price",
-        verbose: bool = True,
+        verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":

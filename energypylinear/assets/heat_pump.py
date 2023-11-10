@@ -20,7 +20,8 @@ class HeatPumpConfig(pydantic.BaseModel):
     include_valve: bool
     name: str
 
-    @pydantic.validator("cop", pre=True, always=True)
+    @pydantic.field_validator("cop", mode="after")
+    @classmethod
     def validate_cop(cls, value: float) -> float:
         """Check COP is greater than 1.0.
 
@@ -181,7 +182,7 @@ class HeatPump(epl.Asset):
     def optimize(
         self,
         objective: str = "price",
-        verbose: bool = True,
+        verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":

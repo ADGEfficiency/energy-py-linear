@@ -8,6 +8,7 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
+from energypylinear.logger import logger, set_logging_level
 from energypylinear.optimizer import Optimizer
 from energypylinear.utils import repeat_to_match_length
 
@@ -28,7 +29,7 @@ def validate_interval_data(
             if hasattr(asset.cfg, "interval_data"):
                 if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
 
-                    idata = asset.cfg.interval_data.dict(exclude={"idx"})
+                    idata = asset.cfg.interval_data.model_dump(exclude={"idx"})
                     for name, data in idata.items():
                         assert isinstance(site.cfg.interval_data.idx, np.ndarray)
                         setattr(
@@ -57,27 +58,27 @@ class SiteIntervalData(pydantic.BaseModel):
     idx: list[int] | np.ndarray = []
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    @pydantic.root_validator(pre=True)
-    def validate_all_things(cls, values: dict) -> dict:
+    @pydantic.model_validator(mode="after")
+    def validate_all_things(self) -> "SiteIntervalData":
         """Validates site interval data."""
 
-        fields = list(cls.__fields__.keys())
+        fields = list(self.model_fields.keys())
         fields.remove("idx")
-        if values.get("electricity_prices") is not None:
-            values["idx"] = np.arange(len(values["electricity_prices"]))
-            values["electricity_prices"] = np.atleast_1d(
-                np.array(values["electricity_prices"])
-            )
+        if self.electricity_prices is not None:
+            assert isinstance(self.electricity_prices, (np.ndarray, list))
+            self.idx = np.arange(len(self.electricity_prices))
+            self.electricity_prices = np.atleast_1d(np.array(self.electricity_prices))
             fields.remove("electricity_prices")
 
-            if values.get("export_electricity_prices") is None:
-                values["export_electricity_prices"] = values["electricity_prices"]
+            if self.export_electricity_prices is None:
+                self.export_electricity_prices = self.electricity_prices
                 fields.remove("export_electricity_prices")
 
-        elif values.get("electricity_carbon_intensities") is not None:
-            values["idx"] = np.arange(len(values["electricity_carbon_intensities"]))
-            values["electricity_carbon_intensities"] = np.atleast_1d(
-                np.array(values["electricity_carbon_intensities"])
+        elif self.electricity_carbon_intensities is not None:
+            assert isinstance(self.electricity_carbon_intensities, (np.ndarray, list))
+            self.idx = np.arange(len(self.electricity_carbon_intensities))
+            self.electricity_carbon_intensities = np.atleast_1d(
+                np.array(self.electricity_carbon_intensities)
             )
             fields.remove("electricity_carbon_intensities")
 
@@ -86,27 +87,29 @@ class SiteIntervalData(pydantic.BaseModel):
                 "One of electricity_prices or carbon_intensities should be specified."
             )
 
-        idx = values["idx"]
+        idx = self.idx
         for field in fields:
-            value = values.get(field)
+            value = getattr(self, field, None)
             if isinstance(value, (float, int)):
-                values[field] = np.array([value] * len(idx))
+                setattr(self, field, np.array([value] * len(idx)))
 
             elif value is None:
-                values[field] = np.array([getattr(defaults, field)] * len(idx))
+                setattr(self, field, np.array([getattr(defaults, field)] * len(idx)))
 
             else:
                 assert len(value) == len(
                     idx
                 ), f"{field} has len {len(value)}, index has {len(idx)}"
-                values[field] = np.array(value)
+                setattr(self, field, np.array(value))
 
-            assert values[field] is not None
-            assert isinstance(values[field], np.ndarray)
-            assert np.isnan(values[field]).sum() == 0
-            values[field] = np.atleast_1d(values[field])
+            assert getattr(self, field) is not None
+            assert isinstance(getattr(self, field), np.ndarray)
 
-        return values
+            assert np.isnan(getattr(self, field)).sum() == 0
+
+            setattr(self, field, np.atleast_1d(getattr(self, field)))
+
+        return self
 
 
 class SiteConfig(pydantic.BaseModel):
@@ -118,6 +121,14 @@ class SiteConfig(pydantic.BaseModel):
 
     import_limit_mw: float
     export_limit_mw: float
+
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<SiteConfig {self.name=}>"
+
+    def __str__(self) -> str:
+        """A string representation of self."""
+        return f"<SiteConfig name={self.name}, freq_mins={self.freq_mins}, import_limit_mw={self.import_limit_mw}, export_limit_mw={self.export_limit_mw}>"
 
 
 class SiteOneInterval(pydantic.BaseModel):
@@ -329,7 +340,7 @@ class Site:
         self,
         objective: str = "price",
         flags: Flags = Flags(),
-        verbose: bool = True,
+        verbose: int | bool = 2,
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize sites dispatch using a mixed-integer linear program.
@@ -353,6 +364,10 @@ class Site:
         assert len(names) == len(
             set(names)
         ), f"Asset names must be unique, your assets are called {names}"
+
+        set_logging_level(logger, verbose)
+        logger.info(f"assets.site.optimize: cfg={self.cfg}")
+        logger.info(f"assets.site.optimize: assets={names}")
 
         #  TODO warn about sites without boilers?  warn sites without valve / spill?
 

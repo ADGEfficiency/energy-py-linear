@@ -16,7 +16,8 @@ class SpillConfig(AssetOneInterval):
 
     name: str = "spill"
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
         assert "spill" in name
