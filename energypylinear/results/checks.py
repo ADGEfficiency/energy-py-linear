@@ -62,7 +62,6 @@ def check_electricity_balance(
 
     aggregated = aggregate_check(debug, {"balance": "all", "soc": "mean"})
     logger.debug(f"checks.check_electricity_balance: aggs={aggregated}")
-    simulation.to_csv("temp.csv")
     assert balance.all(), aggregated
     return debug
 
