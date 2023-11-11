@@ -265,7 +265,7 @@ def test_create_evs_array() -> None:
     freq = epl.Freq(30)
     ivars = epl.IntervalVars()
     for i in range(idx_length):
-        one_interval = []
+        one_interval: list = []
         for ev in [evs_one, evs_two]:
             evs_assets = ev.one_interval(
                 optimizer,

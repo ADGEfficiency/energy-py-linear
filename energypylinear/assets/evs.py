@@ -166,12 +166,14 @@ def create_evs_array(
     ivars: "epl.IntervalVars", i: int, asset_name: str, is_spill: bool
 ) -> EVsArrayOneInterval:
     """Creates the array representation from EVOneInterval objects."""
-    one_intervals: list[EVOneInterval] = ivars.filter_objective_variables(
-        epl.assets.evs.EVOneInterval, i=i, asset_name=asset_name
+    one_intervals: list[EVOneInterval] = typing.cast(
+        list[EVOneInterval],
+        ivars.filter_objective_variables(
+            epl.assets.evs.EVOneInterval, i=i, asset_name=asset_name
+        ),
     )
-    one_intervals: list[EVOneInterval] = [
-        oi for oi in one_intervals if oi.is_spill == is_spill
-    ]
+
+    one_intervals = [oi for oi in one_intervals if oi.is_spill == is_spill]
     asset_cfg = one_intervals[0].cfg
     if is_spill:
         assert len(one_intervals) == len(asset_cfg.charge_event_cfgs) * 1
@@ -246,7 +248,7 @@ def evs_one_interval(
     create_charge_event_soc: bool = True,
     create_discharge_variables: bool = True,
     is_spill: bool = False,
-) -> list[EVOneInterval]:
+) -> list[EVOneInterval] | list[EVSpillOneInterval]:
     """Create EV asset data for a single interval.
 
     Create a list of `EVOneInterval` and one `EVsArrayOneInterval` data structures.
@@ -269,7 +271,8 @@ def evs_one_interval(
     - this seems like the real profitable one
     - most of the time the charge event binary is 0
     """
-    evs = []
+    evs: list = []
+
     for charge_event_idx, charge_event_cfg in enumerate(charge_event_cfgs):
         if create_charge_event_soc:
             name = f"i:{i},asset:{asset_name},charge_event:{charge_event_cfg.name}"
@@ -339,32 +342,44 @@ def evs_one_interval(
                 f"electric_loss_mwh,{name}",
                 low=0,
             )
-
-            Model: EVOneInterval | EVSpillOneInterval
-
             if is_spill:
-                Model = EVSpillOneInterval
-            else:
-                Model = EVOneInterval
-
-            evs.append(
-                Model(
-                    i=i,
-                    cfg=cfg,
-                    charge_event_idx=charge_event_idx,
-                    charge_event_cfg=charge_event_cfg,
-                    charger_idx=charger_idx,
-                    charger_cfg=charger_cfg,
-                    electric_charge_mwh=electric_charge_mwh,
-                    electric_charge_binary=electric_charge_binary,
-                    electric_discharge_mwh=electric_discharge_mwh,
-                    electric_discharge_binary=electric_discharge_binary,
-                    initial_soc_mwh=initial_charge,
-                    final_soc_mwh=final_charge,
-                    electric_loss_mwh=loss_mwh,
-                    is_spill=is_spill,
+                evs.append(
+                    EVSpillOneInterval(
+                        i=i,
+                        cfg=cfg,
+                        charge_event_idx=charge_event_idx,
+                        charge_event_cfg=charge_event_cfg,
+                        charger_idx=charger_idx,
+                        charger_cfg=charger_cfg,
+                        electric_charge_mwh=electric_charge_mwh,
+                        electric_charge_binary=electric_charge_binary,
+                        electric_discharge_mwh=electric_discharge_mwh,
+                        electric_discharge_binary=electric_discharge_binary,
+                        initial_soc_mwh=initial_charge,
+                        final_soc_mwh=final_charge,
+                        electric_loss_mwh=loss_mwh,
+                        is_spill=is_spill,
+                    )
                 )
-            )
+            else:
+                evs.append(
+                    EVOneInterval(
+                        i=i,
+                        cfg=cfg,
+                        charge_event_idx=charge_event_idx,
+                        charge_event_cfg=charge_event_cfg,
+                        charger_idx=charger_idx,
+                        charger_cfg=charger_cfg,
+                        electric_charge_mwh=electric_charge_mwh,
+                        electric_charge_binary=electric_charge_binary,
+                        electric_discharge_mwh=electric_discharge_mwh,
+                        electric_discharge_binary=electric_discharge_binary,
+                        initial_soc_mwh=initial_charge,
+                        final_soc_mwh=final_charge,
+                        electric_loss_mwh=loss_mwh,
+                        is_spill=is_spill,
+                    )
+                )
     return evs
 
 

@@ -1,4 +1,6 @@
 """Linear programming objective cost functions for price and carbon."""
+import typing
+
 import numpy as np
 import pulp
 
@@ -28,10 +30,29 @@ def price_objective(
 
     #  cheating here with the site name (the second `site`)
     sites = ivars.asset["site"]["site"]
-    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-    spill_evs = ivars.filter_objective_variables(epl.assets.evs.EVSpillOneInterval)
-    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
-    boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
+
+    spills = typing.cast(
+        list[list["epl.assets.spill.SpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.spill.SpillOneInterval
+        ),
+    )
+    spill_evs = typing.cast(
+        list[list["epl.assets.evs.EVSpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.evs.EVSpillOneInterval
+        ),
+    )
+    generators = typing.cast(
+        list[list["epl.assets.chp.CHPOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(epl.assets.chp.CHPOneInterval),
+    )
+    boilers = typing.cast(
+        list[list["epl.assets.boiler.BoilerOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.boiler.BoilerOneInterval
+        ),
+    )
 
     assert isinstance(interval_data.gas_prices, np.ndarray)
     assert isinstance(interval_data.electricity_prices, np.ndarray)
@@ -87,10 +108,28 @@ def carbon_objective(
 
     #  cheating here with the site name (the second `site`)
     sites = ivars.asset["site"]["site"]
-    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-    spill_evs = ivars.filter_objective_variables(epl.assets.evs.EVSpillOneInterval)
-    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
-    boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
+    spills = typing.cast(
+        list[list["epl.assets.spill.SpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.spill.SpillOneInterval
+        ),
+    )
+    spill_evs = typing.cast(
+        list[list["epl.assets.evs.EVSpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.evs.EVSpillOneInterval
+        ),
+    )
+    generators = typing.cast(
+        list[list["epl.assets.chp.CHPOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(epl.assets.chp.CHPOneInterval),
+    )
+    boilers = typing.cast(
+        list[list["epl.assets.boiler.BoilerOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.boiler.BoilerOneInterval
+        ),
+    )
 
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
     obj = [

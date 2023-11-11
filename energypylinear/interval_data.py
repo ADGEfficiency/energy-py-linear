@@ -9,6 +9,8 @@ from energypylinear.assets.site import SiteOneInterval
 
 floats = typing.Union[float, np.ndarray, typing.Sequence[float], list[float]]
 
+AssetOneIntervalType = typing.TypeVar("AssetOneIntervalType", bound=AssetOneInterval)
+
 
 class IntervalVars:
     """Interval data of linear program variables."""
@@ -34,9 +36,7 @@ class IntervalVars:
         """Enable subscripting to get a list of AssetOneInterval at a given index."""
         return self.objective_variables[index]
 
-    def append(
-        self, one_interval: AssetOneInterval | SiteOneInterval | list[AssetOneInterval]
-    ) -> None:
+    def append(self, one_interval: AssetOneInterval | SiteOneInterval | list) -> None:
         """Appends a one_interval object to the appropriate attribute.
 
         Args:
@@ -64,51 +64,34 @@ class IntervalVars:
     def filter_objective_variables(
         self,
         instance_type: type[AssetOneInterval],
-        i: int | None = None,
+        i: int,
         asset_name: str | None = None,
-    ) -> list[list[AssetOneInterval]] | list[AssetOneInterval]:
-        """Filters objective variables based on type, interval index, and asset name.
+    ) -> list[AssetOneInterval]:
+        """Filters objective variables based on type, interval index, and asset name."""
+        assets = self.objective_variables[i]
+        return [
+            asset
+            for asset in assets
+            if isinstance(asset, instance_type)
+            and (asset.cfg.name == asset_name if asset_name is not None else True)
+        ]
 
-        Args:
-            instance_type (type[AssetOneInterval]):
-                Type of the AssetOneInterval instances to filter.
-            i (int | None, optional):
-                Interval index. If None, filters across all intervals.
-                Defaults to None.
-            asset_name (str | None, optional):
-                Name of the asset to filter by. If None, no filtering by name.
-                Defaults to None.
-
-        Returns:
-            list[list[AssetOneInterval]]:
-                Filtered list of AssetOneInterval instances.
-        """
-        #  here we return data for all intervals
-        if i is None:
-            pkg = []
-            for i, assets_one_interval in enumerate(self.objective_variables):
-                pkg.append(
-                    [
-                        asset
-                        for asset in assets_one_interval
-                        if isinstance(asset, instance_type)
-                        and (
-                            asset.cfg.name == asset_name
-                            if asset_name is not None
-                            else True
-                        )
-                    ]
-                )
-            return pkg
-
-        #  here we return data for one interval
-        else:
-
-            # used to return list of lists
-            assets = self.objective_variables[i]
-            return [
-                asset
-                for asset in assets
-                if isinstance(asset, instance_type)
-                and (asset.cfg.name == asset_name if asset_name is not None else True)
-            ]
+    def filter_objective_variables_all_intervals(
+        self,
+        instance_type: type[AssetOneInterval],
+        asset_name: str | None = None,
+    ) -> list[list[AssetOneInterval]]:
+        """Filters objective variables based on type, interval index, and asset name."""
+        pkg = []
+        for assets_one_interval in self.objective_variables:
+            pkg.append(
+                [
+                    asset
+                    for asset in assets_one_interval
+                    if isinstance(asset, instance_type)
+                    and (
+                        asset.cfg.name == asset_name if asset_name is not None else True
+                    )
+                ]
+            )
+        return pkg

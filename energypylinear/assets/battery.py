@@ -252,8 +252,8 @@ class Battery:
         #  TODO this is one battery asset, all intervals
         #  maybe refactor into the after intervals?
         #  bit of a weird case really
-        all_batteries = ivars.filter_objective_variables(
-            BatteryOneInterval, i=None, asset_name=self.cfg.name
+        all_batteries = ivars.filter_objective_variables_all_intervals(
+            BatteryOneInterval, asset_name=self.cfg.name
         )
         assert isinstance(all_batteries, list)
         constrain_connection_batteries_between_intervals(optimizer, all_batteries)
