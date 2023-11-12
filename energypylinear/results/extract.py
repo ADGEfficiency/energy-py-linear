@@ -43,7 +43,12 @@ def extract_site_results(
     site: "epl.Site", ivars: "epl.IntervalVars", results: dict, i: int
 ) -> None:
     """Extract simulation result data for epl.Site."""
-    site_one_interval = ivars.filter_site(i, site.cfg.name)
+    sites = ivars.filter_objective_variables(
+        epl.assets.site.SiteOneInterval, asset_name=site.cfg.name, i=i
+    )
+    assert len(sites) == 1
+    site_one_interval = sites[0]
+    assert isinstance(site_one_interval, epl.assets.site.SiteOneInterval)
     results["site-import_power_mwh"].append(site_one_interval.import_power_mwh.value())
     results["site-export_power_mwh"].append(site_one_interval.export_power_mwh.value())
 

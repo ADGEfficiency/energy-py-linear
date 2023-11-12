@@ -5,7 +5,7 @@ import energypylinear as epl
 from energypylinear.interval_data import IntervalVars
 
 
-def test_var() -> None:
+def test_interval_vars() -> None:
     """
     for interval
         make some lp vars
@@ -27,14 +27,8 @@ def test_var() -> None:
     site = asset.site.one_interval(
         optimizer, asset.site.cfg, i=0, freq=epl.freq.Freq(60)
     )
-    ivars.append(site)
+    ivars.append([site])
     ivars.append(evs)
-    ivars.filter_site(0, asset.site.cfg.name)
     ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, 0, asset.cfg.name)
     ivars[0]
     ivars[-1]
-
-    print("[red]assets[/red]")
-    print(ivars.asset.keys())
-    print(ivars.asset["evs"].keys())
-    print(ivars.asset["evs"]["spill_evs_array"])

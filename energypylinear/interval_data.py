@@ -1,5 +1,4 @@
 """Models for interval data for electricity & gas prices, thermal loads and carbon intensities."""
-import collections
 import typing
 
 import numpy as np
@@ -17,12 +16,7 @@ class IntervalVars:
 
     def __init__(self) -> None:
         """Initializes the interval variables object."""
-        #  not every lp variable - only the ones we want to iterate over
-        #  in the objective functions (price, carbon etc)
         self.objective_variables: list[list[AssetOneInterval]] = []
-        self.asset: collections.defaultdict = collections.defaultdict(
-            lambda: {"evs_array": [], "spill_evs_array": [], "site": []}
-        )
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -42,24 +36,8 @@ class IntervalVars:
         Args:
             one_interval (Union[AssetOneInterval, SiteOneInterval, list[AssetOneInterval]]): The interval data to append.
         """
-        if isinstance(one_interval, SiteOneInterval):
-            self.asset[one_interval.cfg.name]["site"].append(one_interval)
-
-        else:
-            assert isinstance(one_interval, list)
-            self.objective_variables.append(one_interval)
-
-    def filter_site(self, i: int, site_name: str) -> SiteOneInterval:
-        """Filters and a SiteOneInterval based on interval index and site name.
-
-        Args:
-            i (int): Interval index.
-            site_name (str): Name of the site to filter by.
-
-        Returns:
-            SiteOneInterval: Filtered SiteOneInterval instance.
-        """
-        return self.asset[site_name]["site"][i]
+        assert isinstance(one_interval, list)
+        self.objective_variables.append(one_interval)
 
     def filter_objective_variables(
         self,

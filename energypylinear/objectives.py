@@ -28,9 +28,13 @@ def price_objective(
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
 
-    #  cheating here with the site name (the second `site`)
-    sites = ivars.asset["site"]["site"]
-
+    #  TODO cheating here with the site name
+    sites = typing.cast(
+        list[list["epl.assets.site.SiteOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.site.SiteOneInterval, asset_name="site"
+        ),
+    )
     spills = typing.cast(
         list[list["epl.assets.spill.SpillOneInterval"]],
         ivars.filter_objective_variables_all_intervals(
@@ -58,9 +62,12 @@ def price_objective(
     assert isinstance(interval_data.electricity_prices, np.ndarray)
     assert isinstance(interval_data.export_electricity_prices, np.ndarray)
 
-    obj = [
-        sites[i].import_power_mwh * interval_data.electricity_prices[i]
-        - sites[i].export_power_mwh * interval_data.export_electricity_prices[i]
+    obj: list[typing.Any | float] = [
+        [
+            site.import_power_mwh * interval_data.electricity_prices[i]
+            - site.export_power_mwh * interval_data.export_electricity_prices[i]
+            for site in sites[i]
+        ]
         + [
             spill.electric_generation_mwh * defaults.spill_objective_penalty
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
@@ -105,9 +112,13 @@ def carbon_objective(
     Returns:
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
-
-    #  cheating here with the site name (the second `site`)
-    sites = ivars.asset["site"]["site"]
+    #  TODO cheating here with the site name
+    sites = typing.cast(
+        list[list["epl.assets.site.SiteOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.site.SiteOneInterval, asset_name="site"
+        ),
+    )
     spills = typing.cast(
         list[list["epl.assets.spill.SpillOneInterval"]],
         ivars.filter_objective_variables_all_intervals(
@@ -132,9 +143,12 @@ def carbon_objective(
     )
 
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
-    obj = [
-        sites[i].import_power_mwh * interval_data.electricity_carbon_intensities[i]
-        - sites[i].export_power_mwh * interval_data.electricity_carbon_intensities[i]
+    obj: list[typing.Any | float] = [
+        [
+            site.import_power_mwh * interval_data.electricity_carbon_intensities[i]
+            - site.export_power_mwh * interval_data.electricity_carbon_intensities[i]
+            for site in sites[i]
+        ]
         + [
             spill.electric_generation_mwh * defaults.spill_objective_penalty
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty

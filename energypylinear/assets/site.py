@@ -5,6 +5,7 @@ import pulp
 import pydantic
 
 import energypylinear as epl
+from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
@@ -131,7 +132,7 @@ class SiteConfig(pydantic.BaseModel):
         return f"<SiteConfig name={self.name}, freq_mins={self.freq_mins}, import_limit_mw={self.import_limit_mw}, export_limit_mw={self.export_limit_mw}>"
 
 
-class SiteOneInterval(pydantic.BaseModel):
+class SiteOneInterval(AssetOneInterval):
     """Site data for a single interval."""
 
     cfg: SiteConfig
@@ -160,7 +161,10 @@ def constrain_site_electricity_balance(
     import + generation - (export + load) - (charge - discharge) = 0
     """
     assets = ivars.objective_variables[-1]
-    site = ivars.filter_site(i=-1, site_name=cfg.name)
+    site = ivars.filter_objective_variables(
+        epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
+    )[0]
+    assert isinstance(site, epl.assets.site.SiteOneInterval)
     assert interval_data.electric_load_mwh is not None
     assert isinstance(interval_data.electric_load_mwh, np.ndarray)
     optimizer.constrain(
@@ -184,7 +188,10 @@ def constrain_site_import_export(
     ivars: "epl.interval_data.IntervalVars",
 ) -> None:
     """Constrain to only do one of import and export electricity in an interval."""
-    site = ivars.filter_site(i=-1, site_name=cfg.name)
+    site = ivars.filter_objective_variables(
+        epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
+    )[0]
+    assert isinstance(site, epl.assets.site.SiteOneInterval)
     optimizer.constrain(
         site.import_power_mwh - site.import_limit_mwh * site.import_power_bin <= 0
     )
@@ -365,20 +372,18 @@ class Site:
         logger.info(f"assets.site.optimize: assets={names}")
 
         #  TODO warn about sites without boilers?  warn sites without valve / spill?
-
         ivars = epl.IntervalVars()
         for i in self.cfg.interval_data.idx:
-            ivars.append(self.one_interval(self.optimizer, self.cfg, i, freq))
-
-            assets = []
+            one_interval = []
+            one_interval.append(self.one_interval(self.optimizer, self.cfg, i, freq))
             for asset in self.assets:
                 neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
                 if isinstance(neu_assets, list):
-                    assets.extend(neu_assets)
+                    one_interval.extend(neu_assets)
                 else:
-                    assets.append(neu_assets)
+                    one_interval.append(neu_assets)
 
-            ivars.append(assets)
+            ivars.append(one_interval)
 
             self.constrain_within_interval(
                 self.optimizer, ivars, self.cfg.interval_data, i
