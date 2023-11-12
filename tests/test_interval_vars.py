@@ -1,5 +1,4 @@
 """Interval variable testing."""
-from rich import print
 
 import energypylinear as epl
 from energypylinear.interval_data import IntervalVars
