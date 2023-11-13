@@ -1,8 +1,6 @@
-"""
-Interface to the `pulp` optimization library to solve linear programming problems.
+"""Interface to the `pulp` optimization library to solve linear programming problems.
 
-The `Optimizer` allows creating linear constraints, variables, and objectives, along with a linear program solver.
-"""
+The `Optimizer` allows creating linear constraints, variables, and objectives, along with a linear program solver."""
 import dataclasses
 import datetime
 import typing
@@ -10,7 +8,7 @@ import typing
 import numpy as np
 import pulp
 
-from energypylinear.logger import logger
+from energypylinear.logger import logger, set_logging_level
 
 
 @dataclasses.dataclass
@@ -30,7 +28,7 @@ class OptimizerConfig:
 
     verbose: bool = False
     presolve: bool = True
-    relative_tolerance: float = 0.02
+    relative_tolerance: float = 0.0
     timeout: int = 60 * 3
 
     def dict(self) -> dict:
@@ -74,7 +72,6 @@ class Optimizer:
             low: The lower bound of the variable.
             up: The upper bound of the variable.
         """
-        # logger.debug("optimizer.continuous", name=name)
         return pulp.LpVariable(name=name, lowBound=low, upBound=up, cat="Continuous")
 
     def binary(self, name: str) -> pulp.LpVariable:
@@ -116,7 +113,7 @@ class Optimizer:
         return self.prob.setObjective(objective)
 
     def solve(
-        self, verbose: bool = False, allow_infeasible: bool = False
+        self, verbose: int | bool, allow_infeasible: bool = False
     ) -> OptimizationStatus:
         """Solve the optimization problem.
 
@@ -124,17 +121,19 @@ class Optimizer:
             verbose: a flag indicating how verbose the output should be.  0 for no output.
             allow_infeasible: whether an infeasible solution should raise an error.
         """
+        set_logging_level(logger, level=verbose)
+
         logger.debug(
-            "optimizer.solve",
-            variables=len(self.variables()),
-            constraints=len(self.constraints()),
+            f"optimizer.solve: variables={len(self.variables())}, constraints={len(self.constraints())}"
         )
         self.assert_no_duplicate_variables()
         self.solver.solve(self.prob)
 
         status = self.status()
         if verbose > 0:
-            logger.info("optimizer.solve", status=status)
+            logger.info(
+                f"optimizer.solve: {status=}",
+            )
 
         feasible = status == "Optimal"
         if not allow_infeasible:
