@@ -1,8 +1,6 @@
 """Tests the implementation of custom objective functions."""
 
 
-import random
-
 import numpy as np
 import pytest
 
@@ -102,12 +100,12 @@ def test_hardcoded(asset: str, objective: str) -> None:
         )
 
 
-@pytest.mark.parametrize("seed", [random.randint(0, 1000) for _ in range(5)])
+@pytest.mark.parametrize("n", range(5))
 @pytest.mark.parametrize("objective", ["price", "carbon"])
-def test_hardcoded_with_spills(seed: int, objective: str) -> None:
+def test_hardcoded_with_spills(n: int, objective: str) -> None:
     """Tests that the hardcoded objective function definitions are the same as the custom version."""
     ds = generate_random_ev_input_data(
-        24, n_chargers=1, n_charge_events=100, charge_length=3, seed=seed
+        24, n_chargers=1, n_charge_events=100, charge_length=3, seed=None
     )
 
     assets: list = [
