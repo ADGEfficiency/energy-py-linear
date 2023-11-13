@@ -11,9 +11,10 @@ from energypylinear.defaults import defaults
 
 @dataclasses.dataclass
 class Term:
-    asset_type: str
     variable: str
+    asset_type: str | None = None
     interval_data: str | None = None
+    asset_name: str | None = None
     coefficient: float = 1.0
 
 
@@ -224,7 +225,10 @@ def get_objective(
             if term.asset_type == "*":
                 assets = ivars[i]
             else:
-                assets = ivars.filter_objective_variables(term.asset_type, i=i)
+                assets = ivars.filter_objective_variables(
+                    instance_type=term.asset_type, i=i, asset_name=term.asset_name
+                )
+
             for asset in assets:
                 obj.extend(
                     [

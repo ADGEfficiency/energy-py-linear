@@ -161,7 +161,7 @@ def constrain_site_electricity_balance(
     """
     assets = ivars.objective_variables[-1]
     site = ivars.filter_objective_variables(
-        epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
+        instance_type=epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
     )[0]
     assert isinstance(site, epl.assets.site.SiteOneInterval)
     assert interval_data.electric_load_mwh is not None
@@ -188,7 +188,7 @@ def constrain_site_import_export(
 ) -> None:
     """Constrain to only do one of import and export electricity in an interval."""
     site = ivars.filter_objective_variables(
-        epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
+        instance_type=epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
     )[0]
     assert isinstance(site, epl.assets.site.SiteOneInterval)
     optimizer.constrain(

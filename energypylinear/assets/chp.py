@@ -156,7 +156,7 @@ class CHP(epl.Asset):
         """Constrain generator upper and lower bounds for generating electricity, high
         and low temperature heat within a single interval."""
         chp = ivars.filter_objective_variables(
-            CHPOneInterval, i=i, asset_name=self.cfg.name
+            instance_type=CHPOneInterval, i=i, asset_name=self.cfg.name
         )[0]
         assert isinstance(chp, CHPOneInterval)
         if chp.cfg.electric_efficiency_pct > 0:

@@ -8,11 +8,13 @@ import pytest
 
 import energypylinear as epl
 from energypylinear.data_generation import generate_random_ev_input_data
+from energypylinear.defaults import defaults
 
 
 @pytest.mark.parametrize("asset", ["battery", "evs", "chp"])
-def test_hardcoded_price(asset: str) -> None:
-    """Tests that the custom objective function definition of the `price` objective is the same as the hardcoded version."""
+@pytest.mark.parametrize("objective", ["price", "carbon"])
+def test_hardcoded(asset: str, objective: str) -> None:
+    """Tests that the hardcoded objective function definitions are the same as the custom version."""
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
 
     assets: list
@@ -37,35 +39,57 @@ def test_hardcoded_price(asset: str) -> None:
     site = epl.Site(
         assets=assets,
         electricity_prices=ds["electricity_prices"],
+        electricity_carbon_intensities=ds["electricity_carbon_intensities"],
         gas_prices=30,
         electric_load_mwh=30,
         high_temperature_load_mwh=100,
         low_temperature_load_mwh=100,
         low_temperature_generation_mwh=0,
     )
-    hardcoded = site.optimize(verbose=True, objective="price")
+    hardcoded = site.optimize(verbose=True, objective=objective)
+
+    if objective == "price":
+        terms = [
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "electricity_prices",
+            },
+            {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+                "interval_data": "electricity_prices",
+                "coefficient": -1,
+            },
+            {
+                "asset_type": "*",
+                "variable": "gas_consumption_mwh",
+                "interval_data": "gas_prices",
+            },
+        ]
+    elif objective == "carbon":
+        terms = [
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "electricity_carbon_intensities",
+            },
+            {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+                "interval_data": "electricity_carbon_intensities",
+                "coefficient": -1,
+            },
+            {
+                "asset_type": "*",
+                "variable": "gas_consumption_mwh",
+                "coefficient": defaults.gas_carbon_intensity,
+            },
+        ]
+
     custom = site.optimize(
         verbose=True,
-        objective={
-            "terms": [
-                {
-                    "asset_type": "site",
-                    "variable": "import_power_mwh",
-                    "interval_data": "electricity_prices",
-                },
-                {
-                    "asset_type": "site",
-                    "variable": "export_power_mwh",
-                    "interval_data": "electricity_prices",
-                    "coefficient": -1,
-                },
-                {
-                    "asset_type": "*",
-                    "variable": "gas_consumption_mwh",
-                    "interval_data": "gas_prices",
-                },
-            ]
-        },
+        objective={"terms": terms},
     )
 
     for col in [
@@ -79,8 +103,9 @@ def test_hardcoded_price(asset: str) -> None:
 
 
 @pytest.mark.parametrize("seed", [random.randint(0, 1000) for _ in range(5)])
-def test_hardcoded_price_with_spills(seed: int) -> None:
-    """Tests that the custom objective function definition of the `price` objective is the same as the hardcoded version."""
+@pytest.mark.parametrize("objective", ["price", "carbon"])
+def test_hardcoded_with_spills(seed: int, objective: str) -> None:
+    """Tests that the hardcoded objective function definitions are the same as the custom version."""
     ds = generate_random_ev_input_data(
         24, n_chargers=1, n_charge_events=100, charge_length=3, seed=seed
     )
@@ -107,29 +132,52 @@ def test_hardcoded_price_with_spills(seed: int) -> None:
         low_temperature_load_mwh=100,
         low_temperature_generation_mwh=0,
     )
-    hardcoded = site.optimize(verbose=True, objective="price")
-    from energypylinear.defaults import defaults
+    hardcoded = site.optimize(verbose=True, objective=objective)
+
+    if objective == "price":
+        terms = [
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "electricity_prices",
+            },
+            {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+                "interval_data": "electricity_prices",
+                "coefficient": -1,
+            },
+            {
+                "asset_type": "*",
+                "variable": "gas_consumption_mwh",
+                "interval_data": "gas_prices",
+            },
+        ]
+    elif objective == "carbon":
+        terms = [
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "electricity_carbon_intensities",
+            },
+            {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+                "interval_data": "electricity_carbon_intensities",
+                "coefficient": -1,
+            },
+            {
+                "asset_type": "*",
+                "variable": "gas_consumption_mwh",
+                "coefficient": defaults.gas_carbon_intensity,
+            },
+        ]
 
     custom = site.optimize(
         verbose=True,
         objective={
             "terms": [
-                {
-                    "asset_type": "site",
-                    "variable": "import_power_mwh",
-                    "interval_data": "electricity_prices",
-                },
-                {
-                    "asset_type": "site",
-                    "variable": "export_power_mwh",
-                    "interval_data": "electricity_prices",
-                    "coefficient": -1,
-                },
-                {
-                    "asset_type": "*",
-                    "variable": "gas_consumption_mwh",
-                    "interval_data": "gas_prices",
-                },
+                *terms,
                 *[
                     {
                         "asset_type": "spill",
@@ -172,3 +220,78 @@ def test_hardcoded_price_with_spills(seed: int) -> None:
         np.testing.assert_array_almost_equal(
             hardcoded.results[col].values, custom.results[col].values
         )
+
+
+def test_single_asset() -> None:
+    """Test that we can apply a custom objective function to a specific asset.
+
+    This test sets up two CHP assets - one with a gas price that is half the other.
+    """
+    assets = [
+        epl.CHP(
+            electric_power_max_mw=100, electric_efficiency_pct=0.5, name="chp-eins"
+        ),
+        epl.CHP(
+            electric_power_max_mw=100, electric_efficiency_pct=0.5, name="chp-zwei"
+        ),
+        epl.Boiler(),
+        epl.Valve(),
+    ]
+    site = epl.Site(
+        assets=assets,
+        electricity_prices=[250, 250, 250, 250, 250],
+        gas_prices=20,
+        electric_load_mwh=[0, 50, 75, 100, 300],
+        export_limit_mw=50,
+    )
+    simulation = site.optimize(
+        objective={
+            "terms": [
+                {
+                    "asset_type": "site",
+                    "variable": "import_power_mwh",
+                    "interval_data": "electricity_prices",
+                },
+                {
+                    "asset_type": "site",
+                    "variable": "export_power_mwh",
+                    "interval_data": "electricity_prices",
+                    "coefficient": -1,
+                },
+                {
+                    "asset_name": "chp-eins",
+                    "variable": "gas_consumption_mwh",
+                    "interval_data": "gas_prices",
+                },
+                {
+                    "asset_name": "chp-zwei",
+                    "variable": "gas_consumption_mwh",
+                    "interval_data": "gas_prices",
+                    "coefficient": 0.5,
+                },
+            ]
+        },
+    )
+    print(
+        simulation.results[
+            [
+                "site-import_power_mwh",
+                "site-export_power_mwh",
+                "chp-eins-electric_generation_mwh",
+                "chp-zwei-electric_generation_mwh",
+            ]
+        ]
+    )
+    np.testing.assert_array_almost_equal(
+        simulation.results["site-import_power_mwh"], [0.0, 0.0, 0.0, 0.0, 100]
+    )
+    np.testing.assert_array_almost_equal(
+        simulation.results["site-export_power_mwh"], [50.0, 50, 50, 50, 0]
+    )
+    np.testing.assert_array_almost_equal(
+        simulation.results["chp-eins-electric_generation_mwh"], [0.0, 0.0, 25, 50, 100]
+    )
+    np.testing.assert_array_almost_equal(
+        simulation.results["chp-zwei-electric_generation_mwh"],
+        [50.0, 100, 100, 100, 100],
+    )

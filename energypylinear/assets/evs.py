@@ -169,7 +169,7 @@ def create_evs_array(
     one_intervals: list[EVOneInterval] = typing.cast(
         list[EVOneInterval],
         ivars.filter_objective_variables(
-            epl.assets.evs.EVOneInterval, i=i, asset_name=asset_name
+            instance_type=epl.assets.evs.EVOneInterval, i=i, asset_name=asset_name
         ),
     )
 

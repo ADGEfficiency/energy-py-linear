@@ -10,15 +10,37 @@ def test_interval_vars() -> None:
         48, n_chargers=3, charge_length=3, n_charge_events=12, seed=42
     )
     asset = epl.EVs(**ds)
+    asset_two = epl.EVs(**ds, name="evs-two")
     optimizer = epl.Optimizer()
+
     evs = asset.one_interval(optimizer, i=0, freq=epl.Freq(60))
+    evs_two = asset_two.one_interval(optimizer, i=0, freq=epl.Freq(60))
     site = asset.site.one_interval(
         optimizer, asset.site.cfg, i=0, freq=epl.freq.Freq(60)
     )
 
     ivars = IntervalVars()
-    ivars.append([site])
-    ivars.append(evs)
-    ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, 0, asset.cfg.name)
+    ivars.append([site, evs, evs_two])
+
+    assert (
+        len(
+            ivars.filter_objective_variables(
+                instance_type=epl.assets.evs.EVOneInterval,
+                i=0,
+            )
+        )
+        == 2
+    )
+
+    assert (
+        len(
+            ivars.filter_objective_variables(
+                instance_type=epl.assets.evs.EVOneInterval,
+                i=0,
+                asset_name=asset.cfg.name,
+            )
+        )
+        == 1
+    )
     ivars[0]
     ivars[-1]

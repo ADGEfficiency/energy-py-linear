@@ -14,10 +14,16 @@ def generate_random_ev_input_data(
     prices_mu: float = 100,
     prices_std: float = 20,
     seed: int | None = 2,
+    intensity_mu: float = 0.5,
+    intensity_std: float = 1.0,
 ) -> dict:
     """Create interval data for the `epl.EVs` smart electric charging asset."""
     np.random.seed(seed)
     electricity_prices = np.random.normal(prices_mu, prices_std, idx_length)
+    electricity_carbon_intensities = np.random.normal(
+        intensity_mu, intensity_std, idx_length
+    )
+
     charger_mws = np.random.randint(10, 100, n_chargers)
 
     charge_events = np.zeros((n_charge_events, idx_length))
@@ -35,6 +41,7 @@ def generate_random_ev_input_data(
 
     return {
         "electricity_prices": electricity_prices.tolist(),
+        "electricity_carbon_intensities": electricity_carbon_intensities.tolist(),
         "chargers_power_mw": charger_mws,
         "charge_events_capacity_mwh": charge_event_mwh,
         "charge_events": charge_events,
