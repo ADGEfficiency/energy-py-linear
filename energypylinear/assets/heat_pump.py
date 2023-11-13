@@ -154,7 +154,7 @@ class HeatPump(epl.Asset):
     ) -> None:
         """Constrain asset within a single interval."""
         heat_pump = ivars.filter_objective_variables(
-            HeatPumpOneInterval, i=i, asset_name=self.cfg.name
+            instance_type=HeatPumpOneInterval, i=i, asset_name=self.cfg.name
         )[0]
         assert isinstance(heat_pump, HeatPumpOneInterval)
         optimizer.constrain_max(
