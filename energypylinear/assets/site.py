@@ -1,5 +1,7 @@
 """Site asset for optimizing dispatch of combined heat and power (CHP) generators."""
 
+import typing
+
 import numpy as np
 import pulp
 import pydantic
@@ -116,10 +118,9 @@ class SiteIntervalData(pydantic.BaseModel):
 class SiteConfig(pydantic.BaseModel):
     """Site configuration."""
 
-    name: str
+    name: typing.Literal["site"] = "site"
     interval_data: SiteIntervalData
     freq_mins: int
-
     import_limit_mw: float
     export_limit_mw: float
 
@@ -136,12 +137,10 @@ class SiteOneInterval(AssetOneInterval):
     """Site data for a single interval."""
 
     cfg: SiteConfig
-
     import_power_mwh: pulp.LpVariable
     export_power_mwh: pulp.LpVariable
     import_power_bin: pulp.LpVariable
     export_power_bin: pulp.LpVariable
-
     import_limit_mwh: float
     export_limit_mwh: float
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)

@@ -196,7 +196,6 @@ def create_evs_array(
     discharges_mwh = np.zeros((1, n_charge_events, n_chargers)).astype(object)
     discharges_binary = np.zeros((1, n_charge_events, n_chargers)).astype(object)
     losses_mwh = np.zeros((1, n_charge_events, n_chargers)).astype(object)
-
     charge_event_idxs = np.zeros((1, n_charge_events, n_chargers)).astype(object)
     charger_idxs = np.zeros((1, n_charge_events, n_chargers)).astype(object)
 
