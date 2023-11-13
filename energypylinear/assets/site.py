@@ -1,10 +1,13 @@
 """Site asset for optimizing dispatch of combined heat and power (CHP) generators."""
 
+import typing
+
 import numpy as np
 import pulp
 import pydantic
 
 import energypylinear as epl
+from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
@@ -115,10 +118,9 @@ class SiteIntervalData(pydantic.BaseModel):
 class SiteConfig(pydantic.BaseModel):
     """Site configuration."""
 
-    name: str
+    name: typing.Literal["site"] = "site"
     interval_data: SiteIntervalData
     freq_mins: int
-
     import_limit_mw: float
     export_limit_mw: float
 
@@ -131,16 +133,14 @@ class SiteConfig(pydantic.BaseModel):
         return f"<SiteConfig name={self.name}, freq_mins={self.freq_mins}, import_limit_mw={self.import_limit_mw}, export_limit_mw={self.export_limit_mw}>"
 
 
-class SiteOneInterval(pydantic.BaseModel):
+class SiteOneInterval(AssetOneInterval):
     """Site data for a single interval."""
 
     cfg: SiteConfig
-
     import_power_mwh: pulp.LpVariable
     export_power_mwh: pulp.LpVariable
     import_power_bin: pulp.LpVariable
     export_power_bin: pulp.LpVariable
-
     import_limit_mwh: float
     export_limit_mwh: float
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
@@ -160,11 +160,10 @@ def constrain_site_electricity_balance(
     import + generation - (export + load) - (charge - discharge) = 0
     """
     assets = ivars.objective_variables[-1]
-    site = ivars.filter_site(i=-1, site_name=cfg.name)
-    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval, i=-1)[
-        0
-    ]
-
+    site = ivars.filter_objective_variables(
+        epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
+    )[0]
+    assert isinstance(site, epl.assets.site.SiteOneInterval)
     assert interval_data.electric_load_mwh is not None
     assert isinstance(interval_data.electric_load_mwh, np.ndarray)
     optimizer.constrain(
@@ -176,10 +175,9 @@ def constrain_site_electricity_balance(
             - optimizer.sum([a.electric_load_mwh for a in assets])
             - optimizer.sum([a.electric_charge_mwh for a in assets])
             + optimizer.sum([a.electric_discharge_mwh for a in assets])
-            + (spills[-1].electric_generation_mwh if spills else 0)
-            - (spills[-1].electric_load_mwh if spills else 0)
         )
-        == 0
+        == 0,
+        name=f"site_electricity_balance,i:{i}",
     )
 
 
@@ -189,7 +187,10 @@ def constrain_site_import_export(
     ivars: "epl.interval_data.IntervalVars",
 ) -> None:
     """Constrain to only do one of import and export electricity in an interval."""
-    site = ivars.filter_site(i=-1, site_name=cfg.name)
+    site = ivars.filter_objective_variables(
+        epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
+    )[0]
+    assert isinstance(site, epl.assets.site.SiteOneInterval)
     optimizer.constrain(
         site.import_power_mwh - site.import_limit_mwh * site.import_power_bin <= 0
     )
@@ -370,28 +371,18 @@ class Site:
         logger.info(f"assets.site.optimize: assets={names}")
 
         #  TODO warn about sites without boilers?  warn sites without valve / spill?
-
         ivars = epl.IntervalVars()
         for i in self.cfg.interval_data.idx:
-            ivars.append(self.one_interval(self.optimizer, self.cfg, i, freq))
-
-            assets = []
+            one_interval = []
+            one_interval.append(self.one_interval(self.optimizer, self.cfg, i, freq))
             for asset in self.assets:
                 neu_assets = asset.one_interval(self.optimizer, i, freq, flags)
-                #  tech debt TODO
-                #  EV is special because it returns many one interval blocks per step
-                if isinstance(asset, epl.EVs):
-                    evs, evs_array, spill_evs, spill_evs_array = neu_assets
-                    assets.extend(evs)
-                    assets.extend(spill_evs)
-                    #  ivars has special logic for append
-                    #  the EVsArrayOneInterval deals with them separately
-                    ivars.append(evs_array)
-                    ivars.append(spill_evs_array)
+                if isinstance(neu_assets, list):
+                    one_interval.extend(neu_assets)
                 else:
-                    assets.append(neu_assets)
+                    one_interval.append(neu_assets)
 
-            ivars.append(assets)
+            ivars.append(one_interval)
 
             self.constrain_within_interval(
                 self.optimizer, ivars, self.cfg.interval_data, i

@@ -37,10 +37,11 @@ def test_site() -> None:
             epl.Spill(),
             epl.Valve(),
         ],
-        electricity_prices=[100, 1000, -20, 40, 50],
+        electricity_prices=[100, 1000, -20, 40, 45],
     )
 
     simulation = site.optimize()
+    simulation.results.to_csv("temp.csv")
     np.testing.assert_array_almost_equal(
         simulation.results["site-import_power_mwh"],
         [0.0, 0, 3.0, 0.2222, 0.0],

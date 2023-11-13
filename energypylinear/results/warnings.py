@@ -13,14 +13,12 @@ def warn_spills(
     simulation: pd.DataFrame, flags: Flags, verbose: int | bool = defaults.log_level
 ) -> bool:
     """Prints warnings if we have spilled."""
-    #  add warnings on the use of any spill asset
-    spill_columns = [c for c in simulation.columns if "spill" in c]
-
-    #  filter out binary columns - TODO separate loop while dev
-    spill_columns = [c for c in spill_columns if "charge_binary" not in c]
+    spill_columns = [
+        c for c in simulation.columns if ("spill" in c) and ("charge_binary" not in c)
+    ]
     spill_results = simulation[spill_columns]
     assert isinstance(spill_results, pd.DataFrame)
-    spill_occured = spill_results.sum().sum() > 0.0
+    spill_occured = spill_results.sum().sum() > abs(defaults.epsilon)
 
     spills = spill_results.sum(axis=0).to_dict()
     spills = {k: v for k, v in spills.items() if v > 0}

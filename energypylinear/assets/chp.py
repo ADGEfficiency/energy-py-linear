@@ -157,7 +157,8 @@ class CHP(epl.Asset):
         and low temperature heat within a single interval."""
         chp = ivars.filter_objective_variables(
             CHPOneInterval, i=i, asset_name=self.cfg.name
-        )[0][0]
+        )[0]
+        assert isinstance(chp, CHPOneInterval)
         if chp.cfg.electric_efficiency_pct > 0:
             optimizer.constrain(
                 chp.gas_consumption_mwh

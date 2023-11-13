@@ -1,17 +1,20 @@
 """Test electric vehicle asset."""
 import collections
+import random
 import statistics
 from concurrent.futures import ProcessPoolExecutor
 
 import hypothesis
 import numpy as np
+import pulp
 import pytest
 
 import energypylinear as epl
+from energypylinear.assets.evs import create_evs_array
 from energypylinear.flags import Flags
 
 
-def test_evs_optimization_price() -> None:
+def test_optimization_price() -> None:
     """Test EV optimization for price."""
 
     charge_events_capacity_mwh = [50.0, 100, 30, 40]
@@ -202,7 +205,7 @@ def _one_v2g(args: tuple) -> tuple:
     return (simulation.results, charge_event_length, seed)
 
 
-def test_v2g() -> None:
+def test_v2g(multiprocess: bool = True) -> None:
     """Test that we discharge more power as the charge events get longer."""
     num_trials = 25
     charge_event_lengths = range(3, 24, 5)
@@ -211,8 +214,14 @@ def test_v2g() -> None:
         for charge_event_length in charge_event_lengths
         for seed in np.random.randint(0, 1000, size=num_trials)
     ]
-    with ProcessPoolExecutor() as executor:
-        trials = list(executor.map(_one_v2g, args))
+
+    if multiprocess:
+        with ProcessPoolExecutor() as executor:
+            trials = list(executor.map(_one_v2g, args))
+    else:
+        trials = []
+        for arg in args:
+            trials.append(_one_v2g(arg))
 
     discharge = collections.defaultdict(list)
     for charge_event_length in charge_event_lengths:
@@ -228,6 +237,77 @@ def test_v2g() -> None:
         x <= y
         for x, y in zip(discharge["mean"][:-1], discharge["mean"][1:], strict=True)
     ), "discharge should be increasing always as charge event increases"
+
+
+def test_create_evs_array() -> None:
+    """Test the creation of the EVsArrayOneInterval from a list of OneInterval objects."""
+    from energypylinear.assets.evs import EVs
+
+    idx_length = 100
+
+    n_chargers = 3
+    charge_length = 6
+    n_charge_events = 100
+    ds = epl.data_generation.generate_random_ev_input_data(
+        idx_length,
+        n_chargers=n_chargers,
+        n_charge_events=n_charge_events,
+        charge_length=charge_length,
+        prices_mu=100,
+        prices_std=50,
+    )
+
+    evs_one = EVs(**ds, name="evs-one")
+    evs_two = EVs(**ds, name="evs-two")
+    battery = epl.Battery(electricity_prices=ds["electricity_prices"])
+
+    optimizer = epl.Optimizer()
+    freq = epl.Freq(30)
+    ivars = epl.IntervalVars()
+    for i in range(idx_length):
+        one_interval: list = []
+        for ev in [evs_one, evs_two]:
+            evs_assets = ev.one_interval(
+                optimizer,
+                i=i,
+                freq=freq,
+                flags=epl.Flags(allow_evs_discharge=True),
+            )
+            one_interval.extend(evs_assets)
+
+        assert len(one_interval) == 2 * (n_charge_events * (n_chargers + 1))
+
+        one_interval.append(battery.one_interval(optimizer, i=i, freq=freq))
+        assert len(one_interval) == 2 * (n_charge_events * (n_chargers + 1)) + 1
+
+        random.shuffle(one_interval)
+        ivars.append(one_interval)
+
+    assert len(ivars) == idx_length
+
+    evs_array = create_evs_array(ivars, 0, evs_one.cfg.name, is_spill=False)
+    assert evs_array.is_spill is False
+    assert evs_array.electric_charge_mwh.shape == (1, n_charge_events, n_chargers)
+    for n_charge_event in range(n_charge_events):
+        for n_charger in range(n_chargers):
+            assert (
+                evs_array.charge_event_idxs[0, n_charge_event, n_charger]
+                == n_charge_event
+            )
+            assert evs_array.charger_idxs[0, n_charge_event, n_charger] == n_charger
+
+    for attr in [
+        "electric_charge_mwh",
+        "electric_discharge_mwh",
+        "electric_charge_binary",
+        "electric_discharge_binary",
+        "electric_loss_mwh",
+        "initial_soc_mwh",
+        "final_soc_mwh",
+    ]:
+        for var in getattr(evs_array, attr).flatten():
+            if isinstance(var, pulp.LpVariable):
+                assert attr in var.name
 
 
 @hypothesis.settings(

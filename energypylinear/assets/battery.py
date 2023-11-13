@@ -199,7 +199,7 @@ class Battery:
         return f"<energypylinear.Battery {self.cfg.power_mw=} {self.cfg.capacity_mwh=}>"
 
     def one_interval(
-        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags
+        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> BatteryOneInterval:
         """Generate linear program data for one interval."""
         return BatteryOneInterval(
@@ -245,15 +245,15 @@ class Battery:
         """Constrain asset within an interval."""
         battery = ivars.filter_objective_variables(
             BatteryOneInterval, i=-1, asset_name=self.cfg.name
-        )[0][0]
+        )[0]
         constrain_only_charge_or_discharge(optimizer, battery, flags)
         constrain_battery_electricity_balance(optimizer, battery)
 
         #  TODO this is one battery asset, all intervals
         #  maybe refactor into the after intervals?
         #  bit of a weird case really
-        all_batteries = ivars.filter_objective_variables(
-            BatteryOneInterval, i=None, asset_name=self.cfg.name
+        all_batteries = ivars.filter_objective_variables_all_intervals(
+            BatteryOneInterval, asset_name=self.cfg.name
         )
         assert isinstance(all_batteries, list)
         constrain_connection_batteries_between_intervals(optimizer, all_batteries)
@@ -266,10 +266,12 @@ class Battery:
         """Constrain asset after all intervals."""
         initial = ivars.filter_objective_variables(
             BatteryOneInterval, i=0, asset_name=self.cfg.name
-        )[0][0]
+        )[0]
         final = ivars.filter_objective_variables(
             BatteryOneInterval, i=-1, asset_name=self.cfg.name
-        )[0][0]
+        )[0]
+        assert isinstance(initial, BatteryOneInterval)
+        assert isinstance(final, BatteryOneInterval)
         constrain_initial_final_charge(optimizer, initial, final)
 
     def optimize(
