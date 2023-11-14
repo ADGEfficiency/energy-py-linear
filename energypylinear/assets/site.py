@@ -339,7 +339,7 @@ class Site:
 
     def optimize(
         self,
-        objective: "str | dict | epl.optimizer.CustomObjectiveFunction",
+        objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
         flags: Flags = Flags(),
         verbose: int | bool = 2,
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),

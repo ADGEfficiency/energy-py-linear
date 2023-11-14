@@ -62,6 +62,7 @@ nav:
       - Optimize Multiple Assets: how-to/dispatch-site.md
       - Optimize for Carbon: how-to/price-carbon.md
       - Optimize for a Forecast: how-to/dispatch-forecast.md
+      - Use a Custom Objective Function: how-to/custom-objective.md
   - Validation:
       - Battery: validation/battery.md
       # - Combined Heat & Power: validation/chp.md

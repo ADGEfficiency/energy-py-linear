@@ -1,8 +1,5 @@
 """Tests the implementation of custom objective functions."""
 
-
-import random
-
 import numpy as np
 import pytest
 
@@ -102,12 +99,12 @@ def test_hardcoded(asset: str, objective: str) -> None:
         )
 
 
-@pytest.mark.parametrize("seed", [random.randint(0, 1000) for _ in range(5)])
+@pytest.mark.parametrize("n", range(5))
 @pytest.mark.parametrize("objective", ["price", "carbon"])
-def test_hardcoded_with_spills(seed: int, objective: str) -> None:
+def test_hardcoded_with_spills(n: int, objective: str) -> None:
     """Tests that the hardcoded objective function definitions are the same as the custom version."""
     ds = generate_random_ev_input_data(
-        24, n_chargers=1, n_charge_events=100, charge_length=3, seed=seed
+        24, n_chargers=1, n_charge_events=100, charge_length=3, seed=None
     )
 
     assets: list = [
@@ -222,7 +219,7 @@ def test_hardcoded_with_spills(seed: int, objective: str) -> None:
         )
 
 
-def test_single_asset() -> None:
+def test_two_chp_different_gas_prices() -> None:
     """Test that we can apply a custom objective function to a specific asset.
 
     This test sets up two CHP assets - one with a gas price that is half the other.
@@ -272,16 +269,6 @@ def test_single_asset() -> None:
             ]
         },
     )
-    print(
-        simulation.results[
-            [
-                "site-import_power_mwh",
-                "site-export_power_mwh",
-                "chp-eins-electric_generation_mwh",
-                "chp-zwei-electric_generation_mwh",
-            ]
-        ]
-    )
     np.testing.assert_array_almost_equal(
         simulation.results["site-import_power_mwh"], [0.0, 0.0, 0.0, 0.0, 100]
     )
@@ -295,3 +282,182 @@ def test_single_asset() -> None:
         simulation.results["chp-zwei-electric_generation_mwh"],
         [50.0, 100, 100, 100, 100],
     )
+
+
+def test_renewable_certificate() -> None:
+    """Test that we can apply a custom objective function to a specific asset.
+
+    This test sets two renewable generators, where one renewable generator output receives an additional income per MWh.
+    """
+    assets = [
+        epl.RenewableGenerator(
+            electric_generation_mwh=50,
+            name="wind",
+            electric_generation_lower_bound_pct=0.0,
+        ),
+        epl.RenewableGenerator(
+            electric_generation_mwh=50,
+            name="solar",
+            electric_generation_lower_bound_pct=0.0,
+        ),
+    ]
+    site = epl.Site(
+        assets=assets,
+        electricity_prices=[250, 250, 250, 250, 250],
+        export_limit_mw=25,
+        electric_load_mwh=[0, 50, 75, 100, 300],
+    )
+    simulation = site.optimize(
+        objective=epl.CustomObjectiveFunction(
+            terms=[
+                epl.Term(
+                    asset_type="site",
+                    variable="import_power_mwh",
+                    interval_data="electricity_prices",
+                ),
+                epl.Term(
+                    asset_type="site",
+                    variable="export_power_mwh",
+                    interval_data="electricity_prices",
+                    coefficient=-1,
+                ),
+                epl.Term(
+                    asset_name="solar",
+                    variable="electric_generation_mwh",
+                    coefficient=-25,
+                ),
+            ]
+        )
+    )
+    np.testing.assert_array_almost_equal(
+        simulation.results["solar-electric_generation_mwh"].values,
+        [25, 50, 50, 50, 50],
+    )
+    np.testing.assert_array_almost_equal(
+        simulation.results["wind-electric_generation_mwh"].values, [0, 25, 50, 50, 50]
+    )
+
+
+def test_heat_dump_cost() -> None:
+    """Test that we can apply a custom objective function to a specific asset.
+
+    This test sets up a heat pump system where dumping heat has a cost.
+    """
+
+    # first setup a site with a penalty to dumping heat, but a high electricity price
+    # heat pump will operate even though the electricity price is high
+    assets = [epl.HeatPump(electric_power_mw=10, cop=4), epl.Spill()]
+    site = epl.Site(
+        assets=assets,
+        electricity_prices=[200],
+        export_limit_mw=25,
+        high_temperature_load_mwh=100,
+        low_temperature_generation_mwh=100,
+    )
+    simulation = site.optimize(
+        objective=epl.CustomObjectiveFunction(
+            terms=[
+                epl.Term(
+                    asset_type="site",
+                    variable="import_power_mwh",
+                    interval_data="electricity_prices",
+                ),
+                epl.Term(
+                    asset_type="site",
+                    variable="export_power_mwh",
+                    interval_data="electricity_prices",
+                    coefficient=-1,
+                ),
+                epl.Term(
+                    asset_name="spill",
+                    variable="low_temperature_load_mwh",
+                    coefficient=100,
+                ),
+                *[
+                    epl.Term(
+                        asset_type="spill",
+                        variable=variable,
+                        coefficient=defaults.spill_objective_penalty,
+                    )
+                    for variable in [
+                        "electric_generation_mwh",
+                        "high_temperature_generation_mwh",
+                        "electric_load_mwh",
+                        "electric_charge_mwh",
+                        "electric_discharge_mwh",
+                    ]
+                ],
+            ]
+        )
+    )
+    np.testing.assert_array_almost_equal(
+        simulation.results["spill-low_temperature_load_mwh"], [70]
+    )
+    np.testing.assert_array_almost_equal(
+        simulation.results["heat-pump-electric_load_mwh"], [10]
+    )
+
+    # now setup a site with no penalty to dumping heat, but a high electricity price
+    # heat pump will not operate
+    assets = [epl.HeatPump(electric_power_mw=10, cop=4), epl.Spill()]
+    site = epl.Site(
+        assets=assets,
+        electricity_prices=[200],
+        export_limit_mw=25,
+        high_temperature_load_mwh=100,
+        low_temperature_generation_mwh=100,
+    )
+    simulation = site.optimize(
+        objective=epl.CustomObjectiveFunction(
+            terms=[
+                epl.Term(
+                    asset_type="site",
+                    variable="import_power_mwh",
+                    interval_data="electricity_prices",
+                ),
+                epl.Term(
+                    asset_type="site",
+                    variable="export_power_mwh",
+                    interval_data="electricity_prices",
+                    coefficient=-1,
+                ),
+            ]
+        )
+    )
+    cols = ["spill-low_temperature_load_mwh"]
+    np.testing.assert_array_almost_equal(
+        simulation.results["spill-low_temperature_load_mwh"], [100]
+    )
+    np.testing.assert_array_almost_equal(
+        simulation.results["heat-pump-electric_load_mwh"], [0]
+    )
+
+
+def test_behind_meter_battery_no_arbitrage() -> None:
+    """
+    Want to test:
+        - battery behind the meter,
+        - it can use behind the meter generation to charge,
+        - can discharge to offset on site demand,
+        - cannot import power to charge.
+
+    Behind the meter offset = site load - site import
+
+    Think I need to penalize?
+
+    battery charge - (site load - site import)
+    """
+
+
+def test_custom_errors() -> None:
+    """Test that we raise the correct value error when we try use a hardcoded objective that doesn't exist."""
+
+    site = epl.Site(
+        assets=[epl.Battery()],
+        electricity_prices=[250, 250, 250, 250, 250],
+        gas_prices=20,
+        electric_load_mwh=[0, 50, 75, 100, 300],
+        export_limit_mw=50,
+    )
+    with pytest.raises(ValueError):
+        site.optimize(objective="not-a-valid-objective")

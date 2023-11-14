@@ -40,7 +40,7 @@ class SimulationResult(pydantic.BaseModel):
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        return f"<energypylinear.SimulationResult feasible:{self.feasible}, results:{self.results.shape}>"
+        return f"<energypylinear.SimulationResult feasible:{self.feasible}, rows:{self.results.shape[0]}, cols:{self.results.shape[1]}>"
 
     def __str__(self) -> str:
         """A string representation of self."""

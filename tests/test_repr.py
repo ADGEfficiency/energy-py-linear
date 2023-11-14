@@ -1,5 +1,6 @@
 """Keeping coverage happy by testing __repr__ with print."""
 import numpy as np
+import pandas as pd
 
 import energypylinear as epl
 
@@ -126,6 +127,13 @@ def test_repr() -> None:
             emissions=0,
         ),
         epl.interval_data.IntervalVars(),
+        epl.SimulationResult(
+            site=epl.Site(assets=[], electricity_prices=[10]),
+            assets=[],
+            results=pd.DataFrame(),
+            feasible=True,
+            spill=False,
+        ),
     ]
     for th in things:
         repr(th)

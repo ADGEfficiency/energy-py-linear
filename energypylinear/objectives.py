@@ -11,6 +11,10 @@ from energypylinear.defaults import defaults
 
 @dataclasses.dataclass
 class Term:
+    """A single term in the objective function.
+
+    objective = Term + Term + Term"""
+
     variable: str
     asset_type: str | None = None
     interval_data: str | None = None
@@ -20,6 +24,10 @@ class Term:
 
 @dataclasses.dataclass
 class CustomObjectiveFunction:
+    """The objective function - a sum of terms.
+
+    CustomObjectiveFunction = Term + Term + Term"""
+
     terms: list[Term] = dataclasses.field(default_factory=list)
 
 
@@ -201,6 +209,7 @@ def get_objective(
     ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
+    """Creates the objective function - either from a hardcoded function or from a custom objective function."""
     hardcoded_objectives = {"price": price_objective, "carbon": carbon_objective}
 
     if isinstance(objective, str):

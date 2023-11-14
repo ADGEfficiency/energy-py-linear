@@ -20,16 +20,24 @@ def test_interval_vars() -> None:
     )
 
     ivars = IntervalVars()
-    ivars.append([site, evs, evs_two])
+    ivars.append([site, *evs, *evs_two])
 
     assert (
         len(
             ivars.filter_objective_variables(
-                instance_type=epl.assets.evs.EVOneInterval,
-                i=0,
+                instance_type=epl.assets.evs.EVOneInterval, i=0
             )
         )
-        == 2
+        == 3 * 12 * 2
+    )
+
+    assert (
+        len(
+            ivars.filter_objective_variables(
+                instance_type=epl.assets.evs.EVSpillOneInterval, i=0
+            )
+        )
+        == 1 * 12 * 2
     )
 
     assert (
@@ -40,7 +48,7 @@ def test_interval_vars() -> None:
                 asset_name=asset.cfg.name,
             )
         )
-        == 1
+        == 3 * 12
     )
     ivars[0]
     ivars[-1]
