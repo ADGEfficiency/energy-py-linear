@@ -30,6 +30,7 @@ theme:
         icon: material/lightbulb
         name: Switch to light mode
 plugins:
+  - material-plausible
   - search
   - social
   - mike:
@@ -89,3 +90,6 @@ nav:
 extra:
   version:
     provider: mike
+  analytics:
+    provider: plausible
+    domain: energypylinear.adgefficiency.com
