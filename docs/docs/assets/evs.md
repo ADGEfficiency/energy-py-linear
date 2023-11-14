@@ -4,7 +4,7 @@ Control a number of EV chargers to charge a number of charge events.
 
 Chargers are configured by their size given in `charger_mws`.
 
-A `charge_event` is a time interval where an EV can be charged.  This is given as a boolean 2D array, with one binary digit for each charge events, interval pairs.
+A `charge_event` is a time interval where an EV can be charged.  This is given as a boolean 2D array, with one binary digit for each charge event, interval pairs.
 
 Each charge event has a required amount of electricity `charge_event_mwh`, that can be delivered when the `charge_event` is 1.  The model is constrained so that each charge event receives all of it's `charge_event_mwh`.
 
@@ -55,10 +55,12 @@ assert all(
         "evs-charger-0-electric_charge_binary",
         "evs-charger-0-electric_discharge_mwh",
         "evs-charger-0-electric_discharge_binary",
+        "evs-charger-0-electric_loss_mwh",
         "evs-charger-1-electric_charge_mwh",
         "evs-charger-1-electric_charge_binary",
         "evs-charger-1-electric_discharge_mwh",
         "evs-charger-1-electric_discharge_binary",
+        "evs-charger-1-electric_loss_mwh",
         "evs-charge-event-0-electric_charge_mwh",
         "evs-charge-event-0-electric_discharge_mwh",
         "evs-charge-event-0-electric_loss_mwh",
@@ -83,6 +85,7 @@ assert all(
         "evs-charger-spill-evs-electric_charge_binary",
         "evs-charger-spill-evs-electric_discharge_mwh",
         "evs-charger-spill-evs-electric_discharge_binary",
+        "evs-charger-spill-evs-electric_loss_mwh",
         "total-electric_generation_mwh",
         "total-electric_load_mwh",
         "total-high_temperature_generation_mwh",

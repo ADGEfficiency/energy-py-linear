@@ -1,10 +1,10 @@
 """Electric vehicle asset for optimizing the smart charging of electric vehicles."""
 import pathlib
+import typing
 
 import numpy as np
 import pulp
 import pydantic
-from pydantic import ConfigDict
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
@@ -65,31 +65,41 @@ class EVsConfig(pydantic.BaseModel):
     charge_event_cfgs: np.ndarray
     charge_events: np.ndarray
     freq_mins: int
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    @pydantic.validator("name")
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<EVsConfig name: {self.name}, n_chargers: {len(self.charger_cfgs)}, n_charge_events: {len(self.charge_event_cfgs)}>"
+
+    def __str__(self) -> str:
+        """A string representation of self."""
+        return repr(self)
+
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
         assert "evs" in name
         return name
 
-    @pydantic.validator("charge_events")
-    def validate_charge_events(
-        cls, charge_events: np.ndarray, values: dict
-    ) -> np.ndarray:
+    @pydantic.model_validator(mode="after")
+    def validate_charge_events(self) -> "EVsConfig":
         """Check charge events match the configs"""
-        validate_charge_events(values["charge_event_cfgs"], charge_events)
-        return charge_events
+        validate_charge_events(self.charge_event_cfgs, self.charge_events)
+        return self
 
 
 class EVOneInterval(AssetOneInterval):
     """EV asset data for a single interval.
 
     This single data structure contains data for one asset
-    in one interval.
-    """
+    in one interval."""
 
-    cfg: EVsConfig
+    i: int
+    charge_event_idx: int
+    charge_event_cfg: ChargeEventConfig
+    charger_idx: int
+    charger_cfg: ChargerConfig
 
     electric_charge_mwh: pulp.LpVariable | float
     electric_charge_binary: pulp.LpVariable | int
@@ -97,10 +107,31 @@ class EVOneInterval(AssetOneInterval):
     electric_discharge_binary: pulp.LpVariable | int
     initial_soc_mwh: pulp.LpVariable | float
     final_soc_mwh: pulp.LpVariable | float
-    electric_loss_mwh: pulp.LpVariable
+    electric_loss_mwh: pulp.LpVariable | float
 
     is_spill: bool = False
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<EVOneInterval i: {self.i} charge_event_idx: {self.charge_event_idx} charger_idx: {self.charger_idx}, is_spill: {self.is_spill}>"
+
+    def __str__(self) -> str:
+        """A string representation of self."""
+        return repr(self)
+
+
+class EVSpillOneInterval(EVOneInterval):
+    """Spill EV asset data for a single interval.
+
+    This single data structure contains data for one asset
+    in one interval."""
+
+    is_spill: typing.Literal[True] = True
+
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<EVSpillOneInterval i: {self.i} charge_event_idx: {self.charge_event_idx} charger_idx: {self.charger_idx}, is_spill: {self.is_spill}>"
 
 
 class EVsArrayOneInterval(AssetOneInterval):
@@ -121,11 +152,86 @@ class EVsArrayOneInterval(AssetOneInterval):
     electric_discharge_mwh: np.ndarray
     electric_discharge_binary: np.ndarray
     electric_loss_mwh: np.ndarray
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
+    charge_event_idxs: np.ndarray
+    charger_idxs: np.ndarray
 
     def __repr__(self) -> str:
         """A string representation of self."""
-        return f"<EVsArrayOneInterval i: {self.i} chargers: {len(self.cfg.charger_cfgs)} charge-events: {len(self.cfg.charge_event_cfgs)}>"
+        return f"<EVsArrayOneInterval i: {self.i} chargers: {len(self.cfg.charger_cfgs)} charge-events: {len(self.cfg.charge_event_cfgs)}, is_spill: {self.is_spill}>"
+
+
+def create_evs_array(
+    ivars: "epl.IntervalVars", i: int, asset_name: str, is_spill: bool
+) -> EVsArrayOneInterval:
+    """Creates the array representation from EVOneInterval objects."""
+    one_intervals: list[EVOneInterval] = typing.cast(
+        list[EVOneInterval],
+        ivars.filter_objective_variables(
+            epl.assets.evs.EVOneInterval, i=i, asset_name=asset_name
+        ),
+    )
+
+    one_intervals = [oi for oi in one_intervals if oi.is_spill == is_spill]
+    asset_cfg = one_intervals[0].cfg
+    if is_spill:
+        assert len(one_intervals) == len(asset_cfg.charge_event_cfgs) * 1
+
+    else:
+        assert len(one_intervals) == len(asset_cfg.charge_event_cfgs) * len(
+            asset_cfg.charger_cfgs
+        )
+
+    n_chargers = len(asset_cfg.charger_cfgs)
+    n_charge_events = len(asset_cfg.charge_event_cfgs)
+
+    #  2D arrays
+    initial_socs_mwh = np.zeros((1, n_charge_events)).astype(object)
+    final_socs_mwh = np.zeros((1, n_charge_events)).astype(object)
+
+    #  3D arrays
+    charges_mwh = np.zeros((1, n_charge_events, n_chargers)).astype(object)
+    charges_binary = np.zeros((1, n_charge_events, n_chargers)).astype(object)
+    discharges_mwh = np.zeros((1, n_charge_events, n_chargers)).astype(object)
+    discharges_binary = np.zeros((1, n_charge_events, n_chargers)).astype(object)
+    losses_mwh = np.zeros((1, n_charge_events, n_chargers)).astype(object)
+    charge_event_idxs = np.zeros((1, n_charge_events, n_chargers)).astype(object)
+    charger_idxs = np.zeros((1, n_charge_events, n_chargers)).astype(object)
+
+    for oi in one_intervals:
+        initial_socs_mwh[0, oi.charge_event_idx] = oi.initial_soc_mwh
+        final_socs_mwh[0, oi.charge_event_idx] = oi.final_soc_mwh
+        charges_mwh[0, oi.charge_event_idx, oi.charger_idx] = oi.electric_charge_mwh
+        charges_binary[
+            0, oi.charge_event_idx, oi.charger_idx
+        ] = oi.electric_charge_binary
+        discharges_mwh[
+            0, oi.charge_event_idx, oi.charger_idx
+        ] = oi.electric_discharge_mwh
+        discharges_binary[
+            0, oi.charge_event_idx, oi.charger_idx
+        ] = oi.electric_discharge_binary
+        losses_mwh[0, oi.charge_event_idx, oi.charger_idx] = oi.electric_loss_mwh
+        charge_event_idxs[0, oi.charge_event_idx, oi.charger_idx] = oi.charge_event_idx
+        charger_idxs[0, oi.charge_event_idx, oi.charger_idx] = oi.charger_idx
+
+    evs_array = epl.assets.evs.EVsArrayOneInterval(
+        i=i,
+        cfg=asset_cfg,
+        charge_event_idxs=charge_event_idxs,
+        charger_idxs=charger_idxs,
+        electric_charge_mwh=charges_mwh,
+        electric_charge_binary=charges_binary,
+        electric_discharge_mwh=discharges_mwh,
+        electric_discharge_binary=discharges_binary,
+        initial_soc_mwh=initial_socs_mwh,
+        final_soc_mwh=final_socs_mwh,
+        electric_loss_mwh=losses_mwh,
+        is_spill=is_spill,
+    )
+
+    return evs_array
 
 
 def evs_one_interval(
@@ -141,7 +247,7 @@ def evs_one_interval(
     create_charge_event_soc: bool = True,
     create_discharge_variables: bool = True,
     is_spill: bool = False,
-) -> tuple[list[EVOneInterval], EVsArrayOneInterval]:
+) -> list[EVOneInterval] | list[EVSpillOneInterval]:
     """Create EV asset data for a single interval.
 
     Create a list of `EVOneInterval` and one `EVsArrayOneInterval` data structures.
@@ -152,22 +258,6 @@ def evs_one_interval(
 
     The array representation is used in constructing the linear program.
     """
-    n_chargers = len(charger_cfgs)
-    n_charge_events = len(charge_event_cfgs)
-
-    #  1D array
-    evs = []
-
-    #  2D arrays
-    initial_socs_mwh = np.zeros((1, n_charge_events)).astype(object)
-    final_socs_mwh = np.zeros((1, n_charge_events)).astype(object)
-
-    #  3D arrays
-    charges_mwh = np.zeros((1, n_charge_events, n_chargers)).astype(object)
-    charges_binary = np.zeros((1, n_charge_events, n_chargers)).astype(object)
-    discharges_mwh = np.zeros((1, n_charge_events, n_chargers)).astype(object)
-    discharges_binary = np.zeros((1, n_charge_events, n_chargers)).astype(object)
-    losses_mwh = np.zeros((1, n_charge_events, n_chargers)).astype(object)
 
     """
     there is opportunity here to prune the number of variables
@@ -180,6 +270,7 @@ def evs_one_interval(
     - this seems like the real profitable one
     - most of the time the charge event binary is 0
     """
+    evs: list = []
 
     for charge_event_idx, charge_event_cfg in enumerate(charge_event_cfgs):
         if create_charge_event_soc:
@@ -198,15 +289,12 @@ def evs_one_interval(
             initial_charge = 0
             final_charge = 0
 
-        initial_socs_mwh[0, charge_event_idx] = initial_charge
-        final_socs_mwh[0, charge_event_idx] = final_charge
-
         for charger_idx, charger_cfg in enumerate(charger_cfgs):
-            name = f"i:{i},asset:{asset_name},charge-event:{charge_event_idx},charger:{charger_cfg.name}"
+            name = f"i:{i},asset:{asset_name},charge-event:{charge_event_idx},charger:{charger_cfg.name},is_spill:{is_spill}"
 
             if flags.limit_charge_variables_to_valid_events:
                 charge_event = charge_events[i, charge_event_idx]
-                charge_mwh = (
+                electric_charge_mwh = (
                     optimizer.continuous(
                         f"electric_charge_mwh,{name}",
                         low=0,
@@ -215,24 +303,26 @@ def evs_one_interval(
                     if charge_event == 1
                     else 0
                 )
-                charge_binary = (
+                electric_charge_binary = (
                     optimizer.binary(f"electric_charge_binary,{name}")
                     if charge_event == 1
                     else 0
                 )
 
             else:
-                charge_mwh = optimizer.continuous(
+                electric_charge_mwh = optimizer.continuous(
                     f"electric_charge_mwh,{name}",
                     low=0,
                     up=freq.mw_to_mwh(charger_cfg.power_max_mw),
                 )
-                charge_binary = optimizer.binary(f"electric_charge_binary,{name}")
+                electric_charge_binary = optimizer.binary(
+                    f"electric_charge_binary,{name}"
+                )
 
-            discharge_mwh = 0
-            discharge_binary = 0
+            electric_discharge_mwh = 0
+            electric_discharge_binary = 0
             if create_discharge_variables:
-                discharge_mwh = (
+                electric_discharge_mwh = (
                     optimizer.continuous(
                         f"electric_discharge_mwh,{name}",
                         low=0,
@@ -241,7 +331,7 @@ def evs_one_interval(
                     if flags.allow_evs_discharge
                     else 0
                 )
-                discharge_binary = (
+                electric_discharge_binary = (
                     optimizer.binary(f"electric_discharge_binary,{name}")
                     if flags.allow_evs_discharge
                     else 0
@@ -251,41 +341,45 @@ def evs_one_interval(
                 f"electric_loss_mwh,{name}",
                 low=0,
             )
-
-            evs.append(
-                EVOneInterval(
-                    cfg=cfg,
-                    electric_charge_mwh=charge_mwh,
-                    electric_charge_binary=charge_binary,
-                    electric_discharge_mwh=discharge_mwh,
-                    electric_discharge_binary=discharge_binary,
-                    initial_soc_mwh=initial_charge,
-                    final_soc_mwh=final_charge,
-                    electric_loss_mwh=loss_mwh,
-                    is_spill=is_spill,
+            if is_spill:
+                evs.append(
+                    EVSpillOneInterval(
+                        i=i,
+                        cfg=cfg,
+                        charge_event_idx=charge_event_idx,
+                        charge_event_cfg=charge_event_cfg,
+                        charger_idx=charger_idx,
+                        charger_cfg=charger_cfg,
+                        electric_charge_mwh=electric_charge_mwh,
+                        electric_charge_binary=electric_charge_binary,
+                        electric_discharge_mwh=electric_discharge_mwh,
+                        electric_discharge_binary=electric_discharge_binary,
+                        initial_soc_mwh=initial_charge,
+                        final_soc_mwh=final_charge,
+                        electric_loss_mwh=loss_mwh,
+                        is_spill=is_spill,
+                    )
                 )
-            )
-            charges_mwh[0, charge_event_idx, charger_idx] = charge_mwh
-            charges_binary[0, charge_event_idx, charger_idx] = charge_binary
-            discharges_mwh[0, charge_event_idx, charger_idx] = discharge_mwh
-            discharges_binary[0, charge_event_idx, charger_idx] = discharge_binary
-            losses_mwh[0, charge_event_idx, charger_idx] = loss_mwh
-
-    evs_array = EVsArrayOneInterval(
-        i=i,
-        electric_charge_mwh=charges_mwh,
-        electric_charge_binary=charges_binary,
-        electric_discharge_mwh=discharges_mwh,
-        electric_discharge_binary=discharges_binary,
-        cfg=cfg,
-        # charger_cfgs=charger_cfgs,
-        # charge_event_cfgs=charge_event_cfgs,
-        initial_soc_mwh=initial_socs_mwh,
-        final_soc_mwh=final_socs_mwh,
-        electric_loss_mwh=losses_mwh,
-        is_spill=is_spill,
-    )
-    return evs, evs_array
+            else:
+                evs.append(
+                    EVOneInterval(
+                        i=i,
+                        cfg=cfg,
+                        charge_event_idx=charge_event_idx,
+                        charge_event_cfg=charge_event_cfg,
+                        charger_idx=charger_idx,
+                        charger_cfg=charger_cfg,
+                        electric_charge_mwh=electric_charge_mwh,
+                        electric_charge_binary=electric_charge_binary,
+                        electric_discharge_mwh=electric_discharge_mwh,
+                        electric_discharge_binary=electric_discharge_binary,
+                        initial_soc_mwh=initial_charge,
+                        final_soc_mwh=final_charge,
+                        electric_loss_mwh=loss_mwh,
+                        is_spill=is_spill,
+                    )
+                )
+    return evs
 
 
 def constrain_charge_discharge_min_max(
@@ -393,35 +487,30 @@ def constrain_charge_event_electricity_balance(
         )
 
         #  losses
-        """
-        used to not do the iteration over chargers here and just take the sum
-        means less constraints
-        """
-        for charger_idx, _ in enumerate(evs_array.cfg.charger_cfgs):
-            optimizer.constrain(
-                optimizer.sum(
-                    evs_array.electric_charge_mwh[0, charge_event_idx, charger_idx]
+        for arr in [evs_array, spill_evs_array]:
+            for charger_idx, _ in enumerate(arr.cfg.charger_cfgs):
+                optimizer.constrain(
+                    optimizer.sum(
+                        arr.electric_charge_mwh[0, charge_event_idx, charger_idx]
+                    )
+                    * (1 - charge_event_cfg.efficiency_pct)
+                    == optimizer.sum(
+                        arr.electric_loss_mwh[0, charge_event_idx, charger_idx]
+                    )
                 )
-                * (1 - charge_event_cfg.efficiency_pct)
-                == optimizer.sum(
-                    evs_array.electric_loss_mwh[0, charge_event_idx, charger_idx]
-                )
-            )
 
 
 def constrain_connection_charge_events_between_intervals(
-    optimizer: Optimizer, evs: list[EVsArrayOneInterval], i: int
+    optimizer: Optimizer,
+    old: EVsArrayOneInterval,
+    new: EVsArrayOneInterval,
 ) -> None:
     """Constrain state of charges between intervals.
 
     This uses data from two adjacent intervals.
 
     This constraint is conditionally applied once per interval."""
-    if i == 0:
-        return None
 
-    old = evs[-2]
-    new = evs[-1]
     for initial_soc, final_soc in zip(
         new.initial_soc_mwh[0], old.final_soc_mwh[0], strict=True
     ):
@@ -433,18 +522,19 @@ def constrain_connection_charge_events_between_intervals(
 
 def constrain_initial_final_charge(
     optimizer: Optimizer,
-    evs: list[EVsArrayOneInterval],
+    initial: EVsArrayOneInterval,
+    final: EVsArrayOneInterval,
     charge_event_cfgs: np.ndarray,
 ) -> None:
     """Constrain state of charge at the beginning and end of the simulation."""
 
     for charge_event_idx, charge_event_cfg in enumerate(charge_event_cfgs):
         #  constrain the initial soc
-        optimizer.constrain(evs[0].initial_soc_mwh[0, charge_event_idx] == 0)
+        optimizer.constrain(initial.initial_soc_mwh[0, charge_event_idx] == 0)
 
         #  constrain the final soc
         optimizer.constrain(
-            evs[-1].final_soc_mwh[0, charge_event_idx] == charge_event_cfg.capacity_mwh
+            final.final_soc_mwh[0, charge_event_idx] == charge_event_cfg.capacity_mwh
         )
 
     #  intentionally don't constrain the spill charger
@@ -559,7 +649,7 @@ class EVs:
 
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
-    ) -> tuple:
+    ) -> list[EVOneInterval]:
         """Create EV asset data for a single interval."""
 
         assert isinstance(self.cfg.charge_event_cfgs, np.ndarray)
@@ -567,7 +657,7 @@ class EVs:
         assert isinstance(self.cfg.spill_charger_cfgs, np.ndarray)
         assert isinstance(self.cfg.charge_events, np.ndarray)
 
-        evs, evs_array = evs_one_interval(
+        evs = evs_one_interval(
             optimizer,
             self.cfg,
             self.cfg.charger_cfgs,
@@ -578,7 +668,7 @@ class EVs:
             asset_name=self.cfg.name,
             flags=flags,
         )
-        spill_evs, spill_evs_array = evs_one_interval(
+        spill_evs = evs_one_interval(
             optimizer,
             self.cfg,
             self.cfg.spill_charger_cfgs,
@@ -592,7 +682,7 @@ class EVs:
             create_discharge_variables=False,
             is_spill=True,
         )
-        return evs, evs_array, spill_evs, spill_evs_array
+        return [*evs, *spill_evs]
 
     def constrain_within_interval(
         self,
@@ -608,7 +698,7 @@ class EVs:
 
         constrain_charge_discharge_min_max(
             optimizer,
-            ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
+            create_evs_array(ivars, i=i, asset_name=self.cfg.name, is_spill=False),
             self.cfg.charge_events,
             freq,
             self.cfg.charger_cfgs,
@@ -619,7 +709,8 @@ class EVs:
 
         constrain_charge_discharge_min_max(
             optimizer,
-            ivars.filter_evs_array(is_spill=True, i=i, asset_name=self.cfg.name),
+            # ivars.filter_evs_array(is_spill=True, i=i, asset_name=self.cfg.name),
+            create_evs_array(ivars, i=i, asset_name=self.cfg.name, is_spill=True),
             self.cfg.charge_events,
             freq,
             self.cfg.spill_charger_cfgs,
@@ -631,19 +722,28 @@ class EVs:
 
         constrain_single_charger_charge_event(
             optimizer,
-            ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
+            # ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
+            create_evs_array(ivars, i=i, asset_name=self.cfg.name, is_spill=False),
             self.cfg.charger_cfgs,
             self.cfg.charge_event_cfgs,
         )
 
         constrain_charge_event_electricity_balance(
             optimizer,
-            ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
-            ivars.filter_evs_array(is_spill=True, i=i, asset_name=self.cfg.name),
+            # ivars.filter_evs_array(is_spill=False, i=i, asset_name=self.cfg.name),
+            # ivars.filter_evs_array(is_spill=True, i=i, asset_name=self.cfg.name),
+            create_evs_array(ivars, i=i, asset_name=self.cfg.name, is_spill=False),
+            create_evs_array(ivars, i=i, asset_name=self.cfg.name, is_spill=True),
         )
-        constrain_connection_charge_events_between_intervals(
-            optimizer, ivars.filter_all_evs_array(False, self.cfg.name), i
-        )
+
+        if i > 0:
+            constrain_connection_charge_events_between_intervals(
+                optimizer,
+                create_evs_array(
+                    ivars, i=i - 1, asset_name=self.cfg.name, is_spill=False
+                ),
+                create_evs_array(ivars, i=i, asset_name=self.cfg.name, is_spill=False),
+            )
 
     def constrain_after_intervals(
         self,
@@ -654,14 +754,16 @@ class EVs:
         assert isinstance(self.cfg.charge_event_cfgs, np.ndarray)
         constrain_initial_final_charge(
             optimizer,
-            ivars.filter_all_evs_array(False, self.cfg.name),
+            create_evs_array(ivars, i=0, asset_name=self.cfg.name, is_spill=False),
+            create_evs_array(ivars, i=-1, asset_name=self.cfg.name, is_spill=False),
+            # ivars.filter_all_evs_array(False, self.cfg.name),
             self.cfg.charge_event_cfgs,
         )
 
     def optimize(
         self,
         objective: str = "price",
-        verbose: bool = True,
+        verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":

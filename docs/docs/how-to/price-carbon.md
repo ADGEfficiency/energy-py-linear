@@ -25,9 +25,9 @@ asset = epl.Battery(
     electricity_prices=electricity_prices,
     electricity_carbon_intensities=electricity_carbon_intensities,
 )
-carbon = asset.optimize(objective="carbon", verbose=False)
+carbon = asset.optimize(objective="carbon", verbose=3)
 
-carbon_account = epl.get_accounts(carbon.results, verbose=False)
+carbon_account = epl.get_accounts(carbon.results, verbose=3)
 print(f"{carbon_account=}")
 ```
 
@@ -54,10 +54,10 @@ asset = epl.Battery(
 )
 price = asset.optimize(
     objective="price",
-    verbose=False
+    verbose=3
 )
 
-price_account = epl.get_accounts(price.results, verbose=False)
+price_account = epl.get_accounts(price.results, verbose=3)
 print(f"{price_account=}")
 ```
 

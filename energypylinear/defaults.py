@@ -32,5 +32,7 @@ class Defaults(pydantic.BaseModel):
     #  used for < 0 stuff
     epsilon: float = -1e-4
 
+    log_level: int = 2
+
 
 defaults = Defaults()

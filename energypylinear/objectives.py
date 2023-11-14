@@ -1,38 +1,11 @@
 """Linear programming objective cost functions for price and carbon."""
+import typing
+
 import numpy as np
 import pulp
 
 import energypylinear as epl
 from energypylinear.defaults import defaults
-
-
-def filter_spill_evs(
-    ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.assets.site.SiteIntervalData",
-) -> "list[list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]]":
-    """
-    Complexity here comes from the need to extract only the spill EVs linear program
-    variables.
-
-    """
-    evs = ivars.filter_objective_variables(epl.assets.evs.EVOneInterval)
-    spill_evs: list[
-        list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]
-    ] = []
-    for i, assets_one_interval in enumerate(evs):
-        spill_evs_one_interval: list[
-            epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval
-        ] = []
-        for ev in assets_one_interval:
-            assert isinstance(ev, epl.assets.evs.EVOneInterval)
-            if ev.is_spill:
-                spill_evs_one_interval.append(ev)
-        spill_evs.append(spill_evs_one_interval)
-
-    #  hmm
-    # if len(spill_evs) == 0:
-    #     spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
-    return spill_evs
 
 
 def price_objective(
@@ -55,20 +28,46 @@ def price_objective(
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
 
-    #  cheating here with the site name (the second `site`)
-    sites = ivars.asset["site"]["site"]
-    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-    spill_evs = filter_spill_evs(ivars, interval_data)
-    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
-    boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
+    #  TODO cheating here with the site name
+    sites = typing.cast(
+        list[list["epl.assets.site.SiteOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.site.SiteOneInterval, asset_name="site"
+        ),
+    )
+    spills = typing.cast(
+        list[list["epl.assets.spill.SpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.spill.SpillOneInterval
+        ),
+    )
+    spill_evs = typing.cast(
+        list[list["epl.assets.evs.EVSpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.evs.EVSpillOneInterval
+        ),
+    )
+    generators = typing.cast(
+        list[list["epl.assets.chp.CHPOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(epl.assets.chp.CHPOneInterval),
+    )
+    boilers = typing.cast(
+        list[list["epl.assets.boiler.BoilerOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.boiler.BoilerOneInterval
+        ),
+    )
 
     assert isinstance(interval_data.gas_prices, np.ndarray)
     assert isinstance(interval_data.electricity_prices, np.ndarray)
     assert isinstance(interval_data.export_electricity_prices, np.ndarray)
 
-    obj = [
-        sites[i].import_power_mwh * interval_data.electricity_prices[i]
-        - sites[i].export_power_mwh * interval_data.export_electricity_prices[i]
+    obj: list[typing.Any | float] = [
+        [
+            site.import_power_mwh * interval_data.electricity_prices[i]
+            - site.export_power_mwh * interval_data.export_electricity_prices[i]
+            for site in sites[i]
+        ]
         + [
             spill.electric_generation_mwh * defaults.spill_objective_penalty
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
@@ -113,18 +112,43 @@ def carbon_objective(
     Returns:
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
-
-    #  cheating here with the site name (the second `site`)
-    sites = ivars.asset["site"]["site"]
-    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-    spill_evs = filter_spill_evs(ivars, interval_data)
-    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
-    boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
+    #  TODO cheating here with the site name
+    sites = typing.cast(
+        list[list["epl.assets.site.SiteOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.site.SiteOneInterval, asset_name="site"
+        ),
+    )
+    spills = typing.cast(
+        list[list["epl.assets.spill.SpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.spill.SpillOneInterval
+        ),
+    )
+    spill_evs = typing.cast(
+        list[list["epl.assets.evs.EVSpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.evs.EVSpillOneInterval
+        ),
+    )
+    generators = typing.cast(
+        list[list["epl.assets.chp.CHPOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(epl.assets.chp.CHPOneInterval),
+    )
+    boilers = typing.cast(
+        list[list["epl.assets.boiler.BoilerOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.boiler.BoilerOneInterval
+        ),
+    )
 
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
-    obj = [
-        sites[i].import_power_mwh * interval_data.electricity_carbon_intensities[i]
-        - sites[i].export_power_mwh * interval_data.electricity_carbon_intensities[i]
+    obj: list[typing.Any | float] = [
+        [
+            site.import_power_mwh * interval_data.electricity_carbon_intensities[i]
+            - site.export_power_mwh * interval_data.electricity_carbon_intensities[i]
+            for site in sites[i]
+        ]
         + [
             spill.electric_generation_mwh * defaults.spill_objective_penalty
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty

@@ -4,14 +4,29 @@ import json
 
 import pandas as pd
 
-from energypylinear.logger import logger
+from energypylinear.defaults import defaults
+from energypylinear.logger import logger, set_logging_level
 from energypylinear.optimizer import Optimizer
 
 optimizer = Optimizer()
 
 
+def aggregate_check(debug: pd.DataFrame, non_sum_aggs: dict | None = None) -> str:
+    """Creates a pretty JSON string of aggregated data from a DataFrame."""
+    aggs = {k: "sum" for k in debug.keys()}
+
+    if non_sum_aggs:
+        for k, v in non_sum_aggs.items():
+            aggs[k] = v
+
+    aggregated = debug.agg(aggs)
+    aggregated = aggregated.to_dict()
+    return json.dumps({f"{aggs[k]}-{k}": v for k, v in aggregated.items()}, indent=2)
+
+
 def check_electricity_balance(
-    simulation: pd.DataFrame, verbose: bool = True
+    simulation: pd.DataFrame,
+    verbose: int | bool = defaults.log_level,
 ) -> pd.DataFrame:
     """Checks the electricity balance."""
     inp = (
@@ -44,22 +59,24 @@ def check_electricity_balance(
             "soc": soc,
         }
     )
-    if verbose:
-        logger.info("check_electricity_balance", debug=debug.to_dict(orient="list"))
 
-    assert balance.all(), json.dumps(debug.to_dict(), indent=4)
+    aggregated = aggregate_check(debug, {"balance": "all", "soc": "mean"})
+    logger.debug(f"checks.check_electricity_balance: aggs={aggregated}")
+    assert balance.all(), aggregated
     return debug
 
 
 def check_high_temperature_heat_balance(
-    simulation: pd.DataFrame, total_mapper: dict | None = None, verbose: bool = True
+    simulation: pd.DataFrame,
+    total_mapper: dict | None = None,
+    verbose: int | bool = defaults.log_level,
 ) -> pd.DataFrame:
     """Checks the high temperature heat balance."""
     inp = simulation["total-high_temperature_generation_mwh"]
     out = simulation["total-high_temperature_load_mwh"]
     balance = abs(inp - out) < 1e-4
 
-    dbg = pd.DataFrame(
+    debug = pd.DataFrame(
         {
             "in": inp,
             "out": out,
@@ -69,25 +86,25 @@ def check_high_temperature_heat_balance(
     if total_mapper:
         for key in ["high_temperature_generation_mwh", "high_temperature_load_mwh"]:
             for col in total_mapper[key]:
-                dbg[col] = simulation[col]
+                debug[col] = simulation[col]
 
-    if verbose:
-        logger.info(
-            "check_high_temperature_heat_balance", debug=dbg.to_dict(orient="list")
-        )
-    assert balance.all()
-    return dbg
+    aggregated = aggregate_check(debug, {"balance": "all"})
+    logger.debug(f"checks.check_high_temperature_heat_balance: aggs={aggregated}")
+    assert balance.all(), aggregated
+    return debug
 
 
 def check_low_temperature_heat_balance(
-    simulation: pd.DataFrame, total_mapper: dict | None = None, verbose: bool = True
+    simulation: pd.DataFrame,
+    total_mapper: dict | None = None,
+    verbose: int | bool = defaults.log_level,
 ) -> pd.DataFrame:
     """Checks the high temperature heat balance."""
     inp = simulation["total-low_temperature_generation_mwh"]
     out = simulation["total-low_temperature_load_mwh"]
     balance = abs(inp - out) < 1e-4
 
-    dbg = pd.DataFrame(
+    debug = pd.DataFrame(
         {
             "in": inp,
             "out": out,
@@ -97,20 +114,18 @@ def check_low_temperature_heat_balance(
     if total_mapper:
         for key in ["low_temperature_generation_mwh", "low_temperature_load_mwh"]:
             for col in total_mapper[key]:
-                dbg[col] = simulation[col]
+                debug[col] = simulation[col]
 
-    if verbose:
-        logger.info(
-            "check_low_temperature_heat_balance", debug=dbg.to_dict(orient="list")
-        )
-    assert balance.all()
-    return dbg
+    aggregated = aggregate_check(debug, {"balance": "all"})
+    logger.debug(f"checks.check_low_temperature_heat_balance: aggs={aggregated}")
+    assert balance.all(), aggregated
+    return debug
 
 
 def check_results(
     results: pd.DataFrame,
     total_mapper: dict | None = None,
-    verbose: bool = True,
+    verbose: int | bool = defaults.log_level,
     check_valve: bool = False,
     check_evs: bool = False,
 ) -> dict:
@@ -120,6 +135,7 @@ def check_results(
         interval_data: input interval data to the simulation.
         simulation: simulation results.
     """
+    set_logging_level(logger, verbose)
     electricity_balance = check_electricity_balance(results, verbose)
     ht_balance = check_high_temperature_heat_balance(
         results,
