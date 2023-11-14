@@ -134,7 +134,6 @@ def constrain_initial_final_charge(
     """Constrain the battery state of charge at the start and end of the simulation."""
     assert isinstance(initial, BatteryOneInterval)
     assert isinstance(final, BatteryOneInterval)
-
     optimizer.constrain(
         initial.electric_initial_charge_mwh == initial.cfg.initial_charge_mwh
     )

@@ -39,86 +39,91 @@ def get_assets(ds: dict, asset: str) -> list:
     return assets
 
 
+def get_objective_terms() -> dict[str, list]:
+    """Helper function to get the price and carbon objectives."""
+    price = [
+        {
+            "asset_type": "site",
+            "variable": "import_power_mwh",
+            "interval_data": "electricity_prices",
+        },
+        {
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+            "interval_data": "electricity_prices",
+            "coefficient": -1,
+        },
+        {
+            "asset_type": "*",
+            "variable": "gas_consumption_mwh",
+            "interval_data": "gas_prices",
+        },
+    ]
+    carbon = [
+        {
+            "asset_type": "site",
+            "variable": "import_power_mwh",
+            "interval_data": "electricity_carbon_intensities",
+        },
+        {
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+            "interval_data": "electricity_carbon_intensities",
+            "coefficient": -1,
+        },
+        {
+            "asset_type": "*",
+            "variable": "gas_consumption_mwh",
+            "coefficient": defaults.gas_carbon_intensity,
+        },
+    ]
+
+    for obj in [price, carbon]:
+        obj.extend(
+            [
+                {
+                    "asset_type": "spill",
+                    "variable": variable,
+                    "coefficient": defaults.spill_objective_penalty,
+                }
+                for variable in [
+                    "electric_generation_mwh",
+                    "high_temperature_generation_mwh",
+                    "electric_load_mwh",
+                    "electric_charge_mwh",
+                    "electric_discharge_mwh",
+                ]
+            ]
+        )
+        obj.extend(
+            [
+                {
+                    "asset_type": "spill_evs",
+                    "variable": variable,
+                    "coefficient": defaults.spill_objective_penalty,
+                }
+                for variable in [
+                    "electric_generation_mwh",
+                    "high_temperature_generation_mwh",
+                    "electric_load_mwh",
+                    "electric_charge_mwh",
+                    "electric_discharge_mwh",
+                ]
+            ],
+        )
+    return {"price": price, "carbon": carbon}
+
+
 @pytest.mark.parametrize(
     "asset",
-    ["battery", "evs", "chp"],
+    ["battery", "evs", "chp", "heat-pump", "renewable"],
 )
 @pytest.mark.parametrize("objective", ["price", "carbon"])
-def test_hardcoded_one_asset(asset: str, objective: str) -> None:
+def test_hardcoded_asset_api(asset: str, objective: str) -> None:
     """Tests that the hardcoded objective function definitions are the same as the custom version when using asset.optimize()."""
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
     assets: list = get_assets(ds, asset)
-
-    if objective == "price":
-        terms = [
-            {
-                "asset_type": "site",
-                "variable": "import_power_mwh",
-                "interval_data": "electricity_prices",
-            },
-            {
-                "asset_type": "site",
-                "variable": "export_power_mwh",
-                "interval_data": "electricity_prices",
-                "coefficient": -1,
-            },
-            {
-                "asset_type": "*",
-                "variable": "gas_consumption_mwh",
-                "interval_data": "gas_prices",
-            },
-        ]
-    elif objective == "carbon":
-        terms = [
-            {
-                "asset_type": "site",
-                "variable": "import_power_mwh",
-                "interval_data": "electricity_carbon_intensities",
-            },
-            {
-                "asset_type": "site",
-                "variable": "export_power_mwh",
-                "interval_data": "electricity_carbon_intensities",
-                "coefficient": -1,
-            },
-            {
-                "asset_type": "*",
-                "variable": "gas_consumption_mwh",
-                "coefficient": defaults.gas_carbon_intensity,
-            },
-        ]
-
-    terms = [
-        *terms,
-        *[
-            {
-                "asset_type": "spill",
-                "variable": variable,
-                "coefficient": defaults.spill_objective_penalty,
-            }
-            for variable in [
-                "electric_generation_mwh",
-                "high_temperature_generation_mwh",
-                "electric_load_mwh",
-                "electric_charge_mwh",
-                "electric_discharge_mwh",
-            ]
-        ],
-        *[
-            {
-                "asset_type": "spill_evs",
-                "variable": variable,
-                "coefficient": defaults.spill_objective_penalty,
-            }
-            for variable in [
-                "electric_generation_mwh",
-                "high_temperature_generation_mwh",
-                "electric_load_mwh",
-                "electric_charge_mwh",
-                "electric_discharge_mwh",
-            ]
-        ],
-    ]
+    terms = get_objective_terms()[objective]
     hardcoded = assets[0].optimize(objective=objective)
     custom = assets[0].optimize(objective={"terms": terms})
 
@@ -132,53 +137,16 @@ def test_hardcoded_one_asset(asset: str, objective: str) -> None:
         )
 
 
-@pytest.mark.parametrize("asset", ["battery", "evs", "chp"])
+@pytest.mark.parametrize("asset", ["battery", "evs", "chp", "heat-pump", "renewable"])
 @pytest.mark.parametrize("objective", ["price", "carbon"])
-def test_hardcoded(asset: str, objective: str) -> None:
+def test_hardcoded_site_api(asset: str, objective: str) -> None:
     """Tests that the hardcoded objective function definitions are the same as the custom version when using site.optimize()."""
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
 
     assets: list = get_assets(ds, asset)
     assets.extend([epl.Boiler(high_temperature_generation_max_mw=200), epl.Valve()])
+    terms = get_objective_terms()[objective]
 
-    if objective == "price":
-        terms = [
-            {
-                "asset_type": "site",
-                "variable": "import_power_mwh",
-                "interval_data": "electricity_prices",
-            },
-            {
-                "asset_type": "site",
-                "variable": "export_power_mwh",
-                "interval_data": "electricity_prices",
-                "coefficient": -1,
-            },
-            {
-                "asset_type": "*",
-                "variable": "gas_consumption_mwh",
-                "interval_data": "gas_prices",
-            },
-        ]
-    elif objective == "carbon":
-        terms = [
-            {
-                "asset_type": "site",
-                "variable": "import_power_mwh",
-                "interval_data": "electricity_carbon_intensities",
-            },
-            {
-                "asset_type": "site",
-                "variable": "export_power_mwh",
-                "interval_data": "electricity_carbon_intensities",
-                "coefficient": -1,
-            },
-            {
-                "asset_type": "*",
-                "variable": "gas_consumption_mwh",
-                "coefficient": defaults.gas_carbon_intensity,
-            },
-        ]
     site = epl.Site(
         assets=assets,
         electricity_prices=ds["electricity_prices"],
@@ -207,7 +175,7 @@ def test_hardcoded(asset: str, objective: str) -> None:
 
 @pytest.mark.parametrize("n", range(5))
 @pytest.mark.parametrize("objective", ["price", "carbon"])
-def test_hardcoded_with_spills(n: int, objective: str) -> None:
+def test_hardcoded_many_assets(n: int, objective: str) -> None:
     """Tests that the hardcoded objective function definitions are the same as the custom version."""
     ds = generate_random_ev_input_data(
         24, n_chargers=1, n_charge_events=100, charge_length=3, seed=None
@@ -237,80 +205,10 @@ def test_hardcoded_with_spills(n: int, objective: str) -> None:
     )
     hardcoded = site.optimize(verbose=True, objective=objective)
 
-    if objective == "price":
-        terms = [
-            {
-                "asset_type": "site",
-                "variable": "import_power_mwh",
-                "interval_data": "electricity_prices",
-            },
-            {
-                "asset_type": "site",
-                "variable": "export_power_mwh",
-                "interval_data": "electricity_prices",
-                "coefficient": -1,
-            },
-            {
-                "asset_type": "*",
-                "variable": "gas_consumption_mwh",
-                "interval_data": "gas_prices",
-            },
-        ]
-    elif objective == "carbon":
-        terms = [
-            {
-                "asset_type": "site",
-                "variable": "import_power_mwh",
-                "interval_data": "electricity_carbon_intensities",
-            },
-            {
-                "asset_type": "site",
-                "variable": "export_power_mwh",
-                "interval_data": "electricity_carbon_intensities",
-                "coefficient": -1,
-            },
-            {
-                "asset_type": "*",
-                "variable": "gas_consumption_mwh",
-                "coefficient": defaults.gas_carbon_intensity,
-            },
-        ]
-
+    terms = get_objective_terms()[objective]
     custom = site.optimize(
         verbose=True,
-        objective={
-            "terms": [
-                *terms,
-                *[
-                    {
-                        "asset_type": "spill",
-                        "variable": variable,
-                        "coefficient": defaults.spill_objective_penalty,
-                    }
-                    for variable in [
-                        "electric_generation_mwh",
-                        "high_temperature_generation_mwh",
-                        "electric_load_mwh",
-                        "electric_charge_mwh",
-                        "electric_discharge_mwh",
-                    ]
-                ],
-                *[
-                    {
-                        "asset_type": "spill_evs",
-                        "variable": variable,
-                        "coefficient": defaults.spill_objective_penalty,
-                    }
-                    for variable in [
-                        "electric_generation_mwh",
-                        "high_temperature_generation_mwh",
-                        "electric_load_mwh",
-                        "electric_charge_mwh",
-                        "electric_discharge_mwh",
-                    ]
-                ],
-            ]
-        },
+        objective={"terms": terms},
     )
 
     for col in [
@@ -538,20 +436,9 @@ def test_heat_dump_cost() -> None:
     )
 
 
-def test_behind_meter_battery_no_arbitrage() -> None:
-    """
-    Want to test:
-        - battery behind the meter,
-        - it can use behind the meter generation to charge,
-        - can discharge to offset on site demand,
-        - cannot import power to charge.
-
-    Behind the meter offset = site load - site import
-
-    Think I need to penalize?
-
-    battery charge - (site load - site import)
-    """
+def test_synthetic_ppa() -> None:
+    """Test a synthetic PPA where we swap renewable output at spot for a fixed price."""
+    pass
 
 
 def test_custom_errors() -> None:
