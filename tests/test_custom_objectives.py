@@ -8,15 +8,19 @@ from energypylinear.data_generation import generate_random_ev_input_data
 from energypylinear.defaults import defaults
 
 
-@pytest.mark.parametrize("asset", ["battery", "evs", "chp"])
-@pytest.mark.parametrize("objective", ["price", "carbon"])
-def test_hardcoded(asset: str, objective: str) -> None:
-    """Tests that the hardcoded objective function definitions are the same as the custom version."""
-    ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
-
+def get_assets(ds: dict, asset: str) -> list:
+    """Helper function to get assets from a string."""
     assets: list
     if asset == "battery":
-        assets = [epl.Battery(power_mw=2, capacity_mwh=4, efficiency_pct=0.9)]
+        assets = [
+            epl.Battery(
+                power_mw=2,
+                capacity_mwh=4,
+                efficiency_pct=0.9,
+                electricity_prices=ds["electricity_prices"],
+            )
+        ]
+
     elif asset == "evs":
         assets = [epl.EVs(**ds, charger_turndown=0.0, charge_event_efficiency=1.0)]
     elif asset == "chp":
@@ -27,23 +31,23 @@ def test_hardcoded(asset: str, objective: str) -> None:
                 electric_efficiency_pct=0.2,
                 high_temperature_efficiency_pct=0.2,
                 low_temperature_efficiency_pct=0.2,
+                electricity_prices=ds["electricity_prices"],
             )
         ]
     else:
         assets = []
-    assets.extend([epl.Boiler(high_temperature_generation_max_mw=200), epl.Valve()])
+    return assets
 
-    site = epl.Site(
-        assets=assets,
-        electricity_prices=ds["electricity_prices"],
-        electricity_carbon_intensities=ds["electricity_carbon_intensities"],
-        gas_prices=30,
-        electric_load_mwh=30,
-        high_temperature_load_mwh=100,
-        low_temperature_load_mwh=100,
-        low_temperature_generation_mwh=0,
-    )
-    hardcoded = site.optimize(verbose=True, objective=objective)
+
+@pytest.mark.parametrize(
+    "asset",
+    ["battery", "evs", "chp"],
+)
+@pytest.mark.parametrize("objective", ["price", "carbon"])
+def test_hardcoded_one_asset(asset: str, objective: str) -> None:
+    """Tests that the hardcoded objective function definitions are the same as the custom version when using asset.optimize()."""
+    ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
+    assets: list = get_assets(ds, asset)
 
     if objective == "price":
         terms = [
@@ -84,6 +88,108 @@ def test_hardcoded(asset: str, objective: str) -> None:
             },
         ]
 
+    terms = [
+        *terms,
+        *[
+            {
+                "asset_type": "spill",
+                "variable": variable,
+                "coefficient": defaults.spill_objective_penalty,
+            }
+            for variable in [
+                "electric_generation_mwh",
+                "high_temperature_generation_mwh",
+                "electric_load_mwh",
+                "electric_charge_mwh",
+                "electric_discharge_mwh",
+            ]
+        ],
+        *[
+            {
+                "asset_type": "spill_evs",
+                "variable": variable,
+                "coefficient": defaults.spill_objective_penalty,
+            }
+            for variable in [
+                "electric_generation_mwh",
+                "high_temperature_generation_mwh",
+                "electric_load_mwh",
+                "electric_charge_mwh",
+                "electric_discharge_mwh",
+            ]
+        ],
+    ]
+    hardcoded = assets[0].optimize(objective=objective)
+    custom = assets[0].optimize(objective={"terms": terms})
+
+    for col in [
+        "site-import_power_mwh",
+        "site-export_power_mwh",
+        "total-gas_consumption_mwh",
+    ]:
+        np.testing.assert_array_almost_equal(
+            hardcoded.results[col].values, custom.results[col].values
+        )
+
+
+@pytest.mark.parametrize("asset", ["battery", "evs", "chp"])
+@pytest.mark.parametrize("objective", ["price", "carbon"])
+def test_hardcoded(asset: str, objective: str) -> None:
+    """Tests that the hardcoded objective function definitions are the same as the custom version when using site.optimize()."""
+    ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
+
+    assets: list = get_assets(ds, asset)
+    assets.extend([epl.Boiler(high_temperature_generation_max_mw=200), epl.Valve()])
+
+    if objective == "price":
+        terms = [
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "electricity_prices",
+            },
+            {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+                "interval_data": "electricity_prices",
+                "coefficient": -1,
+            },
+            {
+                "asset_type": "*",
+                "variable": "gas_consumption_mwh",
+                "interval_data": "gas_prices",
+            },
+        ]
+    elif objective == "carbon":
+        terms = [
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "electricity_carbon_intensities",
+            },
+            {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+                "interval_data": "electricity_carbon_intensities",
+                "coefficient": -1,
+            },
+            {
+                "asset_type": "*",
+                "variable": "gas_consumption_mwh",
+                "coefficient": defaults.gas_carbon_intensity,
+            },
+        ]
+    site = epl.Site(
+        assets=assets,
+        electricity_prices=ds["electricity_prices"],
+        electricity_carbon_intensities=ds["electricity_carbon_intensities"],
+        gas_prices=30,
+        electric_load_mwh=30,
+        high_temperature_load_mwh=100,
+        low_temperature_load_mwh=100,
+        low_temperature_generation_mwh=0,
+    )
+    hardcoded = site.optimize(verbose=3, objective=objective)
     custom = site.optimize(
         verbose=True,
         objective={"terms": terms},
@@ -424,7 +530,6 @@ def test_heat_dump_cost() -> None:
             ]
         )
     )
-    cols = ["spill-low_temperature_load_mwh"]
     np.testing.assert_array_almost_equal(
         simulation.results["spill-low_temperature_load_mwh"], [100]
     )

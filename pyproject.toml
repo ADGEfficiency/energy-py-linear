@@ -24,7 +24,7 @@ optional = true
 black = "^22.10.0"
 isort = "^5.10.1"
 flake8-docstring-checker = "^1.1"
-ruff = "^0.0.275"
+ruff = "^0.1.5"
 darglint = "^1.8.1"
 
 [tool.poetry.group.test]
