@@ -47,6 +47,58 @@
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
+  
+
+
+  <script
+  defer
+  data-domain="energypylinear.adgefficiency.com"
+  src="https://plausible.io/js/plausible.js"
+></script>
+
+<script>
+  window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments) };
+
+  /* Register event handlers after documented loaded */
+  document.addEventListener("DOMContentLoaded", function () {
+    /* Set up search tracking */
+    if (document.forms.search) {
+      var query = document.forms.search.query;
+      query.addEventListener("blur", function() {
+        if (this.value) plausible("Search", { props: { search_term: this.value } });
+      })
+    }
+
+    /* Set up feedback, i.e. "Was this page helpful?" */
+    document$.subscribe(function () {
+      var feedback = document.forms.feedback;
+      if (typeof feedback === "undefined") return;
+
+      /* Send feedback to Plausible */
+      for (var button of feedback.querySelectorAll("[type=submit]")) {
+        button.addEventListener("click", function (ev) {
+          ev.preventDefault();
+
+          var page = document.location.pathname;
+          var value = this.getAttribute("data-md-value");
+          console.log("[feedback] User clicked", { value });
+          plausible(`Feedback: ${value}`);
+
+          /* Disable form and show note, if given */
+          feedback.firstElementChild.disabled = true;
+          var note = feedback.querySelector(".md-feedback__note [data-md-value='" + value + "']");
+          if (note) note.hidden = false;
+        })
+
+        /* Show feedback */
+        feedback.hidden = false;
+      }
+    });
+  });
+</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
 
     
     
@@ -736,8 +788,8 @@
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">efficiency_pct</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">electricity_prices</span><span class="o">=</span><span class="n">electricity_prices</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">actual</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">perfect_foresight</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">(</span><span class="n">actual</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">actual</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">perfect_foresight</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">(</span><span class="n">actual</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">perfect_foresight</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>perfect_foresight=&lt;Accounts profit=1037.78 emissions=0.0622&gt;
@@ -752,11 +804,11 @@
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">efficiency_pct</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">electricity_prices</span><span class="o">=</span><span class="n">forecasts</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">)</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="n">forecast</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="n">forecast</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">forecast_account</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">(</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">forecast</span><span class="o">.</span><span class="n">results</span><span class="p">,</span>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="n">price_results</span><span class="o">=</span><span class="n">actual</span><span class="o">.</span><span class="n">results</span><span class="p">,</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">)</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">forecast_account</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
@@ -822,7 +874,7 @@
 <a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a>    <span class="n">electricity_prices</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;Trading Price [$/MWh]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
 <a id="__codelineno-7-51" name="__codelineno-7-51" href="#__codelineno-7-51"></a>    <span class="n">freq_mins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
 <a id="__codelineno-7-52" name="__codelineno-7-52" href="#__codelineno-7-52"></a><span class="p">)</span>
-<a id="__codelineno-7-53" name="__codelineno-7-53" href="#__codelineno-7-53"></a><span class="n">actuals</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-7-53" name="__codelineno-7-53" href="#__codelineno-7-53"></a><span class="n">actuals</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <a id="__codelineno-7-54" name="__codelineno-7-54" href="#__codelineno-7-54"></a>
 <a id="__codelineno-7-55" name="__codelineno-7-55" href="#__codelineno-7-55"></a><span class="c1">#  optimize for forecasts</span>
 <a id="__codelineno-7-56" name="__codelineno-7-56" href="#__codelineno-7-56"></a><span class="n">asset</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Battery</span><span class="p">(</span>
@@ -832,17 +884,17 @@
 <a id="__codelineno-7-60" name="__codelineno-7-60" href="#__codelineno-7-60"></a>    <span class="n">electricity_prices</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;Predispatch Forecast [$/MWh]&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
 <a id="__codelineno-7-61" name="__codelineno-7-61" href="#__codelineno-7-61"></a>    <span class="n">freq_mins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
 <a id="__codelineno-7-62" name="__codelineno-7-62" href="#__codelineno-7-62"></a><span class="p">)</span>
-<a id="__codelineno-7-63" name="__codelineno-7-63" href="#__codelineno-7-63"></a><span class="n">forecasts</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-7-63" name="__codelineno-7-63" href="#__codelineno-7-63"></a><span class="n">forecasts</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <a id="__codelineno-7-64" name="__codelineno-7-64" href="#__codelineno-7-64"></a>
 <a id="__codelineno-7-65" name="__codelineno-7-65" href="#__codelineno-7-65"></a><span class="c1">#  calculate the variance between accounts</span>
 <a id="__codelineno-7-66" name="__codelineno-7-66" href="#__codelineno-7-66"></a><span class="n">actual_account</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">(</span>
-<a id="__codelineno-7-67" name="__codelineno-7-67" href="#__codelineno-7-67"></a>    <span class="n">actuals</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
+<a id="__codelineno-7-67" name="__codelineno-7-67" href="#__codelineno-7-67"></a>    <span class="n">actuals</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span>
 <a id="__codelineno-7-68" name="__codelineno-7-68" href="#__codelineno-7-68"></a>
 <a id="__codelineno-7-69" name="__codelineno-7-69" href="#__codelineno-7-69"></a><span class="p">)</span>
 <a id="__codelineno-7-70" name="__codelineno-7-70" href="#__codelineno-7-70"></a><span class="n">forecast_account</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">(</span>
 <a id="__codelineno-7-71" name="__codelineno-7-71" href="#__codelineno-7-71"></a>    <span class="n">forecasts</span><span class="o">.</span><span class="n">results</span><span class="p">,</span>
 <a id="__codelineno-7-72" name="__codelineno-7-72" href="#__codelineno-7-72"></a>    <span class="n">price_results</span><span class="o">=</span><span class="n">actuals</span><span class="o">.</span><span class="n">results</span><span class="p">,</span>
-<a id="__codelineno-7-73" name="__codelineno-7-73" href="#__codelineno-7-73"></a>    <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
+<a id="__codelineno-7-73" name="__codelineno-7-73" href="#__codelineno-7-73"></a>    <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span>
 <a id="__codelineno-7-74" name="__codelineno-7-74" href="#__codelineno-7-74"></a><span class="p">)</span>
 <a id="__codelineno-7-75" name="__codelineno-7-75" href="#__codelineno-7-75"></a><span class="n">variance</span> <span class="o">=</span> <span class="n">actual_account</span> <span class="o">-</span> <span class="n">forecast_account</span>
 <a id="__codelineno-7-76" name="__codelineno-7-76" href="#__codelineno-7-76"></a>
@@ -860,6 +912,8 @@
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>forecast error: $ 92.97 pct: 28.5 %
 </code></pre></div>
 
+
+  
 
 
 
