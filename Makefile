@@ -13,7 +13,7 @@ QUIET := -q
 
 setup-pip-poetry:
 	pip install --upgrade pip $(QUIET)
-	pip install poetry==1.6.1 $(QUIET)
+	pip install poetry==1.7.0 $(QUIET)
 
 setup: setup-pip-poetry
 	poetry install --with main $(QUIET)
@@ -40,7 +40,7 @@ setup-docs:
 
 .PHONY: test test-ci test-docs clean-test-docs test-validate create-test-docs
 PARALLEL = auto
-TEST_ARGS=
+TEST_ARGS =
 export
 
 test: setup-test test-docs

@@ -14,7 +14,7 @@ def test_flags() -> None:
         electricity_prices=np.random.normal(10, 5, 100),
     )
     asset.optimize(
-        flags=Flags(include_charge_discharge_binary_variables=True),
+        flags=Flags(),
     )
 
     ds = epl.data_generation.generate_random_ev_input_data(

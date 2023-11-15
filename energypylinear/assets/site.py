@@ -31,7 +31,6 @@ def validate_interval_data(
         for asset in assets:
             if hasattr(asset.cfg, "interval_data"):
                 if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
-
                     idata = asset.cfg.interval_data.model_dump(exclude={"idx"})
                     for name, data in idata.items():
                         assert isinstance(site.cfg.interval_data.idx, np.ndarray)
@@ -271,7 +270,7 @@ class Site:
         high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
-        name: str = "site",
+        name: typing.Literal["site"] = "site",
         freq_mins: int = defaults.freq_mins,
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
