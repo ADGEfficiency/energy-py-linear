@@ -125,8 +125,9 @@ def test_hardcoded_asset_api(asset: str, objective: str) -> None:
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
     assets: list = get_assets(ds, asset)
     terms = get_objective_terms()[objective]
-    hardcoded = assets[0].optimize(objective=objective)
+
     custom = assets[0].optimize(objective={"terms": terms})
+    hardcoded = assets[0].optimize(objective=objective)
 
     for col in [
         "site-import_power_mwh",
@@ -134,7 +135,7 @@ def test_hardcoded_asset_api(asset: str, objective: str) -> None:
         "total-gas_consumption_mwh",
     ]:
         np.testing.assert_array_almost_equal(
-            hardcoded.results[col].values, custom.results[col].values
+            hardcoded.results[col], custom.results[col]
         )
 
 

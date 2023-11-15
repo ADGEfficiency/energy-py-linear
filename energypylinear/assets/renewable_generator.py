@@ -161,7 +161,7 @@ class RenewableGenerator(epl.Asset):
 
     def optimize(
         self,
-        objective: str = "price",
+        objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
         verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
