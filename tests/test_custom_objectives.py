@@ -7,35 +7,39 @@ import energypylinear as epl
 from energypylinear.data_generation import generate_random_ev_input_data
 from energypylinear.defaults import defaults
 
+asset_names = ["battery", "evs", "chp", "heat-pump", "renewable"]
 
-def get_assets(ds: dict, asset: str) -> list:
+
+def get_assets(ds: dict, asset: str) -> list[epl.Asset]:
     """Helper function to get assets from a string."""
-    assets: list
-    if asset == "battery":
-        assets = [
-            epl.Battery(
-                power_mw=2,
-                capacity_mwh=4,
-                efficiency_pct=0.9,
-                electricity_prices=ds["electricity_prices"],
-            )
-        ]
-
-    elif asset == "evs":
-        assets = [epl.EVs(**ds, charger_turndown=0.0, charge_event_efficiency=1.0)]
-    elif asset == "chp":
-        assets = [
-            epl.CHP(
-                electric_power_max_mw=100,
-                electric_power_min_mw=50,
-                electric_efficiency_pct=0.2,
-                high_temperature_efficiency_pct=0.2,
-                low_temperature_efficiency_pct=0.2,
-                electricity_prices=ds["electricity_prices"],
-            )
-        ]
-    else:
-        assets = []
+    assets: list = []
+    library = {
+        "battery": epl.Battery(
+            power_mw=2,
+            capacity_mwh=4,
+            efficiency_pct=0.9,
+            electricity_prices=ds["electricity_prices"],
+        ),
+        "evs": epl.EVs(**ds, charger_turndown=0.0, charge_event_efficiency=1.0),
+        "chp": epl.CHP(
+            electric_power_max_mw=100,
+            electric_power_min_mw=50,
+            electric_efficiency_pct=0.2,
+            high_temperature_efficiency_pct=0.2,
+            low_temperature_efficiency_pct=0.2,
+            electricity_prices=ds["electricity_prices"],
+        ),
+        "heat-pump": epl.HeatPump(
+            electricity_prices=ds["electricity_prices"],
+        ),
+        "renewable": epl.RenewableGenerator(
+            electric_generation_mwh=np.random.uniform(
+                0, 100, len(ds["electricity_prices"])
+            ),
+            electricity_prices=ds["electricity_prices"],
+        ),
+    }
+    assets.append(library[asset])
     return assets
 
 
@@ -114,10 +118,7 @@ def get_objective_terms() -> dict[str, list]:
     return {"price": price, "carbon": carbon}
 
 
-@pytest.mark.parametrize(
-    "asset",
-    ["battery", "evs", "chp", "heat-pump", "renewable"],
-)
+@pytest.mark.parametrize("asset", asset_names)
 @pytest.mark.parametrize("objective", ["price", "carbon"])
 def test_hardcoded_asset_api(asset: str, objective: str) -> None:
     """Tests that the hardcoded objective function definitions are the same as the custom version when using asset.optimize()."""
@@ -137,7 +138,7 @@ def test_hardcoded_asset_api(asset: str, objective: str) -> None:
         )
 
 
-@pytest.mark.parametrize("asset", ["battery", "evs", "chp", "heat-pump", "renewable"])
+@pytest.mark.parametrize("asset", asset_names)
 @pytest.mark.parametrize("objective", ["price", "carbon"])
 def test_hardcoded_site_api(asset: str, objective: str) -> None:
     """Tests that the hardcoded objective function definitions are the same as the custom version when using site.optimize()."""
@@ -169,7 +170,7 @@ def test_hardcoded_site_api(asset: str, objective: str) -> None:
         "total-gas_consumption_mwh",
     ]:
         np.testing.assert_array_almost_equal(
-            hardcoded.results[col].values, custom.results[col].values
+            hardcoded.results[col], custom.results[col]
         )
 
 
@@ -219,7 +220,7 @@ def test_hardcoded_many_assets(n: int, objective: str) -> None:
         "total-low_temperature_generation_mwh",
     ]:
         np.testing.assert_array_almost_equal(
-            hardcoded.results[col].values, custom.results[col].values
+            hardcoded.results[col], custom.results[col]
         )
 
 
@@ -334,11 +335,11 @@ def test_renewable_certificate() -> None:
         )
     )
     np.testing.assert_array_almost_equal(
-        simulation.results["solar-electric_generation_mwh"].values,
+        simulation.results["solar-electric_generation_mwh"],
         [25, 50, 50, 50, 50],
     )
     np.testing.assert_array_almost_equal(
-        simulation.results["wind-electric_generation_mwh"].values, [0, 25, 50, 50, 50]
+        simulation.results["wind-electric_generation_mwh"], [0, 25, 50, 50, 50]
     )
 
 
@@ -438,7 +439,58 @@ def test_heat_dump_cost() -> None:
 
 def test_synthetic_ppa() -> None:
     """Test a synthetic PPA where we swap renewable output at spot for a fixed price."""
-    pass
+    ds = generate_random_ev_input_data(
+        48, n_chargers=3, charge_length=3, seed=None, prices_mu=0, prices_std=50
+    )
+    wind_mwh = np.random.uniform(0, 100, len(ds["electricity_prices"]))
+    assets: list[epl.Asset] = [
+        epl.RenewableGenerator(
+            electric_generation_mwh=wind_mwh,
+            name="wind",
+            electric_generation_lower_bound_pct=0.0,
+        ),
+        epl.Battery(power_mw=20, capacity_mwh=20),
+    ]
+
+    terms = get_objective_terms()["price"]
+    site = epl.Site(
+        assets=assets,
+        electricity_prices=ds["electricity_prices"],
+        electricity_carbon_intensities=ds["electricity_carbon_intensities"],
+        gas_prices=30,
+        electric_load_mwh=30,
+    )
+    no_ppa = site.optimize(
+        verbose=True,
+        objective={"terms": terms},
+    )
+    ppa_terms = get_objective_terms()["price"]
+    ppa_terms.extend(
+        [
+            {
+                "asset_name": "wind",
+                "variable": "electric_generation_mwh",
+                "interval_data": "electricity_prices",
+                "coefficient": 1,
+            },
+            {
+                "asset_name": "wind",
+                "variable": "electric_generation_mwh",
+                "coefficient": -70,
+            },
+        ]
+    )
+    ppa = site.optimize(
+        verbose=True,
+        objective={"terms": ppa_terms},
+    )
+    assert (
+        no_ppa.results["wind-electric_generation_mwh"].sum()
+        < ppa.results["wind-electric_generation_mwh"].sum()
+    )
+    np.testing.assert_array_almost_equal(
+        ppa.results["wind-electric_generation_mwh"], wind_mwh
+    )
 
 
 def test_custom_errors() -> None:

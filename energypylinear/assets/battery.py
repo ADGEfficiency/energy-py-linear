@@ -140,7 +140,7 @@ def constrain_initial_final_charge(
     optimizer.constrain(final.electric_final_charge_mwh == final.cfg.final_charge_mwh)
 
 
-class Battery:
+class Battery(epl.Asset):
     """Electric battery asset, able to charge and discharge electricity.
 
     Args:

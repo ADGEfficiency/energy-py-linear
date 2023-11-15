@@ -91,7 +91,7 @@ lint: setup-check
 	flake8 --extend-ignore E501,DAR --exclude=__init__.py,poc
 	ruff check . --ignore E501 --extend-exclude=__init__.py,poc
 	isort --check **/*.py --profile black
-	black --check **/*.py
+	ruff format --check **/*.py
 	poetry check
 
 
@@ -100,7 +100,7 @@ lint: setup-check
 .PHONY: format
 format: setup-check
 	isort **/*.py --profile black
-	black **/*.py
+	ruff format **/*.py
 
 
 #  ----- PUBLISH ------

@@ -147,7 +147,7 @@ class Optimizer:
 
     def status(self) -> str:
         """Return the status of the optimization problem."""
-        return pulp.LpStatus[self.prob.status]
+        return str(pulp.LpStatus[self.prob.status])
 
     def constraints(self) -> dict[str, pulp.LpConstraint]:
         """Constraints of the optimization problem."""
