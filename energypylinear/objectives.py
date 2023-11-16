@@ -24,7 +24,7 @@ class Term:
 
 @dataclasses.dataclass
 class CustomObjectiveFunction:
-    """The objective function - a sum of terms.
+    """A custom objective function - a sum of terms.
 
     CustomObjectiveFunction = Term + Term + Term"""
 
@@ -36,8 +36,7 @@ def price_objective(
     ivars: "epl.IntervalVars",
     interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
-    """
-    Linear programming objective for cost minimization.  Equivalent to profit maximization.
+    """Linear programming objective for cost minimization.  Equivalent to profit maximization.
 
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
@@ -50,7 +49,6 @@ def price_objective(
     Returns:
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
-    #  TODO cheating here with the site name
     sites = typing.cast(
         list[list["epl.assets.site.SiteOneInterval"]],
         ivars.filter_objective_variables_all_intervals(
@@ -120,8 +118,7 @@ def carbon_objective(
     ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
-    """
-    Linear programming objective for carbon emission minimization.
+    """Linear programming objective for carbon emission minimization.
 
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
@@ -134,7 +131,6 @@ def carbon_objective(
     Returns:
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
-    #  TODO cheating here with the site name
     sites = typing.cast(
         list[list["epl.assets.site.SiteOneInterval"]],
         ivars.filter_objective_variables_all_intervals(
@@ -250,4 +246,5 @@ def get_objective(
                         * term.coefficient,
                     ]
                 )
+
     return optimizer.sum(obj)

@@ -457,8 +457,6 @@ def test_synthetic_ppa() -> None:
     site = epl.Site(
         assets=assets,
         electricity_prices=ds["electricity_prices"],
-        electricity_carbon_intensities=ds["electricity_carbon_intensities"],
-        gas_prices=30,
         electric_load_mwh=30,
     )
     no_ppa = site.optimize(
