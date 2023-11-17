@@ -28,7 +28,7 @@ class CustomObjectiveFunction:
 
     CustomObjectiveFunction = Term + Term + Term"""
 
-    terms: list[Term] = dataclasses.field(default_factory=list)
+    terms: list[Term]
 
 
 def price_objective(
