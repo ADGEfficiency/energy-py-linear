@@ -27,7 +27,6 @@ def validate_interval_data(
         for asset in assets:
             if hasattr(asset.cfg, "interval_data"):
                 if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
-
                     idata = asset.cfg.interval_data.dict(exclude={"idx"})
                     for name, data in idata.items():
                         assert isinstance(site.cfg.interval_data.idx, np.ndarray)
