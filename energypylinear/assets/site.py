@@ -31,7 +31,6 @@ def validate_interval_data(
         for asset in assets:
             if hasattr(asset.cfg, "interval_data"):
                 if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
-
                     idata = asset.cfg.interval_data.model_dump(exclude={"idx"})
                     for name, data in idata.items():
                         assert isinstance(site.cfg.interval_data.idx, np.ndarray)
@@ -161,7 +160,7 @@ def constrain_site_electricity_balance(
     """
     assets = ivars.objective_variables[-1]
     site = ivars.filter_objective_variables(
-        epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
+        instance_type=epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
     )[0]
     assert isinstance(site, epl.assets.site.SiteOneInterval)
     assert interval_data.electric_load_mwh is not None
@@ -188,7 +187,7 @@ def constrain_site_import_export(
 ) -> None:
     """Constrain to only do one of import and export electricity in an interval."""
     site = ivars.filter_objective_variables(
-        epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
+        instance_type=epl.assets.site.SiteOneInterval, i=-1, asset_name=cfg.name
     )[0]
     assert isinstance(site, epl.assets.site.SiteOneInterval)
     optimizer.constrain(
@@ -271,7 +270,7 @@ class Site:
         high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
-        name: str = "site",
+        name: typing.Literal["site"] = "site",
         freq_mins: int = defaults.freq_mins,
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
@@ -339,7 +338,7 @@ class Site:
 
     def optimize(
         self,
-        objective: str = "price",
+        objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
         flags: Flags = Flags(),
         verbose: int | bool = 2,
         optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
@@ -398,13 +397,8 @@ class Site:
                 ivars,
             )
 
-        objective_fn = epl.objectives[objective]
         self.optimizer.objective(
-            objective_fn(
-                self.optimizer,
-                ivars,
-                self.cfg.interval_data,
-            )
+            epl.get_objective(objective, self.optimizer, ivars, self.cfg.interval_data)
         )
 
         status = self.optimizer.solve(

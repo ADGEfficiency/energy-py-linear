@@ -7,7 +7,7 @@ from rich.logging import RichHandler
 
 from energypylinear.defaults import defaults
 
-console = Console()
+console = Console(width=80)
 
 logger = logging.getLogger("energypylinear")
 logger.setLevel(logging.DEBUG)

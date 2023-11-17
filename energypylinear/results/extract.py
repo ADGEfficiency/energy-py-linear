@@ -38,13 +38,21 @@ class SimulationResult(pydantic.BaseModel):
     spill: bool
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
+    def __repr__(self) -> str:
+        """A string representation of self."""
+        return f"<energypylinear.SimulationResult feasible:{self.feasible}, rows:{self.results.shape[0]}, cols:{self.results.shape[1]}>"
+
+    def __str__(self) -> str:
+        """A string representation of self."""
+        return repr(self)
+
 
 def extract_site_results(
     site: "epl.Site", ivars: "epl.IntervalVars", results: dict, i: int
 ) -> None:
     """Extract simulation result data for epl.Site."""
     sites = ivars.filter_objective_variables(
-        epl.assets.site.SiteOneInterval, asset_name=site.cfg.name, i=i
+        instance_type=epl.assets.site.SiteOneInterval, asset_name=site.cfg.name, i=i
     )
     assert len(sites) == 1
     site_one_interval = sites[0]
@@ -72,7 +80,7 @@ def extract_site_results(
 def extract_spill_results(ivars: "epl.IntervalVars", results: dict, i: int) -> None:
     """Extract simulation result data for epl.Spill."""
     if spills := ivars.filter_objective_variables(
-        epl.assets.spill.SpillOneInterval, i=i
+        instance_type=epl.assets.spill.SpillOneInterval, i=i
     ):
         for spill in spills:
             assert isinstance(spill, epl.assets.spill.SpillOneInterval)
@@ -95,7 +103,7 @@ def extract_spill_results(ivars: "epl.IntervalVars", results: dict, i: int) -> N
 def extract_chp_results(ivars: "epl.IntervalVars", results: dict, i: int) -> None:
     """Extract simulation result data for epl.CHP."""
     if generators := ivars.filter_objective_variables(
-        epl.assets.chp.CHPOneInterval, i=i
+        instance_type=epl.assets.chp.CHPOneInterval, i=i
     ):
         for generator in generators:
             assert isinstance(generator, epl.assets.chp.CHPOneInterval)
@@ -113,7 +121,7 @@ def extract_chp_results(ivars: "epl.IntervalVars", results: dict, i: int) -> Non
 def extract_boiler_results(ivars: "epl.IntervalVars", results: dict, i: int) -> None:
     """Extract simulation result data for epl.Boiler."""
     if boilers := ivars.filter_objective_variables(
-        epl.assets.boiler.BoilerOneInterval, i=i
+        instance_type=epl.assets.boiler.BoilerOneInterval, i=i
     ):
         for boiler in boilers:
             assert isinstance(boiler, epl.assets.boiler.BoilerOneInterval)
@@ -126,7 +134,7 @@ def extract_boiler_results(ivars: "epl.IntervalVars", results: dict, i: int) -> 
 def extract_valve_results(ivars: "epl.IntervalVars", results: dict, i: int) -> None:
     """Extract simulation result data for epl.Valve."""
     if valves := ivars.filter_objective_variables(
-        epl.assets.valve.ValveOneInterval, i=i
+        instance_type=epl.assets.valve.ValveOneInterval, i=i
     ):
         for valve in valves:
             assert isinstance(valve, epl.assets.valve.ValveOneInterval)
@@ -142,7 +150,7 @@ def extract_valve_results(ivars: "epl.IntervalVars", results: dict, i: int) -> N
 def extract_battery_results(ivars: "epl.IntervalVars", results: dict, i: int) -> None:
     """Extract simulation result data for epl.Battery."""
     if batteries := ivars.filter_objective_variables(
-        epl.assets.battery.BatteryOneInterval, i=i
+        instance_type=epl.assets.battery.BatteryOneInterval, i=i
     ):
         for battery in batteries:
             assert isinstance(battery, epl.assets.battery.BatteryOneInterval)
@@ -170,7 +178,9 @@ def extract_evs_results(
     verbose: int | bool = defaults.log_level,
 ) -> None:
     """Extract simulation result data for epl.EVs."""
-    if ivars.filter_objective_variables(epl.assets.evs.EVOneInterval, i=i):
+    if ivars.filter_objective_variables(
+        instance_type=epl.assets.evs.EVOneInterval, i=i
+    ):
         pkg = []
         for asset_name in [n for n in asset_names if "evs" in n]:
             evs_array = create_evs_array(ivars, i, asset_name, is_spill=False)
@@ -267,7 +277,7 @@ def extract_heat_pump_results(
 ) -> None:
     """Extract simulation result data for epl.HeatPump."""
     if heat_pumps := ivars.filter_objective_variables(
-        epl.assets.heat_pump.HeatPumpOneInterval, i=i
+        instance_type=epl.assets.heat_pump.HeatPumpOneInterval, i=i
     ):
         for heat_pump in heat_pumps:
             for attr in [
@@ -287,7 +297,7 @@ def extract_renewable_generator_results(
 ) -> None:
     """Extract simulation result data for epl.RenewableGenerator."""
     if renewables := ivars.filter_objective_variables(
-        epl.assets.renewable_generator.RenewableGeneratorOneInterval, i=i
+        instance_type=epl.assets.renewable_generator.RenewableGeneratorOneInterval, i=i
     ):
         fields = ["electric_generation_mwh"]
         for renewable in renewables:

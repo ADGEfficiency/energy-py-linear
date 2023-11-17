@@ -105,7 +105,7 @@ def test_interval_data() -> None:
 
     # test that we fail with no data
     with pytest.raises(Exception):
-        epl.assets.renewable_generator.RenewableGeneratorIntervalData()
+        epl.assets.renewable_generator.RenewableGeneratorIntervalData()  # type: ignore
 
     # test that we fail with negative values
     with pytest.raises(Exception):

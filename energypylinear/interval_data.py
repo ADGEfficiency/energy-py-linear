@@ -3,6 +3,7 @@ import typing
 
 import numpy as np
 
+import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
 from energypylinear.assets.site import SiteOneInterval
 
@@ -41,16 +42,27 @@ class IntervalVars:
 
     def filter_objective_variables(
         self,
-        instance_type: type[AssetOneInterval],
         i: int,
+        instance_type: type[AssetOneInterval] | str | None = None,
         asset_name: str | None = None,
     ) -> list[AssetOneInterval]:
         """Filters objective variables based on type, interval index, and asset name."""
+        if isinstance(instance_type, str):
+            type_mapper: dict[str, type] = {
+                "site": SiteOneInterval,
+                "spill": epl.assets.spill.SpillOneInterval,
+                "spill_evs": epl.assets.evs.EVSpillOneInterval,
+            }
+            instance_type = type_mapper[instance_type]
+
+        if instance_type is not None:
+            assert issubclass(instance_type, AssetOneInterval)
+
         assets = self.objective_variables[i]
         return [
             asset
             for asset in assets
-            if isinstance(asset, instance_type)
+            if (isinstance(asset, instance_type) if instance_type is not None else True)
             and (asset.cfg.name == asset_name if asset_name is not None else True)
         ]
 

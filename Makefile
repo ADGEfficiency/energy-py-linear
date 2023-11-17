@@ -13,7 +13,7 @@ QUIET := -q
 
 setup-pip-poetry:
 	pip install --upgrade pip $(QUIET)
-	pip install poetry==1.6.1 $(QUIET)
+	pip install poetry==1.7.0 $(QUIET)
 
 setup: setup-pip-poetry
 	poetry install --with main $(QUIET)
@@ -40,7 +40,7 @@ setup-docs:
 
 .PHONY: test test-ci test-docs clean-test-docs test-validate create-test-docs
 PARALLEL = auto
-TEST_ARGS=
+TEST_ARGS =
 export
 
 test: setup-test test-docs
@@ -51,6 +51,7 @@ test: setup-test test-docs
 create-test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
+	python -m phmdoctest ./docs/docs/how-to/custom-objective.md  --outfile tests/phmdoctest/test_custom_objective.py
 	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
 	python -m phmdoctest ./docs/docs/validation/evs.md --outfile tests/phmdoctest/test_validate_evs.py
 	python -m phmdoctest ./docs/docs/validation/heat-pump.md --outfile tests/phmdoctest/test_validate_heat-pump.py
@@ -91,7 +92,7 @@ lint: setup-check
 	flake8 --extend-ignore E501,DAR --exclude=__init__.py,poc
 	ruff check . --ignore E501 --extend-exclude=__init__.py,poc
 	isort --check **/*.py --profile black
-	black --check **/*.py
+	ruff format --check **/*.py
 	poetry check
 
 
@@ -100,7 +101,7 @@ lint: setup-check
 .PHONY: format
 format: setup-check
 	isort **/*.py --profile black
-	black **/*.py
+	ruff format **/*.py
 
 
 #  ----- PUBLISH ------
