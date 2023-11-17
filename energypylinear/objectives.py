@@ -233,7 +233,6 @@ def get_objective(
                 assets = ivars.filter_objective_variables(
                     instance_type=term.asset_type, i=i, asset_name=term.asset_name
                 )
-
             for asset in assets:
                 obj.extend(
                     [

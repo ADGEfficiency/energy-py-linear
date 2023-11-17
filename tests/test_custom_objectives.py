@@ -125,7 +125,6 @@ def test_hardcoded_asset_api(asset: str, objective: str) -> None:
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
     assets: list = get_assets(ds, asset)
     terms = get_objective_terms()[objective]
-
     custom = assets[0].optimize(objective={"terms": terms})
     hardcoded = assets[0].optimize(objective=objective)
 
@@ -144,11 +143,9 @@ def test_hardcoded_asset_api(asset: str, objective: str) -> None:
 def test_hardcoded_site_api(asset: str, objective: str) -> None:
     """Tests that the hardcoded objective function definitions are the same as the custom version when using site.optimize()."""
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
-
     assets: list = get_assets(ds, asset)
     assets.extend([epl.Boiler(high_temperature_generation_max_mw=200), epl.Valve()])
     terms = get_objective_terms()[objective]
-
     site = epl.Site(
         assets=assets,
         electricity_prices=ds["electricity_prices"],
@@ -182,7 +179,6 @@ def test_hardcoded_many_assets(n: int, objective: str) -> None:
     ds = generate_random_ev_input_data(
         24, n_chargers=1, n_charge_events=100, charge_length=3, seed=None
     )
-
     assets: list = [
         epl.Battery(power_mw=2, capacity_mwh=4, efficiency_pct=0.9),
         epl.EVs(**ds, charger_turndown=0.0, charge_event_efficiency=1.0),
@@ -195,7 +191,6 @@ def test_hardcoded_many_assets(n: int, objective: str) -> None:
         ),
         epl.Spill(),
     ]
-
     site = epl.Site(
         assets=assets,
         electricity_prices=ds["electricity_prices"],
@@ -206,7 +201,6 @@ def test_hardcoded_many_assets(n: int, objective: str) -> None:
         low_temperature_generation_mwh=0,
     )
     hardcoded = site.optimize(verbose=True, objective=objective)
-
     terms = get_objective_terms()[objective]
     custom = site.optimize(
         verbose=True,
@@ -349,7 +343,6 @@ def test_heat_dump_cost() -> None:
 
     This test sets up a heat pump system where dumping heat has a cost.
     """
-
     # first setup a site with a penalty to dumping heat, but a high electricity price
     # heat pump will operate even though the electricity price is high
     assets = [epl.HeatPump(electric_power_mw=10, cop=4), epl.Spill()]
