@@ -16,7 +16,8 @@ class BoilerConfig(pydantic.BaseModel):
     high_temperature_generation_min_mw: float = 0
     high_temperature_efficiency_pct: float = pydantic.Field(gt=0.0, default=0.8, le=1.0)
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
         assert "boiler" in name
@@ -83,8 +84,8 @@ class Boiler(epl.Asset):
     ) -> None:
         """Constrain boiler for generation of high temperature heat."""
         boiler = ivars.filter_objective_variables(
-            BoilerOneInterval, i=-1, asset_name=self.cfg.name
-        )[0][0]
+            instance_type=BoilerOneInterval, i=-1, asset_name=self.cfg.name
+        )[0]
         assert isinstance(boiler, BoilerOneInterval)
         optimizer.constrain(
             boiler.gas_consumption_mwh

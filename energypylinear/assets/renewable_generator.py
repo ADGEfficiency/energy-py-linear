@@ -5,7 +5,6 @@ Suitable for modelling either turndownable wind or solar."""
 
 import numpy as np
 import pydantic
-from pydantic import ConfigDict
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
@@ -18,13 +17,10 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
 
     electric_generation_mwh: np.ndarray | list[float] | float
     idx: list[int] | np.ndarray = pydantic.Field(default_factory=list)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    @pydantic.validator("idx", always=True)
-    def create_idx(cls, _: list, values: dict) -> np.ndarray:
-        """Creates an integer index."""
-        return np.arange(len(values["electric_generation_mwh"]))
-
-    @pydantic.validator("electric_generation_mwh", pre=True, always=True)
+    @pydantic.field_validator("electric_generation_mwh", mode="after")
+    @classmethod
     def handle_single_float(cls, value: float | list | np.ndarray) -> list | np.ndarray:
         """Handles case where we want a single value broadcast to the length
         of the interval data.
@@ -33,15 +29,22 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
             return [value]
         return np.array(value)
 
-    @pydantic.validator("electric_generation_mwh", always=True)
+    @pydantic.field_validator("electric_generation_mwh", mode="after")
+    @classmethod
     def validate_greater_zero(cls, value: np.ndarray | list) -> np.ndarray | list:
         """Handles case where we want a single value broadcast to the length
         of the interval data.
+        breakpoint()  # fmt: skip
         """
         assert np.array(value).min() >= 0.0
         return value
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    @pydantic.model_validator(mode="after")
+    def create_idx(self) -> "RenewableGeneratorIntervalData":
+        """Creates an integer index."""
+        assert isinstance(self.electric_generation_mwh, (np.ndarray, list))
+        self.idx = np.arange(len(self.electric_generation_mwh))
+        return self
 
 
 class RenewableGeneratorConfig(pydantic.BaseModel):
@@ -158,8 +161,8 @@ class RenewableGenerator(epl.Asset):
 
     def optimize(
         self,
-        objective: str = "price",
-        verbose: bool = True,
+        objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
+        verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig | dict" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":

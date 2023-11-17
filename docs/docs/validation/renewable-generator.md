@@ -24,7 +24,7 @@ asset = epl.RenewableGenerator(
     name="wind",
     electric_generation_lower_bound_pct=electric_generation_lower_bound_pct
 )
-simulation = asset.optimize(objective="carbon", verbose=False)
+simulation = asset.optimize(objective="carbon", verbose=3)
 print(simulation.results[
     [
         "site-electricity_carbon_intensities",
@@ -55,7 +55,7 @@ asset = epl.RenewableGenerator(
     name="wind",
     electric_generation_lower_bound_pct=electric_generation_lower_bound_pct
 )
-simulation = asset.optimize(objective="carbon", verbose=False)
+simulation = asset.optimize(objective="carbon", verbose=3)
 print(simulation.results[
     [
         "site-electricity_carbon_intensities",

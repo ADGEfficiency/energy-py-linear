@@ -88,21 +88,26 @@ def test_optimization_carbon() -> None:
 def test_interval_data() -> None:
     """Tests the epl.RenewableGenerator and epl.Site interval data."""
 
-    #  the happy path
+    #  the happy paths
     epl.assets.renewable_generator.RenewableGeneratorIntervalData(
         electric_generation_mwh=[1.0, 2.0]
     )
+    epl.assets.renewable_generator.RenewableGeneratorIntervalData(
+        electric_generation_mwh=np.array([1.0, 2.0])
+    )
 
     #  test that we transform a float into a list
-    #  this is so the repeating to lengtn will work correctly in epl.Site
+    #  this is so the repeating to length will work correctly in epl.Site
     idata = epl.assets.renewable_generator.RenewableGeneratorIntervalData(
         electric_generation_mwh=2.0
     )
     assert idata.electric_generation_mwh == [2.0]
 
+    # test that we fail with no data
     with pytest.raises(Exception):
-        epl.assets.renewable_generator.RenewableGeneratorIntervalData()
+        epl.assets.renewable_generator.RenewableGeneratorIntervalData()  # type: ignore
 
+    # test that we fail with negative values
     with pytest.raises(Exception):
         epl.assets.renewable_generator.RenewableGeneratorIntervalData(
             electric_generation_mwh=[-10, 10]

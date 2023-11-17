@@ -16,17 +16,17 @@ import energypylinear as epl
 asset = epl.Battery(
     electricity_prices=[10, -50, 200, -50, 200],
 )
-simulation = asset.optimize(verbose=False)
+simulation = asset.optimize(verbose=3)
 print(simulation.results[["site-electricity_prices", "site-electricity_balance_mwh"]])
 ```
 
 ```
    site-electricity_prices  site-electricity_balance_mwh
-0                       10                      0.444444
-1                      -50                      2.000000
-2                      200                     -2.000000
-3                      -50                      2.000000
-4                      200                     -2.000000
+0                     10.0                      0.444444
+1                    -50.0                      2.000000
+2                    200.0                     -2.000000
+3                    -50.0                      2.000000
+4                    200.0                     -2.000000
 ```
 
 As expected, the battery charges (with a site that is positive) when prices are low and discharges (with a negative site electricity balance) when prices are high.
@@ -39,17 +39,17 @@ import energypylinear as epl
 asset = epl.Battery(
     electricity_prices=[200, -50, -50, 200, 220],
 )
-simulation = asset.optimize(verbose=False)
+simulation = asset.optimize(verbose=3)
 print(simulation.results[["site-electricity_prices", "site-electricity_balance_mwh"]])
 ```
 
 ```
    site-electricity_prices  site-electricity_balance_mwh
-0                      200                           0.0
-1                      -50                           2.0
-2                      -50                           2.0
-3                      200                          -1.6
-4                      220                          -2.0
+0                    200.0                           0.0
+1                    -50.0                           2.0
+2                    -50.0                           2.0
+3                    200.0                          -1.6
+4                    220.0                          -2.0
 ```
 
 As expected, the battery continues to charge during low electricity price intervals, and discharge when electricity prices are high.
@@ -68,9 +68,9 @@ pd.set_option("display.width", 400)
 asset = epl.Battery(
     electricity_prices=[10, -50, 200, -50, 200],
 )
-simulation = asset.optimize(verbose=False)
+simulation = asset.optimize(verbose=3)
 
-checks = epl.check_results(simulation.results, verbose=False)
+checks = epl.check_results(simulation.results, verbose=3)
 balance = checks["electricity-balance"]
 print(balance)
 ```
@@ -108,7 +108,7 @@ for efficiency_pct in [1.0, 0.9, 0.8]:
     )
     simulation = asset.optimize(
         objective="price",
-        verbose=False
+        verbose=3
     )
     results = simulation.results
     out.append(

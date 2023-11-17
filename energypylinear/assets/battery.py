@@ -37,7 +37,8 @@ class BatteryConfig(pydantic.BaseModel):
     final_charge_mwh: float | None = 0.0
     freq_mins: int
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
 
@@ -133,14 +134,13 @@ def constrain_initial_final_charge(
     """Constrain the battery state of charge at the start and end of the simulation."""
     assert isinstance(initial, BatteryOneInterval)
     assert isinstance(final, BatteryOneInterval)
-
     optimizer.constrain(
         initial.electric_initial_charge_mwh == initial.cfg.initial_charge_mwh
     )
     optimizer.constrain(final.electric_final_charge_mwh == final.cfg.final_charge_mwh)
 
 
-class Battery:
+class Battery(epl.Asset):
     """Electric battery asset, able to charge and discharge electricity.
 
     Args:
@@ -198,7 +198,7 @@ class Battery:
         return f"<energypylinear.Battery {self.cfg.power_mw=} {self.cfg.capacity_mwh=}>"
 
     def one_interval(
-        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags
+        self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> BatteryOneInterval:
         """Generate linear program data for one interval."""
         return BatteryOneInterval(
@@ -243,16 +243,16 @@ class Battery:
     ) -> None:
         """Constrain asset within an interval."""
         battery = ivars.filter_objective_variables(
-            BatteryOneInterval, i=-1, asset_name=self.cfg.name
-        )[0][0]
+            instance_type=BatteryOneInterval, i=-1, asset_name=self.cfg.name
+        )[0]
         constrain_only_charge_or_discharge(optimizer, battery, flags)
         constrain_battery_electricity_balance(optimizer, battery)
 
         #  TODO this is one battery asset, all intervals
         #  maybe refactor into the after intervals?
         #  bit of a weird case really
-        all_batteries = ivars.filter_objective_variables(
-            BatteryOneInterval, i=None, asset_name=self.cfg.name
+        all_batteries = ivars.filter_objective_variables_all_intervals(
+            instance_type=BatteryOneInterval, asset_name=self.cfg.name
         )
         assert isinstance(all_batteries, list)
         constrain_connection_batteries_between_intervals(optimizer, all_batteries)
@@ -264,17 +264,19 @@ class Battery:
     ) -> None:
         """Constrain asset after all intervals."""
         initial = ivars.filter_objective_variables(
-            BatteryOneInterval, i=0, asset_name=self.cfg.name
-        )[0][0]
+            instance_type=BatteryOneInterval, i=0, asset_name=self.cfg.name
+        )[0]
         final = ivars.filter_objective_variables(
-            BatteryOneInterval, i=-1, asset_name=self.cfg.name
-        )[0][0]
+            instance_type=BatteryOneInterval, i=-1, asset_name=self.cfg.name
+        )[0]
+        assert isinstance(initial, BatteryOneInterval)
+        assert isinstance(final, BatteryOneInterval)
         constrain_initial_final_charge(optimizer, initial, final)
 
     def optimize(
         self,
-        objective: str = "price",
-        verbose: bool = True,
+        objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
+        verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig | dict" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":

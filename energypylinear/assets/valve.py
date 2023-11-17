@@ -15,7 +15,8 @@ class ValveConfig(pydantic.BaseModel):
 
     name: str
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
         assert "valve" in name
@@ -65,8 +66,9 @@ class Valve(epl.Asset):
     ) -> None:
         """Constrain thermal balance across the valve."""
         valve = ivars.filter_objective_variables(
-            ValveOneInterval, i=-1, asset_name=self.cfg.name
-        )[0][0]
+            instance_type=ValveOneInterval, i=-1, asset_name=self.cfg.name
+        )[0]
+        assert isinstance(valve, ValveOneInterval)
         optimizer.constrain(
             valve.high_temperature_load_mwh == valve.low_temperature_generation_mwh
         )

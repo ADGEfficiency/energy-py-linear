@@ -1,4 +1,7 @@
 """Linear programming objective cost functions for price and carbon."""
+import dataclasses
+import typing
+
 import numpy as np
 import pulp
 
@@ -6,33 +9,26 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
-def filter_spill_evs(
-    ivars: "epl.interval_data.IntervalVars",
-    interval_data: "epl.assets.site.SiteIntervalData",
-) -> "list[list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]]":
-    """
-    Complexity here comes from the need to extract only the spill EVs linear program
-    variables.
+@dataclasses.dataclass
+class Term:
+    """A single term in the objective function.
 
-    """
-    evs = ivars.filter_objective_variables(epl.assets.evs.EVOneInterval)
-    spill_evs: list[
-        list[epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval]
-    ] = []
-    for i, assets_one_interval in enumerate(evs):
-        spill_evs_one_interval: list[
-            epl.assets.evs.EVOneInterval | epl.assets.asset.AssetOneInterval
-        ] = []
-        for ev in assets_one_interval:
-            assert isinstance(ev, epl.assets.evs.EVOneInterval)
-            if ev.is_spill:
-                spill_evs_one_interval.append(ev)
-        spill_evs.append(spill_evs_one_interval)
+    objective = Term + Term + Term"""
 
-    #  hmm
-    # if len(spill_evs) == 0:
-    #     spill_evs = [[epl.assets.asset.AssetOneInterval()] for i in interval_data.idx]
-    return spill_evs
+    variable: str
+    asset_type: str | None = None
+    interval_data: str | None = None
+    asset_name: str | None = None
+    coefficient: float = 1.0
+
+
+@dataclasses.dataclass
+class CustomObjectiveFunction:
+    """A custom objective function - a sum of terms.
+
+    CustomObjectiveFunction = Term + Term + Term"""
+
+    terms: list[Term]
 
 
 def price_objective(
@@ -40,8 +36,7 @@ def price_objective(
     ivars: "epl.IntervalVars",
     interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
-    """
-    Linear programming objective for cost minimization.  Equivalent to profit maximization.
+    """Linear programming objective for cost minimization.  Equivalent to profit maximization.
 
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
@@ -54,21 +49,45 @@ def price_objective(
     Returns:
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
-
-    #  cheating here with the site name (the second `site`)
-    sites = ivars.asset["site"]["site"]
-    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-    spill_evs = filter_spill_evs(ivars, interval_data)
-    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
-    boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
+    sites = typing.cast(
+        list[list["epl.assets.site.SiteOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.site.SiteOneInterval, asset_name="site"
+        ),
+    )
+    spills = typing.cast(
+        list[list["epl.assets.spill.SpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.spill.SpillOneInterval
+        ),
+    )
+    spill_evs = typing.cast(
+        list[list["epl.assets.evs.EVSpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.evs.EVSpillOneInterval
+        ),
+    )
+    generators = typing.cast(
+        list[list["epl.assets.chp.CHPOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(epl.assets.chp.CHPOneInterval),
+    )
+    boilers = typing.cast(
+        list[list["epl.assets.boiler.BoilerOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.boiler.BoilerOneInterval
+        ),
+    )
 
     assert isinstance(interval_data.gas_prices, np.ndarray)
     assert isinstance(interval_data.electricity_prices, np.ndarray)
     assert isinstance(interval_data.export_electricity_prices, np.ndarray)
 
-    obj = [
-        sites[i].import_power_mwh * interval_data.electricity_prices[i]
-        - sites[i].export_power_mwh * interval_data.export_electricity_prices[i]
+    obj: list[typing.Any | float] = [
+        [
+            site.import_power_mwh * interval_data.electricity_prices[i]
+            - site.export_power_mwh * interval_data.export_electricity_prices[i]
+            for site in sites[i]
+        ]
         + [
             spill.electric_generation_mwh * defaults.spill_objective_penalty
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
@@ -99,8 +118,7 @@ def carbon_objective(
     ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
-    """
-    Linear programming objective for carbon emission minimization.
+    """Linear programming objective for carbon emission minimization.
 
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
@@ -113,18 +131,42 @@ def carbon_objective(
     Returns:
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
-
-    #  cheating here with the site name (the second `site`)
-    sites = ivars.asset["site"]["site"]
-    spills = ivars.filter_objective_variables(epl.assets.spill.SpillOneInterval)
-    spill_evs = filter_spill_evs(ivars, interval_data)
-    generators = ivars.filter_objective_variables(epl.assets.chp.CHPOneInterval)
-    boilers = ivars.filter_objective_variables(epl.assets.boiler.BoilerOneInterval)
+    sites = typing.cast(
+        list[list["epl.assets.site.SiteOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.site.SiteOneInterval, asset_name="site"
+        ),
+    )
+    spills = typing.cast(
+        list[list["epl.assets.spill.SpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.spill.SpillOneInterval
+        ),
+    )
+    spill_evs = typing.cast(
+        list[list["epl.assets.evs.EVSpillOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.evs.EVSpillOneInterval
+        ),
+    )
+    generators = typing.cast(
+        list[list["epl.assets.chp.CHPOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(epl.assets.chp.CHPOneInterval),
+    )
+    boilers = typing.cast(
+        list[list["epl.assets.boiler.BoilerOneInterval"]],
+        ivars.filter_objective_variables_all_intervals(
+            epl.assets.boiler.BoilerOneInterval
+        ),
+    )
 
     assert isinstance(interval_data.electricity_carbon_intensities, np.ndarray)
-    obj = [
-        sites[i].import_power_mwh * interval_data.electricity_carbon_intensities[i]
-        - sites[i].export_power_mwh * interval_data.electricity_carbon_intensities[i]
+    obj: list[typing.Any | float] = [
+        [
+            site.import_power_mwh * interval_data.electricity_carbon_intensities[i]
+            - site.export_power_mwh * interval_data.electricity_carbon_intensities[i]
+            for site in sites[i]
+        ]
         + [
             spill.electric_generation_mwh * defaults.spill_objective_penalty
             + spill.high_temperature_generation_mwh * defaults.spill_objective_penalty
@@ -157,4 +199,51 @@ def carbon_objective(
     return optimizer.sum(obj)
 
 
-objectives = {"price": price_objective, "carbon": carbon_objective}
+def get_objective(
+    objective: str | dict | CustomObjectiveFunction,
+    optimizer: "epl.Optimizer",
+    ivars: "epl.interval_data.IntervalVars",
+    interval_data: "epl.assets.site.SiteIntervalData",
+) -> pulp.LpAffineExpression:
+    """Creates the objective function - either from a hardcoded function or from a custom objective function."""
+    hardcoded_objectives = {"price": price_objective, "carbon": carbon_objective}
+
+    if isinstance(objective, str):
+        if objective in hardcoded_objectives:
+            return hardcoded_objectives[objective](optimizer, ivars, interval_data)
+        else:
+            raise ValueError(
+                f"objective {objective} not in objectives, available objectives: {hardcoded_objectives.keys()}"
+            )
+
+    elif isinstance(objective, dict):
+        objective = CustomObjectiveFunction(
+            terms=[Term(**t) for t in objective["terms"]]
+        )
+
+    else:
+        assert isinstance(objective, CustomObjectiveFunction)
+
+    obj: list[typing.Any | float] = []
+    for i in interval_data.idx:
+        for term in objective.terms:
+            if term.asset_type == "*":
+                assets = ivars[i]
+            else:
+                assets = ivars.filter_objective_variables(
+                    instance_type=term.asset_type, i=i, asset_name=term.asset_name
+                )
+            for asset in assets:
+                obj.extend(
+                    [
+                        getattr(asset, term.variable)
+                        * (
+                            getattr(interval_data, term.interval_data)[i]
+                            if term.interval_data is not None
+                            else 1
+                        )
+                        * term.coefficient,
+                    ]
+                )
+
+    return optimizer.sum(obj)

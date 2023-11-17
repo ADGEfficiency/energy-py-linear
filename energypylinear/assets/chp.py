@@ -27,7 +27,8 @@ class CHPConfig(pydantic.BaseModel):
 
     freq_mins: int
 
-    @pydantic.validator("name")
+    @pydantic.field_validator("name")
+    @classmethod
     def check_name(cls, name: str) -> str:
         """Ensure we can identify this asset correctly."""
         assert "chp" in name
@@ -155,8 +156,9 @@ class CHP(epl.Asset):
         """Constrain generator upper and lower bounds for generating electricity, high
         and low temperature heat within a single interval."""
         chp = ivars.filter_objective_variables(
-            CHPOneInterval, i=i, asset_name=self.cfg.name
-        )[0][0]
+            instance_type=CHPOneInterval, i=i, asset_name=self.cfg.name
+        )[0]
+        assert isinstance(chp, CHPOneInterval)
         if chp.cfg.electric_efficiency_pct > 0:
             optimizer.constrain(
                 chp.gas_consumption_mwh
@@ -189,8 +191,8 @@ class CHP(epl.Asset):
 
     def optimize(
         self,
-        objective: str = "price",
-        verbose: bool = True,
+        objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
+        verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig | dict" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":

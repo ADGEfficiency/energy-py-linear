@@ -20,7 +20,8 @@ class HeatPumpConfig(pydantic.BaseModel):
     include_valve: bool
     name: str
 
-    @pydantic.validator("cop", pre=True, always=True)
+    @pydantic.field_validator("cop", mode="after")
+    @classmethod
     def validate_cop(cls, value: float) -> float:
         """Check COP is greater than 1.0.
 
@@ -153,8 +154,8 @@ class HeatPump(epl.Asset):
     ) -> None:
         """Constrain asset within a single interval."""
         heat_pump = ivars.filter_objective_variables(
-            HeatPumpOneInterval, i=i, asset_name=self.cfg.name
-        )[0][0]
+            instance_type=HeatPumpOneInterval, i=i, asset_name=self.cfg.name
+        )[0]
         assert isinstance(heat_pump, HeatPumpOneInterval)
         optimizer.constrain_max(
             heat_pump.electric_load_mwh,
@@ -180,8 +181,8 @@ class HeatPump(epl.Asset):
 
     def optimize(
         self,
-        objective: str = "price",
-        verbose: bool = True,
+        objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
+        verbose: int | bool = 2,
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig | dict" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":

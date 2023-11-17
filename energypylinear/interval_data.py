@@ -1,14 +1,15 @@
 """Models for interval data for electricity & gas prices, thermal loads and carbon intensities."""
-import collections
 import typing
 
 import numpy as np
 
+import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
-from energypylinear.assets.evs import EVsArrayOneInterval
 from energypylinear.assets.site import SiteOneInterval
 
 floats = typing.Union[float, np.ndarray, typing.Sequence[float], list[float]]
+
+AssetOneIntervalType = typing.TypeVar("AssetOneIntervalType", bound=AssetOneInterval)
 
 
 class IntervalVars:
@@ -16,145 +17,71 @@ class IntervalVars:
 
     def __init__(self) -> None:
         """Initializes the interval variables object."""
-        #  not every lp variable - only the ones we want to iterate over
-        #  in the objective functions (price, carbon etc)
         self.objective_variables: list[list[AssetOneInterval]] = []
-        self.asset: collections.defaultdict = collections.defaultdict(
-            lambda: {"evs_array": [], "spill_evs_array": [], "site": []}
-        )
 
     def __repr__(self) -> str:
         """A string representation of self."""
         return f"<epl.IntervalVars i: {len(self.objective_variables)}>"
 
-    def append(
-        self, one_interval: AssetOneInterval | SiteOneInterval | list[AssetOneInterval]
-    ) -> None:
+    def __len__(self) -> int:
+        """Return the number of objective variable lists."""
+        return len(self.objective_variables)
+
+    def __getitem__(self, index: int) -> list[AssetOneInterval]:
+        """Enable subscripting to get a list of AssetOneInterval at a given index."""
+        return self.objective_variables[index]
+
+    def append(self, one_interval: AssetOneInterval | SiteOneInterval | list) -> None:
         """Appends a one_interval object to the appropriate attribute.
 
         Args:
             one_interval (Union[AssetOneInterval, SiteOneInterval, list[AssetOneInterval]]): The interval data to append.
-
-        Raises:
-            AssertionError: If one_interval is not a recognized type.
         """
-        #  some OneInterval objects are special
-        #  is this case it is the Array EV data structures
-        #  TODO in future don't save these separately and
-        #  dynamically create as needed from the objective variables
-        if isinstance(one_interval, EVsArrayOneInterval):
-            if one_interval.is_spill:
-                self.asset[one_interval.cfg.name]["spill_evs_array"].append(
-                    one_interval
-                )
-            else:
-                self.asset[one_interval.cfg.name]["evs_array"].append(one_interval)
-        elif isinstance(one_interval, SiteOneInterval):
-            self.asset[one_interval.cfg.name]["site"].append(one_interval)
-
-        else:
-            assert isinstance(one_interval, list)
-            self.objective_variables.append(one_interval)
-
-    def filter_evs_array(
-        self, is_spill: bool, i: int, asset_name: str
-    ) -> EVsArrayOneInterval:
-        """Filters and returns EVsArrayOneInterval data based on criteria.
-
-        Args:
-            is_spill (bool): Whether to filter spill EVs or regular EVs.
-            i (int): Interval index.
-            asset_name (str): Name of the asset.
-
-        Returns:
-            EVsArrayOneInterval: The filtered EVsArrayOneInterval object.
-        """
-        if is_spill:
-            return self.asset[asset_name]["spill_evs_array"][i]
-        else:
-            return self.asset[asset_name]["evs_array"][i]
-
-    def filter_all_evs_array(
-        self, is_spill: bool, asset_name: str
-    ) -> list[EVsArrayOneInterval]:
-        """Filters EVsArrayOneInterval instances based on spill status and asset name.
-
-        Args:
-            is_spill (bool): Whether to filter by spill or not.
-            asset_name (str): Name of the asset to filter by.
-
-        Returns:
-            list[EVsArrayOneInterval]: Filtered list of EVsArrayOneInterval instances.
-        """
-        if is_spill:
-            return self.asset[asset_name]["spill_evs_array"]
-        else:
-            return self.asset[asset_name]["evs_array"]
-
-    def filter_site(self, i: int, site_name: str) -> SiteOneInterval:
-        """Filters and a SiteOneInterval based on interval index and site name.
-
-        Args:
-            i (int): Interval index.
-            site_name (str): Name of the site to filter by.
-
-        Returns:
-            SiteOneInterval: Filtered SiteOneInterval instance.
-        """
-        return self.asset[site_name]["site"][i]
+        assert isinstance(one_interval, list)
+        self.objective_variables.append(one_interval)
 
     def filter_objective_variables(
         self,
+        i: int,
+        instance_type: type[AssetOneInterval] | str | None = None,
+        asset_name: str | None = None,
+    ) -> list[AssetOneInterval]:
+        """Filters objective variables based on type, interval index, and asset name."""
+        if isinstance(instance_type, str):
+            type_mapper: dict[str, type] = {
+                "site": SiteOneInterval,
+                "spill": epl.assets.spill.SpillOneInterval,
+                "spill_evs": epl.assets.evs.EVSpillOneInterval,
+            }
+            instance_type = type_mapper[instance_type]
+
+        if instance_type is not None:
+            assert issubclass(instance_type, AssetOneInterval)
+
+        assets = self.objective_variables[i]
+        return [
+            asset
+            for asset in assets
+            if (isinstance(asset, instance_type) if instance_type is not None else True)
+            and (asset.cfg.name == asset_name if asset_name is not None else True)
+        ]
+
+    def filter_objective_variables_all_intervals(
+        self,
         instance_type: type[AssetOneInterval],
-        i: int | None = None,
         asset_name: str | None = None,
     ) -> list[list[AssetOneInterval]]:
-        """Filters objective variables based on type, interval index, and asset name.
-
-        Args:
-            instance_type (type[AssetOneInterval]):
-                Type of the AssetOneInterval instances to filter.
-            i (int | None, optional):
-                Interval index. If None, filters across all intervals.
-                Defaults to None.
-            asset_name (str | None, optional):
-                Name of the asset to filter by. If None, no filtering by name.
-                Defaults to None.
-
-        Returns:
-            list[list[AssetOneInterval]]:
-                Filtered list of AssetOneInterval instances.
-        """
-        #  here we return data for all intervals
-        if i is None:
-            pkg = []
-            for i, assets_one_interval in enumerate(self.objective_variables):
-                pkg.append(
-                    [
-                        asset
-                        for asset in assets_one_interval
-                        if isinstance(asset, instance_type)
-                        and (
-                            asset.cfg.name == asset_name
-                            if asset_name is not None
-                            else True
-                        )
-                    ]
-                )
-            return pkg
-
-        #  here we return data for one interval
-        else:
-
-            #  why a list of lists??????????
-            assets = self.objective_variables[i]
-            return [
+        """Filters objective variables based on type, interval index, and asset name."""
+        pkg = []
+        for assets_one_interval in self.objective_variables:
+            pkg.append(
                 [
                     asset
-                    for asset in assets
+                    for asset in assets_one_interval
                     if isinstance(asset, instance_type)
                     and (
                         asset.cfg.name == asset_name if asset_name is not None else True
                     )
                 ]
-            ]
+            )
+        return pkg
