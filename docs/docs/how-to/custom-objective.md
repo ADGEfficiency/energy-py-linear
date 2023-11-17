@@ -1,17 +1,17 @@
-`energypylinear` has the ability to optimize for both price and carbon as optimization objectives built into the library.
+`energypylinear` has the ability to optimize for two different objective functions (price or carbon) built into the library.
 
-Sometimes however, you may want to optimize for a different objective - this is where custom objective functions come in.
+However you may want to optimize for a different objective function in the linear program. This is where custom objective functions come in.
 
-A custom objective function allows you to construct your objective function as you see fit - allowing you to optimize a site and assets for the incentives and costs that are important to you.
+**A custom objective function allows you to construct an objective function as you see fit** - allowing you to optimize a site and assets for the incentives and costs that are important to you.
 
 Core to the custom objective function is the `epl.Term` - representing a single term in the objective function:
 
+<!--phmdoctest-share-names-->
 ```python
 import dataclasses
 
 @dataclasses.dataclass
 class Term:
-
     variable: str
     asset_type: str | None = None
     interval_data: str | None = None
@@ -19,13 +19,20 @@ class Term:
     coefficient: float = 1.0
 ```
 
-Each term can target either many assets by type or one asset by name.
+Each term can target either many assets by type or one asset by name. It can also include a multiplication by interval data or by a coefficient.
+
+A custom objective function is a list of terms - the sum of these terms becomes the objective function.
+
+<!--phmdoctest-share-names-->
+```python
+@dataclasses.dataclass
+class CustomObjectiveFunction:
+    terms: list[Term] = dataclasses.field(default_factory=list)
+```
 
 ## Optimizing for Both Price and Carbon
 
 In this example we will show how to optimize a battery for an objective that includes both profit maximization and carbon emissions reduction.
-
-A custom objective function is a list of terms - the sum of these terms becomes the objective function.
 
 The example below creates an objective function where we incentive the site to:
 
@@ -39,8 +46,13 @@ Key to this is defining a carbon price, which allows us to convert our emissions
 import numpy as np
 import energypylinear as epl
 
-def simulate(carbon_price: int, seed: int, n: int, verbose: int = 2) -> epl.SimulationResult:
-    """Runs one battery simulation at a given carbon price with a price and carbon objective function."""
+def simulate(
+    carbon_price: int,
+    seed: int,
+    n: int,
+    verbose: int = 2
+) -> epl.SimulationResult:
+    """Runs one battery simulation at a given carbon price with a custom objective function."""
     np.random.seed(seed)
     site = epl.Site(
         assets=[epl.Battery(power_mw=10, capacity_mwh=20)],
@@ -104,74 +116,43 @@ from rich import print
 results = []
 for carbon_price in range(0, 300, 50):
     simulation = simulate(carbon_price=carbon_price, seed=42, n=72, verbose=3)
+    accounts = epl.get_accounts(simulation.results)
     results.append(
-        (carbon_price, epl.get_accounts(simulation.results))
+        {
+            "carbon_price": carbon_price,
+            "profit": f"{accounts.profit:5.2f}",
+            "emissions": f"{accounts.emissions:3.2f}"
+        }
     )
 print(results)
 ```
 
 ```
 [
-    (
-        0,
-        Accounts(
-            cost=-466212.61402771604,
-            emissions=161.15902025377193,
-            profit=466212.61402771604
-        )
-    ),
-    (
-        50,
-        Accounts(
-            cost=-452318.6769574514,
-            emissions=-579.5092576655181,
-            profit=452318.6769574514
-        )
-    ),
-    (
-        100,
-        Accounts(
-            cost=-390152.3790973575,
-            emissions=-1403.2085727250274,
-            profit=390152.3790973575
-        )
-    ),
-    (
-        150,
-        Accounts(
-            cost=-336073.24333483365,
-            emissions=-1848.9408727284797,
-            profit=336073.24333483365
-        )
-    ),
-    (
-        200,
-        Accounts(
-            cost=-290186.2623118541,
-            emissions=-2098.2766452348483,
-            profit=290186.2623118541
-        )
-    ),
-    (
-        250,
-        Accounts(
-            cost=-248371.69782712747,
-            emissions=-2288.4186586585793,
-            profit=248371.69782712747
-        )
-    )
+    {'carbon_price': 0, 'profit': '466212.61', 'emissions': '161.16'},
+    {'carbon_price': 50, 'profit': '452318.68', 'emissions': '-579.51'},
+    {'carbon_price': 100, 'profit': '390152.38', 'emissions': '-1403.21'},
+    {'carbon_price': 150, 'profit': '336073.24', 'emissions': '-1848.94'},
+    {'carbon_price': 200, 'profit': '290186.26', 'emissions': '-2098.28'},
+    {'carbon_price': 250, 'profit': '248371.70', 'emissions': '-2288.42'}
 ]
 ```
 
-As expected as our carbon price increases, our emissions decrease, and our profit decreases.
+As expected as our carbon price increases, both our profit and emissions decrease.
 
 ## Renewables Certificates
 
 In the previous example we used a custom objective function to apply incentives to the site import and export electricity.
 
-A custom objective function can also be used to apply incentives to a single asset.
+**A custom objective function can also be used to apply incentives to a single asset**.
 
 An example of this is a renewable energy certificate scheme, where the generation from one asset receives additional income for each MWh generated.
+
+In the example below, our `solar` asset receives additional income for each MWh generated.  
+
+The site has a constrained export limit, which limits how much both generators can output.
+
+The site electric load increases in each interval, which allows us to see which generator is called first:
 
 ```python
 import energypylinear as epl
@@ -234,13 +215,17 @@ print(
 4                           50.0                          50.0
 ```
 
-As expected, as the first generator that is called is the `solar` generator, as it receives additional income for it's output.  As the site demand increases, the `wind` generator is called to make up the remaining demand.
+As expected, the first generator that is called is the `solar` generator, as it receives additional income for it's output.  
+
+As the site demand increases, the `wind` generator is called to make up the remaining demand.
 
 ## Synthetic PPA
 
 A synthetic PPA is a financial instrument that allows swapping of the output of a wholesale exposed generator to a fixed price.
 
-This can be modelled as a custom objective function:
+This can be modelled as a custom objective function.  In the example below, we model a site with wholesale exposed import and export.
+
+In addition we swap the output of our `wind` generator from the wholesale to a fixed price:
 
 ```python
 import numpy as np
@@ -294,65 +279,6 @@ simulation = site.optimize(
 )
 print(simulation.results[["site-electricity_prices", "wind-electric_generation_mwh"]])
 
-```
-
-## Synthetic PPA
-
-A synthetic PPA is a financial instrument that allows swapping of the output of a wholesale exposed generator to a fixed price.
-
-This can be modelled as a custom objective function:
-
-```python
-import numpy as np
-import energypylinear as epl
-
-n = 6
-np.random.seed(42)
-wind_mwh = np.random.uniform(0, 100, n)
-electricity_prices = np.random.normal(0, 1000, n)
-
-assets: list[epl.Asset] = [
-    epl.RenewableGenerator(
-        electric_generation_mwh=wind_mwh,
-        name="wind",
-        electric_generation_lower_bound_pct=0.0,
-    ),
-    epl.Battery(power_mw=20, capacity_mwh=20),
-]
-
-site = epl.Site(
-    assets=assets,
-    electricity_prices=electricity_prices
-)
-terms=[
-    {
-        "asset_type":"site",
-        "variable":"import_power_mwh",
-        "interval_data":"electricity_prices"
-    },
-    {
-        "asset_type":"site",
-        "variable":"export_power_mwh",
-        "interval_data":"electricity_prices",
-        "coefficient":-1
-    },
-    {
-        "asset_name": "wind",
-        "variable": "electric_generation_mwh",
-        "interval_data": "electricity_prices",
-        "coefficient": 1
-    },
-    {
-        "asset_name": "wind",
-        "variable": "electric_generation_mwh",
-        "coefficient": -70
-    }
-]
-simulation = site.optimize(
-    verbose=4,
-    objective={"terms": terms},
-)
-print(simulation.results[["site-electricity_prices", "wind-electric_generation_mwh"]])
 ```
 
 ```
