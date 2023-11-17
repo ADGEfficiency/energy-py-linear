@@ -86,9 +86,10 @@ print(simulate(carbon_price=50, seed=42, n=72))
 ```
 
 ```
-INFO     assets.site.optimize: cfg=<SiteConfig name=site, freq_mins=60, import_limit_mw=10000.0, export_limit_mw=10000.0>
-INFO     assets.site.optimize: assets=['battery']
-INFO     optimizer.solve: status='Optimal'
+INFO     assets.site.optimize: cfg=<SiteConfig name=site, freq_mins=60,         
+         import_limit_mw=10000.0, export_limit_mw=10000.0>                      
+INFO     assets.site.optimize: assets=['battery']                               
+INFO     optimizer.solve: status='Optimal'                                      
 <energypylinear.SimulationResult feasible:True, rows:72, cols:28>
 ```
 
@@ -111,11 +112,54 @@ print(results)
 
 ```
 [
-    Accounts(cost=-466212.61402771604, emissions=161.15902025377193, profit=466212.61402771604),
-    Accounts(cost=-462348.5208314832, emissions=-353.91002234343773, profit=462348.5208314832),
-    Accounts(cost=-462348.5208314832, emissions=-353.91002234343773, profit=462348.5208314832),
-    Accounts(cost=-442491.5493116912, emissions=-761.1011639171603, profit=442491.5493116912),
-    Accounts(cost=-418641.72822318133, emissions=-1081.7941891834703, profit=418641.72822318133)
+    (
+        0,
+        Accounts(
+            cost=-466212.61402771604,
+            emissions=161.15902025377193,
+            profit=466212.61402771604
+        )
+    ),
+    (
+        50,
+        Accounts(
+            cost=-452318.6769574514,
+            emissions=-579.5092576655181,
+            profit=452318.6769574514
+        )
+    ),
+    (
+        100,
+        Accounts(
+            cost=-390152.3790973575,
+            emissions=-1403.2085727250274,
+            profit=390152.3790973575
+        )
+    ),
+    (
+        150,
+        Accounts(
+            cost=-336073.24333483365,
+            emissions=-1848.9408727284797,
+            profit=336073.24333483365
+        )
+    ),
+    (
+        200,
+        Accounts(
+            cost=-290186.2623118541,
+            emissions=-2098.2766452348483,
+            profit=290186.2623118541
+        )
+    ),
+    (
+        250,
+        Accounts(
+            cost=-248371.69782712747,
+            emissions=-2288.4186586585793,
+            profit=248371.69782712747
+        )
+    )
 ]
 ```
 
@@ -313,12 +357,12 @@ print(simulation.results[["site-electricity_prices", "wind-electric_generation_m
 
 ```
    site-electricity_prices  wind-electric_generation_mwh
-0                26.536075                     76.020339
-1               -53.161855                     84.549425
-2               147.905137                     31.016892
-3               239.539851                     81.048354
-4               162.699663                     85.390778
-5               194.203578                     77.168803
+0              1579.212816                     37.454012
+1               767.434729                     95.071431
+2              -469.474386                     73.199394
+3               542.560044                     59.865848
+4              -463.417693                     15.601864
+5              -465.729754                     15.599452
 ```
 
 As expected, our renewable generator still generates during times of negative electricity prices - this is because its output is incentivized at a fixed price.
