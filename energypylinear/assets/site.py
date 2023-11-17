@@ -341,7 +341,7 @@ class Site:
         objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
         flags: Flags = Flags(),
         verbose: int | bool = 2,
-        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
+        optimizer_config: "epl.OptimizerConfig | dict" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize sites dispatch using a mixed-integer linear program.
 
