@@ -109,7 +109,7 @@ class EVOneInterval(AssetOneInterval):
     final_soc_mwh: pulp.LpVariable | float
     electric_loss_mwh: pulp.LpVariable | float
 
-    is_spill: bool = False
+    is_spill: typing.Literal[False] = False
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     def __repr__(self) -> str:
@@ -121,13 +121,28 @@ class EVOneInterval(AssetOneInterval):
         return repr(self)
 
 
-class EVSpillOneInterval(EVOneInterval):
+class EVSpillOneInterval(AssetOneInterval):
     """Spill EV asset data for a single interval.
 
     This single data structure contains data for one asset
     in one interval."""
 
+    i: int
+    charge_event_idx: int
+    charge_event_cfg: ChargeEventConfig
+    charger_idx: int
+    charger_cfg: ChargerConfig
+
+    electric_charge_mwh: pulp.LpVariable | float
+    electric_charge_binary: pulp.LpVariable | int
+    electric_discharge_mwh: pulp.LpVariable | float
+    electric_discharge_binary: pulp.LpVariable | int
+    initial_soc_mwh: pulp.LpVariable | float
+    final_soc_mwh: pulp.LpVariable | float
+    electric_loss_mwh: pulp.LpVariable | float
+
     is_spill: typing.Literal[True] = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -166,14 +181,23 @@ def create_evs_array(
     ivars: "epl.IntervalVars", i: int, asset_name: str, is_spill: bool
 ) -> EVsArrayOneInterval:
     """Creates the array representation from EVOneInterval objects."""
-    one_intervals: list[EVOneInterval] = typing.cast(
-        list[EVOneInterval],
-        ivars.filter_objective_variables(
-            epl.assets.evs.EVOneInterval, i=i, asset_name=asset_name
-        ),
-    )
-
-    one_intervals = [oi for oi in one_intervals if oi.is_spill == is_spill]
+    one_intervals: list[EVOneInterval] | list[EVSpillOneInterval]
+    if not is_spill:
+        one_intervals = typing.cast(
+            list[EVOneInterval],
+            ivars.filter_objective_variables(
+                instance_type=epl.assets.evs.EVOneInterval, i=i, asset_name=asset_name
+            ),
+        )
+    else:
+        one_intervals = typing.cast(
+            list[EVSpillOneInterval],
+            ivars.filter_objective_variables(
+                instance_type=epl.assets.evs.EVSpillOneInterval,
+                i=i,
+                asset_name=asset_name,
+            ),
+        )
     asset_cfg = one_intervals[0].cfg
     if is_spill:
         assert len(one_intervals) == len(asset_cfg.charge_event_cfgs) * 1
@@ -762,10 +786,10 @@ class EVs:
 
     def optimize(
         self,
-        objective: str = "price",
+        objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
         verbose: int | bool = 2,
         flags: Flags = Flags(),
-        optimizer_config: "epl.OptimizerConfig" = epl.optimizer.OptimizerConfig(),
+        optimizer_config: "epl.OptimizerConfig | dict" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize the EVs's dispatch using a mixed-integer linear program.
 

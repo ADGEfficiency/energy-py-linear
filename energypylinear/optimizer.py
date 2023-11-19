@@ -41,12 +41,17 @@ class Optimizer:
     Solver for linear programs. Interfaces with `pulp`.
 
     Attributes:
+        cfg: an OptimizerConfig
         prob: problem to be optimized.
         solver: solver to use for solving the optimization problem.
     """
 
-    def __init__(self, cfg: OptimizerConfig = OptimizerConfig()) -> None:
+    def __init__(self, cfg: OptimizerConfig | dict = OptimizerConfig()) -> None:
         """Initialize an Optimizer."""
+
+        if isinstance(cfg, dict):
+            cfg = OptimizerConfig(**cfg)
+
         self.cfg = cfg
         name = str(datetime.datetime.now())
         name = name.replace(" ", "-")
@@ -80,7 +85,6 @@ class Optimizer:
         Args:
             name: The name of the variable.
         """
-        # logger.debug("optimizer.binary", name=name)
         return pulp.LpVariable(name=name, cat="Binary")
 
     def sum(
@@ -93,24 +97,22 @@ class Optimizer:
         """
         return pulp.lpSum(vector)
 
-    def constrain(
-        self, constraint: pulp.LpConstraint, name: str | None = None
-    ) -> pulp.LpConstraint:
+    def constrain(self, constraint: pulp.LpConstraint, name: str | None = None) -> None:
         """Create a linear program constrain.
 
         Args:
             constraint: equality or inequality expression.
             name: optional name to give to the constraint.
         """
-        return self.prob.addConstraint(constraint, name)
+        self.prob.addConstraint(constraint, name)
 
-    def objective(self, objective: pulp.LpAffineExpression) -> pulp.LpConstraint:
+    def objective(self, objective: pulp.LpAffineExpression) -> None:
         """Sets the linear program objective function.
 
         Args:
             objective: cost function to optimize.
         """
-        return self.prob.setObjective(objective)
+        self.prob.setObjective(objective)
 
     def solve(
         self, verbose: int | bool, allow_infeasible: bool = False
@@ -127,13 +129,12 @@ class Optimizer:
             f"optimizer.solve: variables={len(self.variables())}, constraints={len(self.constraints())}"
         )
         self.assert_no_duplicate_variables()
-        self.solver.solve(self.prob)
 
+        self.solver.solve(self.prob)
         status = self.status()
-        if verbose > 0:
-            logger.info(
-                f"optimizer.solve: {status=}",
-            )
+        logger.info(
+            f"optimizer.solve: {status=}",
+        )
 
         feasible = status == "Optimal"
         if not allow_infeasible:
@@ -143,17 +144,16 @@ class Optimizer:
 
     def assert_no_duplicate_variables(self) -> None:
         """Check there are no duplicate variable names in the optimization problem."""
-        variables = self.variables()
-        names = [v.name for v in variables]
-        assert len(names) == len(
-            set(names)
+        names = [v.name for v in self.variables()]
+        assert (
+            len(names) == len(set(names))
         ), f"duplicate variables detected - {len([x for x in names if names.count(x) >= 2])} of {len(names)}\n{sorted(set([x for x in names if names.count(x) >= 2]))}"
 
     def status(self) -> str:
         """Return the status of the optimization problem."""
-        return pulp.LpStatus[self.prob.status]
+        return str(pulp.LpStatus[self.prob.status])
 
-    def constraints(self) -> list[pulp.LpConstraint]:
+    def constraints(self) -> dict[str, pulp.LpConstraint]:
         """Constraints of the optimization problem."""
         return self.prob.constraints
 
@@ -163,7 +163,7 @@ class Optimizer:
 
     def constrain_max(
         self, continuous: pulp.LpVariable, binary: pulp.LpVariable | int, max: float
-    ) -> pulp.LpConstraint:
+    ) -> None:
         """Constrain the maximum value of a continuous variable.
 
         Args:
@@ -171,11 +171,11 @@ class Optimizer:
             binary: a binary variable, linked to the continuous variable.
             max: the allowed maximum value.
         """
-        return self.constrain(continuous - binary * max <= 0)
+        self.constrain(continuous - binary * max <= 0)
 
     def constrain_min(
         self, continuous: pulp.LpVariable, binary: pulp.LpVariable, min: float
-    ) -> pulp.LpConstraint:
+    ) -> None:
         """Constrain the minimum value of a continuous variable.
 
         Args:
@@ -183,7 +183,7 @@ class Optimizer:
             binary: a binary variable, linked to the continuous variable.
             max: the allowed minimum value.
         """
-        return self.constrain(-continuous + binary * min <= 0)
+        self.constrain(-continuous + binary * min <= 0)
 
     def value(
         self,

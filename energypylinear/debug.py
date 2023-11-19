@@ -1,8 +1,9 @@
-"""one off debug stuff"""
+"""Functions used for interactive debugging."""
 import pandas as pd
 from rich import print
 
 from energypylinear.results.checks import (
+    check_electricity_balance,
     check_high_temperature_heat_balance,
     check_low_temperature_heat_balance,
 )
@@ -18,7 +19,7 @@ def _debug_column(simulation: pd.DataFrame, col: str) -> None:
 
 
 def debug_simulation(simulation: pd.DataFrame) -> None:
-    """be great to debug the balances here as well"""
+    """Debug a simulation result."""
     print("[red]DEBUG[/red]")
     debug = [
         "site-import_power_mwh",
@@ -35,7 +36,8 @@ def debug_simulation(simulation: pd.DataFrame) -> None:
 
 
 def debug_balances(simulation: pd.DataFrame) -> None:
-    """runs balance checks"""
+    """Runs balance checks."""
+    check_electricity_balance(simulation, verbose=True)
     check_high_temperature_heat_balance(simulation, verbose=True)
     check_low_temperature_heat_balance(simulation, verbose=True)
 
@@ -43,7 +45,7 @@ def debug_balances(simulation: pd.DataFrame) -> None:
 def debug_asset(
     simulation: pd.DataFrame, name: str, verbose: bool = True
 ) -> pd.DataFrame:
-    """Extracts result columns for a singel asset."""
+    """Extracts result columns for a single asset."""
     cols = [c for c in simulation.columns if name in c]
     if verbose:
         print(simulation[cols])

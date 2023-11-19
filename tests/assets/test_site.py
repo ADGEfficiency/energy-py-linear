@@ -165,7 +165,7 @@ def test_interval_data() -> None:
     epl.assets.site.SiteIntervalData(
         electricity_prices=[10, 10],
         high_temperature_load_mwh=5.0,
-        high_temperature_generation_mwh=[5, 5],
+        low_temperature_generation_mwh=[5, 5],
     )
 
 

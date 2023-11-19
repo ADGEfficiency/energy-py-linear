@@ -1,4 +1,5 @@
 """Linear programming objective cost functions for price and carbon."""
+import dataclasses
 import typing
 
 import numpy as np
@@ -8,13 +9,34 @@ import energypylinear as epl
 from energypylinear.defaults import defaults
 
 
+@dataclasses.dataclass
+class Term:
+    """A single term in the objective function.
+
+    objective = Term + Term + Term"""
+
+    variable: str
+    asset_type: str | None = None
+    interval_data: str | None = None
+    asset_name: str | None = None
+    coefficient: float = 1.0
+
+
+@dataclasses.dataclass
+class CustomObjectiveFunction:
+    """A custom objective function - a sum of terms.
+
+    CustomObjectiveFunction = Term + Term + Term"""
+
+    terms: list[Term]
+
+
 def price_objective(
     optimizer: "epl.Optimizer",
     ivars: "epl.IntervalVars",
     interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
-    """
-    Linear programming objective for cost minimization.  Equivalent to profit maximization.
+    """Linear programming objective for cost minimization.  Equivalent to profit maximization.
 
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
@@ -27,8 +49,6 @@ def price_objective(
     Returns:
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
-
-    #  TODO cheating here with the site name
     sites = typing.cast(
         list[list["epl.assets.site.SiteOneInterval"]],
         ivars.filter_objective_variables_all_intervals(
@@ -98,8 +118,7 @@ def carbon_objective(
     ivars: "epl.interval_data.IntervalVars",
     interval_data: "epl.assets.site.SiteIntervalData",
 ) -> pulp.LpAffineExpression:
-    """
-    Linear programming objective for carbon emission minimization.
+    """Linear programming objective for carbon emission minimization.
 
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
@@ -112,7 +131,6 @@ def carbon_objective(
     Returns:
         A linear programming objective as an instance of `pulp.LpAffineExpression` class.
     """
-    #  TODO cheating here with the site name
     sites = typing.cast(
         list[list["epl.assets.site.SiteOneInterval"]],
         ivars.filter_objective_variables_all_intervals(
@@ -181,4 +199,51 @@ def carbon_objective(
     return optimizer.sum(obj)
 
 
-objectives = {"price": price_objective, "carbon": carbon_objective}
+def get_objective(
+    objective: str | dict | CustomObjectiveFunction,
+    optimizer: "epl.Optimizer",
+    ivars: "epl.interval_data.IntervalVars",
+    interval_data: "epl.assets.site.SiteIntervalData",
+) -> pulp.LpAffineExpression:
+    """Creates the objective function - either from a hardcoded function or from a custom objective function."""
+    hardcoded_objectives = {"price": price_objective, "carbon": carbon_objective}
+
+    if isinstance(objective, str):
+        if objective in hardcoded_objectives:
+            return hardcoded_objectives[objective](optimizer, ivars, interval_data)
+        else:
+            raise ValueError(
+                f"objective {objective} not in objectives, available objectives: {hardcoded_objectives.keys()}"
+            )
+
+    elif isinstance(objective, dict):
+        objective = CustomObjectiveFunction(
+            terms=[Term(**t) for t in objective["terms"]]
+        )
+
+    else:
+        assert isinstance(objective, CustomObjectiveFunction)
+
+    obj: list[typing.Any | float] = []
+    for i in interval_data.idx:
+        for term in objective.terms:
+            if term.asset_type == "*":
+                assets = ivars[i]
+            else:
+                assets = ivars.filter_objective_variables(
+                    instance_type=term.asset_type, i=i, asset_name=term.asset_name
+                )
+            for asset in assets:
+                obj.extend(
+                    [
+                        getattr(asset, term.variable)
+                        * (
+                            getattr(interval_data, term.interval_data)[i]
+                            if term.interval_data is not None
+                            else 1
+                        )
+                        * term.coefficient,
+                    ]
+                )
+
+    return optimizer.sum(obj)
