@@ -49,6 +49,12 @@ class IntervalVars:
         """Filters objective variables based on type, interval index, and asset name."""
         if isinstance(instance_type, str):
             type_mapper: dict[str, type] = {
+                "battery": epl.assets.battery.BatteryOneInterval,
+                "boiler": epl.assets.boiler.BoilerOneInterval,
+                "chp": epl.assets.chp.CHPOneInterval,
+                "evs": epl.assets.evs.EVOneInterval,
+                "heat-pump": epl.assets.heat_pump.HeatPumpOneInterval,
+                "renewable-generator": epl.assets.renewable_generator.RenewableGeneratorOneInterval,
                 "site": SiteOneInterval,
                 "spill": epl.assets.spill.SpillOneInterval,
                 "spill_evs": epl.assets.evs.EVSpillOneInterval,
