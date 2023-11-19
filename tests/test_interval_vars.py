@@ -20,11 +20,7 @@ def test_interval_vars() -> None:
     )
 
     ivars = IntervalVars()
-    ivars.append([
-        site,
-        *evs,
-        *evs_two
-    ])
+    ivars.append([site, *evs, *evs_two])
 
     assert (
         len(
@@ -64,6 +60,6 @@ def test_interval_vars() -> None:
         "chp",
         "heat-pump",
         "renewable-generator",
-            "boiler"
+        "boiler",
     ]:
         ivars.filter_objective_variables(instance_type=asset_name, i=0)
