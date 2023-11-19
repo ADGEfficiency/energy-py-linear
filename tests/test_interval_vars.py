@@ -20,7 +20,11 @@ def test_interval_vars() -> None:
     )
 
     ivars = IntervalVars()
-    ivars.append([site, *evs, *evs_two])
+    ivars.append([
+        site,
+        *evs,
+        *evs_two
+    ])
 
     assert (
         len(
@@ -52,3 +56,14 @@ def test_interval_vars() -> None:
     )
     ivars[0]
     ivars[-1]
+
+    # test that we can call `filter_objective_variables` with different strings
+    for asset_name in [
+        "battery",
+        "evs",
+        "chp",
+        "heat-pump",
+        "renewable-generator",
+            "boiler"
+    ]:
+        ivars.filter_objective_variables(instance_type=asset_name, i=0)
