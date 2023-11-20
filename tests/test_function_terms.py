@@ -4,7 +4,6 @@ import numpy as np
 import pulp
 
 import energypylinear as epl
-from energypylinear.data_generation import generate_random_ev_input_data
 
 float_args = {
     "allow_infinity": False,
@@ -21,13 +20,11 @@ gap_args = {
 
 atol = 1e-4
 
-settings = {
-    "print_blob": True,
-    "max_examples": 1000,
-    "report_multiple_bugs": False,
-    # "stateful_step_count": 1,
-    # "verbosity": hypothesis.Verbosity.verbose,
-}
+settings = hypothesis.settings(
+    print_blob=True,
+    max_examples=1000,
+    report_multiple_bugs=False,
+)
 
 
 def coerce_variables(
@@ -58,7 +55,7 @@ def coerce_variables(
     return av, bv
 
 
-@hypothesis.settings(**settings)
+@hypothesis.settings(settings)
 @hypothesis.given(
     a=hypothesis.strategies.floats(**float_args),
     b=hypothesis.strategies.floats(**float_args),
@@ -81,7 +78,7 @@ def test_max_two_variables(
     np.testing.assert_allclose(max(a, b), cv.value(), atol=atol)
 
 
-@hypothesis.settings(**settings)
+@hypothesis.settings(settings)
 @hypothesis.given(
     a=hypothesis.strategies.floats(**float_args),
     b=hypothesis.strategies.floats(**float_args),
@@ -104,7 +101,7 @@ def test_min_two_variables(
     np.testing.assert_allclose(min(a, b), cv.value(), atol=atol)
 
 
-@hypothesis.settings(**settings)
+@hypothesis.settings(settings)
 @hypothesis.given(
     electricity_prices=hypothesis.strategies.lists(
         hypothesis.strategies.floats(
@@ -191,17 +188,7 @@ def test_function_term_export_tariff(
     )
 
 
-@hypothesis.settings(
-    **settings,
-    deadline=600,
-    # phases=[
-    #     hypothesis.Phase.explicit,
-    #     hypothesis.Phase.generate,
-    #     hypothesis.Phase.target,
-    #     hypothesis.Phase.shrink,
-    #     hypothesis.Phase.explain,
-    # ],
-)
+@hypothesis.settings(settings, deadline=600)
 @hypothesis.given(
     import_charge=hypothesis.strategies.floats(
         min_value=0, max_value=1000, allow_nan=False, allow_infinity=False

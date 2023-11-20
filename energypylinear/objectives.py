@@ -48,10 +48,11 @@ class CustomObjectiveFunction:
 
     CustomObjectiveFunction = Term + Term + Term"""
 
-    terms: list[Term]
+    terms: list[Term | FunctionTerm]
 
 
 def term_or_float(term_or_float: dict | float) -> Term | float:
+    """Parse a dict or float into either a Term or float."""
     if isinstance(term_or_float, dict):
         return Term(**term_or_float)
     else:
@@ -59,7 +60,7 @@ def term_or_float(term_or_float: dict | float) -> Term | float:
         return float(term_or_float)
 
 
-def term_factory(type: str, term: dict) -> Term | FunctionTerm | None:
+def term_factory(type: str, term: dict) -> Term | FunctionTerm:
     """TODO"""
     mapper = {
         "simple": Term,
@@ -68,17 +69,20 @@ def term_factory(type: str, term: dict) -> Term | FunctionTerm | None:
     if type == "simple":
         return mapper[type](**term)
 
-    elif type == "function":
+    else:
+        assert type == "function"
         term["a"] = term_or_float(term["a"])
         term["b"] = term_or_float(term["b"])
         term["M"] = float(term["M"])
         return mapper[type](**term)
 
-    return None
-
 
 def append_objective_function_terms(
-    obj: list, assets: list, i: int, interval_data: "epl.IntervalData", term: Term
+    obj: list,
+    assets: list,
+    i: int,
+    interval_data: "epl.assets.site.SiteIntervalData",
+    term: Term,
 ) -> None:
     """TODO"""
     for asset in assets:
@@ -281,9 +285,11 @@ def get_objective(
             )
 
     elif isinstance(objective, dict):
-        terms = []
+        terms: list[Term | FunctionTerm] = []
         for term in objective["terms"]:
-            terms.append(term_factory(term.get("type", "simple"), term))
+            t = term_factory(term.get("type", "simple"), term)
+            assert t is not None
+            terms.append(t)
 
         objective = CustomObjectiveFunction(terms=terms)
 
