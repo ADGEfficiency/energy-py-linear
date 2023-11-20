@@ -37,8 +37,7 @@ class OptimizerConfig:
 
 
 class Optimizer:
-    """
-    Solver for linear programs. Interfaces with `pulp`.
+    """Solver for linear programs. Interfaces with `pulp`.
 
     Attributes:
         cfg: an OptimizerConfig
@@ -68,7 +67,7 @@ class Optimizer:
         return f"<energypylinear.Optimizer cfg: {self.cfg} variables: {len(self.variables())} constraints: {len(self.constraints())}>"
 
     def continuous(
-        self, name: str, low: float = 0, up: float | None = None
+        self, name: str, low: float | None = 0, up: float | None = None
     ) -> pulp.LpVariable:
         """Creates a new continuous linear programming variable.
 
@@ -157,9 +156,14 @@ class Optimizer:
         """Constraints of the optimization problem."""
         return self.prob.constraints
 
-    def variables(self) -> list[pulp.LpVariable]:
+    def variables(
+        self, dict: bool = False
+    ) -> list[pulp.LpVariable] | dict[str, pulp.LpVariable]:
         """Variables of the optimization problem."""
-        return self.prob.variables()
+        if dict is False:
+            return self.prob.variables()
+        else:
+            return {v.name: v for v in self.prob.variables()}
 
     def constrain_max(
         self, continuous: pulp.LpVariable, binary: pulp.LpVariable | int, max: float
@@ -184,6 +188,56 @@ class Optimizer:
             max: the allowed minimum value.
         """
         self.constrain(-continuous + binary * min <= 0)
+
+    def max_two_variables(
+        self, name: str, a: pulp.LpVariable, b: pulp.LpVariable, M: float
+    ) -> pulp.LpVariable:
+        """Create a variable that is the maximum of two other variables.
+
+        The variables can be either both linear program variables, or one can be a float.  Both cannot be floats.
+
+        Args:
+            a: a continuous variable or float,
+            b: a continuous variable or float,
+            M: the big-M parameter
+        """
+        if isinstance(a, float):
+            assert not isinstance(b, float)
+
+        assert "max" in name
+        cv = self.continuous(name=f"{name}-continuous", low=None, up=None)
+        cb = self.binary(name=f"{name}-binary")
+
+        self.constrain(cv >= a)
+        self.constrain(cv >= b)
+        self.constrain(a + M * cb >= cv)
+        self.constrain(b + M * (1 - cb) >= cv)
+        return cv
+
+    def min_two_variables(
+        self, name: str, a: pulp.LpVariable, b: pulp.LpVariable, M: float
+    ) -> pulp.LpVariable:
+        """Create a variable that is the minimum of two other variables.
+
+        The variables can be either both linear program variables, or one can be a float.  Both cannot be floats.
+
+        Args:
+            a: a continuous variable or float,
+            b: a continuous variable or float,
+            M: the big-M parameter
+        """
+        if isinstance(a, float):
+            assert not isinstance(b, float)
+
+        assert "min" in name
+        cv = self.continuous(name=f"{name}-continuous", low=None, up=None)
+        cb = self.binary(name=f"{name}-binary")
+
+        self.constrain(a >= cv)
+        self.constrain(b >= cv)
+        self.constrain(cv >= a - M * (1 - cb))
+        self.constrain(cv >= b - M * cb)
+        return cv
 
     def value(
         self,
