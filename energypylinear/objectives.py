@@ -20,6 +20,26 @@ class Term:
     interval_data: str | None = None
     asset_name: str | None = None
     coefficient: float = 1.0
+    type: typing.Literal["simple"] = "simple"
+
+
+@dataclasses.dataclass
+class FunctionTerm:
+    """A function term
+
+    objective = Term + Term + Term"""
+
+    function: typing.Literal["max_two_variables", "min_two_variables"]
+
+    # this is a leaky abstraction - ok with it at the moment
+    a: Term | float
+    b: Term | float
+    M: float
+
+    interval_data: str | None = None
+    coefficient: float = 1.0
+
+    type: typing.Literal["function"] = "function"
 
 
 @dataclasses.dataclass
@@ -29,6 +49,50 @@ class CustomObjectiveFunction:
     CustomObjectiveFunction = Term + Term + Term"""
 
     terms: list[Term]
+
+
+def term_or_float(term_or_float: dict | float) -> Term | float:
+    if isinstance(term_or_float, dict):
+        return Term(**term_or_float)
+    else:
+        assert isinstance(float(term_or_float), float)
+        return float(term_or_float)
+
+
+def term_factory(type: str, term: dict) -> Term | FunctionTerm | None:
+    """TODO"""
+    mapper = {
+        "simple": Term,
+        "function": FunctionTerm,
+    }
+    if type == "simple":
+        return mapper[type](**term)
+
+    elif type == "function":
+        term["a"] = term_or_float(term["a"])
+        term["b"] = term_or_float(term["b"])
+        term["M"] = float(term["M"])
+        return mapper[type](**term)
+
+    return None
+
+
+def append_objective_function_terms(
+    obj: list, assets: list, i: int, interval_data: "epl.IntervalData", term: Term
+) -> None:
+    """TODO"""
+    for asset in assets:
+        obj.extend(
+            [
+                getattr(asset, term.variable)
+                * (
+                    getattr(interval_data, term.interval_data)[i]
+                    if term.interval_data is not None
+                    else 1
+                )
+                * term.coefficient,
+            ]
+        )
 
 
 def price_objective(
@@ -217,9 +281,11 @@ def get_objective(
             )
 
     elif isinstance(objective, dict):
-        objective = CustomObjectiveFunction(
-            terms=[Term(**t) for t in objective["terms"]]
-        )
+        terms = []
+        for term in objective["terms"]:
+            terms.append(term_factory(term.get("type", "simple"), term))
+
+        objective = CustomObjectiveFunction(terms=terms)
 
     else:
         assert isinstance(objective, CustomObjectiveFunction)
@@ -227,23 +293,78 @@ def get_objective(
     obj: list[typing.Any | float] = []
     for i in interval_data.idx:
         for term in objective.terms:
-            if term.asset_type == "*":
-                assets = ivars[i]
+            if term.type == "simple":
+                if term.asset_type == "*":
+                    assets = ivars[i]
+                else:
+                    assets = ivars.filter_objective_variables(
+                        instance_type=term.asset_type, i=i, asset_name=term.asset_name
+                    )
+                append_objective_function_terms(
+                    obj, assets, i, interval_data, term=term
+                )
+
+            elif term.type == "function":
+                function_factory = {
+                    "max_two_variables": optimizer.max_two_variables,
+                    "min_two_variables": optimizer.min_two_variables,
+                }
+                """
+                Currently have a limitation on only applying this kind of constraint to one asset per term
+                - a can have one asset (or be a float)
+                - b can have one asset (or be a float)
+
+                In the future we could apply this to have
+                - a have many assets, b be a float
+                - a have many assets, b be one asset
+                - a have many assets, b have many assets
+
+                It's a bit complex, as you would need to broadcast sometimes
+
+                TODO - leaving as debt for now
+                """
+
+                for t in [term.a, term.b]:
+                    if isinstance(t, Term):
+                        assert t.asset_type is None or t.asset_type == "site"
+                        assert t.asset_type != "*"
+
+                a: pulp.LpVariable | float = (
+                    getattr(
+                        ivars.filter_objective_variables(
+                            asset_name=term.a.asset_name, i=i
+                        )[0],
+                        term.a.variable,
+                    )
+                    if isinstance(term.a, Term)
+                    else float(term.a)
+                )
+
+                b: pulp.LpVariable | float = (
+                    getattr(
+                        ivars.filter_objective_variables(
+                            asset_name=term.b.asset_name, i=i
+                        )[0],
+                        term.b.variable,
+                    )
+                    if isinstance(term.b, Term)
+                    else float(term.b)
+                )
+
+                c = function_factory[term.function](
+                    f"{term.function}-{i}", a=a, b=b, M=term.M
+                )
+                obj.append(
+                    c
+                    * (
+                        getattr(interval_data, term.interval_data)[i]
+                        if term.interval_data is not None
+                        else 1
+                    )
+                    * term.coefficient
+                )
+
             else:
-                assets = ivars.filter_objective_variables(
-                    instance_type=term.asset_type, i=i, asset_name=term.asset_name
-                )
-            for asset in assets:
-                obj.extend(
-                    [
-                        getattr(asset, term.variable)
-                        * (
-                            getattr(interval_data, term.interval_data)[i]
-                            if term.interval_data is not None
-                            else 1
-                        )
-                        * term.coefficient,
-                    ]
-                )
+                pass
 
     return optimizer.sum(obj)

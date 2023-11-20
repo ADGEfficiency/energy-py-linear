@@ -143,7 +143,9 @@ class Optimizer:
 
     def assert_no_duplicate_variables(self) -> None:
         """Check there are no duplicate variable names in the optimization problem."""
-        names = [v.name for v in self.variables()]
+        variables = self.variables()
+        assert isinstance(variables, list)
+        names = [v.name for v in variables]
         assert (
             len(names) == len(set(names))
         ), f"duplicate variables detected - {len([x for x in names if names.count(x) >= 2])} of {len(names)}\n{sorted(set([x for x in names if names.count(x) >= 2]))}"
@@ -190,16 +192,20 @@ class Optimizer:
         self.constrain(-continuous + binary * min <= 0)
 
     def max_two_variables(
-        self, name: str, a: pulp.LpVariable, b: pulp.LpVariable, M: float
+        self,
+        name: str,
+        a: pulp.LpVariable | float,
+        b: pulp.LpVariable | float,
+        M: float,
     ) -> pulp.LpVariable:
         """Create a variable that is the maximum of two other variables.
 
         The variables can be either both linear program variables, or one can be a float.  Both cannot be floats.
 
         Args:
-            a: a continuous variable or float,
-            b: a continuous variable or float,
-            M: the big-M parameter
+            a: a continuous variable or float.
+            b: a continuous variable or float.
+            M: the big-M parameter.
         """
         if isinstance(a, float):
             assert not isinstance(b, float)
@@ -222,9 +228,9 @@ class Optimizer:
         The variables can be either both linear program variables, or one can be a float.  Both cannot be floats.
 
         Args:
-            a: a continuous variable or float,
-            b: a continuous variable or float,
-            M: the big-M parameter
+            a: a continuous variable or float.
+            b: a continuous variable or float.
+            M: the big-M parameter.
         """
         if isinstance(a, float):
             assert not isinstance(b, float)
