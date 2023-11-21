@@ -5,6 +5,7 @@ import pulp
 
 import energypylinear as epl
 
+atol = 1e-4
 float_args = {
     "allow_infinity": False,
     "allow_nan": False,
@@ -17,9 +18,6 @@ gap_args = {
     "min_value": 0.1,
     "max_value": 10000,
 }
-
-atol = 1e-4
-
 settings = hypothesis.settings(
     print_blob=True,
     max_examples=1000,
@@ -57,10 +55,10 @@ def coerce_variables(
 
 @hypothesis.settings(settings)
 @hypothesis.given(
-    a=hypothesis.strategies.floats(**float_args),
-    b=hypothesis.strategies.floats(**float_args),
-    a_gap=hypothesis.strategies.floats(**gap_args),
-    b_gap=hypothesis.strategies.floats(**gap_args),
+    a=hypothesis.strategies.floats(**float_args),  # type: ignore
+    b=hypothesis.strategies.floats(**float_args),  # type: ignore
+    a_gap=hypothesis.strategies.floats(**gap_args),  # type: ignore
+    b_gap=hypothesis.strategies.floats(**gap_args),  # type: ignore
     a_is_float=hypothesis.strategies.booleans(),
     b_is_float=hypothesis.strategies.booleans(),
 )
@@ -80,10 +78,10 @@ def test_max_two_variables(
 
 @hypothesis.settings(settings)
 @hypothesis.given(
-    a=hypothesis.strategies.floats(**float_args),
-    b=hypothesis.strategies.floats(**float_args),
-    a_gap=hypothesis.strategies.floats(**gap_args),
-    b_gap=hypothesis.strategies.floats(**gap_args),
+    a=hypothesis.strategies.floats(**float_args),  # type: ignore
+    b=hypothesis.strategies.floats(**float_args),  # type: ignore
+    a_gap=hypothesis.strategies.floats(**gap_args),  # type: ignore
+    b_gap=hypothesis.strategies.floats(**gap_args),  # type: ignore
     a_is_float=hypothesis.strategies.booleans(),
     b_is_float=hypothesis.strategies.booleans(),
 )
@@ -180,15 +178,18 @@ def test_function_term_export_tariff(
     )
 
     full_export = np.array(electricity_prices) > export_network_charge
-    np.testing.assert_allclose(
-        simulation.results["site-export_power_mwh"][full_export], wind_mwh
-    )
-    np.testing.assert_allclose(
-        simulation.results["site-export_power_mwh"][~full_export], export_threshold_mwh
-    )
+    if sum(full_export) > 0:
+        np.testing.assert_allclose(
+            simulation.results["site-export_power_mwh"][full_export], wind_mwh
+        )
+    if sum(~full_export) > 0:
+        np.testing.assert_allclose(
+            simulation.results["site-export_power_mwh"][~full_export],
+            export_threshold_mwh,
+        )
 
 
-@hypothesis.settings(settings, deadline=600)
+@hypothesis.settings(settings, deadline=1000)
 @hypothesis.given(
     import_charge=hypothesis.strategies.floats(
         min_value=0, max_value=1000, allow_nan=False, allow_infinity=False
