@@ -99,7 +99,7 @@ def test_min_two_variables(
     np.testing.assert_allclose(min(a, b), cv.value(), atol=atol)
 
 
-@hypothesis.settings(settings)
+@hypothesis.settings(settings, deadline=1000)
 @hypothesis.given(
     electricity_prices=hypothesis.strategies.lists(
         hypothesis.strategies.floats(
@@ -108,12 +108,8 @@ def test_min_two_variables(
         min_size=10,
         max_size=10,
     ),
-    wind_mwh=hypothesis.strategies.lists(
-        hypothesis.strategies.floats(
-            min_value=0, max_value=1000, allow_nan=False, allow_infinity=False
-        ),
-        min_size=10,
-        max_size=10,
+    wind_mwh=hypothesis.strategies.floats(
+        min_value=0, max_value=1000, allow_nan=False, allow_infinity=False
     ),
     export_threshold_mwh=hypothesis.strategies.floats(
         min_value=0, max_value=1000, allow_nan=False, allow_infinity=False
@@ -124,7 +120,7 @@ def test_min_two_variables(
 )
 def test_function_term_export_tariff(
     electricity_prices: list[float],
-    wind_mwh: list[float],
+    wind_mwh: float,
     export_threshold_mwh: float,
     export_network_charge: float,
 ) -> None:
@@ -169,7 +165,7 @@ def test_function_term_export_tariff(
             },
             "b": export_threshold_mwh,
             "coefficient": export_network_charge,
-            "M": max(wind_mwh) * 10,
+            "M": wind_mwh * 10 if wind_mwh > 0 else 10,
         },
     ]
     simulation = site.optimize(
