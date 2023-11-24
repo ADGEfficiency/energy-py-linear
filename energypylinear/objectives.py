@@ -310,7 +310,8 @@ def get_objective(
                     obj, assets, i, interval_data, term=term
                 )
 
-            elif term.type == "function":
+            else:
+                assert term.type == "function"
                 function_factory = {
                     "max_two_variables": optimizer.max_two_variables,
                     "min_two_variables": optimizer.min_two_variables,
@@ -325,7 +326,7 @@ def get_objective(
                 - a have many assets, b be one asset
                 - a have many assets, b have many assets
 
-                It's a bit complex, as you would need to broadcast sometimes
+                It's a bit complex, as you would need to broadcast sometimes, other times sum
 
                 TODO - leaving as debt for now
                 """
@@ -369,8 +370,5 @@ def get_objective(
                     )
                     * term.coefficient
                 )
-
-            else:
-                pass
 
     return optimizer.sum(obj)
