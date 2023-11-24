@@ -193,6 +193,100 @@ def test_min_two_variables(
 #         )
 
 
+def test_minimum_two_variables() -> None:
+    """Test the use of the minimum of two variables function term.
+
+    At an incentive for the site to export at the minimum of a fixed value.
+
+    Exporting at less than this value only makes sense when the electricity price is negative enough.
+
+    """
+    electricity_prices = np.array([-1000, -750, -250, -100, 0, 10, 100, 1000])
+    export_threshold_mwh = 5
+    electric_load_mwh = 0
+    gas_prices = 20
+    export_charge = -500
+
+    electric_efficiency = 0.5
+    chp_size = 50
+
+    assets = [
+        epl.CHP(
+            electric_efficiency_pct=electric_efficiency, electric_power_max_mw=chp_size
+        )
+    ]
+
+    site = epl.Site(
+        assets=assets,
+        gas_prices=gas_prices,
+        electricity_prices=electricity_prices,
+        electric_load_mwh=electric_load_mwh,
+    )
+    terms = [
+        {
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+            "interval_data": "electricity_prices",
+            "coefficient": -1,
+        },
+        {
+            "asset_type": "*",
+            "variable": "gas_consumption_mwh",
+            "interval_data": "gas_prices",
+        },
+        {
+            "type": "function",
+            "function": "min_two_variables",
+            "a": {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+            },
+            "b": export_threshold_mwh,
+            "coefficient": export_charge,
+            "M": (
+                electric_load_mwh
+                + assets[0].cfg.electric_power_max_mw
+                + export_threshold_mwh
+            )
+            * 1,
+        },
+    ]
+
+    simulation = site.optimize(
+        verbose=4,
+        objective={"terms": terms},
+    )
+    print(simulation.results[["site-export_power_mwh"]])
+
+    electricity_cost = gas_prices / electric_efficiency
+    electricity_profit = electricity_prices - electricity_cost
+    full_export = electricity_profit > 0
+    minimum_export = electricity_profit - export_charge > 0
+
+    """
+    expect three modes
+
+    1. no export - when prices are very negative, and the minmum export incentive outweighs the revenue from exporting
+    2. minimum export - when the negative prices do not outweighh the minimum export incentive
+    3. full export - when prices are high
+    """
+    if sum(full_export) > 0:
+        np.testing.assert_allclose(
+            simulation.results["site-export_power_mwh"][full_export], chp_size
+        )
+
+    if sum(minimum_export) > 0:
+        np.testing.assert_allclose(
+            simulation.results["site-export_power_mwh"][minimum_export & ~full_export],
+            export_threshold_mwh,
+        )
+    if sum(~minimum_export) > 0:
+        np.testing.assert_allclose(
+            simulation.results["site-export_power_mwh"][~minimum_export & ~full_export],
+            0.0,
+        )
+
+
 @hypothesis.settings(settings, deadline=1000)
 @hypothesis.given(
     import_charge=hypothesis.strategies.floats(
@@ -203,11 +297,13 @@ def test_min_two_variables(
     ),
 )
 @hypothesis.example(import_charge=1000, electric_efficiency=0.5)
-def test_function_term_import_tariff(
+def test_maximum_two_variables_export_tariff(
     import_charge: float,
     electric_efficiency: float,
 ) -> None:
-    """Test a site where we have a charge for importing, a load and a gas fired generator."""
+    """Test the use of the maximum of two variables function term.
+
+    A site where we have a charge for importing, based on the maximum of site import and a fixed value."""
 
     electric_load_mwh = 10
     import_threshold_mwh = 5

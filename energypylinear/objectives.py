@@ -326,7 +326,11 @@ def get_objective(
                 - a have many assets, b be one asset
                 - a have many assets, b have many assets
 
-                It's a bit complex, as you would need to broadcast sometimes, other times sum
+                It's a bit complex, as you would need to
+                - broadcast sometimes,
+                - other times sum
+
+                Perhaps could have an `aggregation` option as part of the a or b - defaults to broadcast
 
                 TODO - leaving as debt for now
                 """
