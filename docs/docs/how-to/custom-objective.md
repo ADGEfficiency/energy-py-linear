@@ -1,6 +1,6 @@
 ## Custom Objective Functions
 
-`energypylinear` has the ability to optimize for two different objective functions (price or carbon) built into the library. 
+`energypylinear` can optimize for two different objective functions (price or carbon) built into the library. 
 
 However you may want to optimize for a different objective function in the linear program.
 
@@ -289,3 +289,119 @@ print(simulation.results[["site-electricity_prices", "wind-electric_generation_m
 ```
 
 As expected, our renewable generator still generates even during times of negative electricity prices - this is because its output is incentivized at a fixed, positive price.
+
+
+### Battery Cycle Cost
+
+It's common in battery optimization to include a cost to use the battery - for every MWh of charge, some cost is incurred.
+
+We can model this cost using a custom objective function, by applying a cost to discharging the battery:
+
+<!--phmdoctest-share-names-->
+```python
+import numpy as np
+import energypylinear as epl
+
+np.random.seed(42)
+electricity_prices = np.random.normal(0, 1000, 48)
+
+assets = [
+    epl.Battery(power_mw=20, capacity_mwh=20)
+]
+site = epl.Site(
+    assets=assets,
+    electricity_prices=electricity_prices
+)
+terms=[
+    {
+        "asset_type":"site",
+        "variable":"import_power_mwh",
+        "interval_data":"electricity_prices"
+    },
+    {
+        "asset_type":"site",
+        "variable":"export_power_mwh",
+        "interval_data":"electricity_prices",
+        "coefficient":-1
+    },
+    {
+        "asset_type": "battery",
+        "variable": "electric_discharge_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": 0.25
+    }
+]
+site.optimize(
+    verbose=4,
+    objective={"terms": terms}
+)
+```
+
+You could also apply this cost to the battery electric charge, or to both the charge and discharge at the same time:
+
+```python
+terms=[
+    {
+        "asset_type": "battery",
+        "variable": "electric_charge_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": 0.25
+    },
+    {
+        "asset_type": "battery",
+        "variable": "electric_discharge_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": 0.25
+    }
+]
+```
+
+We can validate that this works by applying a stronger cycle cost and seeing the battery use descrease:
+
+<!--phmdoctest-share-names-->
+```python
+import pandas as pd
+
+results = []
+for cycle_cost in [0.25, 0.5, 1.0, 2.0]:
+    terms=[
+        {
+            "asset_type":"site",
+            "variable":"import_power_mwh",
+            "interval_data":"electricity_prices"
+        },
+        {
+            "asset_type":"site",
+            "variable":"export_power_mwh",
+            "interval_data":"electricity_prices",
+            "coefficient":-1
+        },
+        {
+            "asset_type": "battery",
+            "variable": "electric_discharge_mwh",
+            "interval_data": "electricity_prices",
+            "coefficient": cycle_cost
+        }
+    ]
+    simulation = site.optimize(
+        verbose=4,
+        objective={"terms": terms}
+    )
+    results.append(
+        {
+            "cycle_cost": cycle_cost,
+            "battery-electric_discharge_mwh": simulation.results["battery-electric_discharge_mwh"].sum()
+        }
+    )
+print(pd.DataFrame(results))
+```
+
+```
+   cycle_cost  battery-electric_discharge_mwh
+0        0.25                           306.0
+1        0.50                           322.0
+2        1.00                           338.0
+3        2.00                           264.0
+```
+
+As expected, as our cycle cost increases, our battery usage decreases.
