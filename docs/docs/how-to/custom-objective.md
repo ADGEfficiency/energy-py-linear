@@ -1,6 +1,6 @@
 ## Custom Objective Functions
 
-`energypylinear` has the ability to optimize for two different objective functions (price or carbon) built into the library. 
+`energypylinear` can optimize for two different objective functions (price or carbon) built into the library. 
 
 However you may want to optimize for a different objective function in the linear program.
 
@@ -337,7 +337,24 @@ site.optimize(
 )
 ```
 
-You could also apply this cost to the battery electric charge, or to both the charge and discharge at the same time.
+You could also apply this cost to the battery electric charge, or to both the charge and discharge at the same time:
+
+```python
+terms=[
+    {
+        "asset_type": "battery",
+        "variable": "electric_charge_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": 0.25
+    },
+    {
+        "asset_type": "battery",
+        "variable": "electric_discharge_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": 0.25
+    }
+]
+```
 
 We can validate that this works by applying a stronger cycle cost and seeing the battery use descrease:
 
