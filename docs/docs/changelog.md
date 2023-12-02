@@ -1,28 +1,25 @@
 # Changelog
 
-## [1.2.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.0)
+## [1.2.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.2.0)
 
 ### Custom Objective Functions
 
 A custom objective function allows users to create their own objective functions in the linear program.  
 
-This allows users to optimize for a custom set of revenues and costs. The objective function can be designed to apply to assets by type or name, and can include multiplication by interval data and or a coefficient.
+This allows users to optimize for a custom set of revenues and costs. The objective function can target assets by type or name, and can include multiplication by interval data and/or a coefficient.
 
-The example below shows how to include a cost for battery use (a cycle cost), applied to the battery discharge:
+The example below shows how to include a cost for battery use (a cycle cost) applied to the battery discharge:
 
 ```python
 import numpy as np
 import energypylinear as epl
-
-np.random.seed(42)
-electricity_prices = np.random.normal(0, 1000, 48)
 
 assets = [
     epl.Battery(power_mw=20, capacity_mwh=20)
 ]
 site = epl.Site(
     assets=assets,
-    electricity_prices=electricity_prices
+    electricity_prices=np.random.normal(0, 1000, 48)
 )
 terms=[
     {
@@ -46,17 +43,13 @@ terms=[
 site.optimize(objective={"terms": terms})
 ```
 
-See [Custom Objectives](https://energypylinear.adgefficiency.com/1.1.1/how-to/custom-objectives/) in the documentation for more examples.
+See [Custom Objectives](https://energypylinear.adgefficiency.com/latest/how-to/custom-objectives/) in the documentation for more examples.
 
 ### Logging Improvements
 
-The dependency on `structlog` has been removed - we now only use `rich.logging.Console` to log to STDOUT.  
+The dependency on `structlog` has been removed - we now only use `rich.logging.Console` to log to STDOUT. The ability to log to a file has been removed.
 
-The ability to log to a file has been removed.
-
-The `verbose` flag now accepts either a `bool` or an `int`.
-
-The mapping of `verbose` to log levels is as follows:
+The `verbose` flag now accepts either a `bool` or an `int`. The mapping of `verbose` to log levels is as follows:
 
 | `verbose` | Log Level |
 |-----------|-----------|
@@ -69,9 +62,7 @@ The mapping of `verbose` to log levels is as follows:
 
 ```python
 import energypylinear as epl
-asset = epl.Battery(
-    electricity_prices=[10, -50, 200, -50, 200],
-)
+asset = epl.Battery(electricity_prices=[10, -50, 200, -50, 200])
 simulation = asset.optimize(verbose=2)
 ```
 
@@ -104,7 +95,7 @@ We have upgraded Poetry to 1.7.0 and Mypy to 1.7.0.
 
 Plausible analytics added to the documentation.
 
-## [1.1.1](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.0)
+## [1.1.1](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.1)
 
 ### Bugs
 
