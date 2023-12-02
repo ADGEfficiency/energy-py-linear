@@ -4,7 +4,9 @@
 
 ### Custom Objective Functions
 
-A custom objective function allows users to create their own linear program objective functions.  This allows users to optimize for a custom set of revenues and costs.
+A custom objective function allows users to create their own objective functions in the linear program.  
+
+This allows users to optimize for a custom set of revenues and costs. The objective function can be designed to apply to assets by type or name, and can include multiplication by interval data and or a coefficient.
 
 The example below shows how to include a cost for battery use (a cycle cost), applied to the battery discharge:
 
@@ -44,15 +46,17 @@ terms=[
 site.optimize(objective={"terms": terms})
 ```
 
-See [Custom Objectives](https://energypylinear.adgefficiency.com/1.1.1/how-to/custom-objectives/) in the documentation for more examples of how to use custom objective functions.
+See [Custom Objectives](https://energypylinear.adgefficiency.com/1.1.1/how-to/custom-objectives/) in the documentation for more examples.
 
 ### Logging Improvements
 
-We have removed the dependency on `structlog` and now use only the `rich.logging.Console` to log to STDOUT.  The ability to log to a file has been removed.
+The dependency on `structlog` has been removed - we now only use `rich.logging.Console` to log to STDOUT.  
 
-The `verbose` flag now accepts either a `bool` (with `True` mapping to `INFO` and `False` mapping to `ERROR`) or an integer.
+The ability to log to a file has been removed.
 
-The integer values map to log levels as follows:
+The `verbose` flag now accepts either a `bool` or an `int`.
+
+The mapping of `verbose` to log levels is as follows:
 
 | `verbose` | Log Level |
 |-----------|-----------|
@@ -91,14 +95,14 @@ The default relative tolerance of the CBC optimizer has been reduced to `0.0`.
 It's now possible to use a dictionary in place of the `epl.OptimizerConfig` object:
 
 ```python
-asset.optimize(optimizer_config={"timeout": 2})
+asset.optimize(optimizer_config={"timeout": 2, "relative_tolerance": 0.1})
 ```
 
 ### Other Changes
 
-#### Upgrade Poetry and Mypy
-
 We have upgraded Poetry to 1.7.0 and Mypy to 1.7.0.
+
+Plausible analytics added to the documentation.
 
 ## [1.1.1](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.0)
 
