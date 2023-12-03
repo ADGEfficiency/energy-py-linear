@@ -1,10 +1,8 @@
-## Custom Objective Functions
+`energypylinear` has two different objective functions (price or carbon) built into the library.
 
-`energypylinear` can optimize for two different objective functions (price or carbon) built into the library. 
+However you may want to optimize for a different objective function in the linear program. You may have a business problem with a different set of revenues and costs than are included by default.
 
-However you may want to optimize for a different objective function in the linear program.
-
-**A custom objective function allows you to construct an objective function as you see fit** - allowing you to optimize a site and assets for the incentives and costs that are important to you.
+**A custom objective function allows you to construct an objective function as you see fit** - allowing you to optimize a site and assets for the revenues and costs that are important to you.
 
 Core to the custom objective function is the `epl.Term` - representing a single term in the objective function:
 
@@ -21,9 +19,9 @@ class Term:
     coefficient: float = 1.0
 ```
 
-Each term can target either many assets by type or one asset by name. It can also include multiplication by interval data or by a coefficient.
+A term can target either many assets by type or one asset by name. It can also include multiplication by interval data or by a coefficient.
 
-A custom objective function is a list of `epl.Term` - the sum of these terms becomes the objective function.
+A custom objective function is a list of terms:
 
 <!--phmdoctest-share-names-->
 ```python
@@ -32,11 +30,13 @@ class CustomObjectiveFunction:
     terms: list[Term]
 ```
 
+The objective function used in the linear program is the sum of these terms.
+
 ### Price and Carbon
 
-In this example we will show how to optimize a battery for an objective optimizes for both profit and carbon at the same time.
+This example shows how to optimize a battery for an objective that includes terms for both price and carbon.
 
-The example below creates an objective function where we incentive a site to:
+Below we create an objective function where we incentive a site to:
 
 - reduce import when the electricity price or carbon intensity is high,
 - increase export when the electricity price or carbon intensity is low.
@@ -52,9 +52,9 @@ def simulate(
     carbon_price: int,
     seed: int,
     n: int,
-    verbose: int = 2
+    verbose: int = 3
 ) -> epl.SimulationResult:
-    """Runs one battery simulation at a given carbon price with a custom objective function."""
+    """Run a battery simulation with a custom objective function."""
     np.random.seed(seed)
     site = epl.Site(
         assets=[epl.Battery(power_mw=10, capacity_mwh=20)],
@@ -100,14 +100,10 @@ print(simulate(carbon_price=50, seed=42, n=72))
 ```
 
 ```
-INFO     assets.site.optimize: cfg=<SiteConfig name=site, freq_mins=60,         
-         import_limit_mw=10000.0, export_limit_mw=10000.0>                      
-INFO     assets.site.optimize: assets=['battery']                               
-INFO     optimizer.solve: status='Optimal'                                      
 <energypylinear.SimulationResult feasible:True, rows:72, cols:28>
 ```
 
-We can validate that our custom objective function is working as expected by running simulations across many carbon prices, and see the effect on the profit and emissions of our site:
+We can validate that our custom objective function is working as expected by running simulations across many carbon prices:
 
 <!--phmdoctest-share-names-->
 ```python
@@ -148,7 +144,7 @@ In the previous example we used a custom objective function to apply incentives 
 
 An example of this is a renewable energy certificate scheme, where the generation from one asset receives additional income for each MWh generated.
 
-In the example below, our `solar` asset receives additional income for each MWh generated.  
+In the example below, our `solar` asset receives additional income for each MWh generated.
 
 The site has a constrained export limit, which limits how much both generators can output. The site electric load increases in each interval, which allows us to see which generator is called first:
 
@@ -213,7 +209,7 @@ print(
 4                           50.0                          50.0
 ```
 
-As expected, the first generator that is called is the `solar` generator, as it receives additional income for it's output.  
+As expected, the first generator that is called is the `solar` generator, as it receives additional income for it's output.
 
 As the site demand increases, the `wind` generator is called to make up the remaining demand.
 
@@ -221,7 +217,7 @@ As the site demand increases, the `wind` generator is called to make up the rema
 
 A synthetic PPA is a financial instrument that allows swapping of the output of a wholesale exposed generator to a fixed price.
 
-This can be modelled as a custom objective function.  
+This can be modelled as a custom objective function.
 
 In the example below, we model a site with wholesale exposed import and export, and swap the output of our `wind` generator from the wholesale to a fixed price:
 
@@ -356,7 +352,7 @@ terms=[
 ]
 ```
 
-We can validate that this works by applying a stronger cycle cost and seeing the battery use descrease:
+We can validate that this works by applying a stronger cycle cost and seeing the battery use decrease:
 
 <!--phmdoctest-share-names-->
 ```python
