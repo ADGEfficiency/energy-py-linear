@@ -793,7 +793,7 @@
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span> <span class="nc">CustomObjectiveFunction</span><span class="p">:</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">terms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Term</span><span class="p">]</span>
 </code></pre></div>
-<p>The objective function used in the linear program is the sum of these terms.</p>
+<p>The objective function used in the linear program is the sum of these terms. They can be supplied as either a <code>epl.Term</code> and <code>epl.CustomObjectiveFunction</code> object or as a list of dictionaries.</p>
 <h3 id="price-and-carbon">Price and Carbon</h3>
 <p>This example shows how to optimize a battery for an objective that includes terms for both price and carbon.</p>
 <p>Below we create an objective function where we incentive a site to:</p>

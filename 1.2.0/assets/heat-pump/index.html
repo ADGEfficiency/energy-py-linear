@@ -688,7 +688,8 @@
 
 
 <h1 id="heat-pump">Heat Pump</h1>
-<p>Optimize the operation of a heat pump.  A heat pump uses electricity to convert low temperature heat to high temperature heat.</p>
+<p>Optimize the operation of a heat pump using <code>epl.HeatPump</code>. </p>
+<p>A heat pump uses electricity to convert low temperature heat to high temperature heat.</p>
 <p>When using <code>epl.HeatPump.optimize</code>, the alternative to the heat pump is generating high temperature heat from a gas boiler.  Under the hood of <code>epl.HeatPump.optimize</code>, a <code>epl.Boiler</code> asset is used to supply the balance of high temperature heat demand of the site.</p>
 <p>The gas price is important as the alternative to using a heat pump to supply the <code>high_temperature_load_mwh</code> is using a natural gas boiler.</p>
 <p>In order for the heat pump to work, it needs to have both a source of low temperature heat and a sink of high temperature heat.</p>
@@ -772,6 +773,7 @@
 <p>Under the hood the heat pump asset also includes a <code>epl.Spill</code>, which allows dumping of excess low temperature heat, and a <code>epl.Valve</code> to allow high temperature heat to flow into low temperature heat.</p>
 <p>The combination of a <code>epl.Spill</code>, <code>epl.Valve</code> and negative electricity prices can lead to the heat pump using electricity to generate high temperature heat which is then dumped as low temperature heat.  For this reason the <code>epl.HeatPump</code> asset includes a <code>include_valve: bool</code> option to turn off the valve.</p>
 <p>You could also setup an <code>epl.Site</code> with other assets that generate high temperature heat to explore different tradeoffs (such as a heat pump using low temperature heat from a CHP system).</p>
+<p><a href="https://energypylinear.adgefficiency.com/latest/validation/heat-pump/">You can check the correctness of the heat pump model here</a>.</p>
 
 
   

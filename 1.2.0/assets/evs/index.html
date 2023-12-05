@@ -688,11 +688,12 @@
 
 
 <h1 id="electric-vehicle-charging">Electric Vehicle Charging</h1>
+<p>Optimize an electric vehicle charging station using <code>epl.EVs</code>.</p>
 <p>Control a number of EV chargers to charge a number of charge events.</p>
 <p>Chargers are configured by their size given in <code>charger_mws</code>.</p>
 <p>A <code>charge_event</code> is a time interval where an EV can be charged.  This is given as a boolean 2D array, with one binary digit for each charge event, interval pairs.</p>
 <p>Each charge event has a required amount of electricity <code>charge_event_mwh</code>, that can be delivered when the <code>charge_event</code> is 1.  The model is constrained so that each charge event receives all of it's <code>charge_event_mwh</code>.</p>
-<p>To optimize two 100 MWe chargers for 4 charge events over 5 intervals:</p>
+<p>Optimize two 100 MWe chargers for 4 charge events over 5 intervals:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">electricity_prices</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">40</span><span class="p">]</span>
@@ -783,6 +784,7 @@
 <a id="__codelineno-0-88" name="__codelineno-0-88" href="#__codelineno-0-88"></a>    <span class="p">]</span>
 <a id="__codelineno-0-89" name="__codelineno-0-89" href="#__codelineno-0-89"></a><span class="p">)</span>
 </code></pre></div>
+<p><a href="https://energypylinear.adgefficiency.com/latest/validation/evs/">You can check the correctness of the electric vehicle model here</a>.</p>
 
 
   
