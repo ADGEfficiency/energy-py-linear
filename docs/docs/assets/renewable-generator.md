@@ -45,3 +45,5 @@ assert all(
 ```
 
 This renewable generator will turn down when electricity prices are negative.
+
+[You can check the correctness of the renewable generator model here](https://energypylinear.adgefficiency.com/latest/validation/renewable-generator/).

@@ -101,3 +101,5 @@ assert all(
     ]
 )
 ```
+
+[You can check the correctness of the electric vehicle model here](https://energypylinear.adgefficiency.com/latest/validation/evs/).
