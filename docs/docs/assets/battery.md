@@ -1,6 +1,6 @@
 # Battery
 
-Dispatch an electric battery operating in wholesale price arbitrage using `epl.Battery`:
+Optimize an electric battery operating in wholesale price arbitrage using `epl.Battery`:
 
 ```python
 import energypylinear as epl
@@ -74,3 +74,5 @@ assert all(
 The battery will charge with electricity at low prices & carbon intensities, and discharge at high prices & carbon intensities.
 
 An efficiency penalty is applied to the battery charge energy (energy is lost during charging).
+
+[You can check the correctness of the battery model here](https://energypylinear.adgefficiency.com/latest/validation/battery/).

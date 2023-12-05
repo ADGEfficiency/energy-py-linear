@@ -1,9 +1,10 @@
 # Heat Pump
 
-Optimize the operation of a heat pump.  A heat pump uses electricity to convert low temperature heat to high temperature heat.
+Optimize the operation of a heat pump using `epl.HeatPump`. 
+
+A heat pump uses electricity to convert low temperature heat to high temperature heat.
 
 When using `epl.HeatPump.optimize`, the alternative to the heat pump is generating high temperature heat from a gas boiler.  Under the hood of `epl.HeatPump.optimize`, a `epl.Boiler` asset is used to supply the balance of high temperature heat demand of the site.
-
 
 The gas price is important as the alternative to using a heat pump to supply the `high_temperature_load_mwh` is using a natural gas boiler.
 
@@ -96,3 +97,5 @@ Under the hood the heat pump asset also includes a `epl.Spill`, which allows dum
 The combination of a `epl.Spill`, `epl.Valve` and negative electricity prices can lead to the heat pump using electricity to generate high temperature heat which is then dumped as low temperature heat.  For this reason the `epl.HeatPump` asset includes a `include_valve: bool` option to turn off the valve.
 
 You could also setup an `epl.Site` with other assets that generate high temperature heat to explore different tradeoffs (such as a heat pump using low temperature heat from a CHP system).
+
+[You can check the correctness of the heat pump model here](https://energypylinear.adgefficiency.com/latest/validation/heat-pump/).

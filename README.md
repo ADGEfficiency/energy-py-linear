@@ -79,7 +79,9 @@ assets = [
             [0, 1, 0, 0, 0],
         ],
     ),
+    #  natural gas boiler to generate high temperature heat
     epl.Boiler(),
+    #  valve to generate low temperature heat from high temperature heat
     epl.Valve()
 ]
 

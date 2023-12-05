@@ -1,5 +1,7 @@
 # Electric Vehicle Charging
 
+Optimize an electric vehicle charging station using `epl.EVs`.
+
 Control a number of EV chargers to charge a number of charge events.
 
 Chargers are configured by their size given in `charger_mws`.
@@ -8,7 +10,7 @@ A `charge_event` is a time interval where an EV can be charged.  This is given a
 
 Each charge event has a required amount of electricity `charge_event_mwh`, that can be delivered when the `charge_event` is 1.  The model is constrained so that each charge event receives all of it's `charge_event_mwh`.
 
-To optimize two 100 MWe chargers for 4 charge events over 5 intervals:
+Optimize two 100 MWe chargers for 4 charge events over 5 intervals:
 
 ```python
 import energypylinear as epl
@@ -101,3 +103,5 @@ assert all(
     ]
 )
 ```
+
+[You can check the correctness of the electric vehicle model here](https://energypylinear.adgefficiency.com/latest/validation/evs/).

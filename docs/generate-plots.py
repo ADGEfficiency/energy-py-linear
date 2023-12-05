@@ -10,7 +10,8 @@ from rich import print
 
 import energypylinear as epl
 from energypylinear.flags import Flags
-from energypylinear.logger import logger
+
+# from energypylinear.logger import logger
 
 
 def test_battery_performance() -> None:
@@ -126,12 +127,12 @@ def test_evs_performance() -> None:
             data["pkg"].append(
                 {"idx_length": idx_length, "time": elapsed, "flag": flag}
             )
-            logger.info(
-                "test_evs_performance",
-                idx_length=idx_length,
-                elapsed=elapsed,
-                flag=flag,
-            )
+            # logger.info(
+            #     "test_evs_performance",
+            #     idx_length=idx_length,
+            #     elapsed=elapsed,
+            #     flag=flag,
+            # )
 
     # plt.figure()
     fig, axes = plt.subplots(nrows=1, sharex=True)
