@@ -135,9 +135,9 @@ print(pd.DataFrame(out))
 
 From the above we observe the following as efficiency decreases:
 
-- an increase in battery losses,
-- a reduction in the amount charged and discharged,
-- a increase in the objective function, which represents an increase in cost or decrease in value of the battery arbitrage.
+- a reduction in the amount discharged `discharge_mwh`,
+- an increase in battery losses `loss_mwh`,
+- a increase in the objective function, which is an increase in cost.
 
 ## State of Charge & Power Ratings
 

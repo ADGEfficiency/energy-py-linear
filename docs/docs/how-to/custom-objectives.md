@@ -30,7 +30,7 @@ class CustomObjectiveFunction:
     terms: list[Term]
 ```
 
-The objective function used in the linear program is the sum of these terms.
+The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a list of dictionaries.
 
 ### Price and Carbon
 
