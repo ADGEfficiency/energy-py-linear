@@ -1,6 +1,6 @@
 # CHP
 
-Dispatch a CHP (combined heat & power) generator to generate electricity, high & low temperature heat from natural gas.
+Optimize CHP (combined heat & power) to generate electricity, high & low temperature heat from natural gas using `epl.CHP`:
 
 The `epl.CHP` model can be configured with electric, high and low temperature thermal efficiencies.
 

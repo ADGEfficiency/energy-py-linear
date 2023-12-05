@@ -1,6 +1,6 @@
 # Battery
 
-Dispatch an electric battery operating in wholesale price arbitrage using `epl.Battery`:
+Optimize an electric battery operating in wholesale price arbitrage using `epl.Battery`:
 
 ```python
 import energypylinear as epl
