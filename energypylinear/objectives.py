@@ -335,6 +335,14 @@ def get_objective(
                 TODO - leaving as debt for now
                 """
 
+                """
+                Another issue here is applying the function term to all intervals versus one
+                - network tariffs will commonly only be applied to the peak interval, rather than to each interval
+                - ideally could be able to select the top n intervals?
+                - see https://math.stackexchange.com/questions/4502315/linear-constraint-expressing-the-sum-of-the-k-largest-elements
+
+                """
+
                 for t in [term.a, term.b]:
                     if isinstance(t, Term):
                         assert t.asset_type is None or t.asset_type == "site"
