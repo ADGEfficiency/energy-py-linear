@@ -17,6 +17,7 @@ class OptimizationStatus:
 
     status: str
     feasible: bool
+    value: float
 
 
 @dataclasses.dataclass
@@ -131,15 +132,15 @@ class Optimizer:
 
         self.solver.solve(self.prob)
         status = self.status()
+        value = pulp.value(self.prob.objective)
         logger.info(
-            f"optimizer.solve: {status=}",
+            f"optimizer.solve: {status=}, {value=}",
         )
-
         feasible = status == "Optimal"
         if not allow_infeasible:
             assert feasible, "Infeasible simulation!"
 
-        return OptimizationStatus(status=status, feasible=feasible)
+        return OptimizationStatus(status=status, feasible=feasible, value=value)
 
     def assert_no_duplicate_variables(self) -> None:
         """Check there are no duplicate variable names in the optimization problem."""
