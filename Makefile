@@ -101,6 +101,7 @@ CHECK_DOCSTRINGS=./energypylinear/assets/battery.py
 lint-docstrings:
 	flake8 --extend-ignore E501 --exclude=__init__.py,poc $(CHECK_DOCSTRINGS)
 	pydocsytle $(CHECK_DOCSTRINGS)
+	pylint $(CHECK_DOCSTRINGS) --rcfile .pylintrc
 
 #  ----- FORMATTING -----
 

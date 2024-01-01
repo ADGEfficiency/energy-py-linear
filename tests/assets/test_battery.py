@@ -257,6 +257,7 @@ def test_hypothesis(
     mask = simulation.results[f"{name}-electric_discharge_mwh"] > 0
     subset = simulation.results[mask]
     assert all(subset[f"{name}-electric_loss_mwh"] == 0)
+    np.testing.assert_allclose(subset[f"{name}-electric_loss_mwh"], 0)
 
 
 def test_import_export_prices() -> None:

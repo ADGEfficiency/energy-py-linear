@@ -16,11 +16,11 @@ from energypylinear.optimizer import Optimizer
 def setup_initial_final_charge(
     initial_charge_mwh: float, final_charge_mwh: float | None, capacity_mwh: float
 ) -> tuple[float, float]:
-    """Determine the initial and final battery state of charge, taking into account the battery capacity.
+    """Determine initial and final battery state of charge, taking into account battery capacity.
 
     Args:
         initial_charge_mwh: state of charge at the start of the simulation in megawatt hours.
-        final_charge_mwh: state of charge at the end of the simulation in megawatt hours. If None, defaults to the initial charge.
+        final_charge_mwh: state of charge at the end of the simulation in megawatt hours. Defaults to the initial charge.
         capacity_mwh: battery capacity in megawatt hours.
 
     Returns:
@@ -140,17 +140,16 @@ def constrain_connection_batteries_between_intervals(
     """
     #  if in first interval, do nothing, could also do something based on `i` here...
     if len(two_intervals) < 2:
-        return None
+        return
 
-    else:
-        old = two_intervals[-2]
-        new = two_intervals[-1]
-        for alt, neu in zip(old, new, strict=True):
-            assert isinstance(alt, BatteryOneInterval)
-            assert isinstance(neu, BatteryOneInterval)
-            optimizer.constrain(
-                alt.electric_final_charge_mwh == neu.electric_initial_charge_mwh
-            )
+    old = two_intervals[-2]
+    new = two_intervals[-1]
+    for alt, neu in zip(old, new, strict=True):
+        assert isinstance(alt, BatteryOneInterval)
+        assert isinstance(neu, BatteryOneInterval)
+        optimizer.constrain(
+            alt.electric_final_charge_mwh == neu.electric_initial_charge_mwh
+        )
 
 
 def constrain_initial_final_charge(
@@ -302,9 +301,7 @@ class Battery(epl.Asset):
         constrain_only_charge_or_discharge(optimizer, battery)
         constrain_battery_electricity_balance(optimizer, battery)
 
-        #  TODO this is one battery asset, all intervals
-        #  maybe refactor into the after intervals?
-        #  bit of a weird case really
+        #  one battery asset, all intervals
         all_batteries = ivars.filter_objective_variables_all_intervals(
             instance_type=BatteryOneInterval, asset_name=self.cfg.name
         )
