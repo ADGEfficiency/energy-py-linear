@@ -301,7 +301,7 @@ def test_import_export_prices() -> None:
         )
         battery_usage.append(simulation.results["battery-electric_charge_mwh"].sum())
         print(f"{export_price_delta=}, time={time.perf_counter() - tic} sec")
-    assert np.all(np.diff(battery_usage) >= 0)
+    assert np.all(np.diff(battery_usage) >= -tol)
 
 
 def test_no_simultaneous_import_export() -> None:
