@@ -1,14 +1,14 @@
 # Battery
 
-The `epl.Battery` model is suitable for modelling an electric battery, such as a Lithium-Ion battery.
+The `epl.Battery` model is suitable for modelling an electric battery, such as a lithium-ion battery.
 
-The size of the battery charge rate is defined by `power_mw`, which will define the maximum rate of charge and discharge. `discharge_power_mw` can be used to define a different rate of maximum discharge.
+The battery charge rate is defined by `power_mw`, which defines both the maximum rate of charge and discharge. `discharge_power_mw` can be used to define a different rate of maximum discharge.
 
-The size of the battery storage capacity is defined by `capacity_mwh`.  This is the capacity after taking into account any battery depth of discharge limits.
+The battery storage capacity is defined by `capacity_mwh`.  This should be the capacity after taking into account any battery depth of discharge limits.
 
 An efficiency penalty is applied to the battery charge energy, based on the `efficiency_pct` parameter.  No electricity is lost when discharging or during storage.
 
-`initial_charge_mwh` and `final_charge_mwh` control the battery state of charge at the start and end of the simulation.
+`initial_charge_mwh` and `final_charge_mwh` control the battery state of charge at the start and end of the simulation.  These can cause infeasible simulations if the battery is not able to charge or discharge enough to meet these constraints.
 
 [You can check the correctness of the battery model here](https://energypylinear.adgefficiency.com/latest/validation/battery/).
 
