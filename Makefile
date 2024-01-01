@@ -95,6 +95,12 @@ lint: setup-check
 	ruff format --check **/*.py
 	poetry check
 
+CHECK_DOCSTRINGS=./energypylinear/assets/battery.py
+
+# currently only run manually
+lint-docstrings:
+	flake8 --extend-ignore E501 --exclude=__init__.py,poc $(CHECK_DOCSTRINGS)
+	pydocsytle $(CHECK_DOCSTRINGS)
 
 #  ----- FORMATTING -----
 
