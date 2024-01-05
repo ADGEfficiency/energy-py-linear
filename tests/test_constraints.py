@@ -168,7 +168,7 @@ def test_max_many_variables(n: int) -> None:
 def test_min_many_variables(n: int) -> None:
     """Tests that we can constrain a variable to be the minimum of many other variables."""
     opt = epl.Optimizer()
-    lp_vars = [opt.continuous(name=f"v{i}", low=None) for i in range(n)]
+    lp_vars = [opt.continuous(name=f"v{i}", low=0) for i in range(n)]
     mins = [random.random() * 100 for _ in lp_vars]
     for m, v in zip(mins, lp_vars):
         opt.constrain(v == m)
