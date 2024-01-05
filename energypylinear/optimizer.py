@@ -192,6 +192,32 @@ class Optimizer:
         """
         self.constrain(-continuous + binary * min <= 0)
 
+    def min_two_variables(
+        self, name: str, a: pulp.LpVariable, b: pulp.LpVariable, M: float
+    ) -> pulp.LpVariable:
+        """Create a variable that is the minimum of two other variables.
+
+        The variables can be either both linear program variables, or one can be a float.  Both cannot be floats.
+
+        Args:
+            name: Name of the maximum variables.
+            a: A continuous variable or float.
+            b: A continuous variable or float.
+            M: The big-M parameter.
+        """
+        if isinstance(a, float):
+            assert not isinstance(b, float)
+
+        assert "min" in name
+        cv = self.continuous(name=f"{name}-continuous", low=None, up=None)
+        cb = self.binary(name=f"{name}-binary")
+
+        self.constrain(a >= cv)
+        self.constrain(b >= cv)
+        self.constrain(cv >= a - M * (1 - cb))
+        self.constrain(cv >= b - M * cb)
+        return cv
+
     def max_two_variables(
         self,
         name: str,
@@ -204,9 +230,10 @@ class Optimizer:
         The variables can be either both linear program variables, or one can be a float.  Both cannot be floats.
 
         Args:
-            a: a continuous variable or float.
-            b: a continuous variable or float.
-            M: the big-M parameter.
+            name: Name of the maximum variables.
+            a: A continuous variable or float.
+            b: A continuous variable or float.
+            M: The big-M parameter.
         """
         if isinstance(a, float):
             assert not isinstance(b, float)
@@ -221,30 +248,58 @@ class Optimizer:
         self.constrain(b + M * (1 - cb) >= cv)
         return cv
 
-    def min_two_variables(
-        self, name: str, a: pulp.LpVariable, b: pulp.LpVariable, M: float
+    def min_many_variables(
+        self, name: str, variables: list[pulp.LpVariable], M: float
     ) -> pulp.LpVariable:
-        """Create a variable that is the minimum of two other variables.
+        """Create a variable that is the minimum of many other variables.
 
-        The variables can be either both linear program variables, or one can be a float.  Both cannot be floats.
+        All the variables should be greater than or equal to zero.
 
         Args:
-            a: a continuous variable or float.
-            b: a continuous variable or float.
-            M: the big-M parameter.
+            name: Name of the new variable.
+            variables: A list of continuous variables or floats.
+            M: The big-M parameter.
         """
-        if isinstance(a, float):
-            assert not isinstance(b, float)
+        assert "min-many" in name
+        min_var = self.continuous(name=f"{name}-continuous", low=None, up=None)
+        binary_vars = [self.binary(f"{name}-binary-{i}") for i in range(len(variables))]
 
-        assert "min" in name
-        cv = self.continuous(name=f"{name}-continuous", low=None, up=None)
-        cb = self.binary(name=f"{name}-binary")
+        for v in variables:
+            assert v.lowBound >= 0
 
-        self.constrain(a >= cv)
-        self.constrain(b >= cv)
-        self.constrain(cv >= a - M * (1 - cb))
-        self.constrain(cv >= b - M * cb)
-        return cv
+        for var, binary_var in zip(variables, binary_vars):
+            self.constrain(min_var <= var)
+            self.constrain(var - M * binary_var <= min_var)
+            return min_var
+
+    def max_many_variables(
+        self, name: str, variables: list[pulp.LpVariable], M: float
+    ) -> pulp.LpVariable:
+        """Create a variable that is the maximum of many other variables.
+
+        The variables can be either linear program variables or floats.
+
+        All the variables should be greater than or equal to zero.
+
+        Args:
+            name: Name of the maximum variables.
+            variables: A list of continuous variables or floats.
+            M: The big-M parameter.
+        """
+        assert "max-many" in name
+        max_var = self.continuous(name=f"{name}-continuous", low=None, up=None)
+        binary_vars = [self.binary(f"{name}-binary-{i}") for i in range(len(variables))]
+
+        for v in variables:
+            assert v.lowBound >= 0
+
+        for var, binary_var in zip(variables, binary_vars):
+            self.constrain(max_var >= var)
+            if isinstance(var, float):
+                self.constrain(max_var >= var)
+            else:
+                self.constrain(var + M * (1 - binary_var) >= max_var)
+        return max_var
 
     def value(
         self,
