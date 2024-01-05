@@ -54,17 +54,14 @@ def coerce_variables(
 @pytest.mark.parametrize(
     "a_is_float, b_is_float, expected_av_type, expected_bv_type",
     [
-        (True, True, float, pulp.LpVariable),
-        (True, False, float, pulp.LpVariable),
-        (False, True, pulp.LpVariable, float),
-        (False, False, pulp.LpVariable, pulp.LpVariable),
+        (True, True, "float", "lpvar"),
+        (True, False, "float", "lpvar"),
+        (False, True, "lpvar", "float"),
+        (False, False, "lpvar", "lpvar"),
     ],
 )
 def test_coerce_variables(
-    a_is_float: bool,
-    b_is_float: bool,
-    expected_av_type: float | pulp.LpVariable,
-    expected_bv_type: float | pulp.LpVariable,
+    a_is_float: bool, b_is_float: bool, expected_av_type: str, expected_bv_type: str
 ) -> None:
     """Test the coerce variables helper.
 
@@ -77,8 +74,16 @@ def test_coerce_variables(
     a, b, a_gap, b_gap = 1.0, 2.0, 0.5, 0.5
     opt = epl.Optimizer()
     av, bv = coerce_variables(a, b, a_gap, b_gap, a_is_float, b_is_float, opt)
-    assert isinstance(av, expected_av_type)
-    assert isinstance(bv, expected_bv_type)
+
+    if expected_av_type == "float":
+        assert isinstance(av, float)
+    else:
+        assert isinstance(av, pulp.LpVariable)
+
+    if expected_bv_type == "float":
+        assert isinstance(bv, float)
+    else:
+        assert isinstance(bv, pulp.LpVariable)
 
 
 @hypothesis.settings(settings)
@@ -172,7 +177,8 @@ def test_min_many_variables(n: int) -> None:
     mins = [random.random() * 100 for _ in lp_vars]
     for m, v in zip(mins, lp_vars):
         opt.constrain(v == m)
-    min_var = opt.min_many_variables("min-many", lp_vars, M=sum(mins))
+    min_var = opt.min_many_variables("min-many", lp_vars, M=max(mins) * 100)
     opt.objective(opt.sum(lp_vars))
     opt.solve(verbose=0)
-    np.testing.assert_allclose(max(mins), min_var.value(), atol=atol)
+    print(mins)
+    np.testing.assert_allclose(min(mins), min_var.value(), atol=atol)

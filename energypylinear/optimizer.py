@@ -270,7 +270,9 @@ class Optimizer:
         for var, binary_var in zip(variables, binary_vars):
             self.constrain(min_var <= var)
             self.constrain(var - M * binary_var <= min_var)
-            return min_var
+
+        self.constrain(self.sum(binary_vars) <= len(variables) - 1)
+        return min_var
 
     def max_many_variables(
         self, name: str, variables: list[pulp.LpVariable], M: float
@@ -295,9 +297,7 @@ class Optimizer:
 
         for var, binary_var in zip(variables, binary_vars):
             self.constrain(max_var >= var)
-            if isinstance(var, float):
-                self.constrain(max_var >= var)
-            else:
+            if isinstance(var, pulp.LpVariable):
                 self.constrain(var + M * (1 - binary_var) >= max_var)
         return max_var
 
