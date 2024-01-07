@@ -24,6 +24,7 @@ class Term:
     type: typing.Literal["simple"] = "simple"
 
 
+# --8<-- [start:min-max-function-terms]
 @dataclasses.dataclass
 class FunctionTermTwoVariables:
     """A function term for constraining two variables."""
@@ -53,6 +54,9 @@ class FunctionTermManyVariables:
     coefficient: float = 1.0
 
     type: typing.Literal["function"] = "function"
+
+
+# --8<-- [end:min-max-function-terms]
 
 
 Terms = Term | FunctionTermTwoVariables | FunctionTermManyVariables

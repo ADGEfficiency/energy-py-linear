@@ -47,6 +47,8 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: [., ..]
   - attr_list
   - md_in_html
   - admonition
@@ -63,7 +65,8 @@ nav:
       - Optimize Multiple Assets: how-to/dispatch-site.md
       - Optimize for Carbon: how-to/price-carbon.md
       - Optimize for a Forecast: how-to/dispatch-forecast.md
-      - Use a Custom Objective Function: how-to/custom-objective.md
+      - Custom Objective Functions: how-to/custom-objectives.md
+      - Minimum and Maximum Function Terms: how-to/min-max-function-terms.md
   - Validation:
       - Battery: validation/battery.md
       # - Combined Heat & Power: validation/chp.md

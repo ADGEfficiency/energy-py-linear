@@ -1,6 +1,101 @@
 # Changelog
 
-## [1.1.1](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.0)
+## [1.2.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.2.0)
+
+### Custom Objective Functions
+
+A custom objective function allows users to create their own objective functions in the linear program.  
+
+This allows users to optimize for a custom set of revenues and costs. The objective function can target assets by type or name, and can include multiplication by interval data and/or a coefficient.
+
+The example below shows how to include a cost for battery use (a cycle cost) applied to the battery discharge:
+
+```python
+import numpy as np
+import energypylinear as epl
+
+assets = [
+    epl.Battery(power_mw=20, capacity_mwh=20)
+]
+site = epl.Site(
+    assets=assets,
+    electricity_prices=np.random.normal(0, 1000, 48)
+)
+terms=[
+    {
+        "asset_type":"site",
+        "variable":"import_power_mwh",
+        "interval_data":"electricity_prices"
+    },
+    {
+        "asset_type":"site",
+        "variable":"export_power_mwh",
+        "interval_data":"electricity_prices",
+        "coefficient":-1
+    },
+    {
+        "asset_type": "battery",
+        "variable": "electric_discharge_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": 0.25
+    }
+]
+site.optimize(objective={"terms": terms})
+```
+
+See [Custom Objectives](https://energypylinear.adgefficiency.com/latest/how-to/custom-objectives/) in the documentation for more examples.
+
+### Logging Improvements
+
+The dependency on `structlog` has been removed - we now only use `rich.logging.Console` to log to STDOUT. The ability to log to a file has been removed.
+
+The `verbose` flag now accepts either a `bool` or an `int`. The mapping of `verbose` to log levels is as follows:
+
+| `verbose` | Log Level |
+|-----------|-----------|
+| True      | INFO      |
+| False     | ERROR     |
+| 1         | DEBUG     |
+| 2         | INFO      |
+| 3         | WARNING   |
+| 4         | ERROR     |
+
+```python
+import energypylinear as epl
+asset = epl.Battery(electricity_prices=[10, -50, 200, -50, 200])
+simulation = asset.optimize(verbose=2)
+```
+
+```
+INFO     assets.site.optimize: cfg=<SiteConfig name=site, freq_mins=60,         
+         import_limit_mw=10000.0, export_limit_mw=10000.0>                      
+INFO     assets.site.optimize: cfg=<SiteConfig name=site, freq_mins=60,         
+         import_limit_mw=10000.0, export_limit_mw=10000.0>                      
+INFO     assets.site.optimize: assets=['battery', 'spill']                      
+INFO     assets.site.optimize: assets=['battery', 'spill']                      
+INFO     optimizer.solve: status='Optimal'                                      
+INFO     optimizer.solve: status='Optimal'                                      
+```
+
+### Tighten Optimizer Tolerance
+
+The default relative tolerance of the CBC optimizer has been reduced to `0.0`.
+
+### Optimizer Config can be a Dictionary
+
+It's now possible to use a dictionary in place of the `epl.OptimizerConfig` object:
+
+```python
+asset.optimize(optimizer_config={"timeout": 2, "relative_tolerance": 0.1})
+```
+
+### Other Changes
+
+We have upgraded Poetry to 1.7.0 and Mypy to 1.7.0.
+
+Plausible analytics added to the documentation.
+
+## [1.1.1](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.1)
 
 ### Bugs
 

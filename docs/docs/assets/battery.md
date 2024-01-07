@@ -1,33 +1,32 @@
 # Battery
 
-Dispatch an electric battery operating in wholesale price arbitrage using `epl.Battery`:
+The `epl.Battery` model is suitable for modelling an electric battery, such as a lithium-ion battery.
+
+The battery charge rate is defined by `power_mw`, which defines both the maximum rate of charge and discharge. `discharge_power_mw` can be used to define a different rate of maximum discharge.
+
+The battery storage capacity is defined by `capacity_mwh`.  This should be the capacity after taking into account any battery depth of discharge limits.
+
+An efficiency penalty is applied to the battery charge energy, based on the `efficiency_pct` parameter.  No electricity is lost when discharging or during storage.
+
+`initial_charge_mwh` and `final_charge_mwh` control the battery state of charge at the start and end of the simulation.  These can cause infeasible simulations if the battery is not able to charge or discharge enough to meet these constraints.
+
+[You can check the correctness of the battery model here](https://energypylinear.adgefficiency.com/latest/validation/battery/).
 
 ```python
 import energypylinear as epl
 
-#  optimize a 2.0 MW, 4.0 MWh battery for money
 asset = epl.Battery(
     power_mw=2,
+    discharge_power_mw=2,
     capacity_mwh=4,
     efficiency_pct=0.9,
     electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
     freq_mins=60,
     initial_charge_mwh=1,
     final_charge_mwh=3,
+    name="battery"
 )
-simulation = asset.optimize(objective="price")
-
-#  optimize a 1.0 MW, 3.0 MWh battery for carbon
-asset = epl.Battery(
-    power_mw=1,
-    capacity_mwh=3,
-    efficiency_pct=0.9,
-    electricity_carbon_intensities=[0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01],
-    freq_mins=60,
-    initial_charge_mwh=0,
-    final_charge_mwh=0,
-)
-simulation = asset.optimize(objective="carbon")
+simulation = asset.optimize()
 
 assert all(
     simulation.results.columns
@@ -70,7 +69,3 @@ assert all(
     ]
 )
 ```
-
-The battery will charge with electricity at low prices & carbon intensities, and discharge at high prices & carbon intensities.
-
-An efficiency penalty is applied to the battery charge energy (energy is lost during charging).
