@@ -160,7 +160,11 @@ def test_max_many_variables(n: int) -> None:
     for m, v in zip(maxes, lp_vars):
         opt.constrain(v == m)
 
-    max_var = opt.max_many_variables("max-many", lp_vars, M=max(maxes))
+    constant = random.random() * 100
+    maxes.append(constant)
+    lp_vars.append(constant)
+
+    max_var = opt.max_many_variables("max_many", lp_vars, M=max(maxes))
     opt.objective(opt.sum(lp_vars))
     opt.solve(verbose=0)
     np.testing.assert_allclose(max(maxes), max_var.value(), atol=atol)
@@ -177,8 +181,12 @@ def test_min_many_variables(n: int) -> None:
     mins = [random.random() * 100 for _ in lp_vars]
     for m, v in zip(mins, lp_vars):
         opt.constrain(v == m)
-    min_var = opt.min_many_variables("min-many", lp_vars, M=max(mins) * 100)
+
+    constant = random.random() * 100
+    mins.append(constant)
+    lp_vars.append(constant)
+
+    min_var = opt.min_many_variables("min_many", lp_vars, M=max(mins) * 100)
     opt.objective(opt.sum(lp_vars))
     opt.solve(verbose=0)
-    print(mins)
     np.testing.assert_allclose(min(mins), min_var.value(), atol=atol)

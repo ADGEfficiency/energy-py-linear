@@ -398,7 +398,9 @@ class Site:
             )
 
         self.optimizer.objective(
-            epl.get_objective(objective, self.optimizer, ivars, self.cfg.interval_data)
+            epl.get_objective(
+                objective, self.optimizer, ivars, self.cfg.interval_data, verbose
+            )
         )
 
         status = self.optimizer.solve(
@@ -410,6 +412,7 @@ class Site:
             self.assets,
             ivars,
             feasible=status.feasible,
+            status=status,
             verbose=verbose,
             flags=flags,
         )

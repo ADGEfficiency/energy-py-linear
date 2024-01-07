@@ -139,6 +139,7 @@ class Optimizer:
         feasible = status == "Optimal"
         if not allow_infeasible:
             assert feasible, "Infeasible simulation!"
+            assert objective is not None, f"Solver failure - objective is {objective}!"
 
         return OptimizationStatus(status=status, feasible=feasible, objective=objective)
 
@@ -249,7 +250,7 @@ class Optimizer:
         return cv
 
     def min_many_variables(
-        self, name: str, variables: list[pulp.LpVariable], M: float
+        self, name: str, variables: list[pulp.LpVariable | float], M: float
     ) -> pulp.LpVariable:
         """Create a variable that is the minimum of many other variables.
 
@@ -260,12 +261,15 @@ class Optimizer:
             variables: A list of continuous variables or floats.
             M: The big-M parameter.
         """
-        assert "min-many" in name
+        assert "min_many" in name
         min_var = self.continuous(name=f"{name}-continuous", low=None, up=None)
         binary_vars = [self.binary(f"{name}-binary-{i}") for i in range(len(variables))]
 
         for v in variables:
-            assert v.lowBound >= 0
+            if isinstance(v, pulp.LpVariable):
+                assert v.lowBound >= 0
+            else:
+                assert v >= 0
 
         for var, binary_var in zip(variables, binary_vars):
             self.constrain(min_var <= var)
@@ -275,7 +279,7 @@ class Optimizer:
         return min_var
 
     def max_many_variables(
-        self, name: str, variables: list[pulp.LpVariable], M: float
+        self, name: str, variables: list[pulp.LpVariable | float], M: float
     ) -> pulp.LpVariable:
         """Create a variable that is the maximum of many other variables.
 
@@ -288,12 +292,15 @@ class Optimizer:
             variables: A list of continuous variables or floats.
             M: The big-M parameter.
         """
-        assert "max-many" in name
+        assert "max_many" in name
         max_var = self.continuous(name=f"{name}-continuous", low=None, up=None)
         binary_vars = [self.binary(f"{name}-binary-{i}") for i in range(len(variables))]
 
         for v in variables:
-            assert v.lowBound >= 0
+            if isinstance(v, pulp.LpVariable):
+                assert v.lowBound >= 0
+            else:
+                assert v >= 0
 
         for var, binary_var in zip(variables, binary_vars):
             self.constrain(max_var >= var)

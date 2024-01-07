@@ -52,6 +52,7 @@ class IntervalVars:
                 "site": SiteOneInterval,
                 "spill": epl.assets.spill.SpillOneInterval,
                 "spill_evs": epl.assets.evs.EVSpillOneInterval,
+                "chp": epl.assets.chp.CHPOneInterval,
             }
             instance_type = type_mapper[instance_type]
 
@@ -68,17 +69,30 @@ class IntervalVars:
 
     def filter_objective_variables_all_intervals(
         self,
-        instance_type: type[AssetOneInterval],
+        instance_type: type[AssetOneInterval] | str | None,
         asset_name: str | None = None,
     ) -> list[list[AssetOneInterval]]:
         """Filters objective variables based on type, interval index, and asset name."""
         pkg = []
         for assets_one_interval in self.objective_variables:
+            if isinstance(instance_type, str):
+                type_mapper: dict[str, type] = {
+                    "site": SiteOneInterval,
+                    "spill": epl.assets.spill.SpillOneInterval,
+                    "spill_evs": epl.assets.evs.EVSpillOneInterval,
+                    "chp": epl.assets.chp.CHPOneInterval,
+                }
+                instance_type = type_mapper[instance_type]
+
             pkg.append(
                 [
                     asset
                     for asset in assets_one_interval
-                    if isinstance(asset, instance_type)
+                    if (
+                        isinstance(asset, instance_type)
+                        if instance_type is not None
+                        else True
+                    )
                     and (
                         asset.cfg.name == asset_name if asset_name is not None else True
                     )

@@ -124,6 +124,9 @@ def test_repr() -> None:
         ),
         epl.interval_data.IntervalVars(),
         epl.SimulationResult(
+            status=epl.optimizer.OptimizationStatus(
+                status="Optimal", feasible=True, objective=0.0
+            ),
             site=epl.Site(assets=[], electricity_prices=[10]),
             assets=[],
             results=pd.DataFrame(),

@@ -1,6 +1,8 @@
 ## Custom Objective Functions
 
-`energypylinear` has the ability to optimize for two different objective functions (price or carbon) built into the library. 
+An objective function determines the incentives and costs in a linear program.  It's what you are trying to optimize for.
+
+`energypylinear` has two different objective functions (price or carbon) built into the library. 
 
 However you may want to optimize for a different objective function in the linear program.
 
@@ -103,7 +105,7 @@ print(simulate(carbon_price=50, seed=42, n=72))
 INFO     assets.site.optimize: cfg=<SiteConfig name=site, freq_mins=60,         
          import_limit_mw=10000.0, export_limit_mw=10000.0>                      
 INFO     assets.site.optimize: assets=['battery']                               
-INFO     optimizer.solve: status='Optimal', objective=-481294.13984072726       
+INFO     optimizer.solve: status='Optimal', objective=-481294.13984072715       
 <energypylinear.SimulationResult feasible:True, rows:72, cols:28>
 ```
 
