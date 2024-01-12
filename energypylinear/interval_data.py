@@ -58,7 +58,6 @@ class IntervalVars:
                 "site": SiteOneInterval,
                 "spill": epl.assets.spill.SpillOneInterval,
                 "spill_evs": epl.assets.evs.EVSpillOneInterval,
-                "chp": epl.assets.chp.CHPOneInterval,
             }
             instance_type = type_mapper[instance_type]
 
