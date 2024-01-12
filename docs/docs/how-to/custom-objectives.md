@@ -104,10 +104,7 @@ print(simulate(carbon_price=50, seed=42, n=72))
 ```
 
 ```
-INFO     assets.site.optimize: cfg=<SiteConfig name=site, freq_mins=60,         
-         import_limit_mw=10000.0, export_limit_mw=10000.0>                      
-INFO     assets.site.optimize: assets=['battery']                               
-INFO     optimizer.solve: status='Optimal', objective=-481294.13984072715       
+<energypylinear.SimulationResult feasible:True, rows:72, cols:28>
 ```
 
 We can validate that our custom objective function is working as expected by running simulations across many carbon prices:

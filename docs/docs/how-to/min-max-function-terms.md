@@ -1,18 +1,14 @@
-In `energypylinear` you can use [custom objective functions]() to define a custom set of incentives and costs in your linear program.
+## Simple Terms
+
+In `energypylinear` you can use [custom objective functions](https://energypylinear.adgefficiency.com/latest/how-to/custom-objectives/) to define a custom set of incentives and costs in your linear program.
 
 The objective function will often be made up of simple terms, which are the product of a single linear variable (one per interval), interval data and a coefficient:
 
+<!--phmdoctest-mark.skip-->
 ```python
 import dataclasses
 
-@dataclasses.dataclass
-class Term:
-    variable: str
-    asset_type: str | None = None
-    interval_data: str | None = None
-    asset_name: str | None = None
-    coefficient: float = 1.0
-
+--8<-- "energypylinear/objectives.py:term"
 # an objective function term for site import power electricity cost
 Term(
     variable="import_power_mwh",
@@ -37,9 +33,16 @@ Term(
 
 ```
 
+## Function Terms
+
 In addition to these simple objective function terms, sites will often have more complicated costs and revenues.  
 
 `energypylinear` uses function terms to include these more complicated terms in the objective function.  
+
+<!--phmdoctest-mark.skip-->
+```python
+--8<-- "energypylinear/objectives.py:min-max-function-terms"
+```
 
 Currently the library includes four function terms, which allow adding minimum or maximum constraints on collections of linear program variables and floats:
 
@@ -50,14 +53,10 @@ Currently the library includes four function terms, which allow adding minimum o
 | `max_many_variables` | Interval index length      | 0 or 1           | 1                                  |
 | `min_many_variables`  | Interval index length      | 0 or 1           | 1                                  |
 
-<!--phmdoctest-mark.skip-->
-```python
---8<-- "energypylinear/objectives.py:min-max-function-terms"
-```
 
 ## Examples
 
-### Maximum Demand Charges
+### Maximum Demand Charge
 
 A common incentive for many sites is a maximum demand charge, where a site will incur a cost based on the maximum site import over a length of time (commonly a month).
 
@@ -236,7 +235,6 @@ print(
 2                    10.0                          0.0
 ```
 
-
 ### Minimum Export Incentive
 
 Above we looked at a function term that took the maximum across many linear program variables at once using the `max_many_variables` function term, which results in one term being added to the objective function.
@@ -340,7 +338,7 @@ no_export_incentive_simulation = site.optimize(
                 },
                 "b": 15,
                 "coefficient": -200,
-                "M": 100,
+                "M": max(electric_load_mwh) * 10
             },
         ]
     },

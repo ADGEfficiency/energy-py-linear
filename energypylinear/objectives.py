@@ -10,11 +10,10 @@ from energypylinear.defaults import defaults
 from energypylinear.logger import logger, set_logging_level
 
 
+# --8<-- [start:term]
 @dataclasses.dataclass
 class Term:
-    """A single term in the objective function.
-
-    objective = Term + Term + Term"""
+    """A single term in the objective function."""
 
     variable: str
     asset_type: str | None = None
@@ -24,20 +23,20 @@ class Term:
     type: typing.Literal["simple"] = "simple"
 
 
+# --8<-- [end:term]
+
+
 # --8<-- [start:min-max-function-terms]
 @dataclasses.dataclass
 class FunctionTermTwoVariables:
     """A function term for constraining two variables."""
 
     function: typing.Literal["max_two_variables", "min_two_variables"]
-
     a: Term | float
     b: Term | float
     M: float
-
     interval_data: str | None = None
     coefficient: float = 1.0
-
     type: typing.Literal["function"] = "function"
 
 
@@ -46,13 +45,10 @@ class FunctionTermManyVariables:
     """A function term for constraining many variables."""
 
     function: typing.Literal["max_many_variables", "min_many_variables"]
-
     variables: Term
     M: float
-
     constant: float = 0.0
     coefficient: float = 1.0
-
     type: typing.Literal["function"] = "function"
 
 
