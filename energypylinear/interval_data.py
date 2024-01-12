@@ -81,7 +81,7 @@ class IntervalVars:
         pkg = []
         for assets_one_interval in self.objective_variables:
             if isinstance(instance_type, str):
-                type_mapper: dict[str, type] = {
+                type_mapper: dict[str, type | None] = {
                     "site": SiteOneInterval,
                     "spill": epl.assets.spill.SpillOneInterval,
                     "spill_evs": epl.assets.evs.EVSpillOneInterval,
