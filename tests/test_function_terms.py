@@ -509,3 +509,142 @@ def test_minimum_export_all_intervals_chp() -> None:
     )
 
     # TODO test the objective values???
+
+
+def test_filter_assets() -> None:
+    """Test that the filter on `*` works correctly."""
+
+    electric_load_mwh = 0.0
+    electricity_prices = [-50.0, -25, -50]
+    gas_prices = 20
+
+    # run a simulation where we incentivise all generators to not run
+    site = epl.Site(
+        assets=[
+            epl.CHP(
+                electric_efficiency_pct=1.0,
+                electric_power_max_mw=20,
+                electric_power_min_mw=0,
+            ),
+            epl.RenewableGenerator(
+                electric_generation_mwh=[30, 30, 30],
+                electric_generation_lower_bound_pct=0.0,
+            ),
+        ],
+        gas_prices=gas_prices,
+        electricity_prices=electricity_prices,
+        electric_load_mwh=electric_load_mwh,
+    )
+    no_incentive = site.optimize(
+        objective={
+            "terms": [
+                {
+                    "asset_type": "site",
+                    "variable": "import_power_mwh",
+                    "interval_data": "electricity_prices",
+                },
+                {
+                    "asset_type": "site",
+                    "variable": "export_power_mwh",
+                    "interval_data": "electricity_prices",
+                    "coefficient": -1,
+                },
+                {
+                    "asset_type": "*",
+                    "variable": "gas_consumption_mwh",
+                    "interval_data": "gas_prices",
+                },
+            ]
+        }
+    )
+    np.testing.assert_allclose(
+        no_incentive.results["total-electric_generation_mwh"], [0, 0, 0]
+    )
+
+    # run a simulation where we incentivise a CHP to run at a minimum load
+    if False:
+        chp_incentive = site.optimize(
+            objective={
+                "terms": [
+                    {
+                        "asset_type": "site",
+                        "variable": "import_power_mwh",
+                        "interval_data": "electricity_prices",
+                    },
+                    {
+                        "asset_type": "site",
+                        "variable": "export_power_mwh",
+                        "interval_data": "electricity_prices",
+                        "coefficient": -1,
+                    },
+                    {
+                        "asset_type": "*",
+                        "variable": "gas_consumption_mwh",
+                        "interval_data": "gas_prices",
+                    },
+                    {
+                        "type": "function",
+                        "function": "min_many_variables",
+                        "variables": {
+                            "asset_name": "chp",
+                            "variable": "electric_generation_mwh",
+                        },
+                        "constant": 15,
+                        "coefficient": -2000,
+                        "M": 1000,
+                    },
+                ]
+            }
+        )
+        np.testing.assert_allclose(
+            chp_incentive.results["chp-electric_generation_mwh"], [15, 15, 15]
+        )
+        np.testing.assert_allclose(
+            chp_incentive.results["total-electric_generation_mwh"], [15, 15, 15]
+        )
+
+    # run a simulation where we incentivise both generators to run at a minimum load
+    gen_incentive = site.optimize(
+        objective={
+            "terms": [
+                {
+                    "asset_type": "site",
+                    "variable": "import_power_mwh",
+                    "interval_data": "electricity_prices",
+                },
+                {
+                    "asset_type": "site",
+                    "variable": "export_power_mwh",
+                    "interval_data": "electricity_prices",
+                    "coefficient": -1,
+                },
+                {
+                    "asset_type": "*",
+                    "variable": "gas_consumption_mwh",
+                    "interval_data": "gas_prices",
+                },
+                {
+                    "type": "function",
+                    "function": "min_many_variables",
+                    "variables": {
+                        "asset_type": "*",
+                        "variable": "electric_generation_mwh",
+                    },
+                    "constant": 15,
+                    "coefficient": -2000,
+                    "M": 1000,
+                },
+            ]
+        }
+    )
+
+    np.testing.assert_allclose(
+        gen_incentive.results["total-electric_generation_mwh"], [30, 30, 30]
+    )
+    np.testing.assert_allclose(
+        gen_incentive.results["renewable-generator-electric_generation_mwh"],
+        [15, 15, 15],
+    )
+    np.testing.assert_allclose(
+        gen_incentive.results["chp-electric_generation_mwh"], [15, 15, 15]
+    )

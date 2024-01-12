@@ -144,6 +144,8 @@ class SiteOneInterval(AssetOneInterval):
     export_limit_mwh: float
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
+    electric_generation_mwh: None = None
+
 
 def constrain_site_electricity_balance(
     optimizer: Optimizer,

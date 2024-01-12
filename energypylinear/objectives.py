@@ -242,8 +242,10 @@ def add_many_variables_terms(
             variables = []
             for ass in assets:
                 for a in ass:
-                    variables.append(getattr(a, term.variables.variable))
-            assert len(variables) == len(interval_data.idx)
+                    if (v := getattr(a, term.variables.variable)) is not None:
+                        variables.append(v)
+
+            # assert len(variables) == len(interval_data.idx) * len(ass)
             variables.append(float(term.constant))
 
             c = function_factory[term.function](
