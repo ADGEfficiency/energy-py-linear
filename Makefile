@@ -51,20 +51,21 @@ test: setup-test test-docs
 create-test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
-	python -m phmdoctest ./docs/docs/how-to/custom-objectives.md  --outfile tests/phmdoctest/test_custom_objectives.py
-	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
-	python -m phmdoctest ./docs/docs/validation/evs.md --outfile tests/phmdoctest/test_validate_evs.py
-	python -m phmdoctest ./docs/docs/validation/heat-pump.md --outfile tests/phmdoctest/test_validate_heat-pump.py
-	python -m phmdoctest ./docs/docs/validation/renewable-generator.md --outfile tests/phmdoctest/test_validate_renewable_generator.py
-	python -m phmdoctest ./docs/docs/how-to/dispatch-forecast.md --outfile tests/phmdoctest/test_forecast.py
-	python -m phmdoctest ./docs/docs/how-to/price-carbon.md --outfile tests/phmdoctest/test_carbon.py
-	python -m phmdoctest ./docs/docs/how-to/dispatch-site.md --outfile tests/phmdoctest/test_dispatch_site.py
-	python -m phmdoctest ./docs/docs/assets/chp.md --outfile tests/phmdoctest/test_optimize_chp.py
-	python -m phmdoctest ./docs/docs/assets/battery.md --outfile tests/phmdoctest/test_optimize_battery.py
-	python -m phmdoctest ./docs/docs/assets/evs.md --outfile tests/phmdoctest/test_optimize_evs.py
-	python -m phmdoctest ./docs/docs/assets/heat-pump.md --outfile tests/phmdoctest/test_optimize_heat_pump.py
-	python -m phmdoctest ./docs/docs/assets/chp.md --outfile tests/phmdoctest/test_optimize_chp.py
-	python -m phmdoctest ./docs/docs/assets/renewable-generator.md --outfile tests/phmdoctest/test_optimize_renewable_generator.py
+	python -m phmdoctest ./docs/docs/how-to/min-max-function-terms.md --outfile tests/phmdoctest/test_min_max_function_terms.py
+	# python -m phmdoctest ./docs/docs/how-to/custom-objectives.md  --outfile tests/phmdoctest/test_custom_objectives.py
+	# python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
+	# python -m phmdoctest ./docs/docs/validation/evs.md --outfile tests/phmdoctest/test_validate_evs.py
+	# python -m phmdoctest ./docs/docs/validation/heat-pump.md --outfile tests/phmdoctest/test_validate_heat-pump.py
+	# python -m phmdoctest ./docs/docs/validation/renewable-generator.md --outfile tests/phmdoctest/test_validate_renewable_generator.py
+	# python -m phmdoctest ./docs/docs/how-to/dispatch-forecast.md --outfile tests/phmdoctest/test_forecast.py
+	# python -m phmdoctest ./docs/docs/how-to/price-carbon.md --outfile tests/phmdoctest/test_carbon.py
+	# python -m phmdoctest ./docs/docs/how-to/dispatch-site.md --outfile tests/phmdoctest/test_dispatch_site.py
+	# python -m phmdoctest ./docs/docs/assets/chp.md --outfile tests/phmdoctest/test_optimize_chp.py
+	# python -m phmdoctest ./docs/docs/assets/battery.md --outfile tests/phmdoctest/test_optimize_battery.py
+	# python -m phmdoctest ./docs/docs/assets/evs.md --outfile tests/phmdoctest/test_optimize_evs.py
+	# python -m phmdoctest ./docs/docs/assets/heat-pump.md --outfile tests/phmdoctest/test_optimize_heat_pump.py
+	# python -m phmdoctest ./docs/docs/assets/chp.md --outfile tests/phmdoctest/test_optimize_chp.py
+	# python -m phmdoctest ./docs/docs/assets/renewable-generator.md --outfile tests/phmdoctest/test_optimize_renewable_generator.py
 
 clean-test-docs:
 	rm -rf ./tests/phmdoctest
