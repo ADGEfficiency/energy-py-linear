@@ -232,7 +232,11 @@ class Battery(epl.Asset):
             )
 
     def __repr__(self) -> str:
-        """Return a string representation of self."""
+        """Return a string representation of self.
+
+        Returns:
+            A string representation of self.
+        """
         return f"<energypylinear.Battery {self.cfg.charge_power_mw=} {self.cfg.capacity_mwh=}>"
 
     def one_interval(
@@ -245,6 +249,9 @@ class Battery(epl.Asset):
             i: Integer index of the current interval.
             freq: Interval frequency.
             flags: Boolean flags to change simulation and results behaviour.
+
+        Returns:
+            Linear program variables for a single interval.
         """
         return BatteryOneInterval(
             cfg=self.cfg,
@@ -360,5 +367,8 @@ class Battery(epl.Asset):
         Args:
             results: The simulation results.
             path: Directory to save the plots to.
+
+        Returns:
+            None.
         """
         return epl.plot.plot_battery(results, pathlib.Path(path))

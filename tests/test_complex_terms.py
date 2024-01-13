@@ -582,7 +582,7 @@ def test_filter_assets() -> None:
                     "interval_data": "gas_prices",
                 },
                 {
-                    "type": "function",
+                    "type": "complex",
                     "function": "min_many_variables",
                     "variables": {
                         "asset_name": "chp",
