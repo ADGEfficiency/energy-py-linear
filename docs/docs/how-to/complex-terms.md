@@ -33,13 +33,13 @@ Term(
 
 ```
 
-## Function Terms
+## Complex Terms
 
-Sites will often have more complicated costs and revenues.  `energypylinear` uses function terms to include these more complicated terms in the objective function.  
+Sites will often have more complicated costs and revenues.  `energypylinear` uses complex terms to include these more complicated terms in the objective function.  
 
 <!--phmdoctest-mark.skip-->
 ```python
---8<-- "energypylinear/objectives.py:min-max-function-terms"
+--8<-- "energypylinear/objectives.py:complex-terms"
 ```
 
 Currently the library includes four function terms, which allow adding minimum or maximum constraints on collections of linear program variables and floats:

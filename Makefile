@@ -52,7 +52,7 @@ test: setup-test test-docs
 create-test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
-	python -m phmdoctest ./docs/docs/how-to/min-max-function-terms.md --outfile tests/phmdoctest/test_min_max_function_terms.py
+	python -m phmdoctest ./docs/docs/how-to/complex-terms.md --outfile tests/phmdoctest/test_complex_terms.py
 	python -m phmdoctest ./docs/docs/how-to/custom-objectives.md  --outfile tests/phmdoctest/test_custom_objectives.py
 	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
 	python -m phmdoctest ./docs/docs/validation/evs.md --outfile tests/phmdoctest/test_validate_evs.py
@@ -97,7 +97,7 @@ lint: setup-check
 	ruff format --check **/*.py
 	poetry check
 
-CHECK_DOCSTRINGS=./energypylinear/assets/battery.py
+CHECK_DOCSTRINGS=./energypylinear/assets/battery.py ./energypylinear/objectives.py
 
 # currently only run manually
 lint-docstrings:

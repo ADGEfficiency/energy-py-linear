@@ -13,7 +13,10 @@ from energypylinear.logger import logger, set_logging_level
 # --8<-- [start:term]
 @dataclasses.dataclass
 class Term:
-    """A single term in the objective function."""
+    """A simple term in the objective function.
+
+    This will add `i` terms to the objective function, where `i` is the length of the interval index (the number of intervals in the simulation).
+    """
 
     variable: str
     asset_type: str | None = None
@@ -26,10 +29,13 @@ class Term:
 # --8<-- [end:term]
 
 
-# --8<-- [start:min-max-function-terms]
+# --8<-- [start:complex-terms]
 @dataclasses.dataclass
 class FunctionTermTwoVariables:
-    """A function term for constraining two variables."""
+    """A function term for constraining two variables.
+
+    This will add `i` terms to the objective function, where `i` is the length of the interval index (the number of intervals in the simulation).
+    """
 
     function: typing.Literal["max_two_variables", "min_two_variables"]
     a: Term | float
@@ -37,47 +43,68 @@ class FunctionTermTwoVariables:
     M: float
     interval_data: str | None = None
     coefficient: float = 1.0
-    type: typing.Literal["function"] = "function"
+    type: typing.Literal["complex"] = "complex"
 
 
 @dataclasses.dataclass
 class FunctionTermManyVariables:
-    """A function term for constraining many variables."""
+    """A function term for constraining many variables.
+
+    This will add 1 term to the objective function.
+    """
 
     function: typing.Literal["max_many_variables", "min_many_variables"]
     variables: Term
     M: float
     constant: float = 0.0
     coefficient: float = 1.0
-    type: typing.Literal["function"] = "function"
+    type: typing.Literal["complex"] = "complex"
 
 
-# --8<-- [end:min-max-function-terms]
+# --8<-- [end:complex-terms]
 
 
-Terms = Term | FunctionTermTwoVariables | FunctionTermManyVariables
+# --8<-- [start:objective]
+OneTerm = Term | FunctionTermTwoVariables | FunctionTermManyVariables
 
 
 @dataclasses.dataclass
 class CustomObjectiveFunction:
-    """A custom objective function - a sum of terms.
+    """A custom objective function - a sum of terms."""
 
-    CustomObjectiveFunction = Term + Term + Term"""
-
-    terms: list[Terms]
+    terms: list[OneTerm]
 
 
-def term_or_float(term_or_float: dict | float) -> Term | float:
-    """Parse a dict or float into either a Term or float."""
-    if isinstance(term_or_float, dict):
-        return Term(**term_or_float)
-    else:
-        assert isinstance(float(term_or_float), float)
-        return float(term_or_float)
+# --8<-- [end:objective]
 
 
-def term_factory(term: dict) -> Terms:
-    """TODO"""
+def term_or_float(t_or_f: dict | float) -> Term | float:
+    """Parse a dict or float into either a Term or float.
+
+    Args:
+        t_or_f: A dictionary representing a Term object, or a float.
+
+    Returns:
+        A Term object if input is a dictionary, or a float if input is a float.
+    """
+    if isinstance(t_or_f, dict):
+        return Term(**t_or_f)
+    assert isinstance(float(t_or_f), float)
+    return float(t_or_f)
+
+
+def term_factory(term: dict) -> OneTerm:
+    """Resolve a dictionary into an objective function term.
+
+    Handles deciding whether the term is simple or complex, and which type of
+    complex term.
+
+    Args:
+        term: an objective function term as a dictionary.
+
+    Returns:
+        an objective function term as a Pydantic class.
+    """
     if "function" not in term:
         return Term(**term)
 
@@ -93,17 +120,27 @@ def term_factory(term: dict) -> Terms:
     return FunctionTermManyVariables(**term)
 
 
-def append_objective_function_terms(
+def append_simple_objective_function_terms(
     obj: list,
     assets: list,
     i: int,
     interval_data: "epl.assets.site.SiteIntervalData",
     term: Term,
 ) -> None:
-    """TODO"""
+    """Add objective function terms to the objective function.
+
+    Args:
+        obj: the objective function.
+        assets: a list of OneInterval asset objects.
+        i: the interval index.
+        interval_data: simulation interval data.
+        term: an objective function term.
+    """
     for asset in assets:
         obj.extend(
             [
+                # TODO - could raise an error here if the getattr is none
+                # this can happen
                 getattr(asset, term.variable)
                 * (
                     getattr(interval_data, term.interval_data)[i]
@@ -116,13 +153,19 @@ def append_objective_function_terms(
 
 
 def add_simple_terms(
-    optimizer: "epl.Optimizer",
     interval_data: "epl.assets.site.SiteIntervalData",
     objective: "CustomObjectiveFunction",
     ivars: "epl.interval_data.IntervalVars",
     obj: list,
 ) -> None:
-    """Adds simple objective function terms to the objective function."""
+    """Add simple objective function terms to the objective function.
+
+    Args:
+        interval_data: Simulation interval data.
+        objective: The objective function as a Pydantic object.
+        ivars: Linear program variables.
+        obj: The objective function as a list.
+    """
     for term in objective.terms:
         if term.type == "simple":
             for i in interval_data.idx:
@@ -134,7 +177,7 @@ def add_simple_terms(
                         i=i,
                         asset_name=term.asset_name,
                     )
-                append_objective_function_terms(
+                append_simple_objective_function_terms(
                     obj, assets, i, interval_data, term=term
                 )
 
@@ -146,13 +189,21 @@ def add_two_variable_terms(
     ivars: "epl.interval_data.IntervalVars",
     obj: list,
 ) -> None:
-    """Adds two variable function terms to the objective function."""
+    """Add two variable function terms to the objective function.
+
+    Args:
+        optimizer: Linear program optimizer.
+        interval_data: Simulation interval data.
+        objective: The objective function as a Pydantic object.
+        ivars: Linear program variables.
+        obj: The objective function as a list.
+    """
     function_factory = {
         "max_two_variables": optimizer.max_two_variables,
         "min_two_variables": optimizer.min_two_variables,
     }
     for term in objective.terms:
-        if term.type == "function" and term.function in function_factory:
+        if term.type == "complex" and term.function in function_factory:
             assert isinstance(term, FunctionTermTwoVariables)
             for i in interval_data.idx:
                 """
@@ -217,18 +268,24 @@ def add_two_variable_terms(
 
 def add_many_variables_terms(
     optimizer: "epl.Optimizer",
-    interval_data: "epl.assets.site.SiteIntervalData",
     objective: "CustomObjectiveFunction",
     ivars: "epl.interval_data.IntervalVars",
     obj: list,
 ) -> None:
-    """Add many variable function terms to the objective function."""
+    """Add many variable function terms to the objective function.
+
+    Args:
+        optimizer: Linear program optimizer.
+        objective: The objective function as a Pydantic object.
+        ivars: Linear program variables.
+        obj: The objective function as a list.
+    """
     function_factory = {
         "max_many_variables": optimizer.max_many_variables,
         "min_many_variables": optimizer.min_many_variables,
     }
     for term in objective.terms:
-        if term.type == "function" and term.function in function_factory:
+        if term.type == "complex" and term.function in function_factory:
             assert isinstance(term, FunctionTermManyVariables)
             if term.variables.asset_type == "*":
                 assets = ivars.filter_objective_variables_all_intervals(
@@ -265,13 +322,13 @@ def price_objective(
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
 
-    Inputs:
-        optimizer: an instance of `epl.Optimizer` class.
-        vars: a dictionary of linear programming variables in the optimization problem.
-        interval_data: interaval data used in the simulation.
+    Args:
+        optimizer: Linear program optimizer.
+        ivars: Linear program variables.
+        interval_data: Simulation interval data.
 
     Returns:
-        A linear programming objective as an instance of `pulp.LpAffineExpression` class.
+        Linear programming objective function.
     """
     sites = typing.cast(
         list[list["epl.assets.site.SiteOneInterval"]],
@@ -347,13 +404,13 @@ def carbon_objective(
     The objective is expressed as a linear combination of the costs for site import/export of power,
     spillage, charge for spillage EVs, gas consumption by generators and boilers.
 
-    Inputs:
-        optimizer: an instance of `epl.Optimizer` class.
-        vars: a dictionary of linear programming variables in the optimization problem.
-        interval_data: interaval data used in the simulation.
+    Args:
+        optimizer: Linear program optimizer.
+        ivars: Linear program variables.
+        interval_data: Simulation interval data.
 
     Returns:
-        A linear programming objective as an instance of `pulp.LpAffineExpression` class.
+        Linear programming objective function.
     """
     sites = typing.cast(
         list[list["epl.assets.site.SiteOneInterval"]],
@@ -430,19 +487,32 @@ def get_objective(
     interval_data: "epl.assets.site.SiteIntervalData",
     verbose: int | bool = 2,
 ) -> pulp.LpAffineExpression:
-    """Creates the objective function - either from a hardcoded function or from a custom objective function."""
+    """Create the objective function - either from a hardcoded function or from a custom objective function.
+
+    Args:
+        objective: The objective function.
+        optimizer: Linear program optimizer.
+        ivars: Linear program variables.
+        interval_data: Simulation interval data.
+        verbose: Level of printing.
+
+    Returns:
+        Linear programming objective function.
+
+    Raises:
+        ValueError: If objective is not a string or a dictionary.
+    """
     hardcoded_objectives = {"price": price_objective, "carbon": carbon_objective}
 
     if isinstance(objective, str):
         if objective in hardcoded_objectives:
             return hardcoded_objectives[objective](optimizer, ivars, interval_data)
-        else:
-            raise ValueError(
-                f"objective {objective} not in objectives, available objectives: {hardcoded_objectives.keys()}"
-            )
+        raise ValueError(
+            f"objective {objective} not in objectives, available objectives: {hardcoded_objectives.keys()}"
+        )
 
-    elif isinstance(objective, dict):
-        terms: list[Terms] = []
+    if isinstance(objective, dict):
+        terms: list[OneTerm] = []
         for term in objective["terms"]:
             t = term_factory(term)
             assert t is not None
@@ -454,7 +524,7 @@ def get_objective(
         assert isinstance(objective, CustomObjectiveFunction)
 
     obj: list[typing.Any | float] = []
-    add_simple_terms(optimizer, interval_data, objective, ivars, obj)
+    add_simple_terms(interval_data, objective, ivars, obj)
     n_simple_terms = len(obj)
 
     set_logging_level(logger, verbose)
@@ -466,7 +536,7 @@ def get_objective(
         f"objectives.get_objective: two_variables_terms={n_min_max_two_variables_terms})"
     )
 
-    add_many_variables_terms(optimizer, interval_data, objective, ivars, obj)
+    add_many_variables_terms(optimizer, objective, ivars, obj)
     n_many_variables_terms = len(obj) - n_simple_terms
     logger.debug(
         f"objectives.get_objective: n_many_variables_terms={n_many_variables_terms})"

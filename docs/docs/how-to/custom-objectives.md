@@ -10,28 +10,20 @@ However you may want to optimize for a different objective function in the linea
 
 Core to the custom objective function is the `epl.Term` - representing a single term in the objective function:
 
-<!--phmdoctest-share-names-->
+<!--phmdoctest-mark.skip-->
 ```python
 import dataclasses
 
-@dataclasses.dataclass
-class Term:
-    variable: str
-    asset_type: str | None = None
-    interval_data: str | None = None
-    asset_name: str | None = None
-    coefficient: float = 1.0
+--8<-- "energypylinear/objectives.py:term"
 ```
 
 A term can target either many assets by type or one asset by name. It can also include multiplication by interval data or by a coefficient.
 
 A custom objective function is a list of terms:
 
-<!--phmdoctest-share-names-->
+<!--phmdoctest-mark.skip-->
 ```python
-@dataclasses.dataclass
-class CustomObjectiveFunction:
-    terms: list[Term]
+--8<-- "energypylinear/objectives.py:objective"
 ```
 
 The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a list of dictionaries.

@@ -54,7 +54,7 @@ def test_min_two_variables_export_threshold() -> None:
             "interval_data": "gas_prices",
         },
         {
-            "type": "function",
+            "type": "complex",
             "function": "min_two_variables",
             "a": {
                 "asset_type": "site",
@@ -157,7 +157,7 @@ def test_maximum_two_variables_export_tariff(
             "interval_data": "gas_prices",
         },
         {
-            "type": "function",
+            "type": "complex",
             "function": "max_two_variables",
             "a": {
                 "asset_type": "site",
@@ -562,46 +562,45 @@ def test_filter_assets() -> None:
     )
 
     # run a simulation where we incentivise a CHP to run at a minimum load
-    if False:
-        chp_incentive = site.optimize(
-            objective={
-                "terms": [
-                    {
-                        "asset_type": "site",
-                        "variable": "import_power_mwh",
-                        "interval_data": "electricity_prices",
+    chp_incentive = site.optimize(
+        objective={
+            "terms": [
+                {
+                    "asset_type": "site",
+                    "variable": "import_power_mwh",
+                    "interval_data": "electricity_prices",
+                },
+                {
+                    "asset_type": "site",
+                    "variable": "export_power_mwh",
+                    "interval_data": "electricity_prices",
+                    "coefficient": -1,
+                },
+                {
+                    "asset_type": "*",
+                    "variable": "gas_consumption_mwh",
+                    "interval_data": "gas_prices",
+                },
+                {
+                    "type": "function",
+                    "function": "min_many_variables",
+                    "variables": {
+                        "asset_name": "chp",
+                        "variable": "electric_generation_mwh",
                     },
-                    {
-                        "asset_type": "site",
-                        "variable": "export_power_mwh",
-                        "interval_data": "electricity_prices",
-                        "coefficient": -1,
-                    },
-                    {
-                        "asset_type": "*",
-                        "variable": "gas_consumption_mwh",
-                        "interval_data": "gas_prices",
-                    },
-                    {
-                        "type": "function",
-                        "function": "min_many_variables",
-                        "variables": {
-                            "asset_name": "chp",
-                            "variable": "electric_generation_mwh",
-                        },
-                        "constant": 15,
-                        "coefficient": -2000,
-                        "M": 1000,
-                    },
-                ]
-            }
-        )
-        np.testing.assert_allclose(
-            chp_incentive.results["chp-electric_generation_mwh"], [15, 15, 15]
-        )
-        np.testing.assert_allclose(
-            chp_incentive.results["total-electric_generation_mwh"], [15, 15, 15]
-        )
+                    "constant": 15,
+                    "coefficient": -2000,
+                    "M": 1000,
+                },
+            ]
+        }
+    )
+    np.testing.assert_allclose(
+        chp_incentive.results["chp-electric_generation_mwh"], [15, 15, 15]
+    )
+    np.testing.assert_allclose(
+        chp_incentive.results["total-electric_generation_mwh"], [15, 15, 15]
+    )
 
     # run a simulation where we incentivise both generators to run at a minimum load
     gen_incentive = site.optimize(
@@ -624,7 +623,7 @@ def test_filter_assets() -> None:
                     "interval_data": "gas_prices",
                 },
                 {
-                    "type": "function",
+                    "type": "complex",
                     "function": "min_many_variables",
                     "variables": {
                         "asset_type": "*",
