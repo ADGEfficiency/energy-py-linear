@@ -7,6 +7,7 @@ clean:
 
 
 #  ----- SETUP -----
+#  installation of dependencies
 
 .PHONY: setup-pip-poetry setup-test setup-static setup-check setup-docs
 QUIET := -q
@@ -37,6 +38,7 @@ setup-docs:
 
 
 #  ----- TEST -----
+#  documentation tests and unit tests
 
 .PHONY: test test-ci test-docs clean-test-docs test-validate create-test-docs
 PARALLEL = auto
@@ -105,7 +107,9 @@ lint-docstrings:
 	pydocstyle $(CHECK_DOCSTRINGS)
 	pylint $(CHECK_DOCSTRINGS)
 
+
 #  ----- FORMATTING -----
+#  formatting code
 
 .PHONY: format
 format: setup-check
@@ -127,6 +131,7 @@ publish: setup
 
 
 #  ----- DOCS ------
+#  mkdocs documentation
 
 .PHONY: docs mike-deploy
 
