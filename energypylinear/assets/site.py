@@ -145,6 +145,11 @@ class SiteOneInterval(AssetOneInterval):
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     electric_generation_mwh: None = None
+    high_temperature_generation_mwh: None = None
+    low_temperature_generation_mwh: None = None
+    electric_charge_mwh: None = None
+    electric_discharge_mwh: None = None
+    gas_consumption_mwh: None = None
 
 
 def constrain_site_electricity_balance(

@@ -35,9 +35,7 @@ Term(
 
 ## Function Terms
 
-In addition to these simple objective function terms, sites will often have more complicated costs and revenues.  
-
-`energypylinear` uses function terms to include these more complicated terms in the objective function.  
+Sites will often have more complicated costs and revenues.  `energypylinear` uses function terms to include these more complicated terms in the objective function.  
 
 <!--phmdoctest-mark.skip-->
 ```python

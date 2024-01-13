@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0 - Unreleased]()
+
+### Different Battery Charge and Discharge Rates
+
+### Minimum and Maximum Objective Function Terms
+
 ## [1.2.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.2.0)
 
 ### Custom Objective Functions
