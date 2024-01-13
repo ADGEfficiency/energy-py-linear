@@ -9,28 +9,6 @@ The objective function will often be made up of simple terms, which are the prod
 import dataclasses
 
 --8<-- "energypylinear/objectives.py:term"
-# an objective function term for site import power electricity cost
-Term(
-    variable="import_power_mwh",
-    asset_type="site",
-    interval_data="electricity_prices"
-)
-
-# an objective function term for site export power electricity revenue
-Term(
-    variable="import_power_mwh",
-    asset_type="site",
-    interval_data="electricity_prices",
-    coefficient=-1
-)
-
-# an objective function term for battery cycle cost
-Term(
-    variable="electric_charge_mwh",
-    asset_type="battery",
-    coefficient=0.25
-)
-
 ```
 
 ## Complex Terms
@@ -42,7 +20,7 @@ Sites will often have more complicated costs and revenues.  `energypylinear` use
 --8<-- "energypylinear/objectives.py:complex-terms"
 ```
 
-Currently the library includes four function terms, which allow adding minimum or maximum constraints on collections of linear program variables and floats:
+Currently the library includes four complex terms, which allow adding minimum or maximum constraints on collections of linear program variables and floats:
 
 | Function             | Number of Linear Variables | Number of Floats | Number of Objective Function Terms |
 |----------------------|----------------------------|------------------|------------------------------------|

@@ -27,6 +27,32 @@ class Term:
         objective.append(term)
     ```
 
+    Examples:
+
+    ```python
+    # an objective function term for site import power electricity cost
+    Term(
+        variable="import_power_mwh",
+        asset_type="site",
+        interval_data="electricity_prices"
+    )
+
+    # an objective function term for site export power electricity revenue
+    Term(
+        variable="import_power_mwh",
+        asset_type="site",
+        interval_data="electricity_prices",
+        coefficient=-1
+    )
+
+    # an objective function term for battery cycle cost
+    Term(
+        variable="electric_charge_mwh",
+        asset_type="battery",
+        coefficient=0.25
+    )
+    ```
+
     Attributes:
         variable: The linear program variable.  This will be an
             attribute of a OneInterval object, like `import_power_mwh`
