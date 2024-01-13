@@ -49,10 +49,7 @@ import numpy as np
 import energypylinear as epl
 
 def simulate(
-    carbon_price: int,
-    seed: int,
-    n: int,
-    verbose: int = 3
+    carbon_price: int, seed: int, n: int, verbose: int = 3
 ) -> epl.SimulationResult:
     """Run a battery simulation with a custom objective function."""
     np.random.seed(seed)
@@ -60,10 +57,8 @@ def simulate(
         assets=[epl.Battery(power_mw=10, capacity_mwh=20)],
         electricity_prices=np.random.normal(100, 1000, n),
         electricity_carbon_intensities=np.clip(
-            np.random.normal(1, 10, n),
-            a_min=0,
-            a_max=None
-        )
+            np.random.normal(1, 10, n), a_min=0, a_max=None
+        ),
     )
     return site.optimize(
         objective=epl.CustomObjectiveFunction(
@@ -83,18 +78,19 @@ def simulate(
                     asset_type="site",
                     variable="import_power_mwh",
                     interval_data="electricity_carbon_intensities",
-                    coefficient=carbon_price
+                    coefficient=carbon_price,
                 ),
                 epl.Term(
                     asset_type="site",
                     variable="export_power_mwh",
                     interval_data="electricity_carbon_intensities",
-                    coefficient=-1 * carbon_price
+                    coefficient=-1 * carbon_price,
                 ),
             ]
         ),
-        verbose=verbose
+        verbose=verbose,
     )
+
 
 print(simulate(carbon_price=50, seed=42, n=72))
 ```
@@ -118,7 +114,7 @@ for carbon_price in range(0, 300, 50):
         {
             "carbon_price": carbon_price,
             "profit": f"{accounts.profit:5.2f}",
-            "emissions": f"{accounts.emissions:3.2f}"
+            "emissions": f"{accounts.emissions:3.2f}",
         }
     )
 print(pd.DataFrame(results))
@@ -190,13 +186,12 @@ simulation = site.optimize(
                 coefficient=-25,
             ),
         ]
-    )
+    ),
 )
 print(
-    simulation.results[[
-        "solar-electric_generation_mwh",
-        "wind-electric_generation_mwh"
-    ]]
+    simulation.results[
+        ["solar-electric_generation_mwh", "wind-electric_generation_mwh"]
+    ]
 )
 ```
 
@@ -238,40 +233,36 @@ assets = [
     ),
     epl.Battery(power_mw=20, capacity_mwh=20),
 ]
-site = epl.Site(
-    assets=assets,
-    electricity_prices=electricity_prices
-)
-terms=[
+site = epl.Site(assets=assets, electricity_prices=electricity_prices)
+terms = [
     {
-        "asset_type":"site",
-        "variable":"import_power_mwh",
-        "interval_data":"electricity_prices"
+        "asset_type": "site",
+        "variable": "import_power_mwh",
+        "interval_data": "electricity_prices",
     },
     {
-        "asset_type":"site",
-        "variable":"export_power_mwh",
-        "interval_data":"electricity_prices",
-        "coefficient":-1
+        "asset_type": "site",
+        "variable": "export_power_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": -1,
     },
     {
         "asset_name": "wind",
         "variable": "electric_generation_mwh",
         "interval_data": "electricity_prices",
-        "coefficient": 1
+        "coefficient": 1,
     },
     {
         "asset_name": "wind",
         "variable": "electric_generation_mwh",
         "coefficient": -70
-    }
+    },
 ]
 simulation = site.optimize(
     verbose=4,
     objective={"terms": terms},
 )
 print(simulation.results[["site-electricity_prices", "wind-electric_generation_mwh"]])
-
 ```
 
 ```
@@ -301,54 +292,46 @@ import energypylinear as epl
 np.random.seed(42)
 electricity_prices = np.random.normal(0, 1000, 48)
 
-assets = [
-    epl.Battery(power_mw=20, capacity_mwh=20)
-]
-site = epl.Site(
-    assets=assets,
-    electricity_prices=electricity_prices
-)
-terms=[
+assets = [epl.Battery(power_mw=20, capacity_mwh=20)]
+site = epl.Site(assets=assets, electricity_prices=electricity_prices)
+terms = [
     {
-        "asset_type":"site",
-        "variable":"import_power_mwh",
-        "interval_data":"electricity_prices"
+        "asset_type": "site",
+        "variable": "import_power_mwh",
+        "interval_data": "electricity_prices",
     },
     {
-        "asset_type":"site",
-        "variable":"export_power_mwh",
-        "interval_data":"electricity_prices",
-        "coefficient":-1
+        "asset_type": "site",
+        "variable": "export_power_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": -1,
     },
     {
         "asset_type": "battery",
         "variable": "electric_discharge_mwh",
         "interval_data": "electricity_prices",
-        "coefficient": 0.25
-    }
+        "coefficient": 0.25,
+    },
 ]
-site.optimize(
-    verbose=4,
-    objective={"terms": terms}
-)
+site.optimize(verbose=4, objective={"terms": terms})
 ```
 
 You could also apply this cost to the battery electric charge, or to both the charge and discharge at the same time:
 
 ```python
-terms=[
+terms = [
     {
         "asset_type": "battery",
         "variable": "electric_charge_mwh",
         "interval_data": "electricity_prices",
-        "coefficient": 0.25
+        "coefficient": 0.25,
     },
     {
         "asset_type": "battery",
         "variable": "electric_discharge_mwh",
         "interval_data": "electricity_prices",
-        "coefficient": 0.25
-    }
+        "coefficient": 0.25,
+    },
 ]
 ```
 
@@ -360,33 +343,32 @@ import pandas as pd
 
 results = []
 for cycle_cost in [0.25, 0.5, 1.0, 2.0]:
-    terms=[
+    terms = [
         {
-            "asset_type":"site",
-            "variable":"import_power_mwh",
-            "interval_data":"electricity_prices"
+            "asset_type": "site",
+            "variable": "import_power_mwh",
+            "interval_data": "electricity_prices",
         },
         {
-            "asset_type":"site",
-            "variable":"export_power_mwh",
-            "interval_data":"electricity_prices",
-            "coefficient":-1
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+            "interval_data": "electricity_prices",
+            "coefficient": -1,
         },
         {
             "asset_type": "battery",
             "variable": "electric_discharge_mwh",
             "interval_data": "electricity_prices",
-            "coefficient": cycle_cost
-        }
+            "coefficient": cycle_cost,
+        },
     ]
-    simulation = site.optimize(
-        verbose=4,
-        objective={"terms": terms}
-    )
+    simulation = site.optimize(verbose=4, objective={"terms": terms})
     results.append(
         {
             "cycle_cost": cycle_cost,
-            "battery-electric_discharge_mwh": simulation.results["battery-electric_discharge_mwh"].sum()
+            "battery-electric_discharge_mwh": simulation.results[
+                "battery-electric_discharge_mwh"
+            ].sum(),
         }
     )
 print(pd.DataFrame(results))
