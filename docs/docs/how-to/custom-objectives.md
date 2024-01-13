@@ -8,6 +8,8 @@ However you may want to optimize for a different objective function in the linea
 
 **A custom objective function allows you to construct an objective function as you see fit** - allowing you to optimize a site and assets for the revenues and costs that are important to you.
 
+## Simple Objective Function Terms
+
 Core to the custom objective function is the `epl.Term` - representing a single term in the objective function:
 
 <!--phmdoctest-mark.skip-->
@@ -19,6 +21,8 @@ import dataclasses
 
 A term can target either many assets by type or one asset by name. It can also include multiplication by interval data or by a coefficient.
 
+## Custom Objective Function
+
 A custom objective function is a list of terms:
 
 <!--phmdoctest-mark.skip-->
@@ -28,11 +32,13 @@ A custom objective function is a list of terms:
 
 The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a list of dictionaries.
 
-### Price and Carbon
+## Simultaneous Price and Carbon Optimization
 
-This example shows how to optimize a battery for an objective that includes terms for both price and carbon.
+`energypylinear` has two different objective functions (price or carbon) built into the library - these optimize for either price or carbon, but not both at the same time.
 
-Below we create an objective function where we incentive a site to:
+This example shows how to optimize a battery for an objective that will optimize for both profit and emissions at the same time.
+
+Below we create an objective function where we:
 
 - reduce import when the electricity price or carbon intensity is high,
 - increase export when the electricity price or carbon intensity is low.
@@ -127,7 +133,7 @@ print(pd.DataFrame(results))
 
 As expected as our carbon price increases, both our profit and emissions decrease.
 
-### Renewables Certificates
+## Renewables Certificates
 
 In the previous example we used a custom objective function to apply incentives to the site import and export electricity by its asset type.
 
@@ -203,7 +209,7 @@ As expected, the first generator that is called is the `solar` generator, as it 
 
 As the site demand increases, the `wind` generator is called to make up the remaining demand.
 
-### Synthetic PPA
+## Synthetic PPA
 
 A synthetic PPA is a financial instrument that allows swapping of the output of a wholesale exposed generator to a fixed price.
 
@@ -272,8 +278,7 @@ print(simulation.results[["site-electricity_prices", "wind-electric_generation_m
 
 As expected, our renewable generator still generates even during times of negative electricity prices - this is because its output is incentivized at a fixed, positive price.
 
-
-### Battery Cycle Cost
+## Battery Cycle Cost
 
 It's common in battery optimization to include a cost to use the battery - for every MWh of charge, some cost is incurred.
 

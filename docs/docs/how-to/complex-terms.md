@@ -52,9 +52,7 @@ Currently the library includes four function terms, which allow adding minimum o
 | `min_many_variables`  | Interval index length      | 0 or 1           | 1                                  |
 
 
-## Examples
-
-### Maximum Demand Charge
+## Maximum Demand Charge
 
 A common incentive for many sites is a maximum demand charge, where a site will incur a cost based on the maximum site import over a length of time (commonly a month).
 
@@ -233,7 +231,7 @@ print(
 2                    10.0                          0.0
 ```
 
-### Minimum Export Incentive
+## Minimum Export Incentive
 
 Above we looked at a function term that took the maximum across many linear program variables at once using the `max_many_variables` function term, which results in one term being added to the objective function.
 

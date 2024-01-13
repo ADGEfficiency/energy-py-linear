@@ -15,7 +15,27 @@ from energypylinear.logger import logger, set_logging_level
 class Term:
     """A simple term in the objective function.
 
-    This will add `i` terms to the objective function, where `i` is the length of the interval index (the number of intervals in the simulation).
+    Will add `i` terms to the objective function, where `i` is
+    the number of intervals in the simulation.
+
+    This term will be represented in the objective function as:
+
+    ```pseudocode
+    objective = []
+    for i in interval_data.idx:
+        term = variable * interval_data[i] * coefficient
+        objective.append(term)
+    ```
+
+    Attributes:
+        variable: The linear program variable.  This will be an
+            attribute of a OneInterval object, like `import_power_mwh`
+            or `gas_consumption_mwh`.
+        asset_type: The type of asset, such as `battery` or `chp`.
+        interval_data: The interval data variable, such as
+            `electricity_prices` or `gas_prices`.
+        coefficient: A constant multipler for the term.
+        type: The type of the term.
     """
 
     variable: str
@@ -34,7 +54,20 @@ class Term:
 class FunctionTermTwoVariables:
     """A function term for constraining two variables.
 
-    This will add `i` terms to the objective function, where `i` is the length of the interval index (the number of intervals in the simulation).
+    Will add `i` terms to the objective function, where `i` is
+    the number of intervals in the simulation.
+
+    Will also add constraints to the linear program.
+
+    Attributes:
+        function: The function to apply to the two variables.
+        a: Left hand side variable.
+        b: Right hand side variable.
+        M: Big-M constant used in the constraints.
+        interval_data: The interval data variable, such as
+            `electricity_prices` or `gas_prices`.
+        coefficient: A constant multipler for the term.
+        type: The type of the term.
     """
 
     function: typing.Literal["max_two_variables", "min_two_variables"]
@@ -51,6 +84,19 @@ class FunctionTermManyVariables:
     """A function term for constraining many variables.
 
     This will add 1 term to the objective function.
+
+    Will also add constraints to the linear program.
+
+    Attributes:
+        function: Function to apply to the many variables.
+        variables: Linear program variables to apply the function over.
+        M: Big-M constant used in the constraints.
+        interval_data: The interval data variable, such as
+            `electricity_prices` or `gas_prices`.
+        constant: A constant to include in the function alongside
+            the linear program variables.
+        coefficient: A constant multipler for the term.
+        type: The type of the term.
     """
 
     function: typing.Literal["max_many_variables", "min_many_variables"]
@@ -70,7 +116,7 @@ OneTerm = Term | FunctionTermTwoVariables | FunctionTermManyVariables
 
 @dataclasses.dataclass
 class CustomObjectiveFunction:
-    """A custom objective function - a sum of terms."""
+    """A custom objective function - a sum of `OneTerm` objects."""
 
     terms: list[OneTerm]
 
