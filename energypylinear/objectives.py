@@ -58,6 +58,7 @@ class Term:
             attribute of a OneInterval object, like `import_power_mwh`
             or `gas_consumption_mwh`.
         asset_type: The type of asset, such as `battery` or `chp`.
+            `*` will include all assets.
         interval_data: The interval data variable, such as
             `electricity_prices` or `gas_prices`.
         coefficient: A constant multipler for the term.

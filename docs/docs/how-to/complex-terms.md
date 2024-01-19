@@ -217,7 +217,7 @@ Another type of function term included in `energypylinear` is the `min_two_varia
 
 The term will represent the minimum of either a linear program variable and another linear program variable, or a linear program variable and a user supplied constant.
 
-To demonstrate this we can look at a site where we want to incentivize a minimum export of 15 MW or greater in each interval.
+To demonstrate this we can look at a site where we want to incentivize a minimum export of 15 MWh or greater in each interval.  The site will receive the maximum benefit when exporting 15 MW or more, and less benefit when exporting less than 15 MWh. There is no incentive to export more than 15 MWh.
 
 Let's first setup a site with a CHP system:
 
@@ -337,3 +337,5 @@ As expected, our CHP system generates to export a minimum of 15 MWh where possib
 1                    50.0                    0.0                          0.0
 2                    10.0                   15.0                         25.0
 ```
+
+Our asset does not generate in the second interval because the site demand is too high to allow the asset to export any electricity.
