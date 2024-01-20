@@ -17,16 +17,14 @@ def test_min_two_variables_export_threshold() -> None:
     At an incentive for the site to export at the minimum of a fixed value.
 
     Exporting at less than this value only makes sense when the electricity price is negative enough.
-
     """
-    electricity_prices = np.array([-1000, -750, -250, -100, 0, 10, 100, 1000])
-    export_threshold_mwh = 5
-    electric_load_mwh = 0
-    gas_prices = 20
-    export_charge = -500
-
-    electric_efficiency = 0.5
     chp_size = 50
+    electric_efficiency = 0.5
+    electric_load_mwh = 0
+    electricity_prices = np.array([-1000, -750, -250, -100, 0, 10, 100, 1000])
+    export_charge = -500
+    export_threshold_mwh = 5
+    gas_prices = 20
 
     assets = [
         epl.CHP(
@@ -34,7 +32,6 @@ def test_min_two_variables_export_threshold() -> None:
             electric_power_max_mw=chp_size,
         )
     ]
-
     site = epl.Site(
         assets=assets,
         gas_prices=gas_prices,
@@ -82,23 +79,19 @@ def test_min_two_variables_export_threshold() -> None:
     full_export = electricity_profit > 0
     minimum_export = electricity_profit - export_charge > 0
 
-    """
-    expect three modes
-
-    1. no export - when prices are very negative, and the minimum export incentive outweighs the revenue from exporting
-    2. minimum export - when the negative prices do not outweighh the minimum export incentive
-    3. full export - when prices are high
-    """
+    # full export - when prices are high
     if sum(full_export) > 0:
         np.testing.assert_allclose(
             simulation.results["site-export_power_mwh"][full_export], chp_size
         )
 
+    # minimum export - when the negative prices do not outweigh the minimum export incentive
     if sum(minimum_export) > 0:
         np.testing.assert_allclose(
             simulation.results["site-export_power_mwh"][minimum_export & ~full_export],
             export_threshold_mwh,
         )
+    # no export - when prices are very negative, and the minimum export incentive outweighs the revenue from exporting
     if sum(~minimum_export) > 0:
         np.testing.assert_allclose(
             simulation.results["site-export_power_mwh"][~minimum_export & ~full_export],
@@ -194,7 +187,6 @@ def test_maximum_two_variables_export_tariff(
     np.testing.assert_allclose(
         simulation.results["site-import_power_mwh"].iloc[0], expected_import_mwh
     )
-    print("")
 
 
 def test_minimum_multiple_generators() -> None:
