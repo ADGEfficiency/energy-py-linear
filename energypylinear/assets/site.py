@@ -131,6 +131,20 @@ class SiteConfig(pydantic.BaseModel):
         """A string representation of self."""
         return f"<SiteConfig name={self.name}, freq_mins={self.freq_mins}, import_limit_mw={self.import_limit_mw}, export_limit_mw={self.export_limit_mw}>"
 
+    @pydantic.field_validator("name")
+    @classmethod
+    def check_name(cls, name: str) -> str:
+        """Ensure we can identify this asset correctly.
+
+        Args:
+            name: asset name.
+
+        Returns:
+            The asset name.
+        """
+        assert name == "site"
+        return name
+
 
 class SiteOneInterval(AssetOneInterval):
     """Site data for a single interval."""

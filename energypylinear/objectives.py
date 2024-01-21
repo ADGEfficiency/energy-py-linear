@@ -160,13 +160,17 @@ def term_or_float(t_or_f: dict | float) -> Term | float:
     Returns:
         A Term object if input is a dictionary, or a float if input is a float.
     """
+    if isinstance(t_or_f, Term):
+        return t_or_f
+
     if isinstance(t_or_f, dict):
         return Term(**t_or_f)
+
     assert isinstance(float(t_or_f), float)
     return float(t_or_f)
 
 
-def term_factory(term: dict) -> OneTerm:
+def term_factory(term: dict | OneTerm) -> OneTerm:
     """Resolve a dictionary into an objective function term.
 
     Handles deciding whether the term is simple or complex, and which type of
@@ -178,6 +182,9 @@ def term_factory(term: dict) -> OneTerm:
     Returns:
         an objective function term as a Pydantic class.
     """
+    if not isinstance(term, dict):
+        term = dataclasses.asdict(term)
+
     if "function" not in term:
         return Term(**term)
 
@@ -188,6 +195,10 @@ def term_factory(term: dict) -> OneTerm:
         return FunctionTermTwoVariables(**term)
 
     assert "many_variables" in term["function"]
+
+    if not isinstance(term["variables"], dict):
+        term["variables"] = dataclasses.asdict(term["variables"])
+
     term["variables"] = Term(**term["variables"])
     term["M"] = float(term["M"])
     return FunctionTermManyVariables(**term)
@@ -301,12 +312,15 @@ def add_two_variable_terms(
                 for t in [term.a, term.b]:
                     if isinstance(t, Term):
                         assert t.asset_type is None or t.asset_type == "site"
+                        assert t.asset_name is None or t.asset_name == "site"
                         assert t.asset_type != "*"
+                        assert t.interval_data is None
 
                 a: pulp.LpVariable | float = (
                     getattr(
                         ivars.filter_objective_variables(
-                            asset_name=term.a.asset_name, i=i
+                            asset_name=term.a.asset_name,
+                            i=i,
                         )[0],
                         term.a.variable,
                     )
@@ -317,7 +331,8 @@ def add_two_variable_terms(
                 b: pulp.LpVariable | float = (
                     getattr(
                         ivars.filter_objective_variables(
-                            asset_name=term.b.asset_name, i=i
+                            asset_name=term.b.asset_name,
+                            i=i,
                         )[0],
                         term.b.variable,
                     )
@@ -360,15 +375,22 @@ def add_many_variables_terms(
     for term in objective.terms:
         if term.type == "complex" and term.function in function_factory:
             assert isinstance(term, FunctionTermManyVariables)
+            assert term.variables.interval_data is None
+
+            # all assets
             if term.variables.asset_type == "*":
+                assets = ivars.filter_objective_variables_all_intervals(
+                    instance_type=term.variables.asset_type,
+                )
+            elif term.variables.asset_name is None:
                 assets = ivars.filter_objective_variables_all_intervals(
                     instance_type=term.variables.asset_type,
                 )
             else:
                 assets = ivars.filter_objective_variables_all_intervals(
-                    instance_type=term.variables.asset_type,
                     asset_name=term.variables.asset_name,
                 )
+
             variables = []
             for ass in assets:
                 for a in ass:

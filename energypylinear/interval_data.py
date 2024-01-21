@@ -74,7 +74,7 @@ class IntervalVars:
 
     def filter_objective_variables_all_intervals(
         self,
-        instance_type: type[AssetOneInterval] | str | None,
+        instance_type: type[AssetOneInterval] | str | None = None,
         asset_name: str | None = None,
     ) -> list[list[AssetOneInterval]]:
         """Filters objective variables based on type, interval index, and asset name."""

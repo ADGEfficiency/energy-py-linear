@@ -52,6 +52,8 @@ def test_site() -> None:
         [97.0, 102.6, 0.0, 0.0, 2.8],
         decimal=defaults.decimal_tolerance,
     )
+    accounts = epl.get_accounts(simulation.results)
+    np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
 
 @pytest.mark.parametrize("seed", range(24))
@@ -118,6 +120,11 @@ def test_sites(seed: int) -> None:
     )
     simulation = site.optimize(verbose=True)
     debug_simulation(simulation.results)
+
+    # can only check the objective versus the accounts if we don't have any spill assets
+    if not [isinstance(a, epl.Spill) for a in sampled_assets]:
+        accounts = epl.get_accounts(simulation.results)
+        np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
 
 def test_interval_data() -> None:

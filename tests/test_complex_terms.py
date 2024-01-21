@@ -152,11 +152,11 @@ def test_maximum_two_variables_export_tariff(
         {
             "type": "complex",
             "function": "max_two_variables",
-            "a": {
+            "a": import_threshold_mwh,
+            "b": {
                 "asset_type": "site",
                 "variable": "import_power_mwh",
             },
-            "b": import_threshold_mwh,
             "coefficient": import_charge,
             "M": (
                 electric_load_mwh
@@ -170,46 +170,29 @@ def test_maximum_two_variables_export_tariff(
         verbose=4,
         objective={"terms": terms},
     )
-
     cost_to_generate_on_site = gas_prices / electric_efficiency
 
     if import_charge > cost_to_generate_on_site:
         expected_import_mwh = 5.0
     else:
         expected_import_mwh = 10.0
-
-    actual_import = simulation.results["site-import_power_mwh"].iloc[0]
-    print(
-        f"{import_charge=} {cost_to_generate_on_site=} {expected_import_mwh=} {actual_import=}"
-    )
-    print(simulation.results[["chp-electric_generation_mwh", "site-import_power_mwh"]])
-
     np.testing.assert_allclose(
         simulation.results["site-import_power_mwh"].iloc[0], expected_import_mwh
     )
+    expected_custom_charge = (
+        simulation.results["site-import_power_mwh"]
+        .clip(lower=import_threshold_mwh)
+        .sum()
+        * import_charge
+    )
+
+    accounts = epl.get_accounts(simulation.results, custom_terms=terms[-1:])
+    np.testing.assert_allclose(expected_custom_charge, accounts.custom.cost)
+    np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
 
-def test_minimum_multiple_generators() -> None:
-    """Test that the sum of multiple generators is above a certain value.
-
-    Can't be done currently - TODO
-
-    Would require summing all the asset types with one of the two_variables constraints
-
-    interesting alternative to broadcasting...
-
-    probably move this back into todo.md
-    """
-    pass
-
-
-def test_maximum_import_all_intervals_no_assets() -> None:
-    """Test that we can add a charge to the maximum import over all intervals with no assets.
-    todo
-    - run a simulation with no max import charge, no assets
-    - run a simulation with a max import charge, no assets
-    - test that the difference in the objective is the import charge only
-    """
+def test_maximum_many_variables_import_all_intervals_no_assets() -> None:
+    """Test that we can add a charge to the maximum import over all intervals with no assets."""
 
     electric_load_mwh = [10.0, 50, 10]
     electricity_prices = [10.0, 10, 10]
@@ -243,10 +226,12 @@ def test_maximum_import_all_intervals_no_assets() -> None:
         objective={"terms": no_charge_terms},
     )
     no_charge_obj = simulation.status.objective
+    accounts = epl.get_accounts(simulation.results)
+    np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
     network_charge = 200
     for minimum_network_demand in [20, max(electric_load_mwh) + 10]:
-        charge_terms = [
+        terms = [
             {
                 "asset_type": "site",
                 "variable": "import_power_mwh",
@@ -276,12 +261,11 @@ def test_maximum_import_all_intervals_no_assets() -> None:
         ]
         simulation = site.optimize(
             verbose=0,
-            objective={"terms": charge_terms},
+            objective={"terms": terms},
         )
         charge_obj = simulation.status.objective
-        assert (
-            charge_obj - no_charge_obj
-            == max(
+        expected_charge = (
+            max(
                 electric_load_mwh
                 + [
                     minimum_network_demand,
@@ -289,6 +273,12 @@ def test_maximum_import_all_intervals_no_assets() -> None:
             )
             * network_charge
         )
+        assert charge_obj - no_charge_obj == expected_charge
+        accounts = epl.get_accounts(
+            simulation.results, custom_terms=terms[-1:], assets=simulation.assets
+        )
+        np.testing.assert_allclose(expected_charge, accounts.custom.cost)
+        np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
 
 def test_maximum_import_all_intervals_chp() -> None:
