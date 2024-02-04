@@ -147,51 +147,147 @@ def get_one_electricity_account(
     )
 
 
-def remove_hardcoded_objective_terms(
-    terms: list[dict] | list[OneTerm],
-) -> list:
-    hardcoded_terms = [
-        {
-            "asset_type": "site",
-            "variable": "import_power_mwh",
-            "interval_data": "electricity_prices",
-        },
-        {
-            "asset_type": "site",
-            "variable": "export_power_mwh",
-            "interval_data": "electricity_prices",
-            "coefficient": -1,
-        },
-        {
-            "asset_type": "*",
-            "variable": "gas_consumption_mwh",
-            "interval_data": "gas_prices",
-        },
-        {
-            "asset_type": "site",
-            "variable": "import_power_mwh",
-            "interval_data": "electricity_carbon_intensities",
-        },
-        {
-            "asset_type": "site",
-            "variable": "export_power_mwh",
-            "interval_data": "electricity_carbon_intensities",
-            "coefficient": -1,
-        },
-        {
-            "asset_type": "*",
-            "variable": "gas_consumption_mwh",
-            "coefficient": defaults.gas_carbon_intensity,
-        },
-    ]
-    return [
-        t
-        for t in terms
-        if not any(
-            all(t.get(key) == value for key, value in combination.items())
-            for combination in hardcoded_terms
-        )
-    ]
+def add_simple_terms() -> None:
+    """TODO"""
+    return None
+
+
+def find_values_for_term(t_or_f: Term | float, results: pd.DataFrame) -> np.ndarray:
+    """Get result values for a single term."""
+
+    if isinstance(t_or_f, float):
+        return np.full_like(results.index, t_or_f)
+    else:
+        assert isinstance(t_or_f, Term)
+        term = t_or_f
+        # do not use the interval data from the .a Term
+        # TODO - here we are relying on the asset being called `site`
+        # and that we forbid the use of any asset type except `site`
+        assert term.asset_type == "site"
+        assert term.asset_type is None or term.asset_type == "site"
+        assert term.asset_name is None or term.asset_name == "site"
+        assert term.asset_type != "*"
+        vals = results[f"site-{term.variable}"].values
+
+    return np.array(vals)
+
+
+def add_two_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float:
+    """Add a two variable term as a custom cost to the accounts.
+
+    Works by finding the revelant variable values from the results and applying
+    an aggregation function on them.
+    """
+    function_factory = {
+        "max_two_variables": lambda x: np.max(x, axis=0),
+        "min_two_variables": lambda x: np.min(x, axis=0),
+    }
+    costs = 0.0
+    for term in terms:
+        if term.type == "complex" and term.function in function_factory:
+            assert isinstance(term, FunctionTermTwoVariables)
+
+            a_vals = find_values_for_term(term.a, results)
+            b_vals = find_values_for_term(term.b, results)
+            assert a_vals.shape[0] == b_vals.shape[0]
+
+            vals = function_factory[term.function]([a_vals, b_vals])
+            assert vals.shape[0] == a_vals.shape[0]
+
+            costs += (
+                vals
+                * (term.interval_data if term.interval_data else 1.0)
+                * term.coefficient
+            ).sum()
+
+    return costs
+
+
+def add_many_variable_terms(
+    results: pd.DataFrame, terms: list[OneTerm], assets: list | None = None
+) -> float:
+    """Add a many variable term as a custom cost to the accounts.
+
+    Works by finding the revelant variable values from the results and applying
+    an aggregation function on them.
+    """
+    function_factory = {
+        "max_many_variables": lambda x: np.max(x),
+        "min_many_variables": lambda x: np.min(x),
+    }
+    costs = 0.0
+    for term in terms:
+        if term.type == "complex" and term.function in function_factory:
+            assert isinstance(term, FunctionTermManyVariables)
+            if term.variables.asset_type == "*":
+                # get all assets with this variable
+                vars = results[
+                    [
+                        col
+                        for col in results.columns
+                        if col.endswith(term.variables.variable)
+                    ]
+                ]
+
+            elif (
+                term.variables.asset_type is not None
+                and term.variables.asset_name is None
+            ):
+                # get this asset type by variable
+
+                # TODO - complex because of the renewable generator name thing
+                # want ot keep `wind` and `solar` as ok names at the momnet
+                # will go away when we change results col names
+
+                type_ids = [term.variables.asset_type]
+                if term.variables.asset_type == "renewable-generator":
+                    type_ids = ["solar", "wind", "renewable-generator"]
+
+                vars = results[
+                    [
+                        col
+                        for col in results.columns
+                        if (col.endswith(term.variables.variable))
+                        # TODO this is a bit hairy
+                        # we are relying on the asset type being part of the name
+                        # will change this in the future when the asset type is separate from the name
+                        # as part of the results
+                        # `name--type--variable`
+                        and (
+                            len(
+                                set(type_ids).intersection(
+                                    set(["-".join(col.split("-")[:-1])])
+                                )
+                            )
+                            == 1
+                        )
+                    ]
+                ]
+
+            else:
+                # get this asset type and asset name
+                vars = results[
+                    [
+                        col
+                        for col in results.columns
+                        if (col.endswith(term.variables.variable))
+                        and (col.startswith(f"{term.variables.asset_name}-"))
+                    ]
+                ]
+
+            costs += (
+                function_factory[term.function](
+                    np.hstack(
+                        [
+                            vars,
+                            np.full_like(results.index, term.constant).reshape(-1, 1),
+                        ]
+                    )
+                )
+                * term.coefficient
+            )
+
+    return costs
 
 
 def get_accounts(
@@ -219,145 +315,10 @@ def get_accounts(
     electricity = get_one_electricity_account(results, price_results)
     gas = get_one_gas_account(results, price_results)
 
-    def find_values_for_term(t_or_f: Term | float) -> np.ndarray:
-        if isinstance(t_or_f, float):
-            return np.full_like(results.index, t_or_f)
-        else:
-            assert isinstance(t_or_f, Term)
-            term = t_or_f
-            # do not use the interval data from the .a Term
-            # TODO - here we are relying on the asset being called `site`
-            # and that we forbid the use of any asset type except `site`
-            assert term.asset_type == "site"
-            assert term.asset_type is None or term.asset_type == "site"
-            assert term.asset_name is None or term.asset_name == "site"
-            assert term.asset_type != "*"
-            vals = results[f"site-{term.variable}"].values
-
-        return np.array(vals)
-
-    def add_two_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float:
-        """Add a two variable term as a custom cost to the accounts.
-
-        Works by finding the revelant variable values from the results and applying
-        an aggregation function on them.
-        """
-        function_factory = {
-            "max_two_variables": lambda x: np.max(x, axis=0),
-            "min_two_variables": lambda x: np.min(x, axis=0),
-        }
-        costs = 0.0
-        for term in terms:
-            if term.type == "complex" and term.function in function_factory:
-                assert isinstance(term, FunctionTermTwoVariables)
-
-                a_vals = find_values_for_term(term.a)
-                b_vals = find_values_for_term(term.b)
-                assert a_vals.shape[0] == b_vals.shape[0]
-
-                vals = function_factory[term.function]([a_vals, b_vals])
-                assert vals.shape[0] == a_vals.shape[0]
-
-                costs += (
-                    vals
-                    * (term.interval_data if term.interval_data else 1.0)
-                    * term.coefficient
-                ).sum()
-
-        return costs
-
-    def add_many_variable_terms(
-        results: pd.DataFrame, terms: list[OneTerm], assets: list | None = None
-    ) -> float:
-        """Add a many variable term as a custom cost to the accounts.
-
-        Works by finding the revelant variable values from the results and applying
-        an aggregation function on them.
-        """
-        function_factory = {
-            "max_many_variables": lambda x: np.max(x),
-            "min_many_variables": lambda x: np.min(x),
-        }
-        costs = 0.0
-        for term in terms:
-            if term.type == "complex" and term.function in function_factory:
-                assert isinstance(term, FunctionTermManyVariables)
-                if term.variables.asset_type == "*":
-                    # get all assets with this variable
-                    vars = results[
-                        [
-                            col
-                            for col in results.columns
-                            if col.endswith(term.variables.variable)
-                        ]
-                    ]
-
-                elif (
-                    term.variables.asset_type is not None
-                    and term.variables.asset_name is None
-                ):
-                    # get this asset type by variable
-
-                    # TODO - complex because of the renewable generator name thing
-                    # want ot keep `wind` and `solar` as ok names at the momnet
-                    # will go away when we change results col names
-
-                    type_ids = [term.variables.asset_type]
-                    if term.variables.asset_type == "renewable-generator":
-                        type_ids = ["solar", "wind", "renewable-generator"]
-
-                    vars = results[
-                        [
-                            col
-                            for col in results.columns
-                            if (col.endswith(term.variables.variable))
-                            # TODO this is a bit hairy
-                            # we are relying on the asset type being part of the name
-                            # will change this in the future when the asset type is separate from the name
-                            # as part of the results
-                            # `name--type--variable`
-                            and (
-                                len(
-                                    set(type_ids).intersection(
-                                        set(["-".join(col.split("-")[:-1])])
-                                    )
-                                )
-                                == 1
-                            )
-                        ]
-                    ]
-
-                else:
-                    # get this asset type and asset name
-                    vars = results[
-                        [
-                            col
-                            for col in results.columns
-                            if (col.endswith(term.variables.variable))
-                            and (col.startswith(f"{term.variables.asset_name}-"))
-                        ]
-                    ]
-
-                costs += (
-                    function_factory[term.function](
-                        np.hstack(
-                            [
-                                vars,
-                                np.full_like(results.index, term.constant).reshape(
-                                    -1, 1
-                                ),
-                            ]
-                        )
-                    )
-                    * term.coefficient
-                )
-
-        return costs
-
     custom_costs = 0.0
     if custom_terms is not None:
         custom_terms = [term_factory(t) for t in custom_terms]
-        # custom_costs += add_simple_terms(results, custom_terms)
+        custom_costs += add_simple_terms(results, custom_terms)
         custom_costs += add_two_variable_terms(results, custom_terms)
         custom_costs += add_many_variable_terms(results, custom_terms, assets)
 
