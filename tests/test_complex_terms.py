@@ -365,20 +365,17 @@ def test_maximum_import_all_intervals_chp() -> None:
         objective={"terms": charge_terms},
     )
     charge_obj = simulation.status.objective
-    assert (
-        charge_obj - no_charge_obj
-        == (
-            max(
-                electric_load_mwh
-                + [
-                    minimum_network_demand,
-                ]
-            )
-            - chp_size
+
+    expected_charge = (
+        max(
+            electric_load_mwh
+            + [
+                minimum_network_demand,
+            ]
         )
-        * network_charge
-        + chp_size * gas_prices
-    )
+        - chp_size
+    ) * network_charge
+    assert charge_obj - no_charge_obj == expected_charge + chp_size * gas_prices
 
     #  TODO difference in objective
     # test that the difference in the objective is the import charge - gas consumption
@@ -391,6 +388,12 @@ def test_maximum_import_all_intervals_chp() -> None:
     np.testing.assert_allclose(
         chp_operation, simulation.results["chp-electric_generation_mwh"]
     )
+    accounts = epl.get_accounts(
+        simulation.results, custom_terms=charge_terms[-1:], assets=simulation.assets
+    )
+
+    np.testing.assert_allclose(expected_charge, accounts.custom.cost)
+    np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
 
 def test_minimum_export_all_intervals_chp() -> None:
@@ -490,6 +493,12 @@ def test_minimum_export_all_intervals_chp() -> None:
         simulation.results["chp-electric_generation_mwh"], [10.0, 0.0, 10.0]
     )
 
+    accounts = epl.get_accounts(
+        simulation.results, custom_terms=charge_terms[-1:], assets=simulation.assets
+    )
+    np.testing.assert_allclose(0.0, accounts.custom.cost)
+    np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
+
     # TODO test the objective values???
 
 
@@ -585,39 +594,36 @@ def test_filter_assets() -> None:
     )
 
     # run a simulation where we incentivise both generators to run at a minimum load
-    gen_incentive = site.optimize(
-        objective={
-            "terms": [
-                {
-                    "asset_type": "site",
-                    "variable": "import_power_mwh",
-                    "interval_data": "electricity_prices",
-                },
-                {
-                    "asset_type": "site",
-                    "variable": "export_power_mwh",
-                    "interval_data": "electricity_prices",
-                    "coefficient": -1,
-                },
-                {
-                    "asset_type": "*",
-                    "variable": "gas_consumption_mwh",
-                    "interval_data": "gas_prices",
-                },
-                {
-                    "type": "complex",
-                    "function": "min_many_variables",
-                    "variables": {
-                        "asset_type": "*",
-                        "variable": "electric_generation_mwh",
-                    },
-                    "constant": 15,
-                    "coefficient": -2000,
-                    "M": 1000,
-                },
-            ]
-        }
-    )
+    terms = [
+        {
+            "asset_type": "site",
+            "variable": "import_power_mwh",
+            "interval_data": "electricity_prices",
+        },
+        {
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+            "interval_data": "electricity_prices",
+            "coefficient": -1,
+        },
+        {
+            "asset_type": "*",
+            "variable": "gas_consumption_mwh",
+            "interval_data": "gas_prices",
+        },
+        {
+            "type": "complex",
+            "function": "min_many_variables",
+            "variables": {
+                "asset_type": "*",
+                "variable": "electric_generation_mwh",
+            },
+            "constant": 15,
+            "coefficient": -2000,
+            "M": 1000,
+        },
+    ]
+    gen_incentive = site.optimize(objective={"terms": terms})
 
     np.testing.assert_allclose(
         gen_incentive.results["total-electric_generation_mwh"], [30, 30, 30]
@@ -629,3 +635,8 @@ def test_filter_assets() -> None:
     np.testing.assert_allclose(
         gen_incentive.results["chp-electric_generation_mwh"], [15, 15, 15]
     )
+
+    accounts = epl.get_accounts(
+        gen_incentive.results, custom_terms=terms[-1:], assets=gen_incentive.assets
+    )
+    np.testing.assert_allclose(gen_incentive.status.objective, accounts.profit * -1)
