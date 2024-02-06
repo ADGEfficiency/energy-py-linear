@@ -202,10 +202,12 @@ def add_two_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float
     Works by finding the revelant variable values from the results and applying
     an aggregation function on them.
     """
+
     function_factory = {
-        "max_two_variables": lambda x: np.max(x, axis=0),
-        "min_two_variables": lambda x: np.min(x, axis=0),
+        "max_two_variables": np.max,
+        "min_two_variables": np.min,
     }
+
     costs = 0.0
     for term in terms:
         if term.type == "complex" and term.function in function_factory:
@@ -215,7 +217,7 @@ def add_two_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float
             b_vals = find_values_for_term(term.b, results)
             assert a_vals.shape[0] == b_vals.shape[0]
 
-            vals = function_factory[term.function]([a_vals, b_vals])
+            vals = function_factory[term.function]([a_vals, b_vals], axis=0)
             assert vals.shape[0] == a_vals.shape[0]
 
             costs += (
@@ -228,12 +230,12 @@ def add_two_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float
 
 
 def find_all_assets_with_variable(results: pd.DataFrame, term: Term) -> pd.DataFrame:
+    """Extract results for all assets with a given variable."""
     return results[[col for col in results.columns if col.endswith(term.variable)]]
 
 
 def find_asset_type_with_variables(results: pd.DataFrame, term: Term) -> pd.DataFrame:
-    # get this asset type by variable
-
+    """Extract results for one asset type with a given variable."""
     # TODO - complex because of the renewable generator name thing
     # want ot keep `wind` and `solar` as ok names at the momnet
     # will go away when we change results col names
@@ -261,6 +263,7 @@ def find_asset_type_with_variables(results: pd.DataFrame, term: Term) -> pd.Data
 
 
 def find_asset_by_name(results: pd.DataFrame, term: Term) -> pd.DataFrame:
+    """Extract results for one asset by name with a given variable."""
     return results[
         [
             col
@@ -276,24 +279,14 @@ def add_many_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> floa
     Works by finding the revelant variable values from the results and applying
     an aggregation function on them.
     """
-    function_factory = {
-        "max_many_variables": lambda x: np.max(x),
-        "min_many_variables": lambda x: np.min(x),
-    }
+    function_factory = {"max_many_variables": np.max, "min_many_variables": np.min}
     costs = 0.0
     for term in terms:
         if term.type == "complex" and term.function in function_factory:
             assert isinstance(term, FunctionTermManyVariables)
             # if all asset types, collect all results that have this variable
-            vars = find_all_assets_with_variable(results, term.variables)
             if term.variables.asset_type == "*":
-                vars = results[
-                    [
-                        col
-                        for col in results.columns
-                        if col.endswith(term.variables.variable)
-                    ]
-                ]
+                vars = find_all_assets_with_variable(results, term.variables)
 
             elif (
                 term.variables.asset_type is not None

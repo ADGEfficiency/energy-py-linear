@@ -6,6 +6,7 @@ import pytest
 import energypylinear as epl
 from energypylinear.data_generation import generate_random_ev_input_data
 from energypylinear.defaults import defaults
+from energypylinear.objectives import OneTerm
 
 asset_names = ["battery", "evs", "chp", "heat-pump", "renewable"]
 
@@ -342,15 +343,14 @@ def test_renewable_certificate() -> None:
     np.testing.assert_array_almost_equal(
         simulation.results["wind-electric_generation_mwh"], [0, 25, 50, 50, 50]
     )
+
+    custom_terms: list[OneTerm] = [
+        epl.Term(
+            asset_name="solar", variable="electric_generation_mwh", coefficient=-25
+        )
+    ]
     assert epl.get_accounts(
-        simulation.results,
-        custom_terms=[
-            epl.Term(
-                asset_name="solar",
-                variable="electric_generation_mwh",
-                coefficient=-25,
-            ),
-        ],
+        simulation.results, custom_terms=custom_terms
     ).custom.cost == -25 * np.sum([25, 50, 50, 50, 50])
 
 

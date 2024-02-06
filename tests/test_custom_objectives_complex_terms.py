@@ -42,7 +42,7 @@ def test_min_two_variables_export_threshold() -> None:
     # start with a site with a simple objective function
     # test that the accounts balance against the objective function
     # value from the status
-    simple_terms = [
+    simple_terms: list[dict] = [
         {
             "asset_type": "site",
             "variable": "import_power_mwh",
@@ -64,7 +64,7 @@ def test_min_two_variables_export_threshold() -> None:
     accounts = epl.get_accounts(simulation.results)
     np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
-    terms = [
+    terms: list[dict] = [
         {
             "asset_type": "site",
             "variable": "export_power_mwh",
@@ -167,7 +167,7 @@ def test_maximum_two_variables_export_tariff(
         electricity_prices=[0.0],
         electric_load_mwh=electric_load_mwh,
     )
-    terms = [
+    terms: list[dict] = [
         {
             "asset_type": "site",
             "variable": "import_power_mwh",
@@ -238,7 +238,7 @@ def test_maximum_many_variables_import_all_intervals_no_assets() -> None:
         electricity_prices=electricity_prices,
         electric_load_mwh=electric_load_mwh,
     )
-    no_charge_terms = [
+    no_charge_terms: list[dict] = [
         {
             "asset_type": "site",
             "variable": "import_power_mwh",
@@ -266,7 +266,7 @@ def test_maximum_many_variables_import_all_intervals_no_assets() -> None:
 
     network_charge = 200
     for minimum_network_demand in [20, max(electric_load_mwh) + 10]:
-        terms = [
+        terms: list[dict] = [
             {
                 "asset_type": "site",
                 "variable": "import_power_mwh",
@@ -309,9 +309,7 @@ def test_maximum_many_variables_import_all_intervals_no_assets() -> None:
             * network_charge
         )
         assert charge_obj - no_charge_obj == expected_charge
-        accounts = epl.get_accounts(
-            simulation.results, custom_terms=terms[-1:], assets=simulation.assets
-        )
+        accounts = epl.get_accounts(simulation.results, custom_terms=terms[-1:])
         np.testing.assert_allclose(expected_charge, accounts.custom.cost)
         np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
@@ -337,7 +335,7 @@ def test_maximum_import_all_intervals_chp() -> None:
         electricity_prices=electricity_prices,
         electric_load_mwh=electric_load_mwh,
     )
-    no_charge_terms = [
+    no_charge_terms: list[dict] = [
         {
             "asset_type": "site",
             "variable": "import_power_mwh",
@@ -367,7 +365,7 @@ def test_maximum_import_all_intervals_chp() -> None:
     # run a simulation with a max import charge, with a CHP that will run
     network_charge = 200
     minimum_network_demand = 40.0
-    charge_terms = [
+    charge_terms: list[dict] = [
         {
             "asset_type": "site",
             "variable": "import_power_mwh",
@@ -423,9 +421,7 @@ def test_maximum_import_all_intervals_chp() -> None:
     np.testing.assert_allclose(
         chp_operation, simulation.results["chp-electric_generation_mwh"]
     )
-    accounts = epl.get_accounts(
-        simulation.results, custom_terms=charge_terms[-1:], assets=simulation.assets
-    )
+    accounts = epl.get_accounts(simulation.results, custom_terms=charge_terms[-1:])
 
     np.testing.assert_allclose(expected_charge, accounts.custom.cost)
     np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
@@ -460,7 +456,7 @@ def test_minimum_export_all_intervals_chp() -> None:
         electricity_prices=electricity_prices,
         electric_load_mwh=electric_load_mwh,
     )
-    no_charge_terms = [
+    no_charge_terms: list[dict] = [
         {
             "asset_type": "site",
             "variable": "import_power_mwh",
@@ -492,7 +488,7 @@ def test_minimum_export_all_intervals_chp() -> None:
 
     maximum_export_charge = 200
     maximum_export = 5.0
-    charge_terms = [
+    charge_terms: list[dict] = [
         {
             "asset_type": "site",
             "variable": "import_power_mwh",
@@ -528,9 +524,7 @@ def test_minimum_export_all_intervals_chp() -> None:
         simulation.results["chp-electric_generation_mwh"], [10.0, 0.0, 10.0]
     )
 
-    accounts = epl.get_accounts(
-        simulation.results, custom_terms=charge_terms[-1:], assets=simulation.assets
-    )
+    accounts = epl.get_accounts(simulation.results, custom_terms=charge_terms[-1:])
     np.testing.assert_allclose(0.0, accounts.custom.cost)
     np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
@@ -629,7 +623,7 @@ def test_filter_assets() -> None:
     )
 
     # run a simulation where we incentivise both generators to run at a minimum load
-    terms = [
+    terms: list[dict] = [
         {
             "asset_type": "site",
             "variable": "import_power_mwh",
@@ -671,7 +665,5 @@ def test_filter_assets() -> None:
         gen_incentive.results["chp-electric_generation_mwh"], [15, 15, 15]
     )
 
-    accounts = epl.get_accounts(
-        gen_incentive.results, custom_terms=terms[-1:], assets=gen_incentive.assets
-    )
+    accounts = epl.get_accounts(gen_incentive.results, custom_terms=terms[-1:])
     np.testing.assert_allclose(gen_incentive.status.objective, accounts.profit * -1)
