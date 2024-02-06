@@ -137,6 +137,8 @@ def test_hardcoded_asset_api(asset: str, objective: str) -> None:
             hardcoded.results[col], custom.results[col]
         )
 
+    assert epl.get_accounts(custom.results) == epl.get_accounts(hardcoded.results)
+
 
 @pytest.mark.parametrize("asset", asset_names)
 @pytest.mark.parametrize("objective", ["price", "carbon"])
@@ -170,6 +172,7 @@ def test_hardcoded_site_api(asset: str, objective: str) -> None:
         np.testing.assert_array_almost_equal(
             hardcoded.results[col], custom.results[col]
         )
+    assert epl.get_accounts(custom.results) == epl.get_accounts(hardcoded.results)
 
 
 @pytest.mark.parametrize("n", range(5))
@@ -217,6 +220,7 @@ def test_hardcoded_many_assets(n: int, objective: str) -> None:
         np.testing.assert_array_almost_equal(
             hardcoded.results[col], custom.results[col]
         )
+    assert epl.get_accounts(custom.results) == epl.get_accounts(hardcoded.results)
 
 
 def test_two_chp_different_gas_prices() -> None:
@@ -282,6 +286,8 @@ def test_two_chp_different_gas_prices() -> None:
         simulation.results["chp-zwei-electric_generation_mwh"],
         [50.0, 100, 100, 100, 100],
     )
+    assert epl.get_accounts(simulation.results).custom.cost == 0
+    assert epl.get_accounts(simulation.results).custom.emissions == 0
 
 
 def test_renewable_certificate() -> None:
@@ -336,6 +342,16 @@ def test_renewable_certificate() -> None:
     np.testing.assert_array_almost_equal(
         simulation.results["wind-electric_generation_mwh"], [0, 25, 50, 50, 50]
     )
+    assert epl.get_accounts(
+        simulation.results,
+        custom_terms=[
+            epl.Term(
+                asset_name="solar",
+                variable="electric_generation_mwh",
+                coefficient=-25,
+            ),
+        ],
+    ).custom.cost == -25 * np.sum([25, 50, 50, 50, 50])
 
 
 def test_heat_dump_cost() -> None:
@@ -395,6 +411,7 @@ def test_heat_dump_cost() -> None:
     np.testing.assert_array_almost_equal(
         simulation.results["heat-pump-electric_load_mwh"], [10]
     )
+    # TODO - not testing accounts here
 
     # now setup a site with no penalty to dumping heat, but a high electricity price
     # heat pump will not operate
@@ -429,6 +446,7 @@ def test_heat_dump_cost() -> None:
     np.testing.assert_array_almost_equal(
         simulation.results["heat-pump-electric_load_mwh"], [0]
     )
+    # TODO - not testing accounts here
 
 
 def test_synthetic_ppa() -> None:
@@ -482,6 +500,10 @@ def test_synthetic_ppa() -> None:
     )
     np.testing.assert_array_almost_equal(
         ppa.results["wind-electric_generation_mwh"], wind_mwh
+    )
+    np.testing.assert_allclose(
+        epl.get_accounts(ppa.results, custom_terms=ppa_terms[-2:]).custom.cost,
+        sum(wind_mwh * (np.array(ds["electricity_prices"]) - 70)),
     )
 
 

@@ -147,9 +147,33 @@ def get_one_electricity_account(
     )
 
 
-def add_simple_terms() -> None:
-    """TODO"""
-    return None
+def add_simple_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float:
+    """Add simple objective function terms as a custom cost to the accounts."""
+    costs = 0.0
+    for term in terms:
+        if term.type == "simple":
+            if term.asset_type == "*":
+                vars = find_all_assets_with_variable(results, term)
+
+            elif term.asset_type is not None and term.asset_name is None:
+                vars = find_asset_type_with_variables(results, term)
+
+            else:
+                vars = find_asset_by_name(results, term)
+
+            cost = (
+                vars
+                * (
+                    # TODO - bit hacky really...
+                    results[f"site-{term.interval_data}"].values.reshape(-1, 1)
+                    if term.interval_data is not None
+                    else 1
+                )
+                * term.coefficient
+            )
+            costs += cost.sum()
+
+    return costs
 
 
 def find_values_for_term(t_or_f: Term | float, results: pd.DataFrame) -> np.ndarray:
@@ -203,9 +227,50 @@ def add_two_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float
     return costs
 
 
-def add_many_variable_terms(
-    results: pd.DataFrame, terms: list[OneTerm], assets: list | None = None
-) -> float:
+def find_all_assets_with_variable(results: pd.DataFrame, term: Term) -> pd.DataFrame:
+    return results[[col for col in results.columns if col.endswith(term.variable)]]
+
+
+def find_asset_type_with_variables(results: pd.DataFrame, term: Term) -> pd.DataFrame:
+    # get this asset type by variable
+
+    # TODO - complex because of the renewable generator name thing
+    # want ot keep `wind` and `solar` as ok names at the momnet
+    # will go away when we change results col names
+
+    type_ids = [term.asset_type]
+    if term.asset_type == "renewable-generator":
+        type_ids = ["solar", "wind", "renewable-generator"]
+
+    return results[
+        [
+            col
+            for col in results.columns
+            if (col.endswith(term.variable))
+            # TODO this is a bit hairy
+            # we are relying on the asset type being part of the name
+            # will change this in the future when the asset type is separate from the name
+            # as part of the results
+            # `name--type--variable`
+            and (
+                len(set(type_ids).intersection(set(["-".join(col.split("-")[:-1])])))
+                == 1
+            )
+        ]
+    ]
+
+
+def find_asset_by_name(results: pd.DataFrame, term: Term) -> pd.DataFrame:
+    return results[
+        [
+            col
+            for col in results.columns
+            if (col.endswith(term.variable)) and (col.startswith(f"{term.asset_name}-"))
+        ]
+    ]
+
+
+def add_many_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float:
     """Add a many variable term as a custom cost to the accounts.
 
     Works by finding the revelant variable values from the results and applying
@@ -219,8 +284,9 @@ def add_many_variable_terms(
     for term in terms:
         if term.type == "complex" and term.function in function_factory:
             assert isinstance(term, FunctionTermManyVariables)
+            # if all asset types, collect all results that have this variable
+            vars = find_all_assets_with_variable(results, term.variables)
             if term.variables.asset_type == "*":
-                # get all assets with this variable
                 vars = results[
                     [
                         col
@@ -233,47 +299,10 @@ def add_many_variable_terms(
                 term.variables.asset_type is not None
                 and term.variables.asset_name is None
             ):
-                # get this asset type by variable
-
-                # TODO - complex because of the renewable generator name thing
-                # want ot keep `wind` and `solar` as ok names at the momnet
-                # will go away when we change results col names
-
-                type_ids = [term.variables.asset_type]
-                if term.variables.asset_type == "renewable-generator":
-                    type_ids = ["solar", "wind", "renewable-generator"]
-
-                vars = results[
-                    [
-                        col
-                        for col in results.columns
-                        if (col.endswith(term.variables.variable))
-                        # TODO this is a bit hairy
-                        # we are relying on the asset type being part of the name
-                        # will change this in the future when the asset type is separate from the name
-                        # as part of the results
-                        # `name--type--variable`
-                        and (
-                            len(
-                                set(type_ids).intersection(
-                                    set(["-".join(col.split("-")[:-1])])
-                                )
-                            )
-                            == 1
-                        )
-                    ]
-                ]
+                vars = find_asset_type_with_variables(results, term.variables)
 
             else:
-                # get this asset type and asset name
-                vars = results[
-                    [
-                        col
-                        for col in results.columns
-                        if (col.endswith(term.variables.variable))
-                        and (col.startswith(f"{term.variables.asset_name}-"))
-                    ]
-                ]
+                vars = find_asset_by_name(results, term.variables)
 
             costs += (
                 function_factory[term.function](
@@ -294,7 +323,6 @@ def get_accounts(
     results: pd.DataFrame,
     price_results: pd.DataFrame | None = None,
     custom_terms: list[dict] | list[OneTerm] | None = None,
-    assets: list | None = None,
     validate: bool = True,
     verbose: bool = True,
 ) -> Accounts:
@@ -320,7 +348,7 @@ def get_accounts(
         custom_terms = [term_factory(t) for t in custom_terms]
         custom_costs += add_simple_terms(results, custom_terms)
         custom_costs += add_two_variable_terms(results, custom_terms)
-        custom_costs += add_many_variable_terms(results, custom_terms, assets)
+        custom_costs += add_many_variable_terms(results, custom_terms)
 
     custom = CustomAccount(cost=custom_costs, emissions=0)
 
