@@ -38,6 +38,32 @@ def test_min_two_variables_export_threshold() -> None:
         electricity_prices=electricity_prices,
         electric_load_mwh=electric_load_mwh,
     )
+
+    # start with a site with a simple objective function
+    # test that the accounts balance against the objective function
+    # value from the status
+    simple_terms = [
+        {
+            "asset_type": "site",
+            "variable": "import_power_mwh",
+            "interval_data": "electricity_prices",
+        },
+        {
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+            "interval_data": "electricity_prices",
+            "coefficient": -1,
+        },
+        {
+            "asset_type": "*",
+            "variable": "gas_consumption_mwh",
+            "interval_data": "gas_prices",
+        },
+    ]
+    simulation = site.optimize(verbose=4, objective={"terms": simple_terms})
+    accounts = epl.get_accounts(simulation.results)
+    np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
+
     terms = [
         {
             "asset_type": "site",
@@ -72,7 +98,6 @@ def test_min_two_variables_export_threshold() -> None:
         verbose=4,
         objective={"terms": terms},
     )
-    print(simulation.results[["site-export_power_mwh"]])
 
     electricity_cost = gas_prices / electric_efficiency
     electricity_profit = electricity_prices - electricity_cost
@@ -97,6 +122,16 @@ def test_min_two_variables_export_threshold() -> None:
             simulation.results["site-export_power_mwh"][~minimum_export & ~full_export],
             0.0,
         )
+
+    accounts = epl.get_accounts(simulation.results, custom_terms=terms[-1:])
+    expected_charge = (
+        simulation.results["site-export_power_mwh"]
+        .clip(upper=export_threshold_mwh)
+        .sum()
+        * export_charge
+    )
+    np.testing.assert_allclose(expected_charge, accounts.custom.cost)
+    np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
 
 @hypothesis.settings(settings, deadline=1000)
