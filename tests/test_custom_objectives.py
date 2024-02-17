@@ -519,3 +519,73 @@ def test_custom_errors() -> None:
     )
     with pytest.raises(ValueError):
         site.optimize(objective="not-a-valid-objective")
+
+
+def test_custom_terms_account() -> None:
+    """Tests to round of test coverage of accounts."""
+    ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
+
+    assets = [
+        epl.Battery(
+            power_mw=2, capacity_mwh=4, efficiency_pct=0.9, name="small-battery"
+        ),
+        epl.Battery(
+            power_mw=20, capacity_mwh=40, efficiency_pct=0.9, name="large-battery"
+        ),
+        epl.RenewableGenerator(
+            electric_generation_mwh=np.random.uniform(
+                0, 100, size=len(ds["electricity_prices"])
+            )
+        ),
+    ]
+    terms = get_objective_terms()["price"]
+    terms.extend(
+        [
+            # targets the find all assets where asset type == "*"
+            {
+                "asset_type": "*",
+                "variable": "electric_generation_mwh",
+                "coefficient": 1,
+            },
+            # targets the type_id inference in `find_asset_type_with_variables`
+            {
+                "asset_type": "renewable-generator",
+                "variable": "electric_generation_mwh",
+                "coefficient": 1,
+            },
+            # targets the `add_many_variables` with an asset by type
+            {
+                "function": "max_many_variables",
+                "variables": {
+                    "asset_type": "renewable-generator",
+                    "variable": "electric_generation_mwh",
+                },
+                "constant": 10,
+                "coefficient": 10,
+                "M": 1000,
+            },
+            # targets the `add_many_variables` with an asset by name
+            {
+                "function": "max_many_variables",
+                "variables": {
+                    "asset_name": "large-battery",
+                    "variable": "electric_charge_mwh",
+                },
+                "constant": 10,
+                "coefficient": 10,
+                "M": 1000,
+            },
+        ]
+    )
+
+    site = epl.Site(
+        assets=assets,
+        electricity_prices=ds["electricity_prices"],
+        electricity_carbon_intensities=ds["electricity_carbon_intensities"],
+    )
+    simulation = site.optimize(
+        verbose=True,
+        objective={"terms": terms},
+    )
+
+    epl.get_accounts(simulation.results, custom_terms=terms[-3:])

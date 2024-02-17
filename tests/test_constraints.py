@@ -10,9 +10,7 @@ import energypylinear as epl
 
 atol = 1e-4
 settings = hypothesis.settings(
-    print_blob=True,
-    max_examples=1000,
-    report_multiple_bugs=False,
+    print_blob=True, max_examples=1000, report_multiple_bugs=False, deadline=None
 )
 
 

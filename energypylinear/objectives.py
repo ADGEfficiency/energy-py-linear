@@ -221,11 +221,15 @@ def append_simple_objective_function_terms(
         term: an objective function term.
     """
     for asset in assets:
+        variable = getattr(asset, term.variable)
+        if variable is None:
+            variable = 0
+
         obj.extend(
             [
+                variable
                 # TODO - could raise an error here if the getattr is none
                 # this can happen
-                getattr(asset, term.variable)
                 * (
                     getattr(interval_data, term.interval_data)[i]
                     if term.interval_data is not None
@@ -341,7 +345,10 @@ def add_two_variable_terms(
                 )
 
                 c = function_factory[term.function](
-                    f"{term.function}-{i}", a=a, b=b, M=term.M
+                    f"{term.function}-{i=}-{term.a=}-{term.b=}",
+                    a=a,
+                    b=b,
+                    M=term.M
                 )
                 obj.append(
                     c
@@ -400,8 +407,11 @@ def add_many_variables_terms(
             # assert len(variables) == len(interval_data.idx) * len(ass)
             variables.append(float(term.constant))
 
+            v = term.variables
             c = function_factory[term.function](
-                f"{term.function}", variables=variables, M=term.M
+                f"{term.function}-{term=}",
+                variables=variables,
+                M=term.M
             )
 
             obj.append(c * term.coefficient)

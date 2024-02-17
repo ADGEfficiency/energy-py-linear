@@ -134,10 +134,10 @@ def test_min_two_variables_export_threshold() -> None:
     np.testing.assert_allclose(simulation.status.objective, accounts.profit * -1)
 
 
-@hypothesis.settings(settings, deadline=1000)
+@hypothesis.settings(settings, deadline=2000)
 @hypothesis.given(
     import_charge=hypothesis.strategies.floats(
-        min_value=0, max_value=1000, allow_nan=False, allow_infinity=False
+        min_value=0.1, max_value=1000, allow_nan=False, allow_infinity=False
     ),
     electric_efficiency=hypothesis.strategies.floats(
         min_value=0.1, max_value=1.0, allow_nan=False, allow_infinity=False

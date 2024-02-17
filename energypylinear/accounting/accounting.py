@@ -152,11 +152,10 @@ def add_simple_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float:
     costs = 0.0
     for term in terms:
         if term.type == "simple":
-            if term.asset_type == "*":
+            if (term.asset_type == "*") or (
+                term.asset_type is not None and term.asset_name is None
+            ):
                 vars = find_all_assets_with_variable(results, term)
-
-            elif term.asset_type is not None and term.asset_name is None:
-                vars = find_asset_type_with_variables(results, term)
 
             else:
                 vars = find_asset_by_name(results, term)
@@ -171,7 +170,8 @@ def add_simple_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float:
                 )
                 * term.coefficient
             )
-            costs += cost.sum()
+
+            costs += cost.sum().sum()
 
     return costs
 
