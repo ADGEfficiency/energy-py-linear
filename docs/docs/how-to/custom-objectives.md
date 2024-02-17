@@ -6,7 +6,7 @@ An objective function determines the incentives and costs in a linear program.  
 
 However you may want to optimize for a different objective function in the linear program. You may have a business problem with a different set of revenues and costs than are included by default.
 
-**A custom objective function allows you to construct an objective function as you see fit** - allowing you to optimize a site and assets for the revenues and costs that are important to you.
+**A custom objective function allows you to construct an objective function that can optimize for the revenues and costs that are important to you**.
 
 ## Simple Objective Function Terms
 
@@ -30,9 +30,11 @@ A custom objective function is a list of terms:
 --8<-- "energypylinear/objectives.py:objective"
 ```
 
-The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a list of dictionaries.
+The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a dictionaries.
 
-## Simultaneous Price and Carbon Optimization
+## Examples
+
+### Simultaneous Price and Carbon Optimization
 
 `energypylinear` has two different objective functions (price or carbon) built into the library - these optimize for either price or carbon, but not both at the same time.
 
@@ -133,7 +135,7 @@ print(pd.DataFrame(results))
 
 As expected as our carbon price increases, both our profit and emissions decrease.
 
-## Renewables Certificates
+### Renewables Certificates
 
 In the previous example we used a custom objective function to apply incentives to the site import and export electricity by its asset type.
 
@@ -209,7 +211,7 @@ As expected, the first generator that is called is the `solar` generator, as it 
 
 As the site demand increases, the `wind` generator is called to make up the remaining demand.
 
-## Synthetic PPA
+### Synthetic PPA
 
 A synthetic PPA is a financial instrument that allows swapping of the output of a wholesale exposed generator to a fixed price.
 
@@ -278,7 +280,7 @@ print(simulation.results[["site-electricity_prices", "wind-electric_generation_m
 
 As expected, our renewable generator still generates even during times of negative electricity prices - this is because its output is incentivized at a fixed, positive price.
 
-## Battery Cycle Cost
+### Battery Cycle Cost
 
 It's common in battery optimization to include a cost to use the battery - for every MWh of charge, some cost is incurred.
 

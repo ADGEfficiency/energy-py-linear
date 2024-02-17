@@ -1,19 +1,14 @@
-## Simple Terms
-
 In `energypylinear` you can use [custom objective functions](https://energypylinear.adgefficiency.com/latest/how-to/custom-objectives/) to define a custom set of incentives and costs in your linear program.
 
-The objective function will often be made up of simple terms, which are the product of a single linear variable (one per interval), interval data and a coefficient:
+The objective function will often be made up of simple terms, which are the product of a single linear variable (one per interval), interval data and a coefficient. 
 
-<!--phmdoctest-mark.skip-->
-```python
-import dataclasses
+Sites will however often have more complicated costs and revenues, that involve taking the minimum or maximum of a collection of variables.
 
---8<-- "energypylinear/objectives.py:term"
-```
+**A complex custom objective term allows you to construct an objective function with a complex set of costs and revenues.**
 
-## Complex Terms
+## Complex Objective Function Terms
 
-Sites will often have more complicated costs and revenues.  `energypylinear` uses complex terms to include these more complicated terms in the objective function.  
+`energypylinear` uses complex terms to include these more complicated incentives and costs in the objective function:
 
 <!--phmdoctest-mark.skip-->
 ```python
@@ -22,15 +17,16 @@ Sites will often have more complicated costs and revenues.  `energypylinear` use
 
 Currently the library includes four complex terms, which allow adding minimum or maximum constraints on collections of linear program variables and floats:
 
-| Function             | Number of Linear Variables | Number of Floats | Number of Objective Function Terms |
-|----------------------|----------------------------|------------------|------------------------------------|
-| `min_two_variables`  | 1 or 2                     | 0 or 1           | Interval index length              |
-| `max_two_variables`  | 1 or 2                     | 0 or 1           | Interval index length              |
-| `max_many_variables` | Interval index length      | 0 or 1           | 1                                  |
-| `min_many_variables`  | Interval index length      | 0 or 1           | 1                                  |
+| Function             | Number of Linear Variables | Number of Floats | Terms Added to Objective Function                |
+|----------------------|----------------------------|------------------|-----------------------|
+| `min_two_variables`  | 1 or 2                     | 0 or 1           | Interval index length |
+| `max_two_variables`  | 1 or 2                     | 0 or 1           | Interval index length |
+| `max_many_variables` | Interval index length      | 0 or 1           | 1                     |
+| `min_many_variables` | Interval index length      | 0 or 1           | 1                     |
 
+## Examples
 
-## Maximum Demand Charge
+### Maximum Demand Charge
 
 A common incentive for many sites is a maximum demand charge, where a site will incur a cost based on the maximum site import over a length of time (commonly a month).
 
@@ -86,7 +82,7 @@ no_demand_charge_simulation = site.optimize(
 )
 ```
 
-As expected for a site with low electricity prices, this CHP does not generate in any interval:
+As expected for a site with low electricity prices, this CHP does not generate electricity in any interval:
 
 <!--phmdoctest-share-names-->
 ```python
@@ -100,7 +96,9 @@ print(no_demand_charge_simulation.results['chp-electric_generation_mwh'])
 Name: chp-electric_generation_mwh, dtype: float64
 ```
 
-Let's now optimize the site with a demand charge.  This demand charge has a minimum of 40 MW, and a charge of 200:
+Let's now optimize the site with a demand charge.  
+
+This demand charge has a minimum of 40 MW, and a rate of 200 $/MWh:
 
 <!--phmdoctest-share-names-->
 ```python
@@ -209,7 +207,7 @@ print(
 2                    10.0                          0.0
 ```
 
-## Minimum Export Incentive
+### Minimum Export Incentive
 
 Above we looked at a function term that took the maximum across many linear program variables at once using the `max_many_variables` function term, which results in one term being added to the objective function.
 
