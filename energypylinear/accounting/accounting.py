@@ -160,13 +160,11 @@ def add_simple_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float:
             if (term.asset_type == "*") or (
                 term.asset_type is not None and term.asset_name is None
             ):
-                vars = find_all_assets_with_variable(results, term)
-
+                vs = find_all_assets_with_variable(results, term)
             else:
-                vars = find_asset_by_name(results, term)
-
+                vs = find_asset_by_name(results, term)
             cost = (
-                vars
+                vs
                 * (
                     # TODO - bit hacky really...
                     results[f"site-{term.interval_data}"].values.reshape(-1, 1)
@@ -175,7 +173,6 @@ def add_simple_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float:
                 )
                 * term.coefficient
             )
-
             costs += cost.sum().sum()
 
     return costs
@@ -183,7 +180,6 @@ def add_simple_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float:
 
 def find_values_for_term(t_or_f: Term | float, results: pd.DataFrame) -> np.ndarray:
     """Get result values for a single term."""
-
     if isinstance(t_or_f, float):
         return np.full_like(results.index, t_or_f)
     else:
@@ -207,12 +203,10 @@ def add_two_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> float
     Works by finding the revelant variable values from the results and applying
     an aggregation function on them.
     """
-
     function_factory = {
         "max_two_variables": np.max,
         "min_two_variables": np.min,
     }
-
     costs = 0.0
     for term in terms:
         if term.type == "complex" and term.function in function_factory:
@@ -242,8 +236,8 @@ def find_all_assets_with_variable(results: pd.DataFrame, term: Term) -> pd.DataF
 def find_asset_type_with_variables(results: pd.DataFrame, term: Term) -> pd.DataFrame:
     """Extract results for one asset type with a given variable."""
     # TODO - complex because of the renewable generator name thing
-    # want ot keep `wind` and `solar` as ok names at the momnet
-    # will go away when we change results col names
+    # want to keep `wind` and `solar` as ok names at the momnet
+    # will go away when we change results col names (maybe)
 
     type_ids = [term.asset_type]
     if term.asset_type == "renewable-generator":
@@ -291,22 +285,22 @@ def add_many_variable_terms(results: pd.DataFrame, terms: list[OneTerm]) -> floa
             assert isinstance(term, FunctionTermManyVariables)
             # if all asset types, collect all results that have this variable
             if term.variables.asset_type == "*":
-                vars = find_all_assets_with_variable(results, term.variables)
+                vs = find_all_assets_with_variable(results, term.variables)
 
             elif (
                 term.variables.asset_type is not None
                 and term.variables.asset_name is None
             ):
-                vars = find_asset_type_with_variables(results, term.variables)
+                vs = find_asset_type_with_variables(results, term.variables)
 
             else:
-                vars = find_asset_by_name(results, term.variables)
+                vs = find_asset_by_name(results, term.variables)
 
             costs += (
                 function_factory[term.function](
                     np.hstack(
                         [
-                            vars,
+                            vs,
                             np.full_like(results.index, term.constant).reshape(-1, 1),
                         ]
                     )
@@ -330,6 +324,10 @@ def get_accounts(
         results: Simulation results used for accounts.
         price_results: Source of electricity & gas prices or carbon intensities.
             If not supplied, then `results` are used.
+        custom_terms: A list of custom objective function terms.  These are
+            used to compute the custom account.
+        validate: Whether to validate the results and price_results.
+        verbose: Level of printing.
     """
     if price_results is None:
         price_results = results
