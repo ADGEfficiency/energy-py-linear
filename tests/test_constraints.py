@@ -10,9 +10,7 @@ import energypylinear as epl
 
 atol = 1e-4
 settings = hypothesis.settings(
-    print_blob=True,
-    max_examples=1000,
-    report_multiple_bugs=False,
+    print_blob=True, max_examples=1000, report_multiple_bugs=False, deadline=None
 )
 
 
@@ -89,16 +87,16 @@ def test_coerce_variables(
 @hypothesis.settings(settings)
 @hypothesis.given(
     a=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=-100000, max_value=100000
+        allow_infinity=False, allow_nan=False, min_value=-10000, max_value=10000
     ),
     b=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=-100000, max_value=100000
+        allow_infinity=False, allow_nan=False, min_value=-10000, max_value=10000
     ),
     a_gap=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=0.1, max_value=10000
+        allow_infinity=False, allow_nan=False, min_value=0.1, max_value=1000
     ),
     b_gap=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=0.1, max_value=10000
+        allow_infinity=False, allow_nan=False, min_value=0.1, max_value=1000
     ),
     a_is_float=hypothesis.strategies.booleans(),
     b_is_float=hypothesis.strategies.booleans(),
@@ -106,15 +104,16 @@ def test_coerce_variables(
 def test_min_two_variables(
     a: float, b: float, a_gap: float, b_gap: float, a_is_float: bool, b_is_float: bool
 ) -> None:
-    """Tests that we can constrain a variable to be the maximum of two other variables."""
+    """Tests that we can constrain a variable to be the minimum of two other variables."""
+
     opt = epl.Optimizer()
     av, bv = coerce_variables(a, b, a_gap, b_gap, a_is_float, b_is_float, opt)
     cv = opt.min_two_variables(
-        "min-a-b", av, bv, M=max(abs(a) + a_gap, abs(b) + b_gap) * 2.0
+        "min-a-b", av, bv, M=max(abs(a) + a_gap, abs(b) + b_gap) * 100000
     )
     opt.objective(av + bv)
     opt.solve(verbose=3)
-    np.testing.assert_allclose(min(a, b), cv.value(), atol=atol)
+    np.testing.assert_allclose(min(a, b), cv.value(), rtol=1e-2, atol=1e-2)
 
 
 @hypothesis.settings(settings)

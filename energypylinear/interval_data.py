@@ -74,7 +74,7 @@ class IntervalVars:
 
     def filter_objective_variables_all_intervals(
         self,
-        instance_type: type[AssetOneInterval] | str | None,
+        instance_type: type[AssetOneInterval] | str | None = None,
         asset_name: str | None = None,
     ) -> list[list[AssetOneInterval]]:
         """Filters objective variables based on type, interval index, and asset name."""
@@ -82,10 +82,15 @@ class IntervalVars:
         for assets_one_interval in self.objective_variables:
             if isinstance(instance_type, str):
                 type_mapper: dict[str, type | None] = {
+                    "battery": epl.assets.battery.BatteryOneInterval,
+                    "boiler": epl.assets.boiler.BoilerOneInterval,
+                    "chp": epl.assets.chp.CHPOneInterval,
+                    "evs": epl.assets.evs.EVOneInterval,
+                    "heat-pump": epl.assets.heat_pump.HeatPumpOneInterval,
+                    "renewable-generator": epl.assets.renewable_generator.RenewableGeneratorOneInterval,
                     "site": SiteOneInterval,
                     "spill": epl.assets.spill.SpillOneInterval,
                     "spill_evs": epl.assets.evs.EVSpillOneInterval,
-                    "chp": epl.assets.chp.CHPOneInterval,
                     "*": None,
                 }
                 instance_type = type_mapper[instance_type]

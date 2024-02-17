@@ -118,6 +118,10 @@ def test_repr() -> None:
                 cost=0,
                 emissions=0,
             ),
+            custom=epl.accounting.accounting.CustomAccount(
+                cost=0,
+                emissions=0,
+            ),
             profit=0,
             cost=0,
             emissions=0,
