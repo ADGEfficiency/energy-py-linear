@@ -343,10 +343,7 @@ def add_two_variable_terms(
                 )
 
                 c = function_factory[term.function](
-                    f"{term.function}-{i=}-{term.a=}-{term.b=}",
-                    a=a,
-                    b=b,
-                    M=term.M
+                    f"{term.function}-{i=}-{term.a=}-{term.b=}", a=a, b=b, M=term.M
                 )
                 obj.append(
                     c
@@ -407,9 +404,7 @@ def add_many_variables_terms(
 
             v = term.variables
             c = function_factory[term.function](
-                f"{term.function}-{term=}",
-                variables=variables,
-                M=term.M
+                f"{term.function}-{term=}", variables=variables, M=term.M
             )
 
             obj.append(c * term.coefficient)

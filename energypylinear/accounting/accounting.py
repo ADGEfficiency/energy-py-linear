@@ -6,9 +6,13 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear.defaults import defaults
-from energypylinear.objectives import (FunctionTermManyVariables,
-                                       FunctionTermTwoVariables, OneTerm, Term,
-                                       term_factory)
+from energypylinear.objectives import (
+    FunctionTermManyVariables,
+    FunctionTermTwoVariables,
+    OneTerm,
+    Term,
+    term_factory,
+)
 
 
 class Account(pydantic.BaseModel):
