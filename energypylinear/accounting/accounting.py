@@ -6,13 +6,9 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear.defaults import defaults
-from energypylinear.objectives import (
-    FunctionTermManyVariables,
-    FunctionTermTwoVariables,
-    OneTerm,
-    Term,
-    term_factory,
-)
+from energypylinear.objectives import (FunctionTermManyVariables,
+                                       FunctionTermTwoVariables, OneTerm, Term,
+                                       term_factory)
 
 
 class Account(pydantic.BaseModel):
@@ -105,7 +101,12 @@ def get_one_gas_account(
     results: pd.DataFrame,
     price_results: pd.DataFrame,
 ) -> GasAccount:
-    """Calculate a single gas account."""
+    """Calculate a single gas account.
+
+    Args:
+        results: Simulation results used for accounts.
+        price_results: Simulation results used prices.
+    """
     return GasAccount(
         cost=(
             price_results["site-gas_prices"] * results["total-gas_consumption_mwh"]
