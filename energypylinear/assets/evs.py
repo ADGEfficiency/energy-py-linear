@@ -422,7 +422,6 @@ def constrain_charge_discharge_min_max(
     This constraint is applied once per interval."""
     for charge_event_idx, _ in enumerate(charge_event_cfgs):
         for charger_idx, charger_cfg in enumerate(charger_cfgs):
-
             variables = [
                 (
                     evs.electric_charge_mwh[0, charge_event_idx, charger_idx],

@@ -47,9 +47,10 @@ export
 
 test: setup-test test-docs
 	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest $(TEST_ARGS)
-	python tests/assert-test-coverage.py $(TEST_ARGS)
 	-coverage combine
 	-coverage html
+	-coverage report
+	python tests/assert-test-coverage.py $(TEST_ARGS)
 
 create-test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
