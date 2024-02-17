@@ -228,8 +228,6 @@ def append_simple_objective_function_terms(
         obj.extend(
             [
                 variable
-                # TODO - could raise an error here if the getattr is none
-                # this can happen
                 * (
                     getattr(interval_data, term.interval_data)[i]
                     if term.interval_data is not None
