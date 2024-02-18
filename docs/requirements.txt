@@ -7,3 +7,4 @@ pillow
 cairosvg
 mike==1.1.2
 material-plausible-plugin
+pymdown-extensions

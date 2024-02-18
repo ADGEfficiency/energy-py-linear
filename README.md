@@ -16,9 +16,9 @@ A Python library for optimizing energy assets with mixed-integer linear programm
 - heat pumps,
 - renewable (wind & solar) generators.
 
-Assets & sites can be optimized to either maximize profit or minimize carbon emissions.
+Assets & sites can be optimized to either maximize profit or minimize carbon emissions, or a user defined custom objective function.
 
-Energy balances are performed on electricity, high & low temperature heat.
+Energy balances are performed on electricity, high, and low temperature heat.
 
 ## Setup
 

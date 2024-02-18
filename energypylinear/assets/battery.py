@@ -83,8 +83,8 @@ def constrain_only_charge_or_discharge(
     """Constrain battery to only charge or discharge.
 
     Args:
-        optimizer: an epl.Optimizer.
-        one_interval: linear program variables for a single interval.
+        optimizer: The linear program optimizer.
+        one_interval: Linear program variables for a single interval.
     """
     assert isinstance(one_interval, BatteryOneInterval)
     optimizer.constrain_max(
@@ -111,8 +111,8 @@ def constrain_battery_electricity_balance(
     Calculates losses as a percentage of the battery charge.
 
     Args:
-        optimizer: an epl.Optimizer.
-        one_interval: linear program variables for a single interval.
+        optimizer: Linear program optimizer.
+        one_interval: Linear program variables for a single interval.
     """
     assert isinstance(one_interval, BatteryOneInterval)
     optimizer.constrain(
@@ -135,7 +135,7 @@ def constrain_connection_batteries_between_intervals(
     """Constrain battery between two adjacent intervals.
 
     Args:
-        optimizer: An epl.Optimizer.
+        optimizer: Linear program optimizer.
         two_intervals: Linear program variables for two intervals.
     """
     #  if in first interval, do nothing, could also do something based on `i` here...
@@ -158,9 +158,9 @@ def constrain_initial_final_charge(
     """Constrain the battery state of charge at the start and end of the simulation.
 
     Args:
-        optimizer: an epl.Optimizer.
-        initial: linear program variables for the first interval.
-        final: linear program variables for the last interval.
+        optimizer: Linear program optimizer.
+        initial: Linear program variables for the first interval.
+        final: Linear program variables for the last interval.
     """
     assert isinstance(initial, BatteryOneInterval)
     assert isinstance(final, BatteryOneInterval)
@@ -232,7 +232,11 @@ class Battery(epl.Asset):
             )
 
     def __repr__(self) -> str:
-        """Return a string representation of self."""
+        """Return a string representation of self.
+
+        Returns:
+            A string representation of self.
+        """
         return f"<energypylinear.Battery {self.cfg.charge_power_mw=} {self.cfg.capacity_mwh=}>"
 
     def one_interval(
@@ -241,10 +245,13 @@ class Battery(epl.Asset):
         """Generate linear program data for one interval.
 
         Args:
-            optimizer: An epl.Optimizer.
+            optimizer: Linear program optimizer.
             i: Integer index of the current interval.
             freq: Interval frequency.
             flags: Boolean flags to change simulation and results behaviour.
+
+        Returns:
+            Linear program variables for a single interval.
         """
         return BatteryOneInterval(
             cfg=self.cfg,
@@ -289,8 +296,8 @@ class Battery(epl.Asset):
         """Constrain asset within an interval.
 
         Args:
-            optimizer: An epl.Optimizer.
-            ivars: An epl.IntervalVars.
+            optimizer: Linear program optimizer.
+            ivars: Linear program variables.
             i: Integer index of the current interval.
             freq: Interval frequency.
             flags: Boolean flags to change simulation and results behaviour.
@@ -316,8 +323,8 @@ class Battery(epl.Asset):
         """Constrain asset after all intervals.
 
         Args:
-            optimizer: An epl.Optimizer.
-            ivars: An epl.IntervalVars.
+            optimizer: Linear program optimizer.
+            ivars: Linear program variables.
         """
         initial = ivars.filter_objective_variables(
             instance_type=BatteryOneInterval, i=0, asset_name=self.cfg.name
@@ -360,5 +367,8 @@ class Battery(epl.Asset):
         Args:
             results: The simulation results.
             path: Directory to save the plots to.
+
+        Returns:
+            None.
         """
         return epl.plot.plot_battery(results, pathlib.Path(path))

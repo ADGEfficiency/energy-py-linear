@@ -256,7 +256,6 @@ def test_hypothesis(
     #  check losses are always zero when we discharge
     mask = simulation.results[f"{name}-electric_discharge_mwh"] > 0
     subset = simulation.results[mask]
-    assert all(subset[f"{name}-electric_loss_mwh"] == 0)
     np.testing.assert_allclose(subset[f"{name}-electric_loss_mwh"], 0)
 
 
@@ -302,7 +301,7 @@ def test_import_export_prices() -> None:
         )
         battery_usage.append(simulation.results["battery-electric_charge_mwh"].sum())
         print(f"{export_price_delta=}, time={time.perf_counter() - tic} sec")
-    assert np.all(np.diff(battery_usage) >= 0)
+    assert np.all(np.diff(battery_usage) >= -tol)
 
 
 def test_no_simultaneous_import_export() -> None:

@@ -1,42 +1,46 @@
 `energypylinear` has two different objective functions (price or carbon) built into the library.
 
+An objective function determines the incentives and costs in a linear program.  It's what you are trying to optimize for.
+
+`energypylinear` has two different objective functions (price or carbon) built into the library. 
+
 However you may want to optimize for a different objective function in the linear program. You may have a business problem with a different set of revenues and costs than are included by default.
 
-**A custom objective function allows you to construct an objective function as you see fit** - allowing you to optimize a site and assets for the revenues and costs that are important to you.
+**A custom objective function allows you to construct an objective function that can optimize for the revenues and costs that are important to you**.
+
+## Simple Objective Function Terms
 
 Core to the custom objective function is the `epl.Term` - representing a single term in the objective function:
 
-<!--phmdoctest-share-names-->
+<!--phmdoctest-mark.skip-->
 ```python
 import dataclasses
 
-@dataclasses.dataclass
-class Term:
-    variable: str
-    asset_type: str | None = None
-    interval_data: str | None = None
-    asset_name: str | None = None
-    coefficient: float = 1.0
+--8<-- "energypylinear/objectives.py:term"
 ```
 
 A term can target either many assets by type or one asset by name. It can also include multiplication by interval data or by a coefficient.
 
+## Custom Objective Function
+
 A custom objective function is a list of terms:
 
-<!--phmdoctest-share-names-->
+<!--phmdoctest-mark.skip-->
 ```python
-@dataclasses.dataclass
-class CustomObjectiveFunction:
-    terms: list[Term]
+--8<-- "energypylinear/objectives.py:objective"
 ```
 
-The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a list of dictionaries.
+The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a dictionaries.
 
-### Price and Carbon
+## Examples
 
-This example shows how to optimize a battery for an objective that includes terms for both price and carbon.
+### Simultaneous Price and Carbon Optimization
 
-Below we create an objective function where we incentive a site to:
+`energypylinear` has two different objective functions (price or carbon) built into the library - these optimize for either price or carbon, but not both at the same time.
+
+This example shows how to optimize a battery for an objective that will optimize for both profit and emissions at the same time.
+
+Below we create an objective function where we:
 
 - reduce import when the electricity price or carbon intensity is high,
 - increase export when the electricity price or carbon intensity is low.
@@ -90,7 +94,6 @@ def simulate(
         ),
         verbose=verbose,
     )
-
 
 print(simulate(carbon_price=50, seed=42, n=72))
 ```
@@ -277,7 +280,6 @@ print(simulation.results[["site-electricity_prices", "wind-electric_generation_m
 
 As expected, our renewable generator still generates even during times of negative electricity prices - this is because its output is incentivized at a fixed, positive price.
 
-
 ### Battery Cycle Cost
 
 It's common in battery optimization to include a cost to use the battery - for every MWh of charge, some cost is incurred.
@@ -309,9 +311,8 @@ terms = [
     {
         "asset_type": "battery",
         "variable": "electric_discharge_mwh",
-        "interval_data": "electricity_prices",
-        "coefficient": 0.25,
-    },
+        "coefficient": 0.25
+    }
 ]
 site.optimize(verbose=4, objective={"terms": terms})
 ```
@@ -323,15 +324,13 @@ terms = [
     {
         "asset_type": "battery",
         "variable": "electric_charge_mwh",
-        "interval_data": "electricity_prices",
-        "coefficient": 0.25,
+        "coefficient": 0.25
     },
     {
         "asset_type": "battery",
         "variable": "electric_discharge_mwh",
-        "interval_data": "electricity_prices",
-        "coefficient": 0.25,
-    },
+        "coefficient": 0.25
+    }
 ]
 ```
 

@@ -7,6 +7,7 @@ clean:
 
 
 #  ----- SETUP -----
+#  installation of dependencies
 
 .PHONY: setup-pip-poetry setup-test setup-static setup-check setup-docs
 QUIET := -q
@@ -37,6 +38,7 @@ setup-docs:
 
 
 #  ----- TEST -----
+#  documentation tests and unit tests
 
 .PHONY: test test-ci test-docs clean-test-docs test-validate create-test-docs
 PARALLEL = auto
@@ -45,12 +47,15 @@ export
 
 test: setup-test test-docs
 	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest $(TEST_ARGS)
-	python tests/assert-test-coverage.py $(TEST_ARGS)
 	-coverage combine
+	-coverage html
+	-coverage report
+	python tests/assert-test-coverage.py $(TEST_ARGS)
 
 create-test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
+	python -m phmdoctest ./docs/docs/how-to/complex-terms.md --outfile tests/phmdoctest/test_complex_terms.py
 	python -m phmdoctest ./docs/docs/how-to/custom-objectives.md  --outfile tests/phmdoctest/test_custom_objectives.py
 	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
 	python -m phmdoctest ./docs/docs/validation/evs.md --outfile tests/phmdoctest/test_validate_evs.py
@@ -95,7 +100,7 @@ lint: setup-check
 	ruff format --check **/*.py
 	poetry check
 
-CHECK_DOCSTRINGS=./energypylinear/assets/battery.py
+CHECK_DOCSTRINGS=./energypylinear/assets/battery.py ./energypylinear/objectives.py
 
 # currently only run manually
 lint-docstrings:
@@ -103,7 +108,9 @@ lint-docstrings:
 	pydocstyle $(CHECK_DOCSTRINGS)
 	pylint $(CHECK_DOCSTRINGS)
 
+
 #  ----- FORMATTING -----
+#  formatting code
 
 .PHONY: format
 format: setup-check
@@ -125,6 +132,7 @@ publish: setup
 
 
 #  ----- DOCS ------
+#  mkdocs documentation
 
 .PHONY: docs mike-deploy
 
