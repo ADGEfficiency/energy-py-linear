@@ -6,6 +6,7 @@ import pytest
 import energypylinear as epl
 from energypylinear.data_generation import generate_random_ev_input_data
 from energypylinear.defaults import defaults
+from energypylinear.objectives import OneTerm
 
 asset_names = ["battery", "evs", "chp", "heat-pump", "renewable"]
 
@@ -137,6 +138,8 @@ def test_hardcoded_asset_api(asset: str, objective: str) -> None:
             hardcoded.results[col], custom.results[col]
         )
 
+    assert epl.get_accounts(custom.results) == epl.get_accounts(hardcoded.results)
+
 
 @pytest.mark.parametrize("asset", asset_names)
 @pytest.mark.parametrize("objective", ["price", "carbon"])
@@ -170,6 +173,7 @@ def test_hardcoded_site_api(asset: str, objective: str) -> None:
         np.testing.assert_array_almost_equal(
             hardcoded.results[col], custom.results[col]
         )
+    assert epl.get_accounts(custom.results) == epl.get_accounts(hardcoded.results)
 
 
 @pytest.mark.parametrize("n", range(5))
@@ -217,6 +221,7 @@ def test_hardcoded_many_assets(n: int, objective: str) -> None:
         np.testing.assert_array_almost_equal(
             hardcoded.results[col], custom.results[col]
         )
+    assert epl.get_accounts(custom.results) == epl.get_accounts(hardcoded.results)
 
 
 def test_two_chp_different_gas_prices() -> None:
@@ -282,6 +287,8 @@ def test_two_chp_different_gas_prices() -> None:
         simulation.results["chp-zwei-electric_generation_mwh"],
         [50.0, 100, 100, 100, 100],
     )
+    assert epl.get_accounts(simulation.results).custom.cost == 0
+    assert epl.get_accounts(simulation.results).custom.emissions == 0
 
 
 def test_renewable_certificate() -> None:
@@ -336,6 +343,15 @@ def test_renewable_certificate() -> None:
     np.testing.assert_array_almost_equal(
         simulation.results["wind-electric_generation_mwh"], [0, 25, 50, 50, 50]
     )
+
+    custom_terms: list[OneTerm] = [
+        epl.Term(
+            asset_name="solar", variable="electric_generation_mwh", coefficient=-25
+        )
+    ]
+    assert epl.get_accounts(
+        simulation.results, custom_terms=custom_terms
+    ).custom.cost == -25 * np.sum([25, 50, 50, 50, 50])
 
 
 def test_heat_dump_cost() -> None:
@@ -395,6 +411,7 @@ def test_heat_dump_cost() -> None:
     np.testing.assert_array_almost_equal(
         simulation.results["heat-pump-electric_load_mwh"], [10]
     )
+    # TODO - not testing accounts here
 
     # now setup a site with no penalty to dumping heat, but a high electricity price
     # heat pump will not operate
@@ -429,6 +446,7 @@ def test_heat_dump_cost() -> None:
     np.testing.assert_array_almost_equal(
         simulation.results["heat-pump-electric_load_mwh"], [0]
     )
+    # TODO - not testing accounts here
 
 
 def test_synthetic_ppa() -> None:
@@ -483,6 +501,10 @@ def test_synthetic_ppa() -> None:
     np.testing.assert_array_almost_equal(
         ppa.results["wind-electric_generation_mwh"], wind_mwh
     )
+    np.testing.assert_allclose(
+        epl.get_accounts(ppa.results, custom_terms=ppa_terms[-2:]).custom.cost,
+        sum(wind_mwh * (np.array(ds["electricity_prices"]) - 70)),
+    )
 
 
 def test_custom_errors() -> None:
@@ -497,3 +519,73 @@ def test_custom_errors() -> None:
     )
     with pytest.raises(ValueError):
         site.optimize(objective="not-a-valid-objective")
+
+
+def test_custom_terms_account() -> None:
+    """Tests to round of test coverage of accounts."""
+    ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
+
+    assets = [
+        epl.Battery(
+            power_mw=2, capacity_mwh=4, efficiency_pct=0.9, name="small-battery"
+        ),
+        epl.Battery(
+            power_mw=20, capacity_mwh=40, efficiency_pct=0.9, name="large-battery"
+        ),
+        epl.RenewableGenerator(
+            electric_generation_mwh=np.random.uniform(
+                0, 100, size=len(ds["electricity_prices"])
+            )
+        ),
+    ]
+    terms = get_objective_terms()["price"]
+    terms.extend(
+        [
+            # targets the find all assets where asset type == "*"
+            {
+                "asset_type": "*",
+                "variable": "electric_generation_mwh",
+                "coefficient": 1,
+            },
+            # targets the type_id inference in `find_asset_type_with_variables`
+            {
+                "asset_type": "renewable-generator",
+                "variable": "electric_generation_mwh",
+                "coefficient": 1,
+            },
+            # targets the `add_many_variables` with an asset by type
+            {
+                "function": "max_many_variables",
+                "variables": {
+                    "asset_type": "renewable-generator",
+                    "variable": "electric_generation_mwh",
+                },
+                "constant": 10,
+                "coefficient": 10,
+                "M": 1000,
+            },
+            # targets the `add_many_variables` with an asset by name
+            {
+                "function": "max_many_variables",
+                "variables": {
+                    "asset_name": "large-battery",
+                    "variable": "electric_charge_mwh",
+                },
+                "constant": 10,
+                "coefficient": 10,
+                "M": 1000,
+            },
+        ]
+    )
+
+    site = epl.Site(
+        assets=assets,
+        electricity_prices=ds["electricity_prices"],
+        electricity_carbon_intensities=ds["electricity_carbon_intensities"],
+    )
+    simulation = site.optimize(
+        verbose=True,
+        objective={"terms": terms},
+    )
+
+    epl.get_accounts(simulation.results, custom_terms=terms[-3:])

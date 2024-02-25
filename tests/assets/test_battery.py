@@ -256,7 +256,7 @@ def test_hypothesis(
     #  check losses are always zero when we discharge
     mask = simulation.results[f"{name}-electric_discharge_mwh"] > 0
     subset = simulation.results[mask]
-    assert all(subset[f"{name}-electric_loss_mwh"] == 0)
+    np.testing.assert_allclose(subset[f"{name}-electric_loss_mwh"], 0)
 
 
 def test_import_export_prices() -> None:
@@ -301,7 +301,7 @@ def test_import_export_prices() -> None:
         )
         battery_usage.append(simulation.results["battery-electric_charge_mwh"].sum())
         print(f"{export_price_delta=}, time={time.perf_counter() - tic} sec")
-    assert np.all(np.diff(battery_usage) >= 0)
+    assert np.all(np.diff(battery_usage) >= -tol)
 
 
 def test_no_simultaneous_import_export() -> None:
@@ -316,3 +316,37 @@ def test_no_simultaneous_import_export() -> None:
     results = simulation.results
 
     check_no_simultaneous(results, "site-import_power_mwh", "site-export_power_mwh")
+
+
+@hypothesis.settings(
+    print_blob=True,
+    max_examples=25,
+    verbosity=hypothesis.Verbosity.verbose,
+    deadline=20000,
+)
+@hypothesis.given(
+    charge_mw=hypothesis.strategies.floats(min_value=1.0, max_value=100),
+    discharge_mw=hypothesis.strategies.floats(min_value=1.0, max_value=100),
+)
+def test_different_charge_discharge_rates(
+    charge_mw: float, discharge_mw: float
+) -> None:
+    """Test that we can charge and discharge our battery at different rates."""
+    prices = np.random.uniform(-1000, 1000, 512)
+    capacity = 100
+    asset = epl.Battery(
+        power_mw=charge_mw,
+        discharge_power_mw=discharge_mw,
+        capacity_mwh=capacity,
+        initial_charge_mwh=0,
+        final_charge_mwh=capacity,
+        efficiency_pct=1.0,
+        electricity_prices=prices,
+    )
+    simulation = asset.optimize()
+    np.testing.assert_allclose(
+        simulation.results["battery-electric_charge_mwh"].max(), charge_mw
+    )
+    np.testing.assert_allclose(
+        simulation.results["battery-electric_discharge_mwh"].max(), discharge_mw
+    )

@@ -55,6 +55,20 @@ class RenewableGeneratorConfig(pydantic.BaseModel):
     interval_data: RenewableGeneratorIntervalData
     freq_mins: int
 
+    @pydantic.field_validator("name")
+    @classmethod
+    def check_name(cls, name: str) -> str:
+        """Ensure we can identify this asset correctly.
+
+        Args:
+            name: asset name.
+
+        Returns:
+            The asset name.
+        """
+        assert ("wind" in name) or ("solar" in name) or ("renewable-generator" in name)
+        return name
+
 
 class RenewableGeneratorOneInterval(AssetOneInterval):
     """Contains linear program data for a single interval."""

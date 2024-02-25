@@ -1,42 +1,46 @@
 `energypylinear` has two different objective functions (price or carbon) built into the library.
 
+An objective function determines the incentives and costs in a linear program.  It's what you are trying to optimize for.
+
+`energypylinear` has two different objective functions (price or carbon) built into the library. 
+
 However you may want to optimize for a different objective function in the linear program. You may have a business problem with a different set of revenues and costs than are included by default.
 
-**A custom objective function allows you to construct an objective function as you see fit** - allowing you to optimize a site and assets for the revenues and costs that are important to you.
+**A custom objective function allows you to construct an objective function that can optimize for the revenues and costs that are important to you**.
+
+## Simple Objective Function Terms
 
 Core to the custom objective function is the `epl.Term` - representing a single term in the objective function:
 
-<!--phmdoctest-share-names-->
+<!--phmdoctest-mark.skip-->
 ```python
 import dataclasses
 
-@dataclasses.dataclass
-class Term:
-    variable: str
-    asset_type: str | None = None
-    interval_data: str | None = None
-    asset_name: str | None = None
-    coefficient: float = 1.0
+--8<-- "energypylinear/objectives.py:term"
 ```
 
 A term can target either many assets by type or one asset by name. It can also include multiplication by interval data or by a coefficient.
 
+## Custom Objective Function
+
 A custom objective function is a list of terms:
 
-<!--phmdoctest-share-names-->
+<!--phmdoctest-mark.skip-->
 ```python
-@dataclasses.dataclass
-class CustomObjectiveFunction:
-    terms: list[Term]
+--8<-- "energypylinear/objectives.py:objective"
 ```
 
-The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a list of dictionaries.
+The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a dictionaries.
 
-### Price and Carbon
+## Examples
 
-This example shows how to optimize a battery for an objective that includes terms for both price and carbon.
+### Simultaneous Price and Carbon Optimization
 
-Below we create an objective function where we incentive a site to:
+`energypylinear` has two different objective functions (price or carbon) built into the library - these optimize for either price or carbon, but not both at the same time.
+
+This example shows how to optimize a battery for an objective that will optimize for both profit and emissions at the same time.
+
+Below we create an objective function where we:
 
 - reduce import when the electricity price or carbon intensity is high,
 - increase export when the electricity price or carbon intensity is low.
@@ -49,10 +53,7 @@ import numpy as np
 import energypylinear as epl
 
 def simulate(
-    carbon_price: int,
-    seed: int,
-    n: int,
-    verbose: int = 3
+    carbon_price: int, seed: int, n: int, verbose: int = 3
 ) -> epl.SimulationResult:
     """Run a battery simulation with a custom objective function."""
     np.random.seed(seed)
@@ -60,10 +61,8 @@ def simulate(
         assets=[epl.Battery(power_mw=10, capacity_mwh=20)],
         electricity_prices=np.random.normal(100, 1000, n),
         electricity_carbon_intensities=np.clip(
-            np.random.normal(1, 10, n),
-            a_min=0,
-            a_max=None
-        )
+            np.random.normal(1, 10, n), a_min=0, a_max=None
+        ),
     )
     return site.optimize(
         objective=epl.CustomObjectiveFunction(
@@ -83,17 +82,17 @@ def simulate(
                     asset_type="site",
                     variable="import_power_mwh",
                     interval_data="electricity_carbon_intensities",
-                    coefficient=carbon_price
+                    coefficient=carbon_price,
                 ),
                 epl.Term(
                     asset_type="site",
                     variable="export_power_mwh",
                     interval_data="electricity_carbon_intensities",
-                    coefficient=-1 * carbon_price
+                    coefficient=-1 * carbon_price,
                 ),
             ]
         ),
-        verbose=verbose
+        verbose=verbose,
     )
 
 print(simulate(carbon_price=50, seed=42, n=72))
@@ -118,7 +117,7 @@ for carbon_price in range(0, 300, 50):
         {
             "carbon_price": carbon_price,
             "profit": f"{accounts.profit:5.2f}",
-            "emissions": f"{accounts.emissions:3.2f}"
+            "emissions": f"{accounts.emissions:3.2f}",
         }
     )
 print(pd.DataFrame(results))
@@ -190,13 +189,12 @@ simulation = site.optimize(
                 coefficient=-25,
             ),
         ]
-    )
+    ),
 )
 print(
-    simulation.results[[
-        "solar-electric_generation_mwh",
-        "wind-electric_generation_mwh"
-    ]]
+    simulation.results[
+        ["solar-electric_generation_mwh", "wind-electric_generation_mwh"]
+    ]
 )
 ```
 
@@ -238,40 +236,36 @@ assets = [
     ),
     epl.Battery(power_mw=20, capacity_mwh=20),
 ]
-site = epl.Site(
-    assets=assets,
-    electricity_prices=electricity_prices
-)
-terms=[
+site = epl.Site(assets=assets, electricity_prices=electricity_prices)
+terms = [
     {
-        "asset_type":"site",
-        "variable":"import_power_mwh",
-        "interval_data":"electricity_prices"
+        "asset_type": "site",
+        "variable": "import_power_mwh",
+        "interval_data": "electricity_prices",
     },
     {
-        "asset_type":"site",
-        "variable":"export_power_mwh",
-        "interval_data":"electricity_prices",
-        "coefficient":-1
+        "asset_type": "site",
+        "variable": "export_power_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": -1,
     },
     {
         "asset_name": "wind",
         "variable": "electric_generation_mwh",
         "interval_data": "electricity_prices",
-        "coefficient": 1
+        "coefficient": 1,
     },
     {
         "asset_name": "wind",
         "variable": "electric_generation_mwh",
         "coefficient": -70
-    }
+    },
 ]
 simulation = site.optimize(
     verbose=4,
     objective={"terms": terms},
 )
 print(simulation.results[["site-electricity_prices", "wind-electric_generation_mwh"]])
-
 ```
 
 ```
@@ -285,7 +279,6 @@ print(simulation.results[["site-electricity_prices", "wind-electric_generation_m
 ```
 
 As expected, our renewable generator still generates even during times of negative electricity prices - this is because its output is incentivized at a fixed, positive price.
-
 
 ### Battery Cycle Cost
 
@@ -301,52 +294,41 @@ import energypylinear as epl
 np.random.seed(42)
 electricity_prices = np.random.normal(0, 1000, 48)
 
-assets = [
-    epl.Battery(power_mw=20, capacity_mwh=20)
-]
-site = epl.Site(
-    assets=assets,
-    electricity_prices=electricity_prices
-)
-terms=[
+assets = [epl.Battery(power_mw=20, capacity_mwh=20)]
+site = epl.Site(assets=assets, electricity_prices=electricity_prices)
+terms = [
     {
-        "asset_type":"site",
-        "variable":"import_power_mwh",
-        "interval_data":"electricity_prices"
+        "asset_type": "site",
+        "variable": "import_power_mwh",
+        "interval_data": "electricity_prices",
     },
     {
-        "asset_type":"site",
-        "variable":"export_power_mwh",
-        "interval_data":"electricity_prices",
-        "coefficient":-1
+        "asset_type": "site",
+        "variable": "export_power_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": -1,
     },
     {
         "asset_type": "battery",
         "variable": "electric_discharge_mwh",
-        "interval_data": "electricity_prices",
         "coefficient": 0.25
     }
 ]
-site.optimize(
-    verbose=4,
-    objective={"terms": terms}
-)
+site.optimize(verbose=4, objective={"terms": terms})
 ```
 
 You could also apply this cost to the battery electric charge, or to both the charge and discharge at the same time:
 
 ```python
-terms=[
+terms = [
     {
         "asset_type": "battery",
         "variable": "electric_charge_mwh",
-        "interval_data": "electricity_prices",
         "coefficient": 0.25
     },
     {
         "asset_type": "battery",
         "variable": "electric_discharge_mwh",
-        "interval_data": "electricity_prices",
         "coefficient": 0.25
     }
 ]
@@ -360,33 +342,32 @@ import pandas as pd
 
 results = []
 for cycle_cost in [0.25, 0.5, 1.0, 2.0]:
-    terms=[
+    terms = [
         {
-            "asset_type":"site",
-            "variable":"import_power_mwh",
-            "interval_data":"electricity_prices"
+            "asset_type": "site",
+            "variable": "import_power_mwh",
+            "interval_data": "electricity_prices",
         },
         {
-            "asset_type":"site",
-            "variable":"export_power_mwh",
-            "interval_data":"electricity_prices",
-            "coefficient":-1
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+            "interval_data": "electricity_prices",
+            "coefficient": -1,
         },
         {
             "asset_type": "battery",
             "variable": "electric_discharge_mwh",
             "interval_data": "electricity_prices",
-            "coefficient": cycle_cost
-        }
+            "coefficient": cycle_cost,
+        },
     ]
-    simulation = site.optimize(
-        verbose=4,
-        objective={"terms": terms}
-    )
+    simulation = site.optimize(verbose=4, objective={"terms": terms})
     results.append(
         {
             "cycle_cost": cycle_cost,
-            "battery-electric_discharge_mwh": simulation.results["battery-electric_discharge_mwh"].sum()
+            "battery-electric_discharge_mwh": simulation.results[
+                "battery-electric_discharge_mwh"
+            ].sum(),
         }
     )
 print(pd.DataFrame(results))

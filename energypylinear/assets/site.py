@@ -131,6 +131,20 @@ class SiteConfig(pydantic.BaseModel):
         """A string representation of self."""
         return f"<SiteConfig name={self.name}, freq_mins={self.freq_mins}, import_limit_mw={self.import_limit_mw}, export_limit_mw={self.export_limit_mw}>"
 
+    @pydantic.field_validator("name")
+    @classmethod
+    def check_name(cls, name: str) -> str:
+        """Ensure we can identify this asset correctly.
+
+        Args:
+            name: asset name.
+
+        Returns:
+            The asset name.
+        """
+        assert name == "site"
+        return name
+
 
 class SiteOneInterval(AssetOneInterval):
     """Site data for a single interval."""
@@ -143,6 +157,12 @@ class SiteOneInterval(AssetOneInterval):
     import_limit_mwh: float
     export_limit_mwh: float
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
+    electric_generation_mwh: None = None
+    high_temperature_generation_mwh: None = None
+    low_temperature_generation_mwh: None = None
+    electric_charge_mwh: None = None
+    electric_discharge_mwh: None = None
 
 
 def constrain_site_electricity_balance(
@@ -398,7 +418,9 @@ class Site:
             )
 
         self.optimizer.objective(
-            epl.get_objective(objective, self.optimizer, ivars, self.cfg.interval_data)
+            epl.get_objective(
+                objective, self.optimizer, ivars, self.cfg.interval_data, verbose
+            )
         )
 
         status = self.optimizer.solve(
@@ -410,6 +432,7 @@ class Site:
             self.assets,
             ivars,
             feasible=status.feasible,
+            status=status,
             verbose=verbose,
             flags=flags,
         )

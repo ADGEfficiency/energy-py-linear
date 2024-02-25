@@ -118,12 +118,19 @@ def test_repr() -> None:
                 cost=0,
                 emissions=0,
             ),
+            custom=epl.accounting.accounting.CustomAccount(
+                cost=0,
+                emissions=0,
+            ),
             profit=0,
             cost=0,
             emissions=0,
         ),
         epl.interval_data.IntervalVars(),
         epl.SimulationResult(
+            status=epl.optimizer.OptimizationStatus(
+                status="Optimal", feasible=True, objective=0.0
+            ),
             site=epl.Site(assets=[], electricity_prices=[10]),
             assets=[],
             results=pd.DataFrame(),

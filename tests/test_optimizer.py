@@ -31,3 +31,5 @@ def test_optimizer_config() -> None:
 
     with pytest.raises(TypeError):
         asset.optimize(optimizer_config={"timou": 2})
+
+    asset.site.optimizer.variables(dict=True)

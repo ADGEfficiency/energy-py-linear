@@ -90,3 +90,6 @@ build-backend = "poetry.core.masonry.api"
 exclude_also =[
   "@(abc\\.)?abstractmethod"
 ]
+
+[tool.pylint]
+load-plugins = "pylint.extensions.docparams"

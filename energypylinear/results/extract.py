@@ -36,6 +36,7 @@ class SimulationResult(pydantic.BaseModel):
     results: pd.DataFrame
     feasible: bool
     spill: bool
+    status: "epl.optimizer.OptimizationStatus"
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     def __repr__(self) -> str:
@@ -343,6 +344,7 @@ def extract_results(
     assets: list,
     ivars: "epl.IntervalVars",
     feasible: bool,
+    status: "epl.optimizer.OptimizationStatus",
     flags: Flags = Flags(),
     verbose: int | bool = defaults.log_level,
 ) -> SimulationResult:
@@ -425,6 +427,7 @@ def extract_results(
     spill_occured = warn_spills(results, flags, verbose=verbose)
 
     return SimulationResult(
+        status=status,
         site=site,
         assets=assets,
         results=results,
