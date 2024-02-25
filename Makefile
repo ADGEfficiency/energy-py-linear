@@ -55,6 +55,7 @@ test: setup-test test-docs
 create-test-docs: setup-test clean-test-docs
 	mkdir -p ./tests/phmdoctest
 	python -m phmdoctest README.md --outfile tests/phmdoctest/test_readme.py
+	python -m phmdoctest ./docs/docs/changelog.md --outfile tests/phmdoctest/test_changelog.md
 	python -m phmdoctest ./docs/docs/how-to/complex-terms.md --outfile tests/phmdoctest/test_complex_terms.py
 	python -m phmdoctest ./docs/docs/how-to/custom-objectives.md  --outfile tests/phmdoctest/test_custom_objectives.py
 	python -m phmdoctest ./docs/docs/validation/battery.md --outfile tests/phmdoctest/test_validate_battery.py
