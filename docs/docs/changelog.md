@@ -1,14 +1,133 @@
 # Changelog
 
-## [1.3.0 - Unreleased]()
+## [1.3.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.3.1)
 
 ### Different Battery Charge and Discharge Rates
 
-### Minimum and Maximum Objective Function Terms
+It's now possible to define a different charge and discharge rate in the `epl.Battery` asset.
+
+The example below defines a maximum charge and discharge rate of `2.0`:
+
+```python
+epl.Battery(power_mw=2.0)
+```
+
+The example below defines a maximum charge rate of `2.0` with a maximum discharge rate of `1.0`:
+
+```python
+epl.Battery(power_mw=2.0, discharge_power_mw=1.0)
+```
+
+### Complex Objective Function Terms
+
+A complex custom objective term allows you to construct an objective function with a complex set of costs and revenues.
+
+For example, we can define an objective function that includes a cost for the maximum import above a threshold of `40`:
+
+```python
+{
+    "function": "max_many_variables",
+    "variables": {
+        "asset_type": "site",
+        "variable": "import_power_mwh",
+    },
+    "constant": 40,
+    "coefficient": 200,
+    "M": max(electric_load_mwh) * 10
+}
+```
+
+See [Complex Objective Function Terms](https://energypylinear.adgefficiency.com/latest/how-to/complex-terms) in the documentation for more examples.
 
 ### Custom Accounts
 
+To accommodate complex custom objective functions, we have added the ability to include these custom costs and revenues as a custom account:
+
+```python
+import energypylinear as epl
+
+chp_size = 50
+electric_efficiency = 0.5
+electric_load_mwh = 0
+electricity_prices = np.array([-1000, -750, -250, -100, 0, 10, 100, 1000])
+export_charge = -500
+export_threshold_mwh = 5
+gas_prices = 20
+
+assets = [
+    epl.CHP(
+        electric_efficiency_pct=electric_efficiency,
+        electric_power_max_mw=chp_size,
+    )
+]
+site = epl.Site(
+    assets=assets,
+    gas_prices=20,
+    electricity_prices=np.array([-1000, -750, -250, -100, 0, 10, 100, 1000]),
+    electric_load_mwh=electric_load_mwh,
+)
+
+terms: list[dict] = [
+    {
+        "asset_type": "site",
+        "variable": "export_power_mwh",
+        "interval_data": "electricity_prices",
+        "coefficient": -1,
+    },
+    {
+        "asset_type": "*",
+        "variable": "gas_consumption_mwh",
+        "interval_data": "gas_prices",
+    },
+    {
+        "type": "complex",
+        "function": "min_two_variables",
+        "a": {
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+        },
+        "b": 5.0,
+        "coefficient": export_charge,
+        "M": (
+            electric_load_mwh
+            + assets[0].cfg.electric_power_max_mw
+            + export_threshold_mwh
+        )
+        * 1,
+    },
+]
+
+simulation = site.optimize(
+    verbose=4,
+    objective={"terms": terms},
+)
+
+accounts = epl.get_accounts(simulation.results, custom_terms=terms[-1:])
+print(accouts.custom)
+```
+
+```
+<Account profit=15000.00 emissions=0.0000>
+```
+
 ### Optimization Status
+
+The objective function value has been added to the `epl.optimizer.OptimizationStatus` object:
+
+```python
+import energypylinear as epl
+
+site = epl.Site(
+    assets=[epl.Battery()],
+    electricity_prices=np.array([-1000, -750, -250, -100, 0, 10, 100, 1000]),
+)
+simulation = site.optimize(verbose=4, objective="price")
+print(simulation.status)
+```
+
+```
+OptimizationStatus(status='Optimal', feasible=True, objective=-5811.11111)
+```
 
 ## [1.2.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.2.0)
 
