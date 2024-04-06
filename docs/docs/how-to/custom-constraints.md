@@ -12,21 +12,24 @@ In addition, `energypylinear` allows you to define your own, custom constraints.
 class Constraint:
     lhs: list[float | ConstraintTerm | dict]
     rhs: list[float | ConstraintTerm | dict]
-    sense: typing.Literal["<=", "==", ">="]
+    sense: typing.Literal["le", "eq", "ge"]
 ```
 
 A custom constraint has:
 
 - a left hand side,
-- a sense (either `<=`, `==` or `>=`),
+- a sense (either `le` for less than or equal to `<=`, `eq` for equal to `==`, or `ge` for greater than or equal to `>=`),
 - a right hand side.
 
 ```
-# a constraint with a sense of equality
+# a constraint with a sense of le
+LHS <= RHS
+
+# a constraint with a sense of eq
 LHS == RHS
 
-# a constraint with a sense of less than or equal to
-LHS <= RHS
+# a constraint with a sense of ge
+LHS >= RHS
 ```
 
 Both the left and right hand sides are list of constraint terms. A constraint term can be either a constant, an `epl.ConstraintTerm` or a dictionary.
@@ -76,6 +79,7 @@ asset = epl.Battery(
                 ),
             ],
             rhs=2 * 15,
+            sense="le"
         )
     ],
 )
