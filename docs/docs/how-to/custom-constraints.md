@@ -43,18 +43,16 @@ Core to the custom objective function is the `epl.ConstraintTerm`, which represe
 ```python
 class ConstraintTerm:
     """
-    If a constant is supplied, then all other arguments are ignored.
 
-    If a constant is not supplied, then the constraint term will be of the form:
-        coefficient * variable * interval_data
+    An aggregation of None is element wise constraint, with one constraint per interval
+    sum will be one constraint per simulation
     """
-    constant: float | None = None
-
-    coefficient: float | None = None
-    variable: str | None = None
+    coefficient: float = 1.0
+    variable: str 
     asset_type: str | None = None
     interval_data: str | None = None
     asset_name: str | None = None
+    aggregation: typing.Literal["sum"] | None = None
 ```
 
 ## Examples
