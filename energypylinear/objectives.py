@@ -1,4 +1,5 @@
 """Linear programming objective cost functions for price and carbon."""
+
 import dataclasses
 import typing
 

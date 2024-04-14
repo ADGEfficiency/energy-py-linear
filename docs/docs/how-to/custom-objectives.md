@@ -28,6 +28,8 @@ A custom objective function is a list of terms:
 
 The objective function used in the linear program is the sum of these terms. They can be supplied as either a `epl.Term` and `epl.CustomObjectiveFunction` object or as a dictionaries.
 
+If supplied as dictionary, the term will be coerced to an `epl.Term`.
+
 ## Examples
 
 ### Simultaneous Price and Carbon Optimization

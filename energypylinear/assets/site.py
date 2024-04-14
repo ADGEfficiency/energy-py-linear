@@ -276,7 +276,7 @@ class Site:
 
     Args:
         assets: list[Asset] - a list of energypylinear assets to optimize together.
-        cfg: SiteConfig - configuration for the site.
+        constraints: Additional custom constraints to apply to the linear program.
     """
 
     def __init__(
@@ -294,6 +294,7 @@ class Site:
         freq_mins: int = defaults.freq_mins,
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
+        constraints: "list[epl.Constraint | dict] | None" = None,
     ):
         """Initialize a Site asset model."""
         self.assets = assets
@@ -316,6 +317,9 @@ class Site:
         )
 
         validate_interval_data(assets, self)
+
+        # TODO - these could go into the optimizer or something?
+        self.custom_constraints = constraints
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -417,10 +421,23 @@ class Site:
                 ivars,
             )
 
+        # custom constraints are only placed after intervals
+        # if we need access to the interval index again, do the loop when setting up the constraint
+        from energypylinear.constraints import add_custom_constraint
+
+        if self.custom_constraints is not None:
+            for constraint in self.custom_constraints:
+                add_custom_constraint(
+                    optimizer=self.optimizer,
+                    constraint=constraint,
+                    ivars=ivars,
+                    flags=flags,
+                    freq=freq,
+                    interval_data=self.cfg.interval_data,
+                )
+
         self.optimizer.objective(
-            epl.get_objective(
-                objective, self.optimizer, ivars, self.cfg.interval_data, verbose
-            )
+            epl.get_objective(objective, self.optimizer, ivars, self.cfg.interval_data)
         )
 
         status = self.optimizer.solve(

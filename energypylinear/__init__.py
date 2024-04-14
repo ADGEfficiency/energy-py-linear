@@ -1,4 +1,5 @@
 """A library for mixed-integer linear optimization of energy assets."""
+
 from pulp import LpVariable
 
 from energypylinear import assets, data_generation, plot
@@ -21,10 +22,14 @@ from energypylinear.optimizer import Optimizer, OptimizerConfig
 from energypylinear.results.checks import check_results
 from energypylinear.results.extract import SimulationResult, extract_results
 
+from energypylinear.constraints import Constraint, ConstraintTerm
+
 __all__ = [
     "Asset",
     "Battery",
     "Boiler",
+    "Constraint",
+    "ConstraintTerm",
     "CHP",
     "EVs",
     "Flags",

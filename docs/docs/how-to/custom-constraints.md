@@ -9,10 +9,7 @@ In addition, `energypylinear` allows you to define your own, custom constraints.
 ## Custom Constraint
 
 ```
-class Constraint:
-    lhs: list[float | ConstraintTerm | dict]
-    rhs: list[float | ConstraintTerm | dict]
-    sense: typing.Literal["le", "eq", "ge"]
+--8<-- "energypylinear/constraints.py:constraint"
 ```
 
 A custom constraint has:
@@ -41,18 +38,7 @@ If supplied as dictionary, the constraint term will be coerced to an `epl.Constr
 Core to the custom objective function is the `epl.ConstraintTerm`, which represents a single term in a constraint:
 
 ```python
-class ConstraintTerm:
-    """
-
-    An aggregation of None is element wise constraint, with one constraint per interval
-    sum will be one constraint per simulation
-    """
-    coefficient: float = 1.0
-    variable: str 
-    asset_type: str | None = None
-    interval_data: str | None = None
-    asset_name: str | None = None
-    aggregation: typing.Literal["sum"] | None = None
+--8<-- "energypylinear/constraints.py:constraint-term"
 ```
 
 ## Examples

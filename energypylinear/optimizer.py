@@ -1,6 +1,7 @@
 """Interface to the `pulp` optimization library to solve linear programming problems.
 
 The `Optimizer` allows creating linear constraints, variables, and objectives, along with a linear program solver."""
+
 import dataclasses
 import datetime
 import typing
