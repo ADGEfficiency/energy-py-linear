@@ -42,18 +42,24 @@ n_intervals_combinations_test = 48
 test_custom_constraints_params = [
     # LHS constant, RHS asset type "*", no interval data, no aggregation
     (
-        [10],
-        [epl.ConstraintTerm(asset_type="*", variable="var")],
-        "le",
+        [
+            (10, epl.ConstraintTerm(asset_type="*", variable="gas_consumption_mwh"), "ge", None)
+        ],
         n_intervals_combinations_test,
 
     ),
     # # LHS constant, RHS asset type "*", no interval data, aggregation sum
-    # (
-    #     [10],
-    #     [epl.ConstraintTerm(asset_type="*", variable="var", aggregation="sum")],
-    #     "le"
-    # ),
+    (
+        [
+            (
+                epl.ConstraintTerm(asset_type="*", variable="gas_consumption_mwh"),
+                10,
+                "le",
+                "sum",
+            )
+        ],
+        1
+    ),
     # # LHS asset_name, interval data, no aggregation, RHS constant
     # (
     #     [epl.ConstraintTerm(asset_name="test_asset", variable="var", interval_data="data")],
@@ -106,10 +112,12 @@ test_custom_constraints_params = [
 
 
 @pytest.mark.parametrize(
-    "lhss, rhss, sense, expected_n_extra_constraints", test_custom_constraints_params
+    "custom_constraints, expected_n_extra_constraints",
+    test_custom_constraints_params,
 )
 def test_custom_constraint_combinations(
-    lhss, rhss, sense, expected_n_extra_constraints
+    custom_constraints,
+    expected_n_extra_constraints,
 ):
     """
     Tests many combinations of custom constraint terms:
@@ -127,43 +135,56 @@ def test_custom_constraint_combinations(
     electricity_prices = np.random.uniform(-100, 100, n_intervals_combinations_test)
 
     constraints = []
-    for lhs, rhs in zip(lhss, rhss):
-        constraints.append(epl.Constraint(lhs=lhs, rhs=rhs, sense=sense))
-    print(constraints)
+    for constraint in custom_constraints:
+        lhs, rhs, sense, aggregation = constraint
+        constraints.append(
+            epl.Constraint(lhs=lhs, rhs=rhs, sense=sense, aggregation=aggregation)
+        )
 
     no_constraint_asset = epl.Battery(electricity_prices=electricity_prices)
-    no_constraint_simulation = no_constraint_asset.optimize()
+    no_constraint_asset.optimize()
 
     asset = epl.Battery(
         electricity_prices=np.random.uniform(-100, 100, 48), constraints=constraints
     )
-    simulation = asset.optimize()
+    asset.optimize()
     n_extra_constraints = len(asset.site.optimizer.constraints()) - len(
         no_constraint_asset.site.optimizer.constraints()
     )
 
-    assert n_extra_constraints == expected_n_extra_constraints
+    n_agg_constraints = len([c for c in constraints if c.aggregation == "sum"])
+    n_non_agg_constraints = len(constraints) - n_agg_constraints
 
-    # # now test with two assets
-    # site = epl.Site(assets=[asset, asset], constraints=constraints)
-    # site.optimize()
+    assert (
+        n_extra_constraints
+        == 3 * expected_n_extra_constraints * n_non_agg_constraints + n_agg_constraints
+    )
 
-    # # now do with dictionaries
-    # constraints = []
-    # for lhs, rhs in zip(lhss, rhss):
-    #     if isinstance(lhs, epl.ConstraintTerm):
-    #         lhs = lhs.dict()
+    # now test with two assets
+    asset_one = epl.Battery(name="battery-eins")
+    asset_second = epl.Battery(name="battery-zwei")
 
-    #     if isinstance(rhs, epl.ConstraintTerm):
-    #         rhs = rhs.dict()
+    # now do with dictionaries
+    constraints = [c.dict() for c in constraints]
+    no_constraint_site = epl.Site(
+        assets=[asset_one, asset_second, epl.Spill()],
+        electricity_prices=np.random.uniform(-100, 100, 48),
+    )
+    no_constraint_site.optimize()
 
-    #     constraints.append({"lhs": lhs, "rhs": rhs, "sense": sense})
-
-    # asset = epl.Battery(constraints=constraints)
-    # asset.optimize()
-
-    # site = epl.Site(assets=[asset], constraints=constraints)
-    # site.optimize()
+    site = epl.Site(
+        assets=[asset_one, asset_second, epl.Spill()],
+        electricity_prices=np.random.uniform(-100, 100, 48),
+        constraints=constraints,
+    )
+    site.optimize()
+    n_extra_constraints = len(site.optimizer.constraints()) - len(
+        no_constraint_site.optimizer.constraints()
+    )
+    assert (
+        n_extra_constraints
+        == 4 * expected_n_extra_constraints * n_non_agg_constraints + n_agg_constraints
+    )
 
 
 def test_battery_cycle_constraint() -> None:

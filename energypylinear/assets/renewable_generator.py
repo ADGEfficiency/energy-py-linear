@@ -34,7 +34,6 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
     def validate_greater_zero(cls, value: np.ndarray | list) -> np.ndarray | list:
         """Handles case where we want a single value broadcast to the length
         of the interval data.
-        breakpoint()  # fmt: skip
         """
         assert np.array(value).min() >= 0.0
         return value
