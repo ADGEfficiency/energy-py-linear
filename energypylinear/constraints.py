@@ -1,6 +1,7 @@
 import dataclasses
 import typing
 import energypylinear as epl
+import pulp
 
 
 # --8<-- [start:constraint-term]
@@ -43,9 +44,9 @@ class Constraint:
 
 def _resolve_constraint_term(
     term: "epl.ConstraintTerm | dict | float", ivars, interval_data, i
-):
+) -> list:
     if isinstance(term, (float, int)):
-        return term
+        return [term]
 
     if isinstance(term, dict):
         term = epl.ConstraintTerm(**term)
@@ -56,12 +57,30 @@ def _resolve_constraint_term(
         vars = ivars.filter_objective_variables(
             i=i, instance_type=term.asset_type, asset_name=term.asset_name
         )
+        # TODO - add interval data
         return [getattr(v, term.variable) for v in vars]
     else:
         vars = ivars.filter_objective_variables_all_intervals(
             instance_type=term.asset_type, asset_name=term.asset_name
         )
+        # TODO - add interval data
         return [getattr(v, term.variable) for interval in vars for v in interval]
+
+
+def _add_terms(
+    constraint_side,
+    terms: list,
+    ivars: "epl.IntervalVars",
+    interval_data: "epl.SiteIntervalData",
+    i,
+) -> None:
+    if isinstance(constraint_side, (list, tuple)):
+        for t in constraint_side:
+            terms.extend(_resolve_constraint_term(t, ivars, interval_data, i=i))
+    else:
+        terms.extend(
+            _resolve_constraint_term(constraint_side, ivars, interval_data, i=i)
+        )
 
 
 def add_custom_constraint(
@@ -72,28 +91,24 @@ def add_custom_constraint(
     interval_data: "epl.SiteIntervalData",
     freq: "epl.Freq",
 ) -> None:
-    # TODO - will need to deal with list here at some point
+    sense_mapper = {
+        "le": pulp.LpConstraintLE,
+        "eq": pulp.LpConstraintEQ,
+        "ge": pulp.LpConstraintGE,
+    }
 
     if isinstance(constraint, dict):
         constraint = epl.Constraint(**constraint)
 
     if constraint.aggregation == "sum":
-        import pulp
-
         lhs = []
         rhs = []
         for i in interval_data.idx:
-            lhs.append(
-                _resolve_constraint_term(constraint.lhs, ivars, interval_data, i=i)
-            )
-            rhs.append(
-                _resolve_constraint_term(constraint.rhs, ivars, interval_data, i=i)
-            )
-        sense_mapper = {
-            "le": pulp.LpConstraintLE,
-            "eq": pulp.LpConstraintEQ,
-            "ge": pulp.LpConstraintGE,
-        }
+            _add_terms(constraint.lhs, lhs, ivars, interval_data, i)
+            _add_terms(constraint.rhs, rhs, ivars, interval_data, i)
+            assert len(lhs) > 0
+            assert len(rhs) > 0
+
         optimizer.constrain(
             pulp.LpConstraint(
                 e=pulp.lpSum(lhs) - pulp.lpSum(rhs),
@@ -104,33 +119,17 @@ def add_custom_constraint(
 
     else:
         for i in interval_data.idx:
-            lhs = _resolve_constraint_term(constraint.lhs, ivars, interval_data, i=i)
-            rhs = _resolve_constraint_term(constraint.rhs, ivars, interval_data, i=i)
+            lhs = []
+            rhs = []
+            _add_terms(constraint.lhs, lhs, ivars, interval_data, i)
+            _add_terms(constraint.rhs, rhs, ivars, interval_data, i)
+            assert len(lhs) > 0
+            assert len(rhs) > 0
 
-            if not isinstance(lhs, list):
-                lhs = [lhs]
-
-            if not isinstance(rhs, list):
-                rhs = [rhs]
-
-            if len(lhs) < len(rhs):
-                assert len(lhs) == 1
-                lhs = lhs * len(rhs)
-
-            if len(rhs) < len(lhs):
-                assert len(rhs) == 1
-                rhs = rhs * len(lhs)
-
-            assert len(lhs) == len(rhs)
-
-            for l, r in zip(lhs, rhs):
-                import pulp
-
-                sense_mapper = {
-                    "le": pulp.LpConstraintLE,
-                    "eq": pulp.LpConstraintEQ,
-                    "ge": pulp.LpConstraintGE,
-                }
-                optimizer.constrain(
-                    pulp.LpConstraint(e=l, sense=sense_mapper[constraint.sense], rhs=r)
+            optimizer.constrain(
+                pulp.LpConstraint(
+                    e=pulp.lpSum(lhs) - pulp.lpSum(rhs),
+                    sense=sense_mapper[constraint.sense],
+                    rhs=0.0,
                 )
+            )

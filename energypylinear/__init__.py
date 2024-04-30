@@ -11,7 +11,7 @@ from energypylinear.assets.chp import CHP
 from energypylinear.assets.evs import EVs
 from energypylinear.assets.heat_pump import HeatPump
 from energypylinear.assets.renewable_generator import RenewableGenerator
-from energypylinear.assets.site import Site
+from energypylinear.assets.site import Site, SiteIntervalData
 from energypylinear.assets.spill import Spill
 from energypylinear.assets.valve import Valve
 from energypylinear.flags import Flags
@@ -30,6 +30,13 @@ __all__ = [
     "Boiler",
     "Constraint",
     "ConstraintTerm",
+    "CustomObjectiveFunction",
+    "Term",
+    "get_objective",
+    "RenewableGenerator",
+    "assets",
+    "data_generation",
+    "plot",
     "CHP",
     "EVs",
     "Flags",
@@ -38,7 +45,9 @@ __all__ = [
     "IntervalVars",
     "LpVariable",
     "Optimizer",
+    "OptimizerConfig",
     "SimulationResult",
+    "SiteIntervalData",
     "Site",
     "Spill",
     "Valve",
