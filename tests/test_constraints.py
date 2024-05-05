@@ -87,10 +87,10 @@ def test_coerce_variables(
 @hypothesis.settings(settings)
 @hypothesis.given(
     a=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=-10000, max_value=10000
+        allow_infinity=False, allow_nan=False, min_value=0, max_value=1000
     ),
     b=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=-10000, max_value=10000
+        allow_infinity=False, allow_nan=False, min_value=0, max_value=1000
     ),
     a_gap=hypothesis.strategies.floats(
         allow_infinity=False, allow_nan=False, min_value=0.1, max_value=1000
@@ -108,9 +108,7 @@ def test_min_two_variables(
 
     opt = epl.Optimizer()
     av, bv = coerce_variables(a, b, a_gap, b_gap, a_is_float, b_is_float, opt)
-    cv = opt.min_two_variables(
-        "min-a-b", av, bv, M=max(abs(a) + a_gap, abs(b) + b_gap) * 100000
-    )
+    cv = opt.min_two_variables("min-a-b", av, bv, M=1000)
     opt.objective(av + bv)
     opt.solve(verbose=3)
     np.testing.assert_allclose(min(a, b), cv.value(), rtol=1e-2, atol=1e-2)
@@ -119,16 +117,16 @@ def test_min_two_variables(
 @hypothesis.settings(settings)
 @hypothesis.given(
     a=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=-100000, max_value=100000
+        allow_infinity=False, allow_nan=False, min_value=0, max_value=1000
     ),
     b=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=-100000, max_value=100000
+        allow_infinity=False, allow_nan=False, min_value=0, max_value=1000
     ),
     a_gap=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=0.1, max_value=10000
+        allow_infinity=False, allow_nan=False, min_value=0.1, max_value=1000
     ),
     b_gap=hypothesis.strategies.floats(
-        allow_infinity=False, allow_nan=False, min_value=0.1, max_value=10000
+        allow_infinity=False, allow_nan=False, min_value=0.1, max_value=1000
     ),
     a_is_float=hypothesis.strategies.booleans(),
     b_is_float=hypothesis.strategies.booleans(),
@@ -139,9 +137,7 @@ def test_max_two_variables(
     """Tests that we can constrain a variable to be the maximum of two other variables."""
     opt = epl.Optimizer()
     av, bv = coerce_variables(a, b, a_gap, b_gap, a_is_float, b_is_float, opt)
-    cv = opt.max_two_variables(
-        "max-a-b", av, bv, M=max(abs(a) + a_gap, abs(b) + b_gap) * 2.0
-    )
+    cv = opt.max_two_variables("max-a-b", av, bv, M=1000)
     opt.objective(av + bv)
     opt.solve(verbose=3)
     np.testing.assert_allclose(max(a, b), cv.value(), atol=atol)

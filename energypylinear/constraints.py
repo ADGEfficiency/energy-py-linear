@@ -116,7 +116,7 @@ def _resolve_constraint_term(
 
         """
         return [
-            getattr(v, term.variable)
+            (getattr(v, term.variable) if getattr(v, term.variable) is not None else 0)
             * (
                 getattr(interval_data, term.interval_data)[i]
                 if term.interval_data is not None
@@ -131,7 +131,7 @@ def _resolve_constraint_term(
         )
         assert len(vars) == len(interval_data.idx)
         return [
-            getattr(v, term.variable)
+            (getattr(v, term.variable) if getattr(v, term.variable) is not None else 0)
             * (
                 getattr(interval_data, term.interval_data)[i]
                 if term.interval_data is not None

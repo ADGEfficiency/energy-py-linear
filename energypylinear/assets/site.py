@@ -158,13 +158,27 @@ class SiteOneInterval(AssetOneInterval):
     export_limit_mwh: float
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    # TODO - this used to be all None
-    # not sure if it's important
-    electric_generation_mwh: float = 0.0
-    high_temperature_generation_mwh: float = 0.0
-    low_temperature_generation_mwh: float = 0.0
-    electric_charge_mwh: float = 0.0
-    electric_discharge_mwh: float = 0.0
+    """
+    TODO
+
+    this matters in (at least) two different places
+
+    /Users/adam/energy-py-linear/energypylinear/constraints.py _resolve_constraint_term
+
+            (getattr(v, term.variable) if getattr(v, term.variable) is not None else 0)
+
+    /Users/adam/energy-py-linear/energypylinear/objectives.py
+            variables = []
+            for ass in assets:
+                for a in ass:
+                    if (v := getattr(a, term.variables.variable)) is not None:
+                        variables.append(v)
+    """
+    electric_generation_mwh: None = None
+    high_temperature_generation_mwh: None = None
+    low_temperature_generation_mwh: None = None
+    electric_charge_mwh: None = None
+    electric_discharge_mwh: None = None
 
 
 def constrain_site_electricity_balance(

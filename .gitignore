@@ -1,3 +1,4 @@
 tests/phmdoctest/**/*
 logs
 docs/.cache
+.coverage*
