@@ -3,6 +3,8 @@ import typing
 import energypylinear as epl
 import pulp
 
+import pydantic
+
 
 # --8<-- [start:constraint-term]
 @dataclasses.dataclass
@@ -18,8 +20,7 @@ class ConstraintTerm:
 
 
 # --8<-- [start:constraint]
-@dataclasses.dataclass
-class Constraint:
+class Constraint(pydantic.BaseModel):
     """
 
     An aggregation of None is element wise constraint, with one constraint per interval
@@ -28,25 +29,72 @@ class Constraint:
     Aggregation is across the time / interval dimension
     """
 
-    lhs: float | ConstraintTerm | dict
-    rhs: float | ConstraintTerm | dict
+    lhs: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
+    rhs: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
     sense: typing.Literal["le", "eq", "ge"]
 
     # TODO - could call `interval_aggregation`
     aggregation: typing.Literal["sum"] | None = None
 
-    def dict(self) -> dict:
-        return dataclasses.asdict(self)
+    @pydantic.field_validator("lhs", "rhs")
+    def parse_dicts_to_constraint_terms(
+        cls, value: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
+    ) -> float | ConstraintTerm | list[float | ConstraintTerm]:
+        if isinstance(value, (float, ConstraintTerm)):
+            return value
+
+        elif isinstance(value, dict):
+            return ConstraintTerm(**value)
+
+        terms = []
+        values = value
+        assert isinstance(values, list)
+        for t in values:
+            if isinstance(t, (float, ConstraintTerm)):
+                terms.append(t)
+            else:
+                assert isinstance(t, dict)
+                terms.append(ConstraintTerm(**t))
+
+        assert len(terms) == len(values)
+        return terms
+
+    @pydantic.model_validator(mode="after")
+    def validate_all(self):
+        if isinstance(self.lhs, ConstraintTerm):
+            lhs_all_floats = False
+        elif isinstance(self.lhs, float):
+            lhs_all_floats = True
+        else:
+            assert isinstance(self.lhs, list)
+            lhs_all_floats = all([isinstance(t, float) for t in self.lhs])
+
+        if isinstance(self.rhs, ConstraintTerm):
+            rhs_all_floats = False
+        elif isinstance(self.rhs, float):
+            rhs_all_floats = True
+        else:
+            assert isinstance(self.rhs, list)
+            rhs_all_floats = all([isinstance(t, float) for t in self.rhs])
+
+        if lhs_all_floats and rhs_all_floats:
+            raise ValueError("lhs and rhs cannot be all floats")
+
+        return self
 
 
 # --8<-- [end:constraint]
 
 
 def _resolve_constraint_term(
-    term: "epl.ConstraintTerm | dict | float", ivars, interval_data, i
+    term: "epl.ConstraintTerm | dict | float",
+    ivars,
+    interval_data,
+    i,
+    divide_constant_by_idx_len: bool = False,
 ) -> list:
     if isinstance(term, (float, int)):
-        return [term]
+        return [term / (len(interval_data.idx) if divide_constant_by_idx_len else 1)]
 
     if isinstance(term, dict):
         term = epl.ConstraintTerm(**term)
@@ -57,14 +105,42 @@ def _resolve_constraint_term(
         vars = ivars.filter_objective_variables(
             i=i, instance_type=term.asset_type, asset_name=term.asset_name
         )
-        # TODO - add interval data
-        return [getattr(v, term.variable) for v in vars]
+        """
+        TODO - interesting thing here
+
+        for a Site, `electric_generation_mwh` is None
+
+        I do tackle this issue elsewhere - cannot remember where at the moment
+
+        Why wouldn't I have `electric_generation_mwh` be 0 ?
+
+        """
+        return [
+            getattr(v, term.variable)
+            * (
+                getattr(interval_data, term.interval_data)[i]
+                if term.interval_data is not None
+                else 1
+            )
+            * term.coefficient
+            for v in vars
+        ]
     else:
         vars = ivars.filter_objective_variables_all_intervals(
             instance_type=term.asset_type, asset_name=term.asset_name
         )
-        # TODO - add interval data
-        return [getattr(v, term.variable) for interval in vars for v in interval]
+        assert len(vars) == len(interval_data.idx)
+        return [
+            getattr(v, term.variable)
+            * (
+                getattr(interval_data, term.interval_data)[i]
+                if term.interval_data is not None
+                else 1
+            )
+            * term.coefficient
+            for i, interval in enumerate(vars)
+            for v in interval
+        ]
 
 
 def _add_terms(
@@ -73,13 +149,28 @@ def _add_terms(
     ivars: "epl.IntervalVars",
     interval_data: "epl.SiteIntervalData",
     i,
+    divide_constant_by_idx_len: bool = False,
 ) -> None:
     if isinstance(constraint_side, (list, tuple)):
         for t in constraint_side:
-            terms.extend(_resolve_constraint_term(t, ivars, interval_data, i=i))
+            terms.extend(
+                _resolve_constraint_term(
+                    t,
+                    ivars,
+                    interval_data,
+                    i=i,
+                    divide_constant_by_idx_len=divide_constant_by_idx_len,
+                )
+            )
     else:
         terms.extend(
-            _resolve_constraint_term(constraint_side, ivars, interval_data, i=i)
+            _resolve_constraint_term(
+                constraint_side,
+                ivars,
+                interval_data,
+                i=i,
+                divide_constant_by_idx_len=divide_constant_by_idx_len,
+            )
         )
 
 
@@ -104,8 +195,22 @@ def add_custom_constraint(
         lhs = []
         rhs = []
         for i in interval_data.idx:
-            _add_terms(constraint.lhs, lhs, ivars, interval_data, i)
-            _add_terms(constraint.rhs, rhs, ivars, interval_data, i)
+            _add_terms(
+                constraint.lhs,
+                lhs,
+                ivars,
+                interval_data,
+                i,
+                divide_constant_by_idx_len=True,
+            )
+            _add_terms(
+                constraint.rhs,
+                rhs,
+                ivars,
+                interval_data,
+                i,
+                divide_constant_by_idx_len=True,
+            )
             assert len(lhs) > 0
             assert len(rhs) > 0
 

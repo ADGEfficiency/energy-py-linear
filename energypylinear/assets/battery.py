@@ -187,7 +187,7 @@ class Battery(epl.Asset):
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: float | None = None,
         freq_mins: int = defaults.freq_mins,
-        constraints: "list[epl.Constraint | dict] | None" = None,
+        constraints: "list[epl.Constraint] | list[dict] | None" = None,
     ):
         """Initialize the asset.
 
@@ -234,6 +234,8 @@ class Battery(epl.Asset):
                 freq_mins=self.cfg.freq_mins,
                 constraints=constraints,
             )
+
+        # TODO - could warn that if constraints are specified, but not prices, they will be ignored
 
     def __repr__(self) -> str:
         """Return a string representation of self.
