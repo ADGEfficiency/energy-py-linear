@@ -1,19 +1,43 @@
+"""Add custom constraints to the linear program."""
 import dataclasses
 import typing
-import energypylinear as epl
-import pulp
 
+import pulp
 import pydantic
+
+import energypylinear as epl
 
 
 # --8<-- [start:constraint-term]
 @dataclasses.dataclass
 class ConstraintTerm:
+    """A term in a constraint.
+
+    The sum of terms creates either side of a constraint - left-hand side (LHS) or right-hand side (RHS).
+
+    Examples:
+
+    ```
+    Constraint = ConstraintTerm + ConstraintTerm <= 2.0
+    ```
+
+    Attributes:
+        variable: The linear program variable.  This will be an
+            attribute of a OneInterval object, like `import_power_mwh`
+            or `gas_consumption_mwh`.
+        asset_type: The type of asset, such as `battery` or `chp`.
+            `*` will include all assets.
+        interval_data: The interval data variable, such as
+            `electricity_prices` or `gas_prices`.
+        asset_name: The name of a specific asset.
+        coefficient: A constant multipler for the term.
+    """
+
     variable: str
-    coefficient: float = 1.0
     asset_type: str | None = None
     interval_data: str | None = None
     asset_name: str | None = None
+    coefficient: float = 1.0
 
 
 # --8<-- [end:constraint-term]
@@ -21,20 +45,25 @@ class ConstraintTerm:
 
 # --8<-- [start:constraint]
 class Constraint(pydantic.BaseModel):
-    """
+    """A custom constraint.
 
-    An aggregation of None is element wise constraint, with one constraint per interval
+    Made of a left-hand side (LHS), a right-hand side (RHS) and a sense (<=, ==, >=).
+
+    An interval_aggregation of None is element wise constraint, with one constraint per interval
     sum will be one constraint per simulation
 
-    Aggregation is across the time / interval dimension
+    Attributes:
+        lhs: The left-hand side of the constraint.
+        rhs: The right-hand side of the constraint.
+        sense: The constraint sense and a sense (<=, ==, >=).
+        interval_aggregation: How to aggregate terms across intervals.
+            None will mean one constraint per interval, sum will be one constraint per simulation.
     """
 
     lhs: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
     rhs: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
     sense: typing.Literal["le", "eq", "ge"]
-
-    # TODO - could call `interval_aggregation`
-    aggregation: typing.Literal["sum"] | None = None
+    interval_aggregation: typing.Literal["sum"] | None = None
 
     # --8<-- [end:constraint]
 
@@ -42,6 +71,7 @@ class Constraint(pydantic.BaseModel):
     def parse_dicts_to_constraint_terms(
         cls, value: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
     ) -> float | ConstraintTerm | list[float | ConstraintTerm]:
+        """Converts a dict to a ConstraintTerm."""
         if isinstance(value, (float, ConstraintTerm)):
             return value
 
@@ -62,7 +92,8 @@ class Constraint(pydantic.BaseModel):
         return terms
 
     @pydantic.model_validator(mode="after")
-    def validate_all(self):
+    def validate_all(self) -> typing.Self:
+        """Validates that our LHS and RHS make sense."""
         if isinstance(self.lhs, ConstraintTerm):
             lhs_all_floats = False
         elif isinstance(self.lhs, float):
@@ -87,11 +118,12 @@ class Constraint(pydantic.BaseModel):
 
 def _resolve_constraint_term(
     term: "epl.ConstraintTerm | dict | float",
-    ivars,
-    interval_data,
-    i,
+    ivars: "epl.IntervalVars",
+    interval_data: "epl.SiteIntervalData",
+    i: int,
     divide_constant_by_idx_len: bool = False,
 ) -> list:
+    """Converts a ConstraintTerm to a float or list of linear program variables."""
     if isinstance(term, (float, int)):
         return [term / (len(interval_data.idx) if divide_constant_by_idx_len else 1)]
 
@@ -112,7 +144,6 @@ def _resolve_constraint_term(
         I do tackle this issue elsewhere - cannot remember where at the moment
 
         Why wouldn't I have `electric_generation_mwh` be 0 ?
-
         """
         return [
             (getattr(v, term.variable) if getattr(v, term.variable) is not None else 0)
@@ -143,13 +174,17 @@ def _resolve_constraint_term(
 
 
 def _add_terms(
-    constraint_side,
+    constraint_side: float
+    | ConstraintTerm
+    | dict
+    | list[float | ConstraintTerm | dict],
     terms: list,
     ivars: "epl.IntervalVars",
     interval_data: "epl.SiteIntervalData",
-    i,
+    i: int,
     divide_constant_by_idx_len: bool = False,
 ) -> None:
+    """Iterates across terms in the LHS or RHS of a constraint."""
     if isinstance(constraint_side, (list, tuple)):
         for t in constraint_side:
             terms.extend(
@@ -175,12 +210,18 @@ def _add_terms(
 
 def add_custom_constraint(
     optimizer: "epl.Optimizer",
-    constraint: "epl.Constraint",
-    ivars: "epl.IntervalVars",
-    flags: "epl.Flags",
     interval_data: "epl.SiteIntervalData",
-    freq: "epl.Freq",
+    constraint: "epl.Constraint | dict",
+    ivars: "epl.IntervalVars",
 ) -> None:
+    """Add a custom constraint to the linear program.
+
+    Args:
+        optimizer: Linear program optimizer.
+        interval_data: Simulation interval data.
+        constraint: A custom constraint.
+        ivars: Linear program variables.
+    """
     sense_mapper = {
         "le": pulp.LpConstraintLE,
         "eq": pulp.LpConstraintEQ,
@@ -190,7 +231,7 @@ def add_custom_constraint(
     if isinstance(constraint, dict):
         constraint = epl.Constraint(**constraint)
 
-    if constraint.aggregation == "sum":
+    if constraint.interval_aggregation == "sum":
         lhs = []
         rhs = []
         for i in interval_data.idx:

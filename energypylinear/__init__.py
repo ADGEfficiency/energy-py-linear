@@ -14,6 +14,7 @@ from energypylinear.assets.renewable_generator import RenewableGenerator
 from energypylinear.assets.site import Site, SiteIntervalData
 from energypylinear.assets.spill import Spill
 from energypylinear.assets.valve import Valve
+from energypylinear.constraints import Constraint, ConstraintTerm
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
 from energypylinear.interval_data import IntervalVars
@@ -21,8 +22,6 @@ from energypylinear.objectives import CustomObjectiveFunction, Term, get_objecti
 from energypylinear.optimizer import Optimizer, OptimizerConfig
 from energypylinear.results.checks import check_results
 from energypylinear.results.extract import SimulationResult, extract_results
-
-from energypylinear.constraints import Constraint, ConstraintTerm
 
 __all__ = [
     "Asset",

@@ -62,6 +62,7 @@ class Term:
             `*` will include all assets.
         interval_data: The interval data variable, such as
             `electricity_prices` or `gas_prices`.
+        asset_name: The name of a specific asset.
         coefficient: A constant multipler for the term.
         type: The type of the term.
     """

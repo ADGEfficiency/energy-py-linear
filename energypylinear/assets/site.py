@@ -8,6 +8,7 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
+from energypylinear.constraints import add_custom_constraint
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
@@ -439,7 +440,6 @@ class Site:
 
         # custom constraints are only placed after intervals
         # if we need access to the interval index again, do the loop when setting up the constraint
-        from energypylinear.constraints import add_custom_constraint
 
         if self.custom_constraints is not None:
             for constraint in self.custom_constraints:
@@ -447,8 +447,6 @@ class Site:
                     optimizer=self.optimizer,
                     constraint=constraint,
                     ivars=ivars,
-                    flags=flags,
-                    freq=freq,
                     interval_data=self.cfg.interval_data,
                 )
 

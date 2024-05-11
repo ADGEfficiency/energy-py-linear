@@ -1,28 +1,9 @@
 """Tests the implementation of custom constraints."""
 
 import numpy as np
-
-"""
-
-Want to test bunch of combinations
-
-- LHS constant, RHS asset type = "*", interval_data = None, agg = None
-- LHS constant, RHS asset type = "*", interval_data = None, agg = sum
-
-- LHS asset_name, interal_data = something, agg = None, RHS constant
-- LHS asset_name, interal_data = something, agg = sum, RHS constant
-
-- LHS asset_name, interal_data = something, agg = None, RHS asset type = "*", interval_data = None, agg = None
-- LHS asset_name, interal_data = something, agg = None, RHS asset type = "*", interval_data = None, agg = sum
-
-Also test that we can do
-- LHS asset_name, interal_data = something, agg = None, LHS asset type = "*", interval_data = None, agg = None AND RHS asset_name, interal_data = something, agg = None, RHS asset type = "*", interval_data = None, agg = sum
-
-Raise value error if LHS and RHS both constant
-"""
+import pytest
 
 import energypylinear as epl
-import pytest
 
 
 @pytest.mark.parametrize(
@@ -33,21 +14,24 @@ import pytest
     ],
 )
 def test_no_all_constants(lhs: tuple | float, rhs: tuple | float) -> None:
+    """Tests that we raise errors when we have all floats on both sides of a constraint."""
     with pytest.raises(ValueError):
         epl.Constraint(lhs=lhs, rhs=rhs, sense="le")
 
 
 n_intervals_combinations_test = 48
-# fmt: off
 test_custom_constraints_params = [
-    # LHS constant, RHS asset type "*", no interval data, no aggregation
     (
         [
-            (10, epl.ConstraintTerm(asset_type="*", variable="gas_consumption_mwh"), "ge", None)
+            (
+                10,
+                epl.ConstraintTerm(asset_type="*", variable="gas_consumption_mwh"),
+                "ge",
+                None,
+            )
         ],
         n_intervals_combinations_test,
     ),
-    # RHS constant, LHS asset type "*", no interval data, aggregation sum
     (
         [
             (
@@ -59,123 +43,136 @@ test_custom_constraints_params = [
         ],
         1,
     ),
-    # LHS asset_name, interval data, no aggregation, RHS constant
     (
         [
             (
                 epl.ConstraintTerm(
                     asset_name="battery",
                     variable="electric_charge_mwh",
-                    interval_data="electricity_prices"
+                    interval_data="electricity_prices",
                 ),
                 20,
                 "le",
-                None
+                None,
             )
         ],
         n_intervals_combinations_test,
     ),
-    # LHS asset_name, interval data, aggregation sum, RHS constant
     (
         [
             (
-                epl.ConstraintTerm(asset_name="battery", variable="electric_charge_mwh", interval_data="electricity_prices"),
+                epl.ConstraintTerm(
+                    asset_name="battery",
+                    variable="electric_charge_mwh",
+                    interval_data="electricity_prices",
+                ),
                 30,
                 "le",
-                "sum"
+                "sum",
             )
         ],
         1,
     ),
-    # LHS asset_name, interval data, no aggregation, RHS asset type "*", no interval data, no aggregation
     (
         [
             (
                 epl.ConstraintTerm(
                     asset_name="battery",
                     variable="electric_charge_mwh",
-                    interval_data="electricity_prices"
-                ),
-                epl.ConstraintTerm(
-                    asset_type="*",
-                    variable="electric_generation_mwh"
-                ),
-                "ge",
-                None
-            )
-        ],
-        n_intervals_combinations_test,
-    ),
-    # LHS asset_name, interval data, no aggregation, RHS asset type "*", no interval data, aggregation sum
-    (
-        [
-            (
-                epl.ConstraintTerm(
-                    asset_name="battery",
-                    variable="electric_charge_mwh",
-                    interval_data="electricity_prices"
+                    interval_data="electricity_prices",
                 ),
                 epl.ConstraintTerm(asset_type="*", variable="electric_generation_mwh"),
                 "ge",
-                None
+                None,
             )
         ],
         n_intervals_combinations_test,
     ),
-    # Combination of different types on LHS and RHS
     (
         [
             (
                 epl.ConstraintTerm(
                     asset_name="battery",
                     variable="electric_charge_mwh",
-                    interval_data="electricity_prices"
+                    interval_data="electricity_prices",
+                ),
+                epl.ConstraintTerm(asset_type="*", variable="electric_generation_mwh"),
+                "ge",
+                None,
+            )
+        ],
+        n_intervals_combinations_test,
+    ),
+    (
+        [
+            (
+                epl.ConstraintTerm(
+                    asset_name="battery",
+                    variable="electric_charge_mwh",
+                    interval_data="electricity_prices",
                 ),
                 epl.ConstraintTerm(asset_type="*", variable="electric_generation_mwh"),
                 "le",
-                "sum"
+                "sum",
             )
         ],
         1,
     ),
-    # Multiple terms in the lhs and rhs
     (
         [
             (
                 [
-                    epl.ConstraintTerm(asset_name="battery", variable="electric_generation_mwh", interval_data="electricity_prices"),
-                    epl.ConstraintTerm(asset_type="*", variable="electric_generation_mwh")
+                    epl.ConstraintTerm(
+                        asset_name="battery",
+                        variable="electric_generation_mwh",
+                        interval_data="electricity_prices",
+                    ),
+                    epl.ConstraintTerm(
+                        asset_type="*", variable="electric_generation_mwh"
+                    ),
                 ],
                 [
-                    epl.ConstraintTerm(asset_name="battery", variable="electric_generation_mwh", interval_data="electricity_prices"),
-                    epl.ConstraintTerm(asset_type="*", variable="electric_generation_mwh")
+                    epl.ConstraintTerm(
+                        asset_name="battery",
+                        variable="electric_generation_mwh",
+                        interval_data="electricity_prices",
+                    ),
+                    epl.ConstraintTerm(
+                        asset_type="*", variable="electric_generation_mwh"
+                    ),
                 ],
                 "eq",
-                "sum"
+                "sum",
             )
         ],
         1,
     ),
-    # Two constraints
     (
         [
             (
-                epl.ConstraintTerm(asset_name="battery", variable="electric_generation_mwh", interval_data="electricity_prices"),
+                epl.ConstraintTerm(
+                    asset_name="battery",
+                    variable="electric_generation_mwh",
+                    interval_data="electricity_prices",
+                ),
                 epl.ConstraintTerm(asset_type="*", variable="electric_generation_mwh"),
                 "eq",
-                "sum"
+                "sum",
             ),
             (
-                epl.ConstraintTerm(asset_name="battery", variable="electric_generation_mwh", interval_data="electricity_prices"),
+                epl.ConstraintTerm(
+                    asset_name="battery",
+                    variable="electric_generation_mwh",
+                    interval_data="electricity_prices",
+                ),
                 epl.ConstraintTerm(asset_type="*", variable="electric_generation_mwh"),
                 "eq",
-                None
-            )
+                None,
+            ),
         ],
         n_intervals_combinations_test + 1,
     ),
 ]
-# fmt: on
 
 
 @pytest.mark.parametrize(
@@ -186,8 +183,7 @@ def test_custom_constraint_combinations(
     custom_constraints,
     expected_n_extra_constraints,
 ):
-    """
-    Tests many combinations of custom constraint terms:
+    """Tests many combinations of custom constraint terms:
     - contants,
     - asset types,
     - asset names,
@@ -196,16 +192,16 @@ def test_custom_constraint_combinations(
     - senses.
 
     Only checks that we can create and optimize with these constraints, not that we get
-    the correct result. Correctness is tested in other tests in this file.
-
-    """
+    the correct result. Correctness is tested in other tests in this file."""
     electricity_prices = np.random.uniform(-100, 100, n_intervals_combinations_test)
 
     constraints = []
     for constraint in custom_constraints:
         lhs, rhs, sense, aggregation = constraint
         constraints.append(
-            epl.Constraint(lhs=lhs, rhs=rhs, sense=sense, aggregation=aggregation)
+            epl.Constraint(
+                lhs=lhs, rhs=rhs, sense=sense, interval_aggregation=aggregation
+            )
         )
 
     no_constraint_asset = epl.Battery(electricity_prices=electricity_prices)
@@ -246,6 +242,7 @@ def test_custom_constraint_combinations(
 
 
 def test_battery_cycle_constraint() -> None:
+    """Test example where we constrain the cycles of one battery."""
     electricity_prices = np.random.normal(0.0, 10000, 128)
     cycle_limit = 2.0
 
@@ -278,7 +275,7 @@ def test_battery_cycle_constraint() -> None:
                 ],
                 rhs=cycle_limit,
                 sense="le",
-                aggregation="sum",
+                interval_aggregation="sum",
             )
         ],
         electricity_prices=electricity_prices,
@@ -305,7 +302,7 @@ def test_battery_cycle_constraint() -> None:
                 ],
                 "lhs": cycle_limit,
                 "sense": "ge",
-                "aggregation": "sum",
+                "interval_aggregation": "sum",
             }
         ],
         electricity_prices=electricity_prices,
@@ -332,7 +329,7 @@ def test_battery_cycle_constraint() -> None:
                 ],
                 "lhs": cycle_limit * 2,
                 "sense": "ge",
-                "aggregation": "sum",
+                "interval_aggregation": "sum",
             }
         ],
         electricity_prices=electricity_prices,
@@ -351,6 +348,7 @@ def test_battery_cycle_constraint() -> None:
 
 
 def test_battery_cycle_constraint_multiple_batteries() -> None:
+    """Test example where we constrain the cycles of two batteries."""
     electricity_prices = np.random.normal(0.0, 10000, 128)
     cycle_limit = 2.0
 
@@ -361,7 +359,7 @@ def test_battery_cycle_constraint_multiple_batteries() -> None:
             epl.Battery(power_mw=1, capacity_mwh=2, efficiency_pct=0.98, name=name)
             for name in battery_names
         ],
-        electricity_prices=np.random.uniform(-100, 100, 48),
+        electricity_prices=electricity_prices,
         constraints=[
             epl.Constraint(
                 lhs=[
@@ -372,7 +370,7 @@ def test_battery_cycle_constraint_multiple_batteries() -> None:
                 ],
                 rhs=cycle_limit,
                 sense="le",
-                aggregation="sum",
+                interval_aggregation="sum",
             )
             for name in battery_names
         ],
@@ -393,7 +391,7 @@ def test_battery_cycle_constraint_multiple_batteries() -> None:
             epl.Battery(power_mw=1, capacity_mwh=2, efficiency_pct=0.98, name=name)
             for name in battery_names
         ],
-        electricity_prices=np.random.uniform(-100, 100, 48),
+        electricity_prices=electricity_prices,
         constraints=[
             epl.Constraint(
                 lhs=[
@@ -406,7 +404,7 @@ def test_battery_cycle_constraint_multiple_batteries() -> None:
                 ],
                 rhs=cycle_limit,
                 sense="le",
-                aggregation="sum",
+                interval_aggregation="sum",
             )
         ],
     )
