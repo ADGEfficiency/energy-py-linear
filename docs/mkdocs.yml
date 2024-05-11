@@ -67,6 +67,7 @@ nav:
       - Optimize for a Forecast: how-to/dispatch-forecast.md
       - Custom Objective Functions: how-to/custom-objectives.md
       - Complex Objective Function Terms: how-to/complex-terms.md
+      - Custom Constraints: how-to/custom-constraints.md
   - Validation:
       - Battery: validation/battery.md
       # - Combined Heat & Power: validation/chp.md

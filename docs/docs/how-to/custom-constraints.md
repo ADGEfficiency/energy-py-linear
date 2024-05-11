@@ -1,3 +1,5 @@
+## Context 
+
 In linear programming, constraints define the feasible region of the program.  They are how you control what is and isn't possible in a program.
 
 The assets and site in `energypylinear` apply a range of constraints to the linear program, ranging from electricity balances around a battery to constraining how much electricity can be generated from a renewable generator.
@@ -8,7 +10,7 @@ In addition, `energypylinear` allows you to define your own, custom constraints.
 
 ## Custom Constraint
 
-```
+```python
 --8<-- "energypylinear/constraints.py:constraint"
 ```
 
@@ -18,7 +20,7 @@ A custom constraint has:
 - a sense (either `le` for less than or equal to `<=`, `eq` for equal to `==`, or `ge` for greater than or equal to `>=`),
 - a right hand side.
 
-```
+```pseudocode
 # a constraint with a sense of le
 LHS <= RHS
 

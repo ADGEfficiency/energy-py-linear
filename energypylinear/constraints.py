@@ -36,6 +36,8 @@ class Constraint(pydantic.BaseModel):
     # TODO - could call `interval_aggregation`
     aggregation: typing.Literal["sum"] | None = None
 
+    # --8<-- [end:constraint]
+
     @pydantic.field_validator("lhs", "rhs")
     def parse_dicts_to_constraint_terms(
         cls, value: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
@@ -81,9 +83,6 @@ class Constraint(pydantic.BaseModel):
             raise ValueError("lhs and rhs cannot be all floats")
 
         return self
-
-
-# --8<-- [end:constraint]
 
 
 def _resolve_constraint_term(
