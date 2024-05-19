@@ -15,9 +15,36 @@ class ConstraintTerm:
 
     The sum of terms creates either side of a constraint - left-hand side (LHS) or right-hand side (RHS).
 
-    ```
+    ```pseudocode
     Constraint = LHS sense RHS
     Constraint = ConstraintTerm + ConstraintTerm <= 2.0
+    ```
+
+    Examples:
+
+    ```python
+    # a constraint term for site import power electricity cost
+    ConstraintTerm(
+        variable="import_power_mwh",
+        asset_type="site",
+        interval_data="electricity_prices"
+    )
+
+    # a constraint term for site export power electricity revenue
+    ConstraintTerm(
+        variable="import_power_mwh",
+        asset_type="site",
+        interval_data="electricity_prices",
+        coefficient=-1
+    )
+
+    # a constraint term for battery cycle cost
+    ConstraintTerm(
+        variable="electric_charge_mwh",
+        asset_type="battery",
+        coefficient=0.25
+    )
+
     ```
 
     Attributes:

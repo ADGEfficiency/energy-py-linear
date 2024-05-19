@@ -134,7 +134,7 @@ print(
 )
 ```
 
-After simulation
+After simulation we can see that as solar generation becomes available, the CHP electric generation decreases to keep the total site electric generation at 25 MWh:
 
 ```
    chp-electric_generation_mwh  solar-electric_generation_mwh  total-electric_generation_mwh
