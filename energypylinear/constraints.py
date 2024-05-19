@@ -15,9 +15,8 @@ class ConstraintTerm:
 
     The sum of terms creates either side of a constraint - left-hand side (LHS) or right-hand side (RHS).
 
-    Examples:
-
     ```
+    Constraint = LHS sense RHS
     Constraint = ConstraintTerm + ConstraintTerm <= 2.0
     ```
 
@@ -218,46 +217,29 @@ def add_custom_constraint(
     if isinstance(constraint, dict):
         constraint = epl.Constraint(**constraint)
 
-    if constraint.interval_aggregation == "sum":
-        lhs: list = []
-        rhs: list = []
-        for i in interval_data.idx:
-            _add_terms(
-                constraint.lhs,
-                lhs,
-                ivars,
-                interval_data,
-                i,
-                divide_constant_by_idx_len=True,
-            )
-            _add_terms(
-                constraint.rhs,
-                rhs,
-                ivars,
-                interval_data,
-                i,
-                divide_constant_by_idx_len=True,
-            )
-            assert len(lhs) > 0
-            assert len(rhs) > 0
-
-        optimizer.constrain(
-            pulp.LpConstraint(
-                e=pulp.lpSum(lhs) - pulp.lpSum(rhs),
-                sense=sense_mapper[constraint.sense],
-                rhs=0.0,
-            )
+    lhs: list = []
+    rhs: list = []
+    for i in interval_data.idx:
+        _add_terms(
+            constraint.lhs,
+            lhs,
+            ivars,
+            interval_data,
+            i,
+            divide_constant_by_idx_len=constraint.interval_aggregation == "sum",
         )
+        _add_terms(
+            constraint.rhs,
+            rhs,
+            ivars,
+            interval_data,
+            i,
+            divide_constant_by_idx_len=constraint.interval_aggregation == "sum",
+        )
+        assert len(lhs) > 0
+        assert len(rhs) > 0
 
-    else:
-        for i in interval_data.idx:
-            lhs = []
-            rhs = []
-            _add_terms(constraint.lhs, lhs, ivars, interval_data, i)
-            _add_terms(constraint.rhs, rhs, ivars, interval_data, i)
-            assert len(lhs) > 0
-            assert len(rhs) > 0
-
+        if constraint.interval_aggregation != "sum":
             optimizer.constrain(
                 pulp.LpConstraint(
                     e=pulp.lpSum(lhs) - pulp.lpSum(rhs),
@@ -265,3 +247,14 @@ def add_custom_constraint(
                     rhs=0.0,
                 )
             )
+            lhs = []
+            rhs = []
+
+    if constraint.interval_aggregation == "sum":
+        optimizer.constrain(
+            pulp.LpConstraint(
+                e=pulp.lpSum(lhs) - pulp.lpSum(rhs),
+                sense=sense_mapper[constraint.sense],
+                rhs=0.0,
+            )
+        )
