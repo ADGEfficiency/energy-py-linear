@@ -13,7 +13,10 @@ import energypylinear as epl
         ([10 + 20], [20 + 30]),
     ],
 )
-def test_no_all_constants(lhs: tuple | float, rhs: tuple | float) -> None:
+def test_no_all_constants(
+    lhs: float | epl.ConstraintTerm | dict | list[float | epl.ConstraintTerm | dict],
+    rhs: float | epl.ConstraintTerm | dict | list[float | epl.ConstraintTerm | dict],
+) -> None:
     """Tests that we raise errors when we have all floats on both sides of a constraint."""
     with pytest.raises(ValueError):
         epl.Constraint(lhs=lhs, rhs=rhs, sense="le")
@@ -176,13 +179,12 @@ test_custom_constraints_params = [
 
 
 @pytest.mark.parametrize(
-    "custom_constraints, expected_n_extra_constraints",
-    test_custom_constraints_params,
+    "custom_constraints, expected_n_extra_constraints", test_custom_constraints_params
 )
 def test_custom_constraint_combinations(
-    custom_constraints,
-    expected_n_extra_constraints,
-):
+    custom_constraints: list,
+    expected_n_extra_constraints: int,
+) -> None:
     """Tests many combinations of custom constraint terms:
     - contants,
     - asset types,
@@ -222,7 +224,7 @@ def test_custom_constraint_combinations(
     asset_second = epl.Battery(name="battery-zwei")
 
     # now do with dictionaries
-    constraints = [c.dict() for c in constraints]
+    constraints_dicts = [c.dict() for c in constraints]
     no_constraint_site = epl.Site(
         assets=[asset_one, asset_second, epl.Spill()],
         electricity_prices=np.random.uniform(-100, 100, 48),
@@ -232,7 +234,7 @@ def test_custom_constraint_combinations(
     site = epl.Site(
         assets=[asset_one, asset_second, epl.Spill()],
         electricity_prices=np.random.uniform(-100, 100, 48),
-        constraints=constraints,
+        constraints=constraints_dicts,
     )
     site.optimize(verbose=3)
     n_extra_constraints = len(site.optimizer.constraints()) - len(
@@ -429,7 +431,7 @@ def test_battery_cycle_constraint_multiple_batteries() -> None:
     )
 
 
-def test_limit_sum_generation_in_each_interval():
+def test_limit_sum_generation_in_each_interval() -> None:
     """Test that we can constrain the sum of two generators within each interval."""
 
     idx_len = 4

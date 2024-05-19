@@ -48,7 +48,7 @@ class IntervalVars:
     ) -> list[AssetOneInterval]:
         """Filters objective variables based on type, interval index, and asset name."""
         if isinstance(instance_type, str):
-            type_mapper: dict[str, type] = {
+            type_mapper: dict[str, type | None] = {
                 "battery": epl.assets.battery.BatteryOneInterval,
                 "boiler": epl.assets.boiler.BoilerOneInterval,
                 "chp": epl.assets.chp.CHPOneInterval,

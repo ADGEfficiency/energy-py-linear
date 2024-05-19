@@ -75,18 +75,22 @@ class Constraint(pydantic.BaseModel):
         if isinstance(value, (float, ConstraintTerm)):
             return value
 
-        elif isinstance(value, dict):
-            return ConstraintTerm(**value)
+        # elif isinstance(value, dict):
+        #     return ConstraintTerm(**value)
 
         terms = []
         values = value
         assert isinstance(values, list)
         for t in values:
+            """
             if isinstance(t, (float, ConstraintTerm)):
                 terms.append(t)
             else:
                 assert isinstance(t, dict)
                 terms.append(ConstraintTerm(**t))
+            """
+            assert isinstance(t, (float, ConstraintTerm))
+            terms.append(t)
 
         assert len(terms) == len(values)
         return terms
@@ -127,50 +131,33 @@ def _resolve_constraint_term(
     if isinstance(term, (float, int)):
         return [term / (len(interval_data.idx) if divide_constant_by_idx_len else 1)]
 
-    if isinstance(term, dict):
-        term = epl.ConstraintTerm(**term)
+    # if isinstance(term, dict):
+    #     term = epl.ConstraintTerm(**term)
 
     assert isinstance(term, epl.ConstraintTerm)
 
-    if i is not None:
-        vars = ivars.filter_objective_variables(
-            i=i, instance_type=term.asset_type, asset_name=term.asset_name
+    vars = ivars.filter_objective_variables(
+        i=i, instance_type=term.asset_type, asset_name=term.asset_name
+    )
+    """
+    TODO - interesting thing here
+
+    for a Site, `electric_generation_mwh` is None
+
+    I do tackle this issue elsewhere - cannot remember where at the moment
+
+    Why wouldn't I have `electric_generation_mwh` be 0 ?
+    """
+    return [
+        (getattr(v, term.variable) if getattr(v, term.variable) is not None else 0)
+        * (
+            getattr(interval_data, term.interval_data)[i]
+            if term.interval_data is not None
+            else 1
         )
-        """
-        TODO - interesting thing here
-
-        for a Site, `electric_generation_mwh` is None
-
-        I do tackle this issue elsewhere - cannot remember where at the moment
-
-        Why wouldn't I have `electric_generation_mwh` be 0 ?
-        """
-        return [
-            (getattr(v, term.variable) if getattr(v, term.variable) is not None else 0)
-            * (
-                getattr(interval_data, term.interval_data)[i]
-                if term.interval_data is not None
-                else 1
-            )
-            * term.coefficient
-            for v in vars
-        ]
-    else:
-        vars = ivars.filter_objective_variables_all_intervals(
-            instance_type=term.asset_type, asset_name=term.asset_name
-        )
-        assert len(vars) == len(interval_data.idx)
-        return [
-            (getattr(v, term.variable) if getattr(v, term.variable) is not None else 0)
-            * (
-                getattr(interval_data, term.interval_data)[i]
-                if term.interval_data is not None
-                else 1
-            )
-            * term.coefficient
-            for i, interval in enumerate(vars)
-            for v in interval
-        ]
+        * term.coefficient
+        for v in vars
+    ]
 
 
 def _add_terms(
@@ -232,8 +219,8 @@ def add_custom_constraint(
         constraint = epl.Constraint(**constraint)
 
     if constraint.interval_aggregation == "sum":
-        lhs = []
-        rhs = []
+        lhs: list = []
+        rhs: list = []
         for i in interval_data.idx:
             _add_terms(
                 constraint.lhs,

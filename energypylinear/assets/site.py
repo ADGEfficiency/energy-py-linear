@@ -311,7 +311,7 @@ class Site:
         freq_mins: int = defaults.freq_mins,
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
-        constraints: "list[epl.Constraint | dict] | None" = None,
+        constraints: "list[epl.Constraint] | list[dict] | None" = None,
     ):
         """Initialize a Site asset model."""
         self.assets = assets
