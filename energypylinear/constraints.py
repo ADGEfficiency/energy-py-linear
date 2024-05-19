@@ -15,11 +15,6 @@ class ConstraintTerm:
 
     The sum of terms creates either side of a constraint - left-hand side (LHS) or right-hand side (RHS).
 
-    ```pseudocode
-    Constraint = LHS sense RHS
-    Constraint = ConstraintTerm + ConstraintTerm <= 2.0
-    ```
-
     Examples:
 
     ```python
@@ -74,9 +69,6 @@ class Constraint(pydantic.BaseModel):
     """A custom constraint.
 
     Made of a left-hand side (LHS), a right-hand side (RHS) and a sense (<=, ==, >=).
-
-    An interval_aggregation of None is element wise constraint, with one constraint per interval
-    sum will be one constraint per simulation
 
     Attributes:
         lhs: The left-hand side of the constraint.
@@ -156,9 +148,6 @@ def _resolve_constraint_term(
     """Converts a ConstraintTerm to a float or list of linear program variables."""
     if isinstance(term, (float, int)):
         return [term / (len(interval_data.idx) if divide_constant_by_idx_len else 1)]
-
-    # if isinstance(term, dict):
-    #     term = epl.ConstraintTerm(**term)
 
     assert isinstance(term, epl.ConstraintTerm)
 

@@ -6,43 +6,26 @@ The assets and site in `energypylinear` apply constraints to the linear program,
 
 In addition, `energypylinear` allows you to define your own, custom constraints.
 
-**A custom constraint allows you to construct constraints that can control what can and cannot happen based on what is important to you**.
+**A custom constraint allows you to construct constraints that can control what can and cannot happen in an `energypylinear` simulation**.
 
 ## Custom Constraint
 
+A custom constraint has a left hand side, a sense (either `le` for less than or equal to `<=`, `eq` for equal to `==`, or `ge` for greater than or equal to `>=`) and a right hand side.
+
 <!--phmdoctest-mark.skip-->
 ```python
---8 < --"energypylinear/constraints.py:constraint"
-```
-
-A custom constraint has:
-
-- a left hand side,
-- a sense (either `le` for less than or equal to `<=`, `eq` for equal to `==`, or `ge` for greater than or equal to `>=`),
-- a right hand side.
-
-```pseudocode
-# a constraint with a sense of le
-LHS <= RHS
-
-# a constraint with a sense of eq
-LHS == RHS
-
-# a constraint with a sense of ge
-LHS >= RHS
+--8<-- "energypylinear/constraints.py:constraint"
 ```
 
 Both the left and right hand sides are list of constraint terms. A constraint term can be either a constant, an `epl.ConstraintTerm` or a dictionary.
 
-If supplied as dictionary, the constraint term will be coerced to an `epl.ConstraintTerm`.
-
 ## Constraint Terms
 
-Core to the custom objective function is the `epl.ConstraintTerm`, which represents a single term in a constraint:
+The `epl.ConstraintTerm` represents a single term in a constraint:
 
 <!--phmdoctest-mark.skip-->
 ```python
---8 < --"energypylinear/constraints.py:constraint-term"
+--8<-- "energypylinear/constraints.py:constraint-term"
 ```
 
 ## Examples
@@ -130,7 +113,13 @@ site = epl.Site(
 )
 simulation = site.optimize(verbose=3)
 print(
-    simulation.results[["chp-electric_generation_mwh", "solar-electric_generation_mwh", "total-electric_generation_mwh"]]
+    simulation.results[
+        [
+            "chp-electric_generation_mwh",
+            "solar-electric_generation_mwh",
+            "total-electric_generation_mwh",
+        ]
+    ]
 )
 ```
 
