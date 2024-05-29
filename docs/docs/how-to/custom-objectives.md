@@ -1,8 +1,8 @@
-In linear programming, the objective function defines the incentives and costs you want to optimize for.
+The objective function defines the incentives and costs in a linear program. It is how you tell the linear program what to optimize for in your simulation.
 
 `energypylinear` has two different objective functions (price or carbon) built into the library.  In addition, `energypylinear` allows you to define your own, custom objective function.
 
-**A custom objective function allows you to construct an objective function that can optimize for the revenues and costs that are important to you**.
+**A custom objective function allows you to optimize for the revenues and costs that are important to you**.
 
 ## Simple Objective Function Terms
 

@@ -1,25 +1,21 @@
-## Context 
+Constraints define the feasible region of a linear program.  They are how you control what is and isn't possible in a simulation.
 
-In linear programming, constraints define the feasible region of the linear program.  They are how you control what is and isn't possible in a simulation.
+The assets and site in `energypylinear` apply constraints to the linear program, ranging from electricity balances around a battery to constraining how much electricity can be generated from a renewable generator. In addition, `energypylinear` allows you to define your own, custom constraints.
 
-The assets and site in `energypylinear` apply constraints to the linear program, ranging from electricity balances around a battery to constraining how much electricity can be generated from a renewable generator.
-
-In addition, `energypylinear` allows you to define your own, custom constraints.
-
-**A custom constraint allows you to construct constraints that can control what can and cannot happen in an `energypylinear` simulation**.
+**A custom constraint allows you to control what can and cannot happen in an `energypylinear` simulation**.
 
 ## Custom Constraint
 
-A custom constraint has a left hand side, a sense (either `le` for less than or equal to `<=`, `eq` for equal to `==`, or `ge` for greater than or equal to `>=`) and a right hand side.
+A custom constraint has a left hand side, a right hand side and a sense:
 
 <!--phmdoctest-mark.skip-->
 ```python
 --8<-- "energypylinear/constraints.py:constraint"
 ```
 
-Both the left and right hand sides are list of constraint terms. A constraint term can be either a constant, an `epl.ConstraintTerm` or a dictionary.
-
 ## Constraint Terms
+
+Both the left and right hand sides of a custom constraint are list of constraint terms. A constraint term can be either a constant, an `epl.ConstraintTerm` or a dictionary.
 
 The `epl.ConstraintTerm` represents a single term in a constraint:
 

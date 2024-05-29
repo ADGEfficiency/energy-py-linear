@@ -1,4 +1,4 @@
-mkdocs-material==9.1.6
+mkdocs-material==9.5.25
 mkdocstrings[python]
 markdown-include
 phmdoctest
