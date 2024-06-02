@@ -5,9 +5,8 @@ Objective functions define the incentives and costs in a linear program. They ar
 ```python
 import energypylinear as epl
 
-battery = epl.Battery()
+battery = epl.Battery(electricity_prices=[100, 50, 200])
 simulation = battery.optimize(
-    electricity_prices=[100, 50, 200],
     objective="carbon",
     verbose=3
 )

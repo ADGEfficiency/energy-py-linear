@@ -37,6 +37,8 @@ asset = epl.Battery(
 )
 ```
 
+[Read more about custom constraints in the documentation](https://energypylinear.adgefficiency.com/latest/how-to/custom-constraints/).
+
 ### Documentation Refactor
 
 We have moved the asset validation documentation into the documentation for the assets.
