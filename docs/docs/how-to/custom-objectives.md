@@ -16,19 +16,6 @@ In addition, `energypylinear` allows you to define your own objective functions.
 
 **A custom objective function allows you to optimize for the revenues and costs that are important to you**.
 
-## Simple Terms
-
-Core to the custom objective function is the `epl.Term`, which represents a single term in the objective function:
-
-<!--phmdoctest-mark.skip-->
-```python
-import dataclasses
-
---8<-- "energypylinear/objectives.py:term"
-```
-
-A term can target either many assets by type or one asset by name. It can also include multiplication by interval data or by a coefficient.
-
 ## Custom Objective Function
 
 A custom objective function is a list of terms:
@@ -42,9 +29,23 @@ The objective function used in the linear program is the sum of these terms. The
 
 If supplied as dictionary, the term will be coerced to an `epl.Term`.
 
-## Simple Term Examples
 
-### Simultaneous Price and Carbon Optimization
+## Simple Terms
+
+Core to the custom objective function is the `epl.Term`, which represents a single term in the objective function:
+
+<!--phmdoctest-mark.skip-->
+```python
+import dataclasses
+
+--8<-- "energypylinear/objectives.py:term"
+```
+
+A term can target either many assets by type or one asset by name. It can also include multiplication by interval data or by a coefficient.
+
+### Examples
+
+#### Simultaneous Price and Carbon Optimization
 
 `energypylinear` has two different objective functions (price or carbon) built into the library - these optimize for either price or carbon, but not both at the same time.
 
@@ -145,7 +146,7 @@ print(pd.DataFrame(results))
 
 As expected as our carbon price increases, both our profit and emissions decrease.
 
-### Renewables Certificates
+#### Renewables Certificates
 
 In the previous example we used a custom objective function to apply incentives to the site import and export electricity by its asset type.
 
@@ -221,7 +222,7 @@ As expected, the first generator that is called is the `solar` generator, as it 
 
 As the site demand increases, the `wind` generator is called to make up the remaining demand.
 
-### Synthetic PPA
+#### Synthetic PPA
 
 A synthetic PPA is a financial instrument that allows swapping of the output of a wholesale exposed generator to a fixed price.
 
@@ -290,7 +291,7 @@ print(simulation.results[["site-electricity_prices", "wind-electric_generation_m
 
 As expected, our renewable generator still generates even during times of negative electricity prices - this is because its output is incentivized at a fixed, positive price.
 
-### Battery Cycle Cost
+#### Battery Cycle Cost
 
 It's common in battery optimization to include a cost to use the battery - for every MWh of charge, some cost is incurred.
 
@@ -602,7 +603,7 @@ print(
 2                    10.0                          0.0
 ```
 
-### Minimum Export Incentive
+#### Minimum Export Incentive
 
 Above we looked at a function term that took the maximum across many linear program variables at once using the `max_many_variables` function term, which results in one term being added to the objective function.
 
