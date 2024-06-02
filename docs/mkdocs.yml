@@ -61,19 +61,14 @@ nav:
       - Electric Vehicles: assets/evs.md
       - Heat Pump: assets/heat-pump.md
       - Renewable Generator: assets/renewable-generator.md
-  - How To:
-      - Optimize Multiple Assets: how-to/dispatch-site.md
-      - Optimize for Carbon: how-to/price-carbon.md
-      - Optimize for a Forecast: how-to/dispatch-forecast.md
-      - Custom Objective Functions: how-to/custom-objectives.md
-      - Complex Objective Function Terms: how-to/complex-terms.md
-      - Custom Constraints: how-to/custom-constraints.md
-  - Validation:
-      - Battery: validation/battery.md
-      # - Combined Heat & Power: validation/chp.md
-      - Electric Vehicles: validation/evs.md
-      - Heat Pump: validation/heat-pump.md
-      - Renewable Generator: validation/renewable-generator.md
+  - Use Cases:
+      - Multiple Assets: how-to/dispatch-site.md
+      - Carbon: how-to/price-carbon.md
+      - Forecast: how-to/dispatch-forecast.md
+      - Battery Cycles: how-to/battery-cycles.md
+  - Customization:
+      - Constraints: how-to/custom-constraints.md
+      - Objective Functions: how-to/custom-objectives.md
   - Changelog: changelog.md
   # - Performance: performance.md
   # - Measure Forecast Quality: index.md

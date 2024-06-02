@@ -1,16 +1,18 @@
-# CHP
+The `epl.CHP` (combined heat & power) model can generate electricity, high & low temperature heat from natural gas.
 
-Optimize CHP (combined heat & power) to generate electricity, high & low temperature heat from natural gas using `epl.CHP`:
+## Assumptions
 
-The `epl.CHP` model can be configured with electric, high and low temperature thermal efficiencies.
+The `epl.CHP` is configured with electric, high and low temperature thermal efficiencies. This allows modelling open cycle generators, gas engines and gas turbines.
 
-This allows modelling both gas engines and gas turbines.
+When optimizing, we can use interval data for the high and low temperature loads.  
 
-When optimizing, we can use interval data for the high and low temperature loads.  These thermal loads will be met by gas boilers if the CHP chooses not to generate, or cannot meet thermal demands.  High temperature heat can be let-down into low temperature heat.
+The high and low temperature loads will be met by gas boilers if the CHP chooses not to generate, or cannot meet thermal demands.  High temperature heat can be let-down into low temperature heat.
 
 The `epl.CHP` is allowed to dump both high temperature and low temperature heat.
 
-The high and low temperature heat demands are supplied alongside the electricity prices when optimizing:
+## Use
+
+You can optimize a single CHP with `epl.CHP`:
 
 ```python
 import energypylinear as epl

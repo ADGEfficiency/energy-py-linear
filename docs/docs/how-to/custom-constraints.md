@@ -6,16 +6,20 @@ The assets and site in `energypylinear` apply constraints to the linear program,
 
 ## Custom Constraint
 
-A custom constraint has a left hand side, a right hand side and a sense:
+The `epl.Constraint` represents a single custom constraint.
+
+A custom constraint has a left hand side, a right hand side and a sense.
 
 <!--phmdoctest-mark.skip-->
 ```python
 --8<-- "energypylinear/constraints.py:constraint"
 ```
 
+It also has an option for configuring how the constraint is aggregated over the simulation intervals.
+
 ## Constraint Terms
 
-Both the left and right hand sides of a custom constraint are list of constraint terms. A constraint term can be either a constant, an `epl.ConstraintTerm` or a dictionary.
+Both the left and right hand sides of a custom constraint are lists of constraint terms. A constraint term can be either a constant, an `epl.ConstraintTerm` or a dictionary.
 
 The `epl.ConstraintTerm` represents a single term in a constraint:
 
@@ -28,9 +32,9 @@ The `epl.ConstraintTerm` represents a single term in a constraint:
 
 ### Limiting Battery Cycles
 
-The example below shows how to optimize a battery with a constraint on battery cycles.
+The example below shows how to optimize a battery with a custom constraint on battery cycles.
 
-We define battery cycles as the sum of the total battery charge and discharge, and constraint it to be less than or equal to 15 cycles of 2 MWh per cycle:
+We define battery cycles as the sum of the total battery charge and discharge, and constrain it to be less than or equal to 15 cycles of 2 MWh per cycle:
 
 ```python
 import energypylinear as epl
@@ -38,7 +42,7 @@ import numpy as np
 
 np.random.seed(42)
 
-cycle_limit = 2 * 15
+cycle_limit = 30
 asset = epl.Battery(
     power_mw=1,
     capacity_mwh=2,
@@ -64,18 +68,18 @@ simulation = asset.optimize(verbose=3)
 total_cycles = simulation.results.sum()[
     ["battery-electric_charge_mwh", "battery-electric_discharge_mwh"]
 ].sum()
-print(total_cycles)
+print(f"{total_cycles=}")
 ```
 
 After simulation we can see our total cycles are constrained to an upper limit of 30 (with a small floating point error):
 
 ```
-30.000000002
+total_cycles=30.000000002
 ```
 
 ### Constraining Total Generation
 
-The example below shows how to constrain the total generation in a site.
+The example below shows how to use a custom constraint to constrain the total generation in a site.
 
 We define a site with a solar and electric generator asset, with the available solar power increasing with time:
 
@@ -119,7 +123,7 @@ print(
 )
 ```
 
-After simulation we can see that as solar generation becomes available, the CHP electric generation decreases to keep the total site electric generation at 25 MWh:
+As solar generation becomes available, the CHP electric generation decreases to keep the total site electric generation at 25 MWh:
 
 ```
    chp-electric_generation_mwh  solar-electric_generation_mwh  total-electric_generation_mwh

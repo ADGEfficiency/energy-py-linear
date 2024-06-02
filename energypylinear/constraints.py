@@ -74,7 +74,8 @@ class Constraint(pydantic.BaseModel):
         rhs: The right-hand side of the constraint.
         sense: The constraint sense and a sense (<=, ==, >=).
         interval_aggregation: How to aggregate terms across intervals.
-            None will mean one constraint per interval, "sum" will be one constraint per simulation.
+            None will result in one constraint per interval.
+            "sum" will result in one constraint per simulation.
     """
 
     lhs: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
