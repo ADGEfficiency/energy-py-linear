@@ -1,4 +1,6 @@
-The `epl.CHP` (combined heat & power) model can generate electricity, high & low temperature heat from natural gas.
+The `epl.CHP` asset is suitable for modelling combined heat and power (CHP) systems.  
+
+It can generate electricity, high & low temperature heat from natural gas.
 
 ## Assumptions
 

@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased
+
+### Custom Constraints
+
+It's now possible to add custom constraints to the linear program.
+
+The example below shows how to add a constraint on battery cycles:
+
+```python
+import energypylinear as epl
+import numpy as np
+
+np.random.seed(42)
+cycle_limit_mwh = 30
+asset = epl.Battery(
+    power_mw=1,
+    capacity_mwh=2,
+    efficiency_pct=0.98,
+    electricity_prices=np.random.normal(0.0, 1000, 48 * 7),
+    constraints=[
+        epl.Constraint(
+            lhs=[
+                epl.ConstraintTerm(
+                    asset_type="battery", variable="electric_charge_mwh"
+                ),
+                epl.ConstraintTerm(
+                    asset_type="battery", variable="electric_discharge_mwh"
+                ),
+            ],
+            rhs=cycle_limit,
+            sense="le",
+            interval_aggregation="sum",
+        )
+    ],
+)
+```
+
+### Documentation Refactor
+
+We have moved the asset validation documentation into the documentation for the assets.
+
+A new section `Customization` has been added to the documentation, which contains the documentation for custom constraints and objective functions.
+
 ## [1.3.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.3.1)
 
 ### Different Battery Charge and Discharge Rates
@@ -103,7 +146,7 @@ simulation = site.optimize(
 )
 
 accounts = epl.get_accounts(simulation.results, custom_terms=terms[-1:])
-print(accouts.custom)
+print(accounts.custom)
 ```
 
 ```
@@ -226,7 +269,7 @@ Plausible analytics added to the documentation.
 
 ## [1.1.1](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.1.1)
 
-### Bugs
+### Bug Fixes
 
 Fixed a bug where logger was making a `./logs` directory even when `enable_file_logging` was set to false.
 
@@ -261,7 +304,7 @@ asset.optimize(
 )
 ```
 
-### Bugs
+### Bug Fixes
 
 Fixed a bug on the `allow_infeasible` flag in `epl.Site.optimize`.
 

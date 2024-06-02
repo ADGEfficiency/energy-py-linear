@@ -1,4 +1,4 @@
-The `epl.Battery` model is suitable for modelling an electric battery, such as a lithium-ion battery.
+The `epl.Battery` asset is suitable for modelling an electric battery, such as a lithium-ion battery.
 
 ## Assumptions
 

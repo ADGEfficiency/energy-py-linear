@@ -1,14 +1,14 @@
-# Electric Vehicle Charging
+The `epl.EVs` asset is suitable for modelling electric vehicle charging, with multiple chargers and charge events.
 
-Optimize an electric vehicle charging station using `epl.EVs`.
-
-Control a number of EV chargers to charge a number of charge events.
+## Assumptions
 
 Chargers are configured by their size given in `charger_mws`.
 
 A `charge_event` is a time interval where an EV can be charged.  This is given as a boolean 2D array, with one binary digit for each charge event, interval pairs.
 
 Each charge event has a required amount of electricity `charge_event_mwh`, that can be delivered when the `charge_event` is 1.  The model is constrained so that each charge event receives all of it's `charge_event_mwh`.
+
+## Use
 
 Optimize two 100 MWe chargers for 4 charge events over 5 intervals:
 
@@ -104,15 +104,13 @@ assert all(
 )
 ```
 
-[You can check the correctness of the electric vehicle model here](https://energypylinear.adgefficiency.com/latest/validation/evs/).
-
 ## Validation
 
 A natural response when you get access to something someone else built is to wonder - **does this work correctly?**
 
 This section will give you confidence in the implementation of the EV asset.
 
-## Fully Constrained EV Charging
+### Fully Constrained EV Charging
 
 ```python
 import energypylinear as epl
@@ -137,7 +135,7 @@ The third charger is the spill charger.
 
 ![](../static/ev-validation-1.png)
 
-## Expanding a Charge Event Window
+### Expanding a Charge Event Window
 
 Let's expand out the charge event window to the last three intervals for the last charge event:
 
@@ -164,7 +162,7 @@ Now we see that the charge has happened in interval 3, this is because electrici
 
 ![](../static/ev-validation-2.png)
 
-## Overlapping Charge Events
+### Overlapping Charge Events
 
 When charge events overlap at low prices, both (but only two) chargers are used:
 
@@ -189,7 +187,7 @@ asset.plot(simulation, path="./docs/docs/static/ev-validation-3.png")
 
 ![](../static/ev-validation-3.png)
 
-## Adding V2G
+### Adding V2G
 
 ```python
 import energypylinear as epl
@@ -216,7 +214,7 @@ asset.plot(simulation, path="./docs/docs/static/ev-validation-4.png")
 
 The key takeaway here is that we discharge during interval 2.  All our charge events still end up at the correct state of charge at the end of the program.
 
-## Spill Chargers
+### Spill Chargers
 
 ```python
 import energypylinear as epl

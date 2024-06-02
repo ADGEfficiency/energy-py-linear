@@ -41,8 +41,7 @@ import energypylinear as epl
 import numpy as np
 
 np.random.seed(42)
-
-cycle_limit = 30
+cycle_limit_mwh = 30
 asset = epl.Battery(
     power_mw=1,
     capacity_mwh=2,
@@ -58,7 +57,7 @@ asset = epl.Battery(
                     asset_type="battery", variable="electric_discharge_mwh"
                 ),
             ],
-            rhs=cycle_limit,
+            rhs=cycle_limit_mwh,
             sense="le",
             interval_aggregation="sum",
         )

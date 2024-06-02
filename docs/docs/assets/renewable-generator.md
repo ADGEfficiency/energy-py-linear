@@ -1,8 +1,6 @@
-# Renewable Generator
+The `epl.RenewableGenerator` asset is suitable for modelling wind or solar generation.
 
-Dispatch an renewable generator operating in wholesale price arbitrage using `epl.RenewableGenerator`.
-
-This asset type is suitable for modelling either wind or solar generators.
+## Use
 
 ```python
 import energypylinear as epl
@@ -46,15 +44,13 @@ assert all(
 
 This renewable generator will turn down when electricity prices are negative.
 
-[You can check the correctness of the renewable generator model here](https://energypylinear.adgefficiency.com/latest/validation/renewable-generator/).
-
 ## Validation
 
 A natural response when you get access to something someone else built is to wonder - does this work correctly?
 
 This section will give you confidence in the implementation of the renewable generator asset.
 
-## Carbon Dispatch Behaviour
+### Carbon Dispatch Behaviour
 
 Let's optimize the renewable generator asset in two intervals:
 
