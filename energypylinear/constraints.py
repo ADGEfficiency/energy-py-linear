@@ -13,7 +13,8 @@ import energypylinear as epl
 class ConstraintTerm:
     """A term in a constraint.
 
-    The sum of terms creates either side of a constraint - left-hand side (LHS) or right-hand side (RHS).
+    The sum of terms creates the two sides of a constraint,
+    the left-hand side (LHS) and right-hand side (RHS).
 
     Examples:
 

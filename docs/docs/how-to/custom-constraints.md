@@ -1,6 +1,6 @@
 Constraints define the feasible region of a linear program.  They are how you control what is and isn't possible in a simulation.
 
-The assets and site in `energypylinear` apply constraints to the linear program, ranging from electricity balances around a battery to constraining how much electricity can be generated from a renewable generator. In addition, `energypylinear` allows you to define your own, custom constraints.
+The assets and site in `energypylinear` apply built-in constraints to the linear program. In addition, you can define your own custom constraints.
 
 **A custom constraint allows you to control what can and cannot happen in an `energypylinear` simulation**.
 

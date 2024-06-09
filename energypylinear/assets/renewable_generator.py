@@ -110,6 +110,7 @@ class RenewableGenerator(epl.Asset):
         electric_generation_lower_bound_pct: float = 1.0,
         name: str = "renewable-generator",
         freq_mins: int = defaults.freq_mins,
+        constraints: "list[epl.Constraint] | list[dict] | None" = None,
     ) -> None:
         """Initializes the asset."""
         self.cfg = RenewableGeneratorConfig(
@@ -131,6 +132,7 @@ class RenewableGenerator(epl.Asset):
                 export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
+                constraints=constraints,
             )
 
     def __repr__(self) -> str:

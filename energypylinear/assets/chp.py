@@ -88,6 +88,7 @@ class CHP(epl.Asset):
         high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
+        constraints: "list[epl.Constraint] | list[dict] | None" = None,
     ):
         """Initializes the asset."""
         self.cfg = CHPConfig(
@@ -112,6 +113,7 @@ class CHP(epl.Asset):
                 low_temperature_load_mwh=low_temperature_load_mwh,
                 low_temperature_generation_mwh=low_temperature_generation_mwh,
                 freq_mins=self.cfg.freq_mins,
+                constraints=constraints,
             )
 
     def __repr__(self) -> str:
