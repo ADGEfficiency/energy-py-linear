@@ -484,13 +484,18 @@ def test_limit_sum_generation_in_each_interval() -> None:
 def test_assets_can_take_constraints() -> None:
     """Test that all assets implement the constraints parameter."""
 
-    constraints = [{"lhs": 10, "rhs": {"asset_type": "site", "variable": "import_power_mwh"}}]
+    constraints = [
+        {"lhs": 10, "rhs": {"asset_type": "site", "variable": "import_power_mwh"}}
+    ]
     epl.Battery(constraints=constraints)
     epl.CHP(constraints=constraints)
-    epl.RenewableGenerator(electric_generation_mwh=[10, 20, 30, 40], constraints=constraints)
+    epl.RenewableGenerator(
+        electric_generation_mwh=[10, 20, 30, 40], constraints=constraints
+    )
     epl.HeatPump(constraints=constraints)
     epl.EVs(
         charge_events=[[10, 20, 30, 40], [10, 20, 30, 40]],
         chargers_power_mw=[1],
-        charge_events_capacity_mwh=[1, 1], constraints=constraints
+        charge_events_capacity_mwh=[1, 1],
+        constraints=constraints,
     )
