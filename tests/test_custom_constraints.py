@@ -492,5 +492,5 @@ def test_assets_can_take_constraints() -> None:
     epl.EVs(
         charge_events=[[10, 20, 30, 40], [10, 20, 30, 40]],
         chargers_power_mw=[1],
-        charge_events_capacity_mwh=[1, 1],constraints=constraints
+        charge_events_capacity_mwh=[1, 1], constraints=constraints
     )
