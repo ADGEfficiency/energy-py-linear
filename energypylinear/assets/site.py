@@ -8,6 +8,7 @@ import pydantic
 
 import energypylinear as epl
 from energypylinear.assets.asset import AssetOneInterval
+from energypylinear.constraints import add_custom_constraint
 from energypylinear.defaults import defaults
 from energypylinear.flags import Flags
 from energypylinear.freq import Freq
@@ -158,6 +159,22 @@ class SiteOneInterval(AssetOneInterval):
     export_limit_mwh: float
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
+    """
+    TODO
+
+    this matters in (at least) two different places
+
+    /Users/adam/energy-py-linear/energypylinear/constraints.py _resolve_constraint_term
+
+            (getattr(v, term.variable) if getattr(v, term.variable) is not None else 0)
+
+    /Users/adam/energy-py-linear/energypylinear/objectives.py
+            variables = []
+            for ass in assets:
+                for a in ass:
+                    if (v := getattr(a, term.variables.variable)) is not None:
+                        variables.append(v)
+    """
     electric_generation_mwh: None = None
     high_temperature_generation_mwh: None = None
     low_temperature_generation_mwh: None = None
@@ -276,7 +293,7 @@ class Site:
 
     Args:
         assets: list[Asset] - a list of energypylinear assets to optimize together.
-        cfg: SiteConfig - configuration for the site.
+        constraints: Additional custom constraints to apply to the linear program.
     """
 
     def __init__(
@@ -294,6 +311,7 @@ class Site:
         freq_mins: int = defaults.freq_mins,
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
+        constraints: "list[epl.Constraint] | list[dict] | None" = None,
     ):
         """Initialize a Site asset model."""
         self.assets = assets
@@ -316,6 +334,9 @@ class Site:
         )
 
         validate_interval_data(assets, self)
+
+        # TODO - these could go into the optimizer or something?
+        self.custom_constraints = constraints
 
     def __repr__(self) -> str:
         """A string representation of self."""
@@ -417,10 +438,20 @@ class Site:
                 ivars,
             )
 
+        # custom constraints are only placed after intervals
+        # if we need access to the interval index again, do the loop when setting up the constraint
+
+        if self.custom_constraints is not None:
+            for constraint in self.custom_constraints:
+                add_custom_constraint(
+                    optimizer=self.optimizer,
+                    constraint=constraint,
+                    ivars=ivars,
+                    interval_data=self.cfg.interval_data,
+                )
+
         self.optimizer.objective(
-            epl.get_objective(
-                objective, self.optimizer, ivars, self.cfg.interval_data, verbose
-            )
+            epl.get_objective(objective, self.optimizer, ivars, self.cfg.interval_data)
         )
 
         status = self.optimizer.solve(

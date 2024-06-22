@@ -1,4 +1,5 @@
 """Battery asset for optimizing battery dispatch for price or carbon arbitrage."""
+
 import pathlib
 
 import numpy as np
@@ -186,6 +187,7 @@ class Battery(epl.Asset):
         initial_charge_mwh: float = 0.0,
         final_charge_mwh: float | None = None,
         freq_mins: int = defaults.freq_mins,
+        constraints: "list[epl.Constraint] | list[dict] | None" = None,
     ):
         """Initialize the asset.
 
@@ -201,6 +203,7 @@ class Battery(epl.Asset):
             initial_charge_mwh: Initial charge state of the battery in megawatt hours.
             final_charge_mwh: Final charge state of the battery in megawatt hours.
             freq_mins: length of the simulation intervals in minutes.
+            constraints: Additional custom constraints to apply to the linear program.
         """
         initial_charge_mwh, final_charge_mwh = setup_initial_final_charge(
             initial_charge_mwh, final_charge_mwh, capacity_mwh
@@ -229,7 +232,10 @@ class Battery(epl.Asset):
                 export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
+                constraints=constraints,
             )
+
+        # TODO - could warn that if constraints are specified, but not prices, they will be ignored
 
     def __repr__(self) -> str:
         """Return a string representation of self.

@@ -609,6 +609,7 @@ class EVs:
         | np.ndarray
         | None = None,
         freq_mins: int = defaults.freq_mins,
+        constraints: "list[epl.Constraint] | list[dict] | None" = None,
     ):
         """Initialize an electric vehicle asset model."""
 
@@ -660,6 +661,7 @@ class EVs:
                 export_electricity_prices=export_electricity_prices,
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
+                constraints=constraints,
             )
             assert isinstance(self.site.cfg.interval_data.idx, np.ndarray)
             validate_ev_interval_data(
