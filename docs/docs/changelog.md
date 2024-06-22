@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [1.4.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.4.0)
 
 ### Custom Constraints
 
@@ -45,7 +45,7 @@ We have moved the asset validation documentation into the documentation for the 
 
 A new section `Customization` has been added to the documentation, which contains the documentation for custom constraints and objective functions.
 
-## [1.3.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.3.1)
+## [1.3.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.3.0)
 
 ### Different Battery Charge and Discharge Rates
 
