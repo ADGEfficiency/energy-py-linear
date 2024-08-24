@@ -16,9 +16,11 @@ A Python library for optimizing energy assets with mixed-integer linear programm
 - heat pumps,
 - renewable (wind & solar) generators.
 
-Assets & sites can be optimized to either maximize profit or minimize carbon emissions, or a user defined custom objective function.
+Assets can be optimized to either maximize profit or minimize carbon emissions, or for user defined custom objective functions. Custom constraints can be used to further constrain asset behaviour.
 
-Energy balances are performed on electricity, high, and low temperature heat.
+A site is a collection of assets that can be optimized together. Sites can use custom objectives and constraints.
+
+Energy balances are performed on electricity, high, and low temperature heat. This means `energypylinear` can model thermal assets like combined heat and power generators, boilers, and heat pumps, alongside electric assets such as batteries, electric vehicles or renewable generators.
 
 ## Setup
 
@@ -42,8 +44,11 @@ asset = epl.Battery(
     power_mw=2,
     capacity_mwh=4,
     efficiency_pct=0.9,
-  electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
-  export_electricity_prices=40
+    # different electricity prices for each interval
+    # length of electricity_prices is the length of the simulation
+    electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
+    # a constant value for each interval
+    export_electricity_prices=40,
 )
 
 simulation = asset.optimize()
@@ -58,15 +63,10 @@ import energypylinear as epl
 
 assets = [
     #  2.0 MW, 4.0 MWh battery
-    epl.Battery(
-        power_mw=2.0,
-        capacity_mwh=4.0
-    ),
+    epl.Battery(power_mw=2.0, capacity_mwh=4.0),
     #  30 MW open cycle generator
     epl.CHP(
-        electric_power_max_mw=100,
-        electric_power_min_mw=30,
-        electric_efficiency_pct=0.4
+        electric_power_max_mw=100, electric_power_min_mw=30, electric_efficiency_pct=0.4
     ),
     #  2 EV chargers & 4 charge events
     epl.EVs(
@@ -82,14 +82,17 @@ assets = [
     #  natural gas boiler to generate high temperature heat
     epl.Boiler(),
     #  valve to generate low temperature heat from high temperature heat
-    epl.Valve()
+    epl.Valve(),
 ]
 
 site = epl.Site(
-  assets=assets,
-  electricity_prices=[100, 50, 200, -100, 0],
-  high_temperature_load_mwh=[105, 110, 120, 110, 105],
-  low_temperature_load_mwh=[105, 110, 120, 110, 105]
+    assets=assets,
+    # length of energy prices is the length of the simulation
+    electricity_prices=[100, 50, 200, -100, 0],
+    # these should match the length of the export_electricity_prices
+    # if they don't, they will be repeated or cut to match the length of electricity_prices
+    high_temperature_load_mwh=[105, 110, 120, 110, 105],
+    low_temperature_load_mwh=[105, 110, 120, 110, 105],
 )
 
 simulation = site.optimize()
