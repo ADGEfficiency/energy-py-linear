@@ -68,15 +68,68 @@ class ConstraintTerm:
 class Constraint(pydantic.BaseModel):
     """A custom constraint.
 
-    Made of a left-hand side (LHS), a right-hand side (RHS) and a sense (<=, ==, >=).
+        Made of a left-hand side (LHS), a right-hand side (RHS) and a sense (<=, ==, >=).
 
-    Attributes:
-        lhs: The left-hand side of the constraint.
-        rhs: The right-hand side of the constraint.
-        sense: The constraint sense and a sense (<=, ==, >=).
-        interval_aggregation: How to aggregate terms across intervals.
-            None will result in one constraint per interval.
-            "sum" will result in one constraint per simulation.
+        Attributes:
+            lhs: The left-hand side of the constraint.
+            rhs: The right-hand side of the constraint.
+            sense: The constraint sense and a sense (<=, ==, >=).
+            interval_aggregation: How to aggregate terms across intervals.
+                None will result in one constraint per interval.
+                "sum" will result in one constraint per simulation.
+
+        Example of using a custom constraint with the `energypylinear` Pydantic models:
+
+        ```python
+        import energypylinear as epl
+
+        epl.Battery(
+            power_mw=1,
+            capacity_mwh=2,
+            efficiency_pct=0.98,
+            electricity_prices=np.random.normal(0.0, 1000, 48 * 7),
+            constraints=[
+                epl.Constraint(
+                    lhs=[
+                        epl.ConstraintTerm(
+                            asset_type="battery", variable="electric_charge_mwh"
+                        ),
+                        epl.ConstraintTerm(
+                            asset_type="battery", variable="electric_discharge_mwh"
+                        ),
+                    ],
+                    rhs=cycle_limit_mwh,
+                    sense="le",
+                    interval_aggregation="sum",
+                )
+            ],
+        )
+        ```
+
+        Constraints can also be set with dictionaries:
+
+        ```python
+        import energypylinear as epl
+
+        epl.Battery(
+            power_mw=1,
+            capacity_mwh=2,
+            efficiency_pct=0.98,
+            electricity_prices=np.random.normal(0.0, 1000, 48 * 7),
+            constraints=[
+                {
+                    "lhs": [
+                        {"asset_type": "battery", "variable": "electric_charge_mwh"},
+                        {"asset_type": "battery", "variable": "electric_discharge_mwh"},
+                    ],
+                    "rhs": cycle_limit_mwh,
+                    "sense": "le",
+                    "interval_aggregation": "sum",
+                },
+            ],
+        )
+        ```
+    >>>>>>> Stashed changes
     """
 
     lhs: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
