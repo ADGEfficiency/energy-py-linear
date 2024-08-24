@@ -52,6 +52,8 @@ class Term:
         asset_type="battery",
         coefficient=0.25
     )
+
+    # TODO - document as dictionaries as well
     ```
 
     Attributes:
@@ -145,7 +147,10 @@ OneTerm = Term | FunctionTermTwoVariables | FunctionTermManyVariables
 
 @dataclasses.dataclass
 class CustomObjectiveFunction:
-    """A custom objective function - a sum of `OneTerm` objects."""
+    """A custom objective function - a sum of `OneTerm` objects.
+
+    TODO - example
+    """
 
     terms: list[OneTerm]
 
@@ -620,8 +625,15 @@ def get_objective(
 
         objective = CustomObjectiveFunction(terms=terms)
 
-    else:
-        assert isinstance(objective, CustomObjectiveFunction)
+    if isinstance(objective, list):
+        # here assume the user has just put in the terms as a list, without the `{"terms": terms}`
+        # doing it as I did it naturally when I used the library
+        # TODO document
+        objective = CustomObjectiveFunction(
+            terms=[term_factory(term) for term in objective]
+        )
+
+    assert isinstance(objective, CustomObjectiveFunction)
 
     obj: list[typing.Any | float] = []
     add_simple_terms(interval_data, objective, ivars, obj)

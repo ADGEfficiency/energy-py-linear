@@ -18,31 +18,62 @@ from energypylinear.utils import repeat_to_match_length
 
 
 def validate_interval_data(
-    assets: list, site: "epl.Site", repeat_interval_data: bool = True
+    assets: list,
+    site: "epl.Site",
+    extra_interval_data: list | None = None,
+    repeat_interval_data: bool = True,
 ) -> None:
     """Validates asset interval data against the site."""
-    if not repeat_interval_data:
-        for asset in assets:
-            if hasattr(asset.cfg, "interval_data"):
-                assert len(asset.cfg.interval_data.idx) == len(
-                    site.cfg.interval_data.idx
-                )
 
-    else:
-        for asset in assets:
-            if hasattr(asset.cfg, "interval_data"):
-                if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
-                    idata = asset.cfg.interval_data.model_dump(exclude={"idx"})
-                    for name, data in idata.items():
-                        assert isinstance(site.cfg.interval_data.idx, np.ndarray)
-                        setattr(
-                            asset.cfg.interval_data,
-                            name,
-                            repeat_to_match_length(
-                                data,
-                                site.cfg.interval_data.idx,
-                            ),
+    # sets the interval data of each asset to the same length as the site interval data
+    for asset in assets:
+        if hasattr(asset.cfg, "interval_data"):
+            if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
+                idata = asset.cfg.interval_data.model_dump(exclude={"idx"})
+                for name, data in idata.items():
+                    assert isinstance(site.cfg.interval_data.idx, np.ndarray)
+                    setattr(
+                        asset.cfg.interval_data,
+                        name,
+                        repeat_to_match_length(
+                            data,
+                            site.cfg.interval_data.idx,
                         )
+                        if repeat_interval_data
+                        else data,
+                    )
+
+                    # if we pass in extra interval data
+                    if extra_interval_data is not None:
+                        for extra in extra_interval_data:
+                            setattr(
+                                asset.cfg.interval_data,
+                                extra["name"],
+                                repeat_to_match_length(
+                                    extra["data"],
+                                    site.cfg.interval_data.idx,
+                                )
+                                if repeat_interval_data
+                                else extra["data"],
+                            )
+
+    if extra_interval_data is not None:
+        for extra in extra_interval_data:
+            setattr(
+                site.cfg.interval_data,
+                extra["name"],
+                repeat_to_match_length(
+                    extra["data"],
+                    site.cfg.interval_data.idx,
+                )
+                if repeat_interval_data
+                else extra["data"],
+            )
+
+    # here really should check over all the interval data, not just the idx
+    for asset in assets:
+        if hasattr(asset.cfg, "interval_data"):
+            assert len(asset.cfg.interval_data.idx) == len(site.cfg.interval_data.idx)
 
 
 class SiteIntervalData(pydantic.BaseModel):
@@ -59,7 +90,7 @@ class SiteIntervalData(pydantic.BaseModel):
     low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None
 
     idx: list[int] | np.ndarray = []
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True, extra="allow")
 
     @pydantic.model_validator(mode="after")
     def validate_all_things(self) -> "SiteIntervalData":
@@ -312,6 +343,7 @@ class Site:
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        **kwargs,
     ):
         """Initialize a Site asset model."""
         self.assets = assets
@@ -333,7 +365,21 @@ class Site:
             freq_mins=freq_mins,
         )
 
-        validate_interval_data(assets, self)
+        def get_extra_interval_data(kwargs: dict) -> list:
+            extra_interval_data = []
+            for key, data in kwargs.items():
+                # check if data is a list, nparry, tuple - sequence like
+                # could I check with the `typing.Sequence` type?
+                if data is not None and isinstance(data, (list, np.ndarray, tuple)):
+                    extra_interval_data.append({"name": key, "data": data})
+            return extra_interval_data
+
+        extra_interval_data = get_extra_interval_data(kwargs)
+        validate_interval_data(assets, self, extra_interval_data=extra_interval_data)
+        print(self.cfg.interval_data)
+
+        # TODO - should raise warning/error if kwargs get through - if there is a extra with that isn't made into interval data
+        # could check if attr of interval data, if not, raise warning
 
         # TODO - these could go into the optimizer or something?
         self.custom_constraints = constraints

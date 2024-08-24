@@ -64,18 +64,8 @@ def extract_site_results(
     assert isinstance(site.cfg.interval_data.electricity_prices, np.ndarray)
     assert isinstance(site.cfg.interval_data.electricity_carbon_intensities, np.ndarray)
 
-    for attr in [
-        "electricity_prices",
-        "electricity_carbon_intensities",
-        "high_temperature_load_mwh",
-        "low_temperature_load_mwh",
-        "low_temperature_generation_mwh",
-        "gas_prices",
-        "electric_load_mwh",
-    ]:
-        results[f"{site.cfg.name}-{attr}"].append(
-            getattr(site.cfg.interval_data, attr)[i]
-        )
+    for attr, data in site.cfg.interval_data.model_dump().items():
+        results[f"{site.cfg.name}-{attr}"].append(data[i])
 
 
 def extract_spill_results(ivars: "epl.IntervalVars", results: dict, i: int) -> None:
@@ -425,6 +415,13 @@ def extract_results(
             check_evs=any([isinstance(a, epl.EVs) for a in assets]),
         )
     spill_occured = warn_spills(results, flags, verbose=verbose)
+
+    # TODO - could i put custom objective results here?
+    # would first just want the extra_interval_data
+    # its a bit tough with the complex terms
+    # maybe could just do simple ones / ones that fit a certain pattern???
+    # better than nothing
+    # should be a flag though...
 
     return SimulationResult(
         status=status,

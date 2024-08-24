@@ -1,5 +1,3 @@
-"""Tests the implementation of custom objective functions."""
-
 import numpy as np
 import pytest
 
