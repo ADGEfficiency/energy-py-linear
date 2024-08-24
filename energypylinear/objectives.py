@@ -53,7 +53,6 @@ class Term:
         coefficient=0.25
     )
 
-    # TODO - document as dictionaries as well
     ```
 
     Attributes:
@@ -147,10 +146,7 @@ OneTerm = Term | FunctionTermTwoVariables | FunctionTermManyVariables
 
 @dataclasses.dataclass
 class CustomObjectiveFunction:
-    """A custom objective function - a sum of `OneTerm` objects.
-
-    TODO - example
-    """
+    """A custom objective function - a sum of `OneTerm` objects."""
 
     terms: list[OneTerm]
 

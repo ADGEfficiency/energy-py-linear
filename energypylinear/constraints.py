@@ -77,8 +77,6 @@ class Constraint(pydantic.BaseModel):
         interval_aggregation: How to aggregate terms across intervals.
             None will result in one constraint per interval.
             "sum" will result in one constraint per simulation.
-
-    TODO - example with constraint terms
     """
 
     lhs: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
