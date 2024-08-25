@@ -22,7 +22,7 @@ Energy balances are performed on electricity, high, and low temperature heat.
 
 ## Setup
 
-Requires Python 3.10+:
+Requires Python 3.11+:
 
 ```shell-session
 $ pip install energypylinear
