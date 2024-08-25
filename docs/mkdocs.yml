@@ -65,7 +65,7 @@ nav:
       - Multiple Assets: how-to/dispatch-site.md
       - Carbon: how-to/price-carbon.md
       - Forecast: how-to/dispatch-forecast.md
-      - Battery Cycles: how-to/battery-cycles.md
+      # - Battery Cycles: how-to/battery-cycles.md
   - Customization:
       - Constraints: how-to/custom-constraints.md
       - Objective Functions: how-to/custom-objectives.md

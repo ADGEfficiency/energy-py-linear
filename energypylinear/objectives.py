@@ -145,7 +145,75 @@ OneTerm = Term | FunctionTermTwoVariables | FunctionTermManyVariables
 
 @dataclasses.dataclass
 class CustomObjectiveFunction:
-    """A custom objective function - a sum of `OneTerm` objects."""
+    """A custom objective function - a sum of `OneTerm` objects.
+
+    Example of a custom objective function with the `energypylinear` Pydantic models to represent:
+    - site import power cost,
+    - site export power cost.
+
+    ```python
+    import energypylinear as epl
+
+    asset = epl.Battery(
+        power_mw=1,
+        capacity_mwh=2,
+        efficiency_pct=0.98,
+        electricity_prices=np.random.normal(0.0, 1000, 48 * 7)
+        )
+
+    asset.optimize(
+        objective={"terms": [
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "electricity_prices",
+            },
+            {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+                "interval_data": "electricity_prices",
+                "coefficient": -1,
+            }
+        ]}
+    )
+    ```
+
+    Objectives can also be set with dictionaries:
+
+    ```python
+    import energypylinear as epl
+
+    epl.Battery(
+        power_mw=1,
+        capacity_mwh=2,
+        efficiency_pct=0.98,
+        electricity_prices=np.random.normal(0.0, 1000, 48 * 7),
+    )
+
+    site.optimize(
+        objective=epl.CustomObjectiveFunction(
+            terms=[
+                epl.Term(
+                    asset_type="site",
+                    variable="import_power_mwh",
+                    interval_data="electricity_prices",
+                ),
+                epl.Term(
+                    asset_type="site",
+                    variable="export_power_mwh",
+                    interval_data="electricity_prices",
+                    coefficient=-1,
+                ),
+                epl.Term(
+                    asset_name="solar",
+                    variable="electric_generation_mwh",
+                    coefficient=-25,
+                ),
+            ]
+        )
+    )
+    ```
+    """
 
     terms: list[OneTerm]
 

@@ -19,14 +19,14 @@ class ConstraintTerm:
     Examples:
 
     ```python
-    # a constraint term for site import power electricity cost
+    # site import power electricity cost
     ConstraintTerm(
         variable="import_power_mwh",
         asset_type="site",
         interval_data="electricity_prices"
     )
 
-    # a constraint term for site export power electricity revenue
+    # site export power electricity revenue
     ConstraintTerm(
         variable="import_power_mwh",
         asset_type="site",
@@ -34,7 +34,7 @@ class ConstraintTerm:
         coefficient=-1
     )
 
-    # a constraint term for battery cycle cost
+    # battery cycle cost
     ConstraintTerm(
         variable="electric_charge_mwh",
         asset_type="battery",
@@ -77,6 +77,61 @@ class Constraint(pydantic.BaseModel):
         interval_aggregation: How to aggregate terms across intervals.
             None will result in one constraint per interval.
             "sum" will result in one constraint per simulation.
+
+    Example of a custom constraint with the `energypylinear` Pydantic models to represent:
+    - the constraint,
+    - the constraint terms on the left and right sides,
+    - the sense of the constraint,
+    - whether to aggregate across the interval (time) dimension.
+
+    ```python
+    import energypylinear as epl
+
+    epl.Battery(
+        power_mw=1,
+        capacity_mwh=2,
+        efficiency_pct=0.98,
+        electricity_prices=np.random.normal(0.0, 1000, 48 * 7),
+        constraints=[
+            epl.Constraint(
+                lhs=[
+                    epl.ConstraintTerm(
+                        asset_type="battery", variable="electric_charge_mwh"
+                    ),
+                    epl.ConstraintTerm(
+                        asset_type="battery", variable="electric_discharge_mwh"
+                    ),
+                ],
+                rhs=cycle_limit_mwh,
+                sense="le",
+                interval_aggregation="sum",
+            )
+        ],
+    )
+    ```
+
+    Constraints can also be set with dictionaries:
+
+    ```python
+    import energypylinear as epl
+
+    epl.Battery(
+        power_mw=1,
+        capacity_mwh=2,
+        efficiency_pct=0.98,
+        electricity_prices=np.random.normal(0.0, 1000, 48 * 7),
+        constraints=[
+            {
+                "lhs": [
+                    {"asset_type": "battery", "variable": "electric_charge_mwh"},
+                    {"asset_type": "battery", "variable": "electric_discharge_mwh"},
+                ],
+                "rhs": cycle_limit_mwh,
+                "sense": "le",
+                "interval_aggregation": "sum",
+            },
+        ],
+    )
     """
 
     lhs: float | ConstraintTerm | dict | list[float | ConstraintTerm | dict]
