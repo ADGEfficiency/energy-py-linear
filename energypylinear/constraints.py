@@ -19,14 +19,14 @@ class ConstraintTerm:
     Examples:
 
     ```python
-    # a constraint term for site import power electricity cost
+    # site import power electricity cost
     ConstraintTerm(
         variable="import_power_mwh",
         asset_type="site",
         interval_data="electricity_prices"
     )
 
-    # a constraint term for site export power electricity revenue
+    # site export power electricity revenue
     ConstraintTerm(
         variable="import_power_mwh",
         asset_type="site",
@@ -34,7 +34,7 @@ class ConstraintTerm:
         coefficient=-1
     )
 
-    # a constraint term for battery cycle cost
+    # battery cycle cost
     ConstraintTerm(
         variable="electric_charge_mwh",
         asset_type="battery",

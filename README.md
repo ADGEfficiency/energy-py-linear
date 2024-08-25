@@ -20,7 +20,7 @@ Assets can be optimized to either maximize profit or minimize carbon emissions, 
 
 A site is a collection of assets that can be optimized together. Sites can use custom objectives and constraints.
 
-Energy balances are performed on electricity, high, and low temperature heat. This means `energypylinear` can model thermal assets like combined heat and power generators, boilers, and heat pumps, alongside electric assets such as batteries, electric vehicles or renewable generators.
+Energy balances are performed on electricity, high, and low temperature heat.
 
 ## Setup
 
