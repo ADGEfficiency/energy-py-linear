@@ -1,13 +1,17 @@
+"""Test that we can use custom interval data."""
 import numpy as np
 import pytest
 
 import energypylinear as epl
+from energypylinear.data_generation import generate_random_ev_input_data
+from energypylinear.defaults import defaults
+from tests.test_custom_objectives import asset_names, get_assets
 
 
-def test_get_extra_interval_data() -> None:
-    """Test that we can pass in and use extra interval data."""
+def test_get_custom_interval_data() -> None:
+    """Test that we can pass in and use custom interval data with a Site."""
 
-    # TODO - should it be custom or extra...???
+    # TODO - should it be custom or custom...???
 
     site = epl.Site(
         assets=[
@@ -32,7 +36,7 @@ def test_get_extra_interval_data() -> None:
     assert hasattr(site.cfg.interval_data, "network_charge")
     assert not hasattr(site.cfg.interval_data, "not_interval_data")
 
-    # TODO - should raise error with the not_interval_data="hello" - an extra kwarg we cannot process
+    # TODO - should raise error with the not_interval_data="hello" - an custom kwarg we cannot process
 
     objective = [
         {
@@ -54,14 +58,14 @@ def test_get_extra_interval_data() -> None:
         {
             "asset_type": "site",
             "variable": "import_power_mwh",
-            # here we use the extra / custom interval data
+            # here we use the custom / custom interval data
             "interval_data": "network_charge",
         },
     ]
     sim = site.optimize(objective)
     assert "site-network_charge" in sim.results.columns
 
-    # below we check that the extra interval data is repeated
+    # below we check that the custom interval data is repeated
     site = epl.Site(
         assets=[
             epl.Battery(
@@ -85,15 +89,12 @@ def test_get_extra_interval_data() -> None:
     sim = site.optimize(objective)
     assert sim.results["site-network_charge"].tolist() == [1, 300, 300, 0, 1]
 
-    # TODO - check we fail if we try to use extra interval data that isn't passed into the site init
-
-
-from energypylinear.data_generation import generate_random_ev_input_data
-from tests.test_custom_objectives import asset_names, get_assets
+    # TODO - check we fail if we try to use custom interval data that isn't passed into the site init
 
 
 @pytest.mark.parametrize("asset_name", asset_names)
-def test_get_extra_interval_data_assets(asset_name: str) -> None:
+def test_get_custom_interval_data_assets(asset_name: str) -> None:
+    """Test that we can pass in and use custom interval data with all the assets."""
     ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
 
     ds["network_charge"] = np.zeros_like(ds["electricity_prices"])
@@ -128,8 +129,6 @@ def test_get_extra_interval_data_assets(asset_name: str) -> None:
             "coefficient": -1000,
         },
     ]
-
-    from energypylinear.defaults import defaults
 
     objective.extend(
         [

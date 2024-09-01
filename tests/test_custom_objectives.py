@@ -1,3 +1,4 @@
+"""Test that we can use custom objective functions."""
 import numpy as np
 import pytest
 

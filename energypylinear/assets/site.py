@@ -17,7 +17,19 @@ from energypylinear.optimizer import Optimizer
 from energypylinear.utils import repeat_to_match_length
 
 
-def get_extra_interval_data(kwargs: dict) -> list:
+def get_custom_interval_data(kwargs: dict | None) -> list | None:
+    """
+    Attempts to extract custom interval data from keyword arguments.
+
+    Args:
+        kwargs: Dictionary of potential custom interal data.
+
+    Returns:
+        A list of custom interval data, or `None` if no kwargs.
+    """
+    if kwargs is None:
+        return None
+
     extra_interval_data = []
     for key, data in kwargs.items():
         # check if data is a list, nparry, tuple - sequence like
@@ -30,12 +42,12 @@ def get_extra_interval_data(kwargs: dict) -> list:
 def validate_interval_data(
     assets: list,
     site: "epl.Site",
-    extra_interval_data: dict,
+    extra_interval_data: dict | None = None,
     repeat_interval_data: bool = True,
 ) -> None:
     """Validates asset interval data against the site."""
     # TODO - changes the type
-    extra_interval_data = get_extra_interval_data(extra_interval_data)
+    eid = get_custom_interval_data(extra_interval_data)
 
     # sets the interval data of each asset to the same length as the site interval data
     for asset in assets:
@@ -58,8 +70,8 @@ def validate_interval_data(
                 setattr(asset.cfg.interval_data, "idx", site.cfg.interval_data.idx)
 
                 # if we pass in extra interval data
-                if extra_interval_data is not None:
-                    for extra in extra_interval_data:
+                if eid is not None:
+                    for extra in eid:
                         setattr(
                             asset.cfg.interval_data,
                             extra["name"],
@@ -71,8 +83,8 @@ def validate_interval_data(
                             else extra["data"],
                         )
 
-    if extra_interval_data is not None:
-        for extra in extra_interval_data:
+    if eid is not None:
+        for extra in eid:
             if len(np.array(extra["data"]).shape) == 1:
                 setattr(
                     site.cfg.interval_data,
