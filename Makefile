@@ -46,7 +46,7 @@ TEST_ARGS =
 export
 
 test: setup-test test-docs
-	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest $(TEST_ARGS)
+	pytest tests --cov=energypylinear --cov-report=html --cov-report=term-missing -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest $(TEST_ARGS)
 	# -coverage combine
 	# -coverage html
 	-coverage report
