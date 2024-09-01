@@ -56,10 +56,10 @@ class OptimizableAsset(Asset):
     @abc.abstractmethod
     def optimize(
         self,
-        objective: "str | dict | epl.objectives.CustomObjectiveFunction",
-        flags: "epl.Flags",
-        verbose: int | bool,
-        optimizer_config: "epl.OptimizerConfig | dict",
+        objective: "str | dict | epl.CustomObjectiveFunction" = "price",
+        verbose: int | bool = 2,
+        flags: "epl.Flags" = epl.Flags(),
+        optimizer_config: "epl.OptimizerConfig | dict" = epl.OptimizerConfig(),
     ) -> "epl.SimulationResult":
         """Optimize sites dispatch using a mixed-integer linear program."""
         pass
