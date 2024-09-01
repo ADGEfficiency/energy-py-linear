@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 import energypylinear as epl
@@ -85,3 +86,85 @@ def test_get_extra_interval_data() -> None:
     assert sim.results["site-network_charge"].tolist() == [1, 300, 300, 0, 1]
 
     # TODO - check we fail if we try to use extra interval data that isn't passed into the site init
+
+
+from energypylinear.data_generation import generate_random_ev_input_data
+from tests.test_custom_objectives import asset_names, get_assets
+
+
+@pytest.mark.parametrize("asset_name", asset_names)
+def test_get_extra_interval_data_assets(asset_name: str) -> None:
+    ds = generate_random_ev_input_data(48, n_chargers=3, charge_length=3, seed=None)
+
+    ds["network_charge"] = np.zeros_like(ds["electricity_prices"])
+
+    # TODO - should just return a dict
+    assets = get_assets(ds, asset_name)
+    assert len(assets) == 1
+    asset = assets[0]
+    assert hasattr(asset.site.cfg.interval_data, "network_charge")
+
+    objective = [
+        {
+            "asset_type": "site",
+            "variable": "import_power_mwh",
+            "interval_data": "electricity_prices",
+        },
+        {
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+            "interval_data": "electricity_prices",
+            "coefficient": -1,
+        },
+        {
+            "asset_type": "*",
+            "variable": "gas_consumption_mwh",
+            "interval_data": "gas_prices",
+        },
+        {
+            "asset_type": "site",
+            "variable": "export_power_mwh",
+            "interval_data": "network_charge",
+            "coefficient": -1000,
+        },
+    ]
+
+    from energypylinear.defaults import defaults
+
+    objective.extend(
+        [
+            {
+                "asset_type": "spill",
+                "variable": variable,
+                "coefficient": defaults.spill_objective_penalty,
+            }
+            for variable in [
+                "electric_generation_mwh",
+                "high_temperature_generation_mwh",
+                "electric_load_mwh",
+                "electric_charge_mwh",
+                "electric_discharge_mwh",
+            ]
+        ]
+    )
+    objective.extend(
+        [
+            {
+                "asset_type": "spill_evs",
+                "variable": variable,
+                "coefficient": defaults.spill_objective_penalty,
+            }
+            for variable in [
+                "electric_generation_mwh",
+                "high_temperature_generation_mwh",
+                "electric_load_mwh",
+                "electric_charge_mwh",
+                "electric_discharge_mwh",
+            ]
+        ],
+    )
+    sim = asset.optimize(objective)
+    assert "site-network_charge" in sim.results.columns
+
+    # TODO - check the export power - should be at site limit...
+    # but its a bit trikcy with the different assets...

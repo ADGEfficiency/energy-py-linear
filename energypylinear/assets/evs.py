@@ -564,34 +564,10 @@ def constrain_initial_final_charge(
 
 
 class EVs:
-    """Electric vehicle asset, used to represent multiple chargers.
+    """
+    Electric vehicle asset, used to represent multiple EV chargers.
 
     Can handle vehicle-to-grid charging.
-
-    Handles optimization and plotting of results over many intervals.
-
-    Args:
-        chargers_power_mw: size of EV chargers in mega-watts.
-        charge_events_capacity_mwh:
-            1D array of final SOC for each charge event.
-            Length is the number of charge events.
-        charge_event_efficiency:
-            Roundtrip efficiency of the charge event charge & discharge.
-        charger_turndown:
-            minimum charger output as a percent of the
-            charger size in mega-watts.
-        name: asset name
-        electricity_prices - the price of electricity in each interval.
-        electricity_carbon_intensities - carbon intensity of electricity in each interval.
-        charge_events: 2D matrix representing when a charge event is active.
-            Shape is (n_charge_events, n_timesteps).
-            A charge events matrix for 4 charge events over 5 intervals:
-            charge_events = [
-                [1, 0, 0, 0, 0],
-                [0, 1, 1, 1, 0],
-                [0, 0, 0, 1, 1],
-                [0, 1, 0, 0, 0],
-            ]
     """
 
     def __init__(
@@ -610,8 +586,36 @@ class EVs:
         | None = None,
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        **kwargs,
     ):
-        """Initialize an electric vehicle asset model."""
+        """
+        Initialize an Electric Vehicle asset.
+
+        Args:
+            chargers_power_mw: size of EV chargers in mega-watts.
+            charge_events_capacity_mwh:
+                1D array of final SOC for each charge event.
+                Length is the number of charge events.
+            charge_event_efficiency:
+                Roundtrip efficiency of the charge event charge & discharge.
+            charger_turndown:
+                minimum charger output as a percent of the
+                charger size in mega-watts.
+            name: asset name
+            electricity_prices - the price of electricity in each interval.
+            electricity_carbon_intensities - carbon intensity of electricity in each interval.
+            charge_events: 2D matrix representing when a charge event is active.
+                Shape is (n_charge_events, n_timesteps).
+                A charge events matrix for 4 charge events over 5 intervals:
+                charge_events = [
+                    [1, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 0],
+                    [0, 0, 0, 1, 1],
+                    [0, 1, 0, 0, 0],
+                ]
+            constraints: Additional custom constraints to apply to the linear program.
+            kwargs: Keyword arguments attempted to be used as extra interval data.
+        """
 
         charger_cfgs = np.array(
             [
@@ -662,10 +666,12 @@ class EVs:
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
                 constraints=constraints,
+                **kwargs,
             )
             assert isinstance(self.site.cfg.interval_data.idx, np.ndarray)
             validate_ev_interval_data(
-                self.site.cfg.interval_data.idx, self.cfg.charge_events
+                self.site.cfg.interval_data.idx,
+                self.cfg.charge_events,
             )
 
     def __repr__(self) -> str:

@@ -17,13 +17,25 @@ from energypylinear.optimizer import Optimizer
 from energypylinear.utils import repeat_to_match_length
 
 
+def get_extra_interval_data(kwargs: dict) -> list:
+    extra_interval_data = []
+    for key, data in kwargs.items():
+        # check if data is a list, nparry, tuple - sequence like
+        # could I check with the `typing.Sequence` type?
+        if data is not None and isinstance(data, (list, np.ndarray, tuple)):
+            extra_interval_data.append({"name": key, "data": data})
+    return extra_interval_data
+
+
 def validate_interval_data(
     assets: list,
     site: "epl.Site",
-    extra_interval_data: list | None = None,
+    extra_interval_data: dict,
     repeat_interval_data: bool = True,
 ) -> None:
     """Validates asset interval data against the site."""
+    # TODO - changes the type
+    extra_interval_data = get_extra_interval_data(extra_interval_data)
 
     # sets the interval data of each asset to the same length as the site interval data
     for asset in assets:
@@ -61,16 +73,17 @@ def validate_interval_data(
 
     if extra_interval_data is not None:
         for extra in extra_interval_data:
-            setattr(
-                site.cfg.interval_data,
-                extra["name"],
-                repeat_to_match_length(
-                    extra["data"],
-                    np.array(site.cfg.interval_data.idx),
+            if len(np.array(extra["data"]).shape) == 1:
+                setattr(
+                    site.cfg.interval_data,
+                    extra["name"],
+                    repeat_to_match_length(
+                        extra["data"],
+                        np.array(site.cfg.interval_data.idx),
+                    )
+                    if repeat_interval_data
+                    else extra["data"],
                 )
-                if repeat_interval_data
-                else extra["data"],
-            )
 
     # here really should check over all the interval data, not just the idx
     for asset in assets:
@@ -318,15 +331,12 @@ def constrain_site_low_temperature_heat_balance(
 
 
 class Site:
-    """Site asset - handles optimization and plotting of many assets over many intervals.
+    """
+    Site asset - handles optimization and plotting of many assets over many intervals.
 
     All assets are connected to the same site electricity, high and low temperature networks.
 
     All assets are optimized as a single linear program.
-
-    Args:
-        assets: list[Asset] - a list of energypylinear assets to optimize together.
-        constraints: Additional custom constraints to apply to the linear program.
     """
 
     def __init__(
@@ -347,7 +357,26 @@ class Site:
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
         **kwargs,
     ):
-        """Initialize a Site asset model."""
+        """
+        Initialize a Site.
+
+        Args:
+            assets: Assets to optimize together.
+            electricity_prices: The price of import electricity in each interval.
+                Will define both import and export prices if `export_electricity_prices` is None.
+            export_electricity_prices: The price of export electricity in each interval.
+            electricity_carbon_intensities: Carbon intensity of electricity in each interval.
+            electric_load_mwh: Electricity demand consumed by the site.
+            gas_prices: Price of natural gas, used in CHP and boilers in each interval.
+            high_temperature_load_mwh: High temperature load of the site.
+            low_temperature_load_mwh: Low temperature load of the site.
+            name: The site name.
+            freq_mins: Size of an interval in minutes.
+            import_limit_mw: Maximum import power of the site.
+            export_limit_mw: Minimum import power of the site.
+            constraints: Additional custom constraints to apply to the linear program.
+            kwargs: Keyword arguments attempted to be used as extra interval data.
+        """
         self.assets = assets
 
         self.cfg = SiteConfig(
@@ -367,17 +396,7 @@ class Site:
             freq_mins=freq_mins,
         )
 
-        def get_extra_interval_data(kwargs: dict) -> list:
-            extra_interval_data = []
-            for key, data in kwargs.items():
-                # check if data is a list, nparry, tuple - sequence like
-                # could I check with the `typing.Sequence` type?
-                if data is not None and isinstance(data, (list, np.ndarray, tuple)):
-                    extra_interval_data.append({"name": key, "data": data})
-            return extra_interval_data
-
-        extra_interval_data = get_extra_interval_data(kwargs)
-        validate_interval_data(assets, self, extra_interval_data=extra_interval_data)
+        validate_interval_data(assets, self, extra_interval_data=kwargs)
         print(self.cfg.interval_data)
 
         # TODO - should raise warning/error if kwargs get through - if there is a extra with that isn't made into interval data

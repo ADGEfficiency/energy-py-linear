@@ -17,7 +17,7 @@ def get_assets(ds: dict, asset: str) -> list[epl.Asset]:
             power_mw=2,
             capacity_mwh=4,
             efficiency_pct=0.9,
-            electricity_prices=ds["electricity_prices"],
+            **ds,
         ),
         "evs": epl.EVs(**ds, charger_turndown=0.0, charge_event_efficiency=1.0),
         "chp": epl.CHP(
@@ -26,16 +26,16 @@ def get_assets(ds: dict, asset: str) -> list[epl.Asset]:
             electric_efficiency_pct=0.2,
             high_temperature_efficiency_pct=0.2,
             low_temperature_efficiency_pct=0.2,
-            electricity_prices=ds["electricity_prices"],
+            **ds,
         ),
         "heat-pump": epl.HeatPump(
-            electricity_prices=ds["electricity_prices"],
+            **ds,
         ),
         "renewable": epl.RenewableGenerator(
             electric_generation_mwh=np.random.uniform(
                 0, 100, len(ds["electricity_prices"])
             ),
-            electricity_prices=ds["electricity_prices"],
+            **ds,
         ),
     }
     assets.append(library[asset])

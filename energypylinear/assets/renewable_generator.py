@@ -111,8 +111,24 @@ class RenewableGenerator(epl.Asset):
         name: str = "renewable-generator",
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        **kwargs,
     ) -> None:
-        """Initializes the asset."""
+        """Initializes a Renewable Generator asset.
+
+        Args:
+            electric_generation_mwh: Available electricity generation from the renewable source.
+            electricity_prices: The price of import electricity in each interval.
+                Will define both import and export prices if `export_electricity_prices` is None.
+            export_electricity_prices: The price of export electricity in each interval.
+            electricity_carbon_intensities: Carbon intensity of electricity in each interval.
+            electric_load_mwh: Electricity demand consumed by the site.
+            electric_generation_lower_bound_pct: Sets how much the generator can dump available
+                electricity.
+            name: The asset name.
+            freq_mins: length of the simulation intervals in minutes.
+            constraints: Additional custom constraints to apply to the linear program.
+            kwargs: Extra keyword arguments attempted to be used as extra interval data.
+        """
         self.cfg = RenewableGeneratorConfig(
             name=name,
             electric_generation_lower_bound_pct=electric_generation_lower_bound_pct,
@@ -133,6 +149,7 @@ class RenewableGenerator(epl.Asset):
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
                 constraints=constraints,
+                **kwargs,
             )
 
     def __repr__(self) -> str:

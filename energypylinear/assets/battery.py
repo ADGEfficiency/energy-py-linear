@@ -188,8 +188,9 @@ class Battery(epl.Asset):
         final_charge_mwh: float | None = None,
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        **kwargs,
     ):
-        """Initialize the asset.
+        """Initialize a Battery asset.
 
         Args:
             power_mw: Maximum charge rate in megawatts. Will define both the charge and discharge rate if `discharge_power_mw` is None.
@@ -204,6 +205,7 @@ class Battery(epl.Asset):
             final_charge_mwh: Final charge state of the battery in megawatt hours.
             freq_mins: length of the simulation intervals in minutes.
             constraints: Additional custom constraints to apply to the linear program.
+            kwargs: Extra keyword arguments attempted to be used as extra interval data.
         """
         initial_charge_mwh, final_charge_mwh = setup_initial_final_charge(
             initial_charge_mwh, final_charge_mwh, capacity_mwh
@@ -233,6 +235,7 @@ class Battery(epl.Asset):
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
                 constraints=constraints,
+                **kwargs,
             )
 
         # TODO - could warn that if constraints are specified, but not prices, they will be ignored

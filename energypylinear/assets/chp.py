@@ -48,26 +48,14 @@ class CHPOneInterval(AssetOneInterval):
 
 
 class CHP(epl.Asset):
-    """CHP asset - handles optimization and plotting of results over many intervals.
+    """
+    CHP asset - handles optimization and plotting of results over many intervals.
 
     A CHP (combined heat and power) generator generates electricity, high temperature
     and low temperature heat from natural gas.
 
     This asset can be used to model gas turbines, gas engines or open cycle generators
     like diesel generators.
-
-    Args:
-        electric_power_max_mw - maximum electric power output of the generator in mega-watts.
-        electric_power_min_mw - minimum electric power output of the generator in mega-watts.
-        electric_efficiency_pct - electric efficiency of the generator, measured in percentage.
-        high_temperature_efficiency_pct - high temperature efficiency of the generator, measured in percentage.
-        low_temperature_efficiency_pct - the low temperature efficiency of the generator, measured in percentage.
-        electricity_prices: the price of electricity in each interval.
-        gas_prices: the prices of natural gas, used in CHP and boilers in each interval.
-        electricity_carbon_intensities: carbon intensity of electricity in each interval.
-        high_temperature_load_mwh: high temperature load of the site in mega-watt hours.
-        low_temperature_load_mwh: low temperature load of the site in mega-watt hours.
-        freq_mins: the size of an interval in minutes.
 
     Make sure to get your efficiencies and gas prices on the same basis (HHV or LHV).
     """
@@ -89,8 +77,25 @@ class CHP(epl.Asset):
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        **kwargs,
     ):
-        """Initializes the asset."""
+        """
+        Initialize a Combined Heat and Power (CHP) asset.
+
+        Args:
+            electric_power_max_mw: Maximum electric power output of the generator in mega-watts.
+            electric_power_min_mw: Minimum electric power output of the generator in mega-watts.
+            electric_efficiency_pct: Electric efficiency of the generator, measured in percentage.
+            high_temperature_efficiency_pct: High temperature efficiency of the generator, measured in percentage.
+            low_temperature_efficiency_pct: The low temperature efficiency of the generator, measured in percentage.
+            electricity_prices: Price of electricity in each interval.
+            gas_prices: Price of natural gas, used in CHP and boilers in each interval.
+            electricity_carbon_intensities: carbon intensity of electricity in each interval.
+            high_temperature_load_mwh: High temperature load of the site.
+            low_temperature_load_mwh: Low temperature load of the site.
+            freq_mins: the size of an interval in minutes.
+            kwargs: Extra keyword arguments attempted to be used as extra interval data.
+        """
         self.cfg = CHPConfig(
             name=name,
             electric_power_min_mw=electric_power_min_mw,
@@ -114,6 +119,7 @@ class CHP(epl.Asset):
                 low_temperature_generation_mwh=low_temperature_generation_mwh,
                 freq_mins=self.cfg.freq_mins,
                 constraints=constraints,
+                **kwargs,
             )
 
     def __repr__(self) -> str:
