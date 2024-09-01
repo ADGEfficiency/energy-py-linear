@@ -6,7 +6,7 @@ import energypylinear as epl
 asset_names = ["battery", "evs", "chp", "heat-pump", "renewable"]
 
 
-def get_assets(ds: dict, asset: str) -> list[epl.OptimizeableAsset]:
+def get_assets(ds: dict, asset: str) -> list[epl.OptimizableAsset]:
     """Helper function to get assets from a string."""
     assets: list = []
     library = {

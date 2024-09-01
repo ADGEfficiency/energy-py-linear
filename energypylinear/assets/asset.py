@@ -11,7 +11,7 @@ import energypylinear as epl
 class Asset(abc.ABC):
     """Abstract Base Class for an Asset."""
 
-    site: epl.Site
+    site: "epl.Site"
 
     @abc.abstractmethod
     def __init__(self) -> None:
@@ -56,10 +56,10 @@ class OptimizableAsset(Asset):
     @abc.abstractmethod
     def optimize(
         self,
-        objective: "str | dict | epl.objectives.CustomObjectiveFunction" = "price",
-        verbose: int | bool = 2,
-        flags: epl.Flags = epl.Flags(),
-        optimizer_config: "epl.OptimizerConfig | dict" = epl.optimizer.OptimizerConfig(),
+        objective: "str | dict | epl.objectives.CustomObjectiveFunction",
+        flags: "epl.Flags",
+        verbose: int | bool,
+        optimizer_config: "epl.OptimizerConfig | dict",
     ) -> "epl.SimulationResult":
         """Optimize sites dispatch using a mixed-integer linear program."""
         pass

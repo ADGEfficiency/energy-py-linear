@@ -110,7 +110,7 @@ print(simulate(carbon_price=50, seed=42, n=72))
 ```
 
 ```
-<energypylinear.SimulationResult feasible:True, rows:72, cols:28>
+<energypylinear.SimulationResult feasible:True, rows:72, cols:29>
 ```
 
 We can validate that our custom objective function is working as expected by running simulations across many carbon prices:

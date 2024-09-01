@@ -65,7 +65,8 @@ def extract_site_results(
     assert isinstance(site.cfg.interval_data.electricity_carbon_intensities, np.ndarray)
 
     for attr, data in site.cfg.interval_data.model_dump().items():
-        results[f"{site.cfg.name}-{attr}"].append(data[i])
+        if attr != "idx":
+            results[f"{site.cfg.name}-{attr}"].append(data[i])
 
 
 def extract_spill_results(ivars: "epl.IntervalVars", results: dict, i: int) -> None:

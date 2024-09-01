@@ -56,7 +56,7 @@ generate-test-docs: setup-test
 	bash ./tests/generate-test-docs.sh
 
 test-docs: setup-test generate-test-docs
-	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose $(TEST_ARGS)
+	pytest tests/phmdoctest -n 1 --dist loadfile --color=yes --verbose $(TEST_ARGS)
 
 
 #  ----- CHECK -----

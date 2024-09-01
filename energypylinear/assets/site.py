@@ -66,7 +66,8 @@ def validate_interval_data(
                         if repeat_interval_data
                         else data,
                     )
-                setattr(asset.cfg.interval_data, "idx", site.cfg.interval_data.idx)
+                if repeat_interval_data:
+                    setattr(asset.cfg.interval_data, "idx", site.cfg.interval_data.idx)
 
                 # if we pass in extra interval data
                 if eid is not None:
@@ -408,7 +409,6 @@ class Site:
         )
 
         validate_interval_data(assets, self, extra_interval_data=kwargs)
-        print(self.cfg.interval_data)
 
         # TODO - should raise warning/error if kwargs get through - if there is a extra with that isn't made into interval data
         # could check if attr of interval data, if not, raise warning

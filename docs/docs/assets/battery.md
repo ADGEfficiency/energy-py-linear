@@ -26,7 +26,7 @@ asset = epl.Battery(
     freq_mins=60,
     initial_charge_mwh=1,
     final_charge_mwh=3,
-    name="battery"
+    name="battery",
 )
 simulation = asset.optimize()
 
@@ -36,12 +36,13 @@ assert all(
         "site-import_power_mwh",
         "site-export_power_mwh",
         "site-electricity_prices",
+        "site-export_electricity_prices",
         "site-electricity_carbon_intensities",
+        "site-gas_prices",
+        "site-electric_load_mwh",
         "site-high_temperature_load_mwh",
         "site-low_temperature_load_mwh",
         "site-low_temperature_generation_mwh",
-        "site-gas_prices",
-        "site-electric_load_mwh",
         "spill-electric_generation_mwh",
         "spill-electric_load_mwh",
         "spill-high_temperature_generation_mwh",
@@ -68,7 +69,7 @@ assert all(
         "total-spills_mwh",
         "total-electric_loss_mwh",
         "site-electricity_balance_mwh",
-    ]
+    ],
 )
 ```
 
