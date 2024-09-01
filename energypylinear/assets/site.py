@@ -30,6 +30,7 @@ def validate_interval_data(
         if hasattr(asset.cfg, "interval_data"):
             if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
                 idata = asset.cfg.interval_data.model_dump(exclude={"idx"})
+
                 for name, data in idata.items():
                     assert isinstance(site.cfg.interval_data.idx, np.ndarray)
                     setattr(
@@ -42,20 +43,21 @@ def validate_interval_data(
                         if repeat_interval_data
                         else data,
                     )
+                setattr(asset.cfg.interval_data, "idx", site.cfg.interval_data.idx)
 
-                    # if we pass in extra interval data
-                    if extra_interval_data is not None:
-                        for extra in extra_interval_data:
-                            setattr(
-                                asset.cfg.interval_data,
-                                extra["name"],
-                                repeat_to_match_length(
-                                    extra["data"],
-                                    site.cfg.interval_data.idx,
-                                )
-                                if repeat_interval_data
-                                else extra["data"],
+                # if we pass in extra interval data
+                if extra_interval_data is not None:
+                    for extra in extra_interval_data:
+                        setattr(
+                            asset.cfg.interval_data,
+                            extra["name"],
+                            repeat_to_match_length(
+                                extra["data"],
+                                np.array(site.cfg.interval_data.idx),
                             )
+                            if repeat_interval_data
+                            else extra["data"],
+                        )
 
     if extra_interval_data is not None:
         for extra in extra_interval_data:
@@ -64,7 +66,7 @@ def validate_interval_data(
                 extra["name"],
                 repeat_to_match_length(
                     extra["data"],
-                    site.cfg.interval_data.idx,
+                    np.array(site.cfg.interval_data.idx),
                 )
                 if repeat_interval_data
                 else extra["data"],
@@ -499,6 +501,7 @@ class Site:
         self.optimizer.objective(
             epl.get_objective(objective, self.optimizer, ivars, self.cfg.interval_data)
         )
+        self.objective = objective
 
         status = self.optimizer.solve(
             verbose=verbose, allow_infeasible=flags.allow_infeasible
