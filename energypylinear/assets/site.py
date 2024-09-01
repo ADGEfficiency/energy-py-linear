@@ -69,20 +69,6 @@ def validate_interval_data(
                 if repeat_interval_data:
                     setattr(asset.cfg.interval_data, "idx", site.cfg.interval_data.idx)
 
-                # if we pass in extra interval data
-                if eid is not None:
-                    for extra in eid:
-                        setattr(
-                            asset.cfg.interval_data,
-                            extra["name"],
-                            repeat_to_match_length(
-                                extra["data"],
-                                np.array(site.cfg.interval_data.idx),
-                            )
-                            if repeat_interval_data
-                            else extra["data"],
-                        )
-
     if eid is not None:
         for extra in eid:
             if len(np.array(extra["data"]).shape) == 1:

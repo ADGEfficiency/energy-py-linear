@@ -621,13 +621,14 @@ def get_objective(
 
         objective = CustomObjectiveFunction(terms=terms)
 
-    if isinstance(objective, list):
-        # here assume the user has just put in the terms as a list, without the `{"terms": terms}`
-        # doing it as I did it naturally when I used the library
-        # TODO document
-        objective = CustomObjectiveFunction(
-            terms=[term_factory(term) for term in objective]
-        )
+    # TODO - add later - it's nice to have, but requires changing typing
+    # if isinstance(objective, list):
+    #     # here assume the user has just put in the terms as a list, without the `{"terms": terms}`
+    #     # doing it as I did it naturally when I used the library
+    #     # TODO document
+    #     objective = CustomObjectiveFunction(
+    #         terms=[term_factory(term) for term in objective]
+    #     )
 
     assert isinstance(objective, CustomObjectiveFunction)
 
