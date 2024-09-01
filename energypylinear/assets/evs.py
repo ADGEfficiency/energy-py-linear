@@ -586,7 +586,7 @@ class EVs:
         | None = None,
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
-        **kwargs,
+        **kwargs: typing.Any,
     ):
         """
         Initialize an Electric Vehicle asset.

@@ -71,7 +71,7 @@ static: setup-static
 	rm -rf ./tests/phmdoctest
 	mypy --version
 	mypy $(MYPY_ARGS) ./energypylinear
-	mypy $(MYPY_ARGS) ./tests
+	mypy $(MYPY_ARGS) ./tests --explicit-package-bases
 
 lint: setup-check
 	rm -rf ./tests/phmdoctest

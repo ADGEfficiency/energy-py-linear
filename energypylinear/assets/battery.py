@@ -1,6 +1,7 @@
 """Battery asset for optimizing battery dispatch for price or carbon arbitrage."""
 
 import pathlib
+import typing
 
 import numpy as np
 import pulp
@@ -171,7 +172,7 @@ def constrain_initial_final_charge(
     optimizer.constrain(final.electric_final_charge_mwh == final.cfg.final_charge_mwh)
 
 
-class Battery(epl.Asset):
+class Battery(epl.OptimizableAsset):
     """Electric battery asset, able to charge and discharge electricity."""
 
     def __init__(
@@ -188,7 +189,7 @@ class Battery(epl.Asset):
         final_charge_mwh: float | None = None,
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
-        **kwargs,
+        **kwargs: typing.Any,
     ):
         """Initialize a Battery asset.
 

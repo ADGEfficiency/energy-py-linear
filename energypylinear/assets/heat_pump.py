@@ -1,5 +1,6 @@
 """Heat Pump asset."""
 import pathlib
+import typing
 
 import numpy as np
 import pulp
@@ -46,7 +47,7 @@ class HeatPumpOneInterval(AssetOneInterval):
     high_temperature_generation_mwh: pulp.LpVariable
 
 
-class HeatPump(epl.Asset):
+class HeatPump(epl.OptimizableAsset):
     """Heat pump asset - handles optimization and plotting of results over many intervals.
 
     A heat pump generates high temperature heat from low temperature heat and electricity.
@@ -67,7 +68,7 @@ class HeatPump(epl.Asset):
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
-        **kwargs,
+        **kwargs: typing.Any,
     ):
         """Initializes the asset.
 

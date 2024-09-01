@@ -24,30 +24,32 @@ def test_network_charges() -> None:
         electric_load_mwh=100,
     )
 
-    objective = [
-        {
-            "asset_type": "site",
-            "variable": "import_power_mwh",
-            "interval_data": "electricity_prices",
-        },
-        {
-            "asset_type": "site",
-            "variable": "export_power_mwh",
-            "interval_data": "electricity_prices",
-            "coefficient": -1,
-        },
-        {
-            "asset_type": "*",
-            "variable": "gas_consumption_mwh",
-            "interval_data": "gas_prices",
-        },
-        {
-            "asset_type": "site",
-            "variable": "import_power_mwh",
-            "interval_data": "network_charge",
-            "coefficient": 1000,
-        },
-    ]
+    objective = {
+        "terms": [
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "electricity_prices",
+            },
+            {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+                "interval_data": "electricity_prices",
+                "coefficient": -1,
+            },
+            {
+                "asset_type": "*",
+                "variable": "gas_consumption_mwh",
+                "interval_data": "gas_prices",
+            },
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "network_charge",
+                "coefficient": 1000,
+            },
+        ]
+    }
     sim = site.optimize(objective, verbose=0)
     assert all(sim.results["site-import_power_mwh"] == np.full(5, 100))
     assert all(sim.results["site-export_power_mwh"] == np.zeros(5))

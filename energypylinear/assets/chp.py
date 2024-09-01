@@ -47,7 +47,7 @@ class CHPOneInterval(AssetOneInterval):
     low_temperature_generation_mwh: pulp.LpVariable
 
 
-class CHP(epl.Asset):
+class CHP(epl.OptimizableAsset):
     """
     CHP asset - handles optimization and plotting of results over many intervals.
 
@@ -77,7 +77,7 @@ class CHP(epl.Asset):
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
-        **kwargs,
+        **kwargs: typing.Any,
     ):
         """
         Initialize a Combined Heat and Power (CHP) asset.

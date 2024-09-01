@@ -3,6 +3,8 @@ Renewable Generator asset.
 
 Suitable for modelling either turndownable wind or solar."""
 
+import typing
+
 import numpy as np
 import pydantic
 
@@ -76,7 +78,7 @@ class RenewableGeneratorOneInterval(AssetOneInterval):
     electric_generation_mwh: epl.LpVariable
 
 
-class RenewableGenerator(epl.Asset):
+class RenewableGenerator(epl.OptimizableAsset):
     """Renewable Generator asset.
 
     Handles optimization and plotting of results over many intervals.
@@ -111,7 +113,7 @@ class RenewableGenerator(epl.Asset):
         name: str = "renewable-generator",
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
-        **kwargs,
+        **kwargs: typing.Any,
     ) -> None:
         """Initializes a Renewable Generator asset.
 

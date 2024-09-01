@@ -46,7 +46,6 @@ def validate_interval_data(
     repeat_interval_data: bool = True,
 ) -> None:
     """Validates asset interval data against the site."""
-    # TODO - changes the type
     eid = get_custom_interval_data(extra_interval_data)
 
     # sets the interval data of each asset to the same length as the site interval data
@@ -367,7 +366,7 @@ class Site:
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
-        **kwargs,
+        **kwargs: typing.Any,
     ):
         """
         Initialize a Site.

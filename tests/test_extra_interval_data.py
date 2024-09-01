@@ -38,30 +38,32 @@ def test_get_custom_interval_data() -> None:
 
     # TODO - should raise error with the not_interval_data="hello" - an custom kwarg we cannot process
 
-    objective = [
-        {
-            "asset_type": "site",
-            "variable": "import_power_mwh",
-            "interval_data": "electricity_prices",
-        },
-        {
-            "asset_type": "site",
-            "variable": "export_power_mwh",
-            "interval_data": "electricity_prices",
-            "coefficient": -1,
-        },
-        {
-            "asset_type": "*",
-            "variable": "gas_consumption_mwh",
-            "interval_data": "gas_prices",
-        },
-        {
-            "asset_type": "site",
-            "variable": "import_power_mwh",
-            # here we use the custom / custom interval data
-            "interval_data": "network_charge",
-        },
-    ]
+    objective = {
+        "terms": [
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                "interval_data": "electricity_prices",
+            },
+            {
+                "asset_type": "site",
+                "variable": "export_power_mwh",
+                "interval_data": "electricity_prices",
+                "coefficient": -1,
+            },
+            {
+                "asset_type": "*",
+                "variable": "gas_consumption_mwh",
+                "interval_data": "gas_prices",
+            },
+            {
+                "asset_type": "site",
+                "variable": "import_power_mwh",
+                # here we use the custom / custom interval data
+                "interval_data": "network_charge",
+            },
+        ]
+    }
     sim = site.optimize(objective)
     assert "site-network_charge" in sim.results.columns
 
@@ -103,6 +105,7 @@ def test_get_custom_interval_data_assets(asset_name: str) -> None:
     assets = get_assets(ds, asset_name)
     assert len(assets) == 1
     asset = assets[0]
+    assert asset.site is not None
     assert hasattr(asset.site.cfg.interval_data, "network_charge")
 
     objective = [
@@ -162,7 +165,7 @@ def test_get_custom_interval_data_assets(asset_name: str) -> None:
             ]
         ],
     )
-    sim = asset.optimize(objective)
+    sim = asset.optimize({"terms": objective})
     assert "site-network_charge" in sim.results.columns
 
     # TODO - check the export power - should be at site limit...

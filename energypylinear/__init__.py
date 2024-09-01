@@ -4,7 +4,7 @@ from pulp import LpVariable
 
 from energypylinear import assets, data_generation, plot
 from energypylinear.accounting import get_accounts
-from energypylinear.assets.asset import Asset
+from energypylinear.assets.asset import Asset, OptimizableAsset
 from energypylinear.assets.battery import Battery
 from energypylinear.assets.boiler import Boiler
 from energypylinear.assets.chp import CHP
@@ -30,6 +30,7 @@ __all__ = [
     "Constraint",
     "ConstraintTerm",
     "CustomObjectiveFunction",
+    "OptimizableAsset",
     "Term",
     "get_objective",
     "RenewableGenerator",
