@@ -173,7 +173,7 @@ def constrain_initial_final_charge(
 
 
 class Battery(epl.OptimizableAsset):
-    """Electric battery asset, able to charge and discharge electricity."""
+    """The battery asset can charge, store and discharge electricity."""
 
     def __init__(
         self,

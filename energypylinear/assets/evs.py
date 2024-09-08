@@ -565,9 +565,9 @@ def constrain_initial_final_charge(
 
 class EVs:
     """
-    Electric vehicle asset, used to represent multiple EV chargers.
+    The EVs asset can charge, store and discharge electricity in mutliple charge events.
 
-    Can handle vehicle-to-grid charging.
+    Can handle both grid-to-vehicle and vehicle-to-grid charging.
     """
 
     def __init__(

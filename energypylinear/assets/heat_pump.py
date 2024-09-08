@@ -48,10 +48,7 @@ class HeatPumpOneInterval(AssetOneInterval):
 
 
 class HeatPump(epl.OptimizableAsset):
-    """Heat pump asset - handles optimization and plotting of results over many intervals.
-
-    A heat pump generates high temperature heat from low temperature heat and electricity.
-    """
+    """A heat pump generates high temperature heat from low temperature heat and electricity."""
 
     def __init__(
         self,

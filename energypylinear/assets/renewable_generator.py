@@ -79,19 +79,16 @@ class RenewableGeneratorOneInterval(AssetOneInterval):
 
 
 class RenewableGenerator(epl.OptimizableAsset):
-    """Renewable Generator asset.
-
-    Handles optimization and plotting of results over many intervals.
+    """
+    The Renewable Generator asset can generate electricity based on an available amount of electricity.
 
     This asset is suitable for modelling either wind or solar generatation.
 
     The electricity generation can be controlled with relative or absolute
     upper and lower bounds on the available generation in an interval.
 
-    The upper bound for the electricity generation is limited by the
-    `electric_generation_mwh` interval data input in
-    `RenewableGenerator.optimize`.  This input is the amount of generation
-    available from the wind or sun.
+    The upper bound for the electricity generation is limited by the `electric_generation_mwh` interval data
+    input in `RenewableGenerator.optimize`. This input is the amount of generation available from the wind or sun.
 
     The `electric_generation_mwh` input interval is the generation available
     to the site from the renewable resource - this should be after any limits or

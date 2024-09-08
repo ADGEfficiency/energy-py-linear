@@ -30,23 +30,23 @@ def get_custom_interval_data(kwargs: dict | None) -> list | None:
     if kwargs is None:
         return None
 
-    extra_interval_data = []
+    custom_interval_data = []
     for key, data in kwargs.items():
         # check if data is a list, nparry, tuple - sequence like
         # could I check with the `typing.Sequence` type?
         if data is not None and isinstance(data, (list, np.ndarray, tuple)):
-            extra_interval_data.append({"name": key, "data": data})
-    return extra_interval_data
+            custom_interval_data.append({"name": key, "data": data})
+    return custom_interval_data
 
 
 def validate_interval_data(
     assets: list,
     site: "epl.Site",
-    extra_interval_data: dict | None = None,
+    custom_interval_data: dict | None = None,
     repeat_interval_data: bool = True,
 ) -> None:
     """Validates asset interval data against the site."""
-    eid = get_custom_interval_data(extra_interval_data)
+    eid = get_custom_interval_data(custom_interval_data)
 
     # sets the interval data of each asset to the same length as the site interval data
     for asset in assets:
