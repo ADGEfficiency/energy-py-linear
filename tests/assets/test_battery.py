@@ -48,6 +48,20 @@ def test_price_optimization(
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
 
+    # now try the same with a spill asset
+    # this is just for test coverage really...
+    asset = epl.Battery(
+        power_mw=power_mw,
+        capacity_mwh=capacity_mwh,
+        efficiency_pct=efficiency,
+        electricity_prices=np.array(electricity_prices),
+        freq_mins=freq_mins,
+        initial_charge_mwh=initial_charge_mwh,
+        final_charge_mwh=0,
+        include_spill=True,
+    )
+    simulation = asset.optimize(verbose=False)
+
 
 @pytest.mark.parametrize(
     "carbon_intensities, initial_charge_mwh, expected_dispatch",
@@ -322,7 +336,6 @@ def test_no_simultaneous_import_export() -> None:
     )
     simulation = asset.optimize()
     results = simulation.results
-
     check_no_simultaneous(results, "site-import_power_mwh", "site-export_power_mwh")
 
 

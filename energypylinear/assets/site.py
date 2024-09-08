@@ -27,7 +27,7 @@ def get_custom_interval_data(kwargs: dict | None) -> list | None:
     Returns:
         A list of custom interval data, or `None` if no kwargs.
     """
-    if kwargs is None:
+    if (kwargs is None) or (kwargs == {}):
         return None
 
     custom_interval_data = []
