@@ -14,7 +14,8 @@ from energypylinear.logger import logger, set_logging_level
 # --8<-- [start:term]
 @dataclasses.dataclass
 class Term:
-    """A simple term in the objective function.
+    """
+    A simple term in the objective function.
 
     Will add `i` terms to the objective function, where `i` is
     the number of intervals in the simulation.
@@ -29,7 +30,6 @@ class Term:
     ```
 
     Examples:
-
     ```python
     # an objective function term for site import power electricity cost
     Term(

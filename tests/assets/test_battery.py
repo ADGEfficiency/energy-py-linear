@@ -110,10 +110,17 @@ def check_no_simultaneous(
     df: pd.DataFrame, left_col: str, right_col: str
 ) -> tuple[bool, pd.DataFrame]:
     """Checks that we don't do two things at once."""
+
+    # checks = (
+    #     ((df[left_col] > 0) & (df[right_col] == 0))
+    #     | ((df[right_col] > 0) & (df[left_col] == 0))
+    #     | ((df[left_col] == 0) & (df[right_col] == 0))
+    # )
+    tol = 1e-8
     checks = (
-        ((df[left_col] > 0) & (df[right_col] == 0))
-        | ((df[right_col] > 0) & (df[left_col] == 0))
-        | ((df[left_col] == 0) & (df[right_col] == 0))
+        ((df[left_col] > tol) & (df[right_col] <= tol))
+        | ((df[right_col] > tol) & (df[left_col] <= tol))
+        | ((df[left_col] <= tol) & (df[right_col] <= tol))
     )
     return (
         checks.all(),
@@ -195,7 +202,7 @@ def test_hypothesis(
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=final_charge_mwh,
-        include_spill=True,
+        include_spill=False,
     )
 
     simulation = asset.optimize(

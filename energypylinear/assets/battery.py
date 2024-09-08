@@ -192,7 +192,8 @@ class Battery(epl.OptimizableAsset):
         include_spill: bool = False,
         **kwargs: typing.Any,
     ):
-        """Initialize a Battery asset.
+        """
+        Initialize a Battery asset.
 
         Args:
             power_mw: Maximum charge rate in megawatts.
@@ -248,7 +249,8 @@ class Battery(epl.OptimizableAsset):
         # TODO - could warn that if constraints are specified, but not prices, they will be ignored
 
     def __repr__(self) -> str:
-        """Return a string representation of self.
+        """
+        Create a string representation of self.
 
         Returns:
             A string representation of self.
@@ -258,7 +260,8 @@ class Battery(epl.OptimizableAsset):
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> BatteryOneInterval:
-        """Generate linear program data for one interval.
+        """
+        Generate linear program data for one interval.
 
         Args:
             optimizer: Linear program optimizer.
@@ -309,7 +312,8 @@ class Battery(epl.OptimizableAsset):
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
-        """Constrain asset within an interval.
+        """
+        Constrain asset within an interval.
 
         Args:
             optimizer: Linear program optimizer.
@@ -336,7 +340,8 @@ class Battery(epl.OptimizableAsset):
         optimizer: Optimizer,
         ivars: "epl.IntervalVars",
     ) -> None:
-        """Constrain asset after all intervals.
+        """
+        Constrain asset after all intervals.
 
         Args:
             optimizer: Linear program optimizer.

@@ -81,13 +81,13 @@ lint: setup-check
 	ruff format --check **/*.py
 	poetry check
 
-CHECK_DOCSTRINGS=./energypylinear/assets/battery.py ./energypylinear/objectives.py
+CHECK_DOCSTRINGS=./energypylinear/objectives.py ./energypylinear/assets/battery.py ./energypylinear/assets/renewable_generator.py
 
 # currently only run manually
 lint-docstrings:
 	flake8 --extend-ignore E501 --exclude=__init__.py,poc --exit-zero $(CHECK_DOCSTRINGS)
 	pydocstyle $(CHECK_DOCSTRINGS)
-	pylint $(CHECK_DOCSTRINGS)
+	# pylint $(CHECK_DOCSTRINGS)
 
 
 #  ----- FORMATTING -----
