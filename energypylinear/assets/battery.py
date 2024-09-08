@@ -181,31 +181,35 @@ class Battery(epl.OptimizableAsset):
         discharge_power_mw: float | None = None,
         capacity_mwh: float = 4.0,
         efficiency_pct: float = 0.9,
-        name: str = "battery",
+        initial_charge_mwh: float = 0.0,
+        final_charge_mwh: float | None = None,
         electricity_prices: np.ndarray | list[float] | float | None = None,
         export_electricity_prices: np.ndarray | list[float] | float | None = None,
         electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
-        initial_charge_mwh: float = 0.0,
-        final_charge_mwh: float | None = None,
+        name: str = "battery",
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        include_spill: bool = False,
         **kwargs: typing.Any,
     ):
         """Initialize a Battery asset.
 
         Args:
-            power_mw: Maximum charge rate in megawatts. Will define both the charge and discharge rate if `discharge_power_mw` is None.
+            power_mw: Maximum charge rate in megawatts.
+                Will define both the charge and discharge rate if `discharge_power_mw` is None.
             discharge_power_mw: Maximum discharge rate in megawatts.
             capacity_mwh: Battery capacity in megawatt hours.
             efficiency_pct: Round-trip efficiency of the battery.
-            name: The asset name.
-            electricity_prices: The price of import electricity in each interval. Will define both import and export prices if `export_electricity_prices` is None.
-            export_electricity_prices: The price of export electricity in each interval.
-            electricity_carbon_intensities: Carbon intensity of electricity in each interval.
             initial_charge_mwh: Initial charge state of the battery in megawatt hours.
             final_charge_mwh: Final charge state of the battery in megawatt hours.
+            electricity_prices: The price of import electricity in each interval.
+                Will define both import and export prices if `export_electricity_prices` is None.
+            export_electricity_prices: The price of export electricity in each interval.
+            electricity_carbon_intensities: Carbon intensity of electricity in each interval.
+            name: The asset name.
             freq_mins: length of the simulation intervals in minutes.
             constraints: Additional custom constraints to apply to the linear program.
+            include_spill: Whether to include a spill asset in the site.
             kwargs: Extra keyword arguments attempted to be used as custom interval data.
         """
         initial_charge_mwh, final_charge_mwh = setup_initial_final_charge(
@@ -228,7 +232,9 @@ class Battery(epl.OptimizableAsset):
         )
 
         if electricity_prices is not None or electricity_carbon_intensities is not None:
-            assets = [self, epl.Spill()]
+            assets: list[epl.Asset] = [self]
+            if include_spill:
+                assets.append(epl.Spill())
             self.site = epl.Site(
                 assets=assets,
                 electricity_prices=electricity_prices,

@@ -24,6 +24,7 @@ asset = epl.HeatPump(
     electricity_prices=[100, -100],
     high_temperature_load_mwh=3.0,
     low_temperature_generation_mwh=3.0,
+    include_spill=True
 )
 simulation = asset.optimize(verbose=False)
 print(
@@ -127,6 +128,7 @@ asset = epl.HeatPump(
     electricity_prices=[100, -100],
     high_temperature_load_mwh=3.0,
     low_temperature_generation_mwh=4.0,
+    include_spill=True
 )
 simulation = asset.optimize(verbose=4)
 print(simulation.results[
@@ -172,6 +174,7 @@ asset = epl.HeatPump(
     electricity_prices=[-100, -100, -100],
     high_temperature_load_mwh=[3.0, 0.5, 3.0],
     low_temperature_generation_mwh=[4.0, 4.0, 0.5],
+    include_spill=True,
     include_valve=False
 )
 simulation = asset.optimize(
@@ -220,7 +223,8 @@ asset = epl.HeatPump(
     electricity_prices=[-100, -100, -100],
     high_temperature_load_mwh=[3.0, 0.5, 3.0],
     low_temperature_generation_mwh=[4.0, 4.0, 0.0],
-    include_valve=True
+    include_valve=True,
+    include_spill=True,
 )
 simulation = asset.optimize(
     verbose=4,

@@ -1,8 +1,10 @@
 # Multiple Assets with the Site API
 
-The `epl.Site` allows optimizing many assets at the same time. The site is a list of `energypylinear` asset models, like `epl.Battery` or `epl.RenewableGenerator`.
+`energypylinear` can optimize many assets in a single linear program.
 
-Below we give some examples of typical configurations of energy assets using an `epl.Site`.
+The `epl.Site` accepts a list of `energypylinear` asset models, like `epl.Battery` or `epl.RenewableGenerator`.
+
+Below are examples of typical configurations of multiple energy assets using a `epl.Site`.
 
 ## Fast & Slow Battery
 

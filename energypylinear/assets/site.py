@@ -46,7 +46,7 @@ def validate_interval_data(
     repeat_interval_data: bool = True,
 ) -> None:
     """Validates asset interval data against the site."""
-    eid = get_custom_interval_data(custom_interval_data)
+    cid = get_custom_interval_data(custom_interval_data)
 
     # sets the interval data of each asset to the same length as the site interval data
     for asset in assets:
@@ -69,18 +69,18 @@ def validate_interval_data(
                 if repeat_interval_data:
                     setattr(asset.cfg.interval_data, "idx", site.cfg.interval_data.idx)
 
-    if eid is not None:
-        for extra in eid:
-            if len(np.array(extra["data"]).shape) == 1:
+    if cid is not None:
+        for custom in cid:
+            if len(np.array(custom["data"]).shape) == 1:
                 setattr(
                     site.cfg.interval_data,
-                    extra["name"],
+                    custom["name"],
                     repeat_to_match_length(
-                        extra["data"],
+                        custom["data"],
                         np.array(site.cfg.interval_data.idx),
                     )
                     if repeat_interval_data
-                    else extra["data"],
+                    else custom["data"],
                 )
 
     # here really should check over all the interval data, not just the idx
@@ -96,7 +96,6 @@ class SiteIntervalData(pydantic.BaseModel):
     export_electricity_prices: np.ndarray | list[float] | float | None = None
     electricity_carbon_intensities: np.ndarray | list[float] | float | None = None
     gas_prices: np.ndarray | list[float] | float | None = None
-
     electric_load_mwh: np.ndarray | list[float] | float | None = None
     high_temperature_load_mwh: np.ndarray | list[float] | float | None = None
     low_temperature_load_mwh: np.ndarray | list[float] | float | None = None
@@ -328,13 +327,12 @@ def constrain_site_low_temperature_heat_balance(
     )
 
 
+# --8<-- [start:site]
 class Site:
     """
-    Site asset - handles optimization and plotting of many assets over many intervals.
+    The Site asset can optimize many assets together in a single linear program.
 
     All assets are connected to the same site electricity, high and low temperature networks.
-
-    All assets are optimized as a single linear program.
     """
 
     def __init__(
@@ -343,8 +341,8 @@ class Site:
         electricity_prices: np.ndarray | list[float] | float | None = None,
         export_electricity_prices: np.ndarray | list[float] | float | None = None,
         electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
-        electric_load_mwh: np.ndarray | list[float] | float | None = None,
         gas_prices: np.ndarray | list[float] | float | None = None,
+        electric_load_mwh: np.ndarray | list[float] | float | None = None,
         high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
@@ -375,6 +373,7 @@ class Site:
             constraints: Additional custom constraints to apply to the linear program.
             kwargs: Keyword arguments attempted to be used as extra interval data.
         """
+        # --8<-- [end:site]
         self.assets = assets
 
         self.cfg = SiteConfig(
@@ -394,12 +393,12 @@ class Site:
             freq_mins=freq_mins,
         )
 
-        validate_interval_data(assets, self, extra_interval_data=kwargs)
+        validate_interval_data(assets, self, custom_interval_data=kwargs)
 
         # TODO - should raise warning/error if kwargs get through - if there is a extra with that isn't made into interval data
         # could check if attr of interval data, if not, raise warning
 
-        # TODO - these could go into the optimizer or something?
+        # TODO - these could go into the optimizer
         self.custom_constraints = constraints
 
     def __repr__(self) -> str:

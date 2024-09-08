@@ -17,7 +17,7 @@ tol = 1e-5
     "electricity_prices, initial_charge_mwh, expected_dispatch",
     [
         ([10, 10, 10], 0, [0, 0, 0]),
-        ([20, 10, 10], 6, [-4, -2, 0]),
+        ([20, 15, 10], 6, [-4, -2, 0]),
         ([10, 50, 10, 5000, 10], 0, [4, -4, 4, -4, 0]),
     ],
 )
@@ -195,6 +195,7 @@ def test_hypothesis(
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=final_charge_mwh,
+        include_spill=True,
     )
 
     simulation = asset.optimize(

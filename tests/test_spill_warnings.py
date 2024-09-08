@@ -30,6 +30,7 @@ def test_chp_spill(capsys: CaptureFixture) -> None:
             20,
         ],
         freq_mins=60,
+        include_spill=True,
     )
     """
     - high electricity price, low heat demand
@@ -57,6 +58,7 @@ def test_chp_spill(capsys: CaptureFixture) -> None:
                 20,
             ],
             freq_mins=60,
+            include_spill=True,
         )
         asset.optimize(
             flags=flags,
@@ -75,6 +77,7 @@ def test_chp_spill(capsys: CaptureFixture) -> None:
         gas_prices=20,
         high_temperature_load_mwh=[20],
         freq_mins=60,
+        include_spill=True,
     )
     asset.optimize()
     capture = capsys.readouterr()
@@ -95,6 +98,7 @@ def test_evs_spill() -> None:
             [1, 0],
             [1, 0],
         ],
+        include_spill=True,
     )
     simulation = asset.optimize()
     assert simulation.results["total-spills_mwh"].sum() > 0

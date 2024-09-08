@@ -36,7 +36,7 @@ asset = epl.CHP(
     low_temperature_efficiency_pct=0.2,
     electricity_prices=[100, 50, 200, -100, 0, 200, 100, -100],
     high_temperature_load_mwh=[100, 50, 200, 40, 0, 200, 100, 100],
-    low_temperature_load_mwh=20,
+    low_temperature_load_mwh=20
 )
 
 simulation = asset.optimize()
@@ -54,13 +54,6 @@ assert all(
         "site-high_temperature_load_mwh",
         "site-low_temperature_load_mwh",
         "site-low_temperature_generation_mwh",
-        "spill-electric_generation_mwh",
-        "spill-electric_load_mwh",
-        "spill-high_temperature_generation_mwh",
-        "spill-low_temperature_generation_mwh",
-        "spill-high_temperature_load_mwh",
-        "spill-low_temperature_load_mwh",
-        "spill-gas_consumption_mwh",
         "chp-electric_generation_mwh",
         "chp-gas_consumption_mwh",
         "chp-high_temperature_generation_mwh",

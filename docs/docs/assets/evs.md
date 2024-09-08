@@ -30,6 +30,7 @@ asset = epl.EVs(
     charger_turndown=0.1,
     electricity_prices=electricity_prices,
     charge_events=charge_events,
+    include_spill=True
 )
 
 simulation = asset.optimize()

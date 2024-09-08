@@ -110,6 +110,7 @@ class RenewableGenerator(epl.OptimizableAsset):
         name: str = "renewable-generator",
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        include_spill: bool = False,
         **kwargs: typing.Any,
     ) -> None:
         """Initializes a Renewable Generator asset.
@@ -126,6 +127,7 @@ class RenewableGenerator(epl.OptimizableAsset):
             name: The asset name.
             freq_mins: length of the simulation intervals in minutes.
             constraints: Additional custom constraints to apply to the linear program.
+            include_spill: Whether to include a spill asset in the site.
             kwargs: Extra keyword arguments attempted to be used as custom interval data.
         """
         self.cfg = RenewableGeneratorConfig(
@@ -138,7 +140,9 @@ class RenewableGenerator(epl.OptimizableAsset):
         )
 
         if electricity_prices is not None or electricity_carbon_intensities is not None:
-            assets = [self]
+            assets: list[epl.Asset] = [self]
+            if include_spill:
+                assets.append(epl.Spill())
 
             self.site = epl.Site(
                 assets=assets,
