@@ -206,7 +206,7 @@ class Battery(epl.OptimizableAsset):
             final_charge_mwh: Final charge state of the battery in megawatt hours.
             freq_mins: length of the simulation intervals in minutes.
             constraints: Additional custom constraints to apply to the linear program.
-            kwargs: Extra keyword arguments attempted to be used as extra interval data.
+            kwargs: Extra keyword arguments attempted to be used as custom interval data.
         """
         initial_charge_mwh, final_charge_mwh = setup_initial_final_charge(
             initial_charge_mwh, final_charge_mwh, capacity_mwh

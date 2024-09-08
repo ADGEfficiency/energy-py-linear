@@ -126,7 +126,7 @@ class RenewableGenerator(epl.OptimizableAsset):
             name: The asset name.
             freq_mins: length of the simulation intervals in minutes.
             constraints: Additional custom constraints to apply to the linear program.
-            kwargs: Extra keyword arguments attempted to be used as extra interval data.
+            kwargs: Extra keyword arguments attempted to be used as custom interval data.
         """
         self.cfg = RenewableGeneratorConfig(
             name=name,

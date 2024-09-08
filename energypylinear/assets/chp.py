@@ -94,7 +94,7 @@ class CHP(epl.OptimizableAsset):
             high_temperature_load_mwh: High temperature load of the site.
             low_temperature_load_mwh: Low temperature load of the site.
             freq_mins: the size of an interval in minutes.
-            kwargs: Extra keyword arguments attempted to be used as extra interval data.
+            kwargs: Extra keyword arguments attempted to be used as custom interval data.
         """
         self.cfg = CHPConfig(
             name=name,
