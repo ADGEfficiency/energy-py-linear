@@ -1,7 +1,10 @@
 """
 Renewable Generator asset.
 
-Suitable for modelling either turndownable wind or solar."""
+Suitable for modelling either turndownable wind or solar.
+"""
+
+import typing
 
 import numpy as np
 import pydantic
@@ -22,8 +25,14 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
     @pydantic.field_validator("electric_generation_mwh", mode="after")
     @classmethod
     def handle_single_float(cls, value: float | list | np.ndarray) -> list | np.ndarray:
-        """Handles case where we want a single value broadcast to the length
-        of the interval data.
+        """
+        Handle case where we want a single value broadcast to the length of the interval data.
+
+        Args:
+            value: The value to broadcast.
+
+        Returns:
+            The value as a list or np.ndarray.
         """
         if isinstance(value, float):
             return [value]
@@ -32,15 +41,26 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
     @pydantic.field_validator("electric_generation_mwh", mode="after")
     @classmethod
     def validate_greater_zero(cls, value: np.ndarray | list) -> np.ndarray | list:
-        """Handles case where we want a single value broadcast to the length
-        of the interval data.
+        """
+        Handle case where we want a single value broadcast to the length of the interval data.
+
+        Args:
+            value: The value to broadcast.
+
+        Returns:
+            The value as a list or np.ndarray.
         """
         assert np.array(value).min() >= 0.0
         return value
 
     @pydantic.model_validator(mode="after")
     def create_idx(self) -> "RenewableGeneratorIntervalData":
-        """Creates an integer index."""
+        """
+        Create an integer index.
+
+        Returns:
+            The instance with an index.
+        """
         assert isinstance(self.electric_generation_mwh, (np.ndarray, list))
         self.idx = np.arange(len(self.electric_generation_mwh))
         return self
@@ -76,20 +96,17 @@ class RenewableGeneratorOneInterval(AssetOneInterval):
     electric_generation_mwh: epl.LpVariable
 
 
-class RenewableGenerator(epl.Asset):
-    """Renewable Generator asset.
-
-    Handles optimization and plotting of results over many intervals.
+class RenewableGenerator(epl.OptimizableAsset):
+    """
+    The Renewable Generator asset can generate electricity based on an available amount of electricity.
 
     This asset is suitable for modelling either wind or solar generatation.
 
     The electricity generation can be controlled with relative or absolute
     upper and lower bounds on the available generation in an interval.
 
-    The upper bound for the electricity generation is limited by the
-    `electric_generation_mwh` interval data input in
-    `RenewableGenerator.optimize`.  This input is the amount of generation
-    available from the wind or sun.
+    The upper bound for the electricity generation is limited by the `electric_generation_mwh` interval data
+    input in `RenewableGenerator.optimize`. This input is the amount of generation available from the wind or sun.
 
     The `electric_generation_mwh` input interval is the generation available
     to the site from the renewable resource - this should be after any limits or
@@ -111,8 +128,27 @@ class RenewableGenerator(epl.Asset):
         name: str = "renewable-generator",
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        include_spill: bool = False,
+        **kwargs: typing.Any,
     ) -> None:
-        """Initializes the asset."""
+        """
+        Initialize a Renewable Generator asset.
+
+        Args:
+            electric_generation_mwh: Available electricity generation from the renewable source.
+            electricity_prices: The price of import electricity in each interval.
+                Will define both import and export prices if `export_electricity_prices` is None.
+            export_electricity_prices: The price of export electricity in each interval.
+            electricity_carbon_intensities: Carbon intensity of electricity in each interval.
+            electric_load_mwh: Electricity demand consumed by the site.
+            electric_generation_lower_bound_pct: Sets how much the generator can dump available
+                electricity.
+            name: The asset name.
+            freq_mins: length of the simulation intervals in minutes.
+            constraints: Additional custom constraints to apply to the linear program.
+            include_spill: Whether to include a spill asset in the site.
+            kwargs: Extra keyword arguments attempted to be used as custom interval data.
+        """
         self.cfg = RenewableGeneratorConfig(
             name=name,
             electric_generation_lower_bound_pct=electric_generation_lower_bound_pct,
@@ -123,7 +159,9 @@ class RenewableGenerator(epl.Asset):
         )
 
         if electricity_prices is not None or electricity_carbon_intensities is not None:
-            assets = [self]
+            assets: list[epl.Asset] = [self]
+            if include_spill:
+                assets.append(epl.Spill())
 
             self.site = epl.Site(
                 assets=assets,
@@ -133,16 +171,33 @@ class RenewableGenerator(epl.Asset):
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
                 constraints=constraints,
+                **kwargs,
             )
 
     def __repr__(self) -> str:
-        """A string representation of self."""
+        """
+        Create a string representation of self.
+
+        Returns:
+            A string representation of self.
+        """
         return "<energypylinear.RenewableGenerator>"
 
     def one_interval(
         self, optimizer: "epl.Optimizer", i: int, freq: "epl.Freq", flags: "epl.Flags"
     ) -> RenewableGeneratorOneInterval:
-        """Create asset data for a single interval."""
+        """
+        Create asset data for a single interval.
+
+        Args:
+            optimizer: Linear program optimizer.
+            i: Integer index of the current interval.
+            freq: Interval frequency.
+            flags: Boolean flags to change simulation and results behaviour.
+
+        Returns:
+            Linear program variables for a single interval.
+        """
         name = f"i:{i},asset:{self.cfg.name}"
         assert isinstance(self.cfg.interval_data.electric_generation_mwh, np.ndarray)
         return RenewableGeneratorOneInterval(
@@ -163,7 +218,16 @@ class RenewableGenerator(epl.Asset):
         freq: "epl.Freq",
         flags: "epl.Flags",
     ) -> None:
-        """Constrain optimization within a single interval."""
+        """
+        Constrain asset within an interval.
+
+        Args:
+            optimizer: Linear program optimizer.
+            ivars: Linear program variables.
+            i: Integer index of the current interval.
+            freq: Interval frequency.
+            flags: Boolean flags to change simulation and results behaviour.
+        """
         pass
 
     def constrain_after_intervals(
@@ -171,7 +235,13 @@ class RenewableGenerator(epl.Asset):
         optimizer: "epl.Optimizer",
         ivars: "epl.IntervalVars",
     ) -> None:
-        """Constrain asset after all intervals."""
+        """
+        Constrain asset after all intervals.
+
+        Args:
+            optimizer: Linear program optimizer.
+            ivars: Linear program variables.
+        """
         pass
 
     def optimize(
@@ -181,7 +251,8 @@ class RenewableGenerator(epl.Asset):
         flags: Flags = Flags(),
         optimizer_config: "epl.OptimizerConfig | dict" = epl.optimizer.OptimizerConfig(),
     ) -> "epl.SimulationResult":
-        """Optimize the asset.
+        """
+        Optimize the asset.
 
         Args:
             objective: the optimization objective - either "price" or "carbon".

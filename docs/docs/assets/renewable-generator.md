@@ -19,12 +19,13 @@ assert all(
         "site-import_power_mwh",
         "site-export_power_mwh",
         "site-electricity_prices",
+        "site-export_electricity_prices",
         "site-electricity_carbon_intensities",
+        "site-gas_prices",
+        "site-electric_load_mwh",
         "site-high_temperature_load_mwh",
         "site-low_temperature_load_mwh",
         "site-low_temperature_generation_mwh",
-        "site-gas_prices",
-        "site-electric_load_mwh",
         "wind-electric_generation_mwh",
         "total-electric_generation_mwh",
         "total-electric_load_mwh",
@@ -38,7 +39,7 @@ assert all(
         "total-spills_mwh",
         "total-electric_loss_mwh",
         "site-electricity_balance_mwh",
-    ]
+    ],
 )
 ```
 

@@ -17,6 +17,7 @@ def test_chp_gas_turbine_price() -> None:
         high_temperature_load_mwh=[20, 20, 1000],
         freq_mins=60,
         name="chp",
+        include_spill=True,
     )
     simulation = asset.optimize()
     """
@@ -67,6 +68,7 @@ def test_chp_gas_turbine_carbon() -> None:
         gas_prices=20,
         high_temperature_load_mwh=[20, 20, 1000],
         freq_mins=60,
+        include_spill=True,
     )
     simulation = asset.optimize(
         objective="carbon",
@@ -122,6 +124,7 @@ def test_chp_gas_engine_price() -> None:
             20.0,
         ],
         freq_mins=60,
+        include_spill=True,
     )
     simulation = asset.optimize()
     """
@@ -151,6 +154,7 @@ def test_chp_gas_engine_carbon() -> None:
         high_temperature_load_mwh=[20.0, 20],
         low_temperature_load_mwh=[20.0, 20],
         freq_mins=60,
+        include_spill=True,
     )
     simulation = asset.optimize(
         objective="carbon",

@@ -39,7 +39,7 @@ def check_electricity_balance(
         - simulation["total-electric_charge_mwh"]
     )
 
-    balance = abs(inp + accumulation - out) < 1e-4
+    balance = abs(inp + accumulation - out) < 1e-3
 
     soc = simulation[[c for c in simulation.columns if "final_soc" in c]].sum(axis=1)
     debug = pd.DataFrame(

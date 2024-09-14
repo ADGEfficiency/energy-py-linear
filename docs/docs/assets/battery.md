@@ -26,7 +26,8 @@ asset = epl.Battery(
     freq_mins=60,
     initial_charge_mwh=1,
     final_charge_mwh=3,
-    name="battery"
+    name="battery",
+    include_spill=True
 )
 simulation = asset.optimize()
 
@@ -36,12 +37,13 @@ assert all(
         "site-import_power_mwh",
         "site-export_power_mwh",
         "site-electricity_prices",
+        "site-export_electricity_prices",
         "site-electricity_carbon_intensities",
+        "site-gas_prices",
+        "site-electric_load_mwh",
         "site-high_temperature_load_mwh",
         "site-low_temperature_load_mwh",
         "site-low_temperature_generation_mwh",
-        "site-gas_prices",
-        "site-electric_load_mwh",
         "spill-electric_generation_mwh",
         "spill-electric_load_mwh",
         "spill-high_temperature_generation_mwh",
@@ -68,7 +70,7 @@ assert all(
         "total-spills_mwh",
         "total-electric_loss_mwh",
         "site-electricity_balance_mwh",
-    ]
+    ],
 )
 ```
 
@@ -153,11 +155,11 @@ print(balance)
 
 ```
       input  accumulation  output  balance    import  generation  export  load    charge  discharge      loss  spills  soc
-0  0.444444     -0.444444     0.0     True  0.444444         0.0     0.0   0.0  0.444444        0.0  0.044444     0.0  0.0
-1  2.000000     -2.000000     0.0     True  2.000000         0.0     0.0   0.0  2.000000        0.0  0.200000     0.0  0.0
-2  0.000000      2.000000     2.0     True  0.000000         0.0     2.0   0.0  0.000000        2.0  0.000000     0.0  0.0
-3  2.000000     -2.000000     0.0     True  2.000000         0.0     0.0   0.0  2.000000        0.0  0.200000     0.0  0.0
-4  0.000000      2.000000     2.0     True  0.000000         0.0     2.0   0.0  0.000000        2.0  0.000000     0.0  0.0
+0  0.444444     -0.444444     0.0     True  0.444444         0.0     0.0     0  0.444444        0.0  0.044444     0.0  0.0
+1  2.000000     -2.000000     0.0     True  2.000000         0.0     0.0     0  2.000000        0.0  0.200000     0.0  0.0
+2  0.000000      2.000000     2.0     True  0.000000         0.0     2.0     0  0.000000        2.0  0.000000     0.0  0.0
+3  2.000000     -2.000000     0.0     True  2.000000         0.0     0.0     0  2.000000        0.0  0.200000     0.0  0.0
+4  0.000000      2.000000     2.0     True  0.000000         0.0     2.0     0  0.000000        2.0  0.000000     0.0  0.0
 ```
 
 In the first interval, we charge the battery with `0.444444 MWh` - `0.4 MWh` goes into increasing the battery state of charge from `0.0 MWh` to `0.4 MWh`, with the balance `0.044444 MWh` going to battery losses.
