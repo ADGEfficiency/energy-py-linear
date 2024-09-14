@@ -18,7 +18,7 @@ import energypylinear as epl
 np.random.seed(42)
 days = 35
 dataset = pd.DataFrame({
-    "timestamp": pd.date_range("2021-01-01", periods=days * 24, freq="H"),
+    "timestamp": pd.date_range("2021-01-01", periods=days * 24, freq="h"),
     "prices": np.random.normal(-1000, 1000, days * 24) + 100
 })
 battery_params = {
@@ -158,7 +158,7 @@ def get_battery_params(cumulative_charge_mwh: float = 0, cumulative_days: float 
 np.random.seed(42)
 days = 35
 dataset = pd.DataFrame({
-    "timestamp": pd.date_range("2021-01-01", periods=days * 24, freq="H"),
+    "timestamp": pd.date_range("2021-01-01", periods=days * 24, freq="h"),
     "prices": np.random.normal(-1000, 1000, days * 24) + 100
 })
 
