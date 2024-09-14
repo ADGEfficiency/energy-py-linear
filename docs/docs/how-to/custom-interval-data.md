@@ -59,7 +59,6 @@ print(simulation.results["site-network_charges"])
 Name: site-network_charges, dtype: float64
 ```
 
-
 ## Custom Interval Data in Custom Objective Functions
 
 Custom interval data can be used in a custom objective function:
