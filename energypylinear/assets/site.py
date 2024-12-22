@@ -17,32 +17,76 @@ from energypylinear.optimizer import Optimizer
 from energypylinear.utils import repeat_to_match_length
 
 
+def get_custom_interval_data(kwargs: dict | None) -> list | None:
+    """
+    Attempts to extract custom interval data from keyword arguments.
+
+    Args:
+        kwargs: Dictionary of potential custom interal data.
+
+    Returns:
+        A list of custom interval data, or `None` if no kwargs.
+    """
+    if (kwargs is None) or (kwargs == {}):
+        return None
+
+    custom_interval_data = []
+    for key, data in kwargs.items():
+        # check if data is a list, nparry, tuple - sequence like
+        # could I check with the `typing.Sequence` type?
+        if data is not None and isinstance(data, (list, np.ndarray, tuple)):
+            custom_interval_data.append({"name": key, "data": data})
+    return custom_interval_data
+
+
 def validate_interval_data(
-    assets: list, site: "epl.Site", repeat_interval_data: bool = True
+    assets: list,
+    site: "epl.Site",
+    custom_interval_data: dict | None = None,
+    repeat_interval_data: bool = True,
 ) -> None:
     """Validates asset interval data against the site."""
-    if not repeat_interval_data:
-        for asset in assets:
-            if hasattr(asset.cfg, "interval_data"):
-                assert len(asset.cfg.interval_data.idx) == len(
-                    site.cfg.interval_data.idx
+    cid = get_custom_interval_data(custom_interval_data)
+
+    # sets the interval data of each asset to the same length as the site interval data
+    for asset in assets:
+        if hasattr(asset.cfg, "interval_data"):
+            if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
+                idata = asset.cfg.interval_data.model_dump(exclude={"idx"})
+
+                for name, data in idata.items():
+                    assert isinstance(site.cfg.interval_data.idx, np.ndarray)
+                    setattr(
+                        asset.cfg.interval_data,
+                        name,
+                        repeat_to_match_length(
+                            data,
+                            site.cfg.interval_data.idx,
+                        )
+                        if repeat_interval_data
+                        else data,
+                    )
+                if repeat_interval_data:
+                    setattr(asset.cfg.interval_data, "idx", site.cfg.interval_data.idx)
+
+    if cid is not None:
+        for custom in cid:
+            if len(np.array(custom["data"]).shape) == 1:
+                setattr(
+                    site.cfg.interval_data,
+                    custom["name"],
+                    repeat_to_match_length(
+                        custom["data"],
+                        np.array(site.cfg.interval_data.idx),
+                    )
+                    if repeat_interval_data
+                    else custom["data"],
                 )
 
-    else:
-        for asset in assets:
-            if hasattr(asset.cfg, "interval_data"):
-                if len(asset.cfg.interval_data.idx) != len(site.cfg.interval_data.idx):
-                    idata = asset.cfg.interval_data.model_dump(exclude={"idx"})
-                    for name, data in idata.items():
-                        assert isinstance(site.cfg.interval_data.idx, np.ndarray)
-                        setattr(
-                            asset.cfg.interval_data,
-                            name,
-                            repeat_to_match_length(
-                                data,
-                                site.cfg.interval_data.idx,
-                            ),
-                        )
+    # here really should check over all the interval data, not just the idx
+    for asset in assets:
+        if hasattr(asset.cfg, "interval_data"):
+            assert len(asset.cfg.interval_data.idx) == len(site.cfg.interval_data.idx)
 
 
 class SiteIntervalData(pydantic.BaseModel):
@@ -52,14 +96,13 @@ class SiteIntervalData(pydantic.BaseModel):
     export_electricity_prices: np.ndarray | list[float] | float | None = None
     electricity_carbon_intensities: np.ndarray | list[float] | float | None = None
     gas_prices: np.ndarray | list[float] | float | None = None
-
     electric_load_mwh: np.ndarray | list[float] | float | None = None
     high_temperature_load_mwh: np.ndarray | list[float] | float | None = None
     low_temperature_load_mwh: np.ndarray | list[float] | float | None = None
     low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None
 
     idx: list[int] | np.ndarray = []
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True, extra="allow")
 
     @pydantic.model_validator(mode="after")
     def validate_all_things(self) -> "SiteIntervalData":
@@ -284,16 +327,12 @@ def constrain_site_low_temperature_heat_balance(
     )
 
 
+# --8<-- [start:site]
 class Site:
-    """Site asset - handles optimization and plotting of many assets over many intervals.
+    """
+    The Site asset can optimize many assets together in a single linear program.
 
     All assets are connected to the same site electricity, high and low temperature networks.
-
-    All assets are optimized as a single linear program.
-
-    Args:
-        assets: list[Asset] - a list of energypylinear assets to optimize together.
-        constraints: Additional custom constraints to apply to the linear program.
     """
 
     def __init__(
@@ -302,8 +341,8 @@ class Site:
         electricity_prices: np.ndarray | list[float] | float | None = None,
         export_electricity_prices: np.ndarray | list[float] | float | None = None,
         electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
-        electric_load_mwh: np.ndarray | list[float] | float | None = None,
         gas_prices: np.ndarray | list[float] | float | None = None,
+        electric_load_mwh: np.ndarray | list[float] | float | None = None,
         high_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_load_mwh: np.ndarray | list[float] | float | None = None,
         low_temperature_generation_mwh: np.ndarray | list[float] | float | None = None,
@@ -312,8 +351,29 @@ class Site:
         import_limit_mw: float = 10000,
         export_limit_mw: float = 10000,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        **kwargs: typing.Any,
     ):
-        """Initialize a Site asset model."""
+        """
+        Initialize a Site.
+
+        Args:
+            assets: Assets to optimize together.
+            electricity_prices: The price of import electricity in each interval.
+                Will define both import and export prices if `export_electricity_prices` is None.
+            export_electricity_prices: The price of export electricity in each interval.
+            electricity_carbon_intensities: Carbon intensity of electricity in each interval.
+            electric_load_mwh: Electricity demand consumed by the site.
+            gas_prices: Price of natural gas, used in CHP and boilers in each interval.
+            high_temperature_load_mwh: High temperature load of the site.
+            low_temperature_load_mwh: Low temperature load of the site.
+            name: The site name.
+            freq_mins: Size of an interval in minutes.
+            import_limit_mw: Maximum import power of the site.
+            export_limit_mw: Minimum import power of the site.
+            constraints: Additional custom constraints to apply to the linear program.
+            kwargs: Keyword arguments attempted to be used as extra interval data.
+        """
+        # --8<-- [end:site]
         self.assets = assets
 
         self.cfg = SiteConfig(
@@ -333,9 +393,12 @@ class Site:
             freq_mins=freq_mins,
         )
 
-        validate_interval_data(assets, self)
+        validate_interval_data(assets, self, custom_interval_data=kwargs)
 
-        # TODO - these could go into the optimizer or something?
+        # TODO - should raise warning/error if kwargs get through - if there is a extra with that isn't made into interval data
+        # could check if attr of interval data, if not, raise warning
+
+        # TODO - these could go into the optimizer
         self.custom_constraints = constraints
 
     def __repr__(self) -> str:
@@ -453,6 +516,7 @@ class Site:
         self.optimizer.objective(
             epl.get_objective(objective, self.optimizer, ivars, self.cfg.interval_data)
         )
+        self.objective = objective
 
         status = self.optimizer.solve(
             verbose=verbose, allow_infeasible=flags.allow_infeasible

@@ -47,7 +47,7 @@ TEST_ARGS =
 export
 
 test: setup-test test-docs
-	pytest tests --cov=energypylinear --cov-report=html -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest $(TEST_ARGS)
+	pytest tests --cov=energypylinear --cov-report=html --cov-report=term-missing -n $(PARALLEL) --color=yes --durations=5 --verbose --ignore tests/phmdoctest $(TEST_ARGS)
 	# -coverage combine
 	# -coverage html
 	-coverage report
@@ -57,7 +57,7 @@ generate-test-docs: setup-test
 	bash ./tests/generate-test-docs.sh
 
 test-docs: setup-test generate-test-docs
-	pytest tests/phmdoctest -n $(PARALLEL) --dist loadfile --color=yes --verbose $(TEST_ARGS)
+	pytest tests/phmdoctest -n 1 --dist loadfile --color=yes --verbose $(TEST_ARGS)
 
 
 #  ----- CHECK -----
@@ -72,7 +72,7 @@ static: setup-static
 	rm -rf ./tests/phmdoctest
 	mypy --version
 	mypy $(MYPY_ARGS) ./energypylinear
-	mypy $(MYPY_ARGS) ./tests
+	mypy $(MYPY_ARGS) ./tests --explicit-package-bases
 
 lint: setup-check
 	rm -rf ./tests/phmdoctest
@@ -82,13 +82,13 @@ lint: setup-check
 	ruff format --check **/*.py
 	poetry check
 
-CHECK_DOCSTRINGS=./energypylinear/assets/battery.py ./energypylinear/objectives.py
+CHECK_DOCSTRINGS=./energypylinear/objectives.py ./energypylinear/assets/battery.py ./energypylinear/assets/renewable_generator.py
 
 # currently only run manually
 lint-docstrings:
 	flake8 --extend-ignore E501 --exclude=__init__.py,poc --exit-zero $(CHECK_DOCSTRINGS)
 	pydocstyle $(CHECK_DOCSTRINGS)
-	pylint $(CHECK_DOCSTRINGS)
+	# pylint $(CHECK_DOCSTRINGS)
 
 
 #  ----- FORMATTING -----

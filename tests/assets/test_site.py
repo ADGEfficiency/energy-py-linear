@@ -148,7 +148,7 @@ def test_interval_data() -> None:
     assets = [epl.RenewableGenerator(electric_generation_mwh=[1.0, 2.0])]
     validate_interval_data(assets, site)
 
-    #  test that things work correctly when the assets have different length data as the site index
+    #  test that things fail when the assets have different length data as the site index
     with pytest.raises(AssertionError):
         site = epl.Site(assets=[], electricity_carbon_intensities=[1.0, 2.0])
         assets = [epl.RenewableGenerator(electric_generation_mwh=2.0)]

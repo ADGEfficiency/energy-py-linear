@@ -14,7 +14,8 @@ from energypylinear.logger import logger, set_logging_level
 # --8<-- [start:term]
 @dataclasses.dataclass
 class Term:
-    """A simple term in the objective function.
+    """
+    A simple term in the objective function.
 
     Will add `i` terms to the objective function, where `i` is
     the number of intervals in the simulation.
@@ -29,7 +30,6 @@ class Term:
     ```
 
     Examples:
-
     ```python
     # an objective function term for site import power electricity cost
     Term(
@@ -52,6 +52,7 @@ class Term:
         asset_type="battery",
         coefficient=0.25
     )
+
     ```
 
     Attributes:
@@ -688,8 +689,16 @@ def get_objective(
 
         objective = CustomObjectiveFunction(terms=terms)
 
-    else:
-        assert isinstance(objective, CustomObjectiveFunction)
+    # TODO - add later - it's nice to have, but requires changing typing
+    # if isinstance(objective, list):
+    #     # here assume the user has just put in the terms as a list, without the `{"terms": terms}`
+    #     # doing it as I did it naturally when I used the library
+    #     # TODO document
+    #     objective = CustomObjectiveFunction(
+    #         terms=[term_factory(term) for term in objective]
+    #     )
+
+    assert isinstance(objective, CustomObjectiveFunction)
 
     obj: list[typing.Any | float] = []
     add_simple_terms(interval_data, objective, ivars, obj)

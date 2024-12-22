@@ -44,6 +44,7 @@ def test_heat_pump_optimization_price() -> None:
         #  which can be dumped or used by the heat pump to make high temperature heat
         high_temperature_load_mwh=100.0,
         low_temperature_generation_mwh=100.0,
+        include_spill=True,
     )
     simulation = asset.optimize()
     results = simulation.results
@@ -123,6 +124,7 @@ def test_heat_pump_optimization_carbon() -> None:
         gas_prices=gas_price,
         high_temperature_load_mwh=100,
         low_temperature_generation_mwh=100,
+        include_spill=True,
     )
 
     simulation = asset.optimize(objective="carbon")
@@ -151,6 +153,7 @@ def test_heat_pump_heat_balance() -> None:
         high_temperature_load_mwh=[1, 2.0, 4.0],
         low_temperature_generation_mwh=[100, 100, 100],
         include_valve=False,
+        include_spill=True,
     )
 
     #  limited by high temperature load
@@ -169,6 +172,7 @@ def test_heat_pump_heat_balance() -> None:
         high_temperature_load_mwh=100,
         low_temperature_generation_mwh=[0.25, 0.5, 1.0],
         include_valve=False,
+        include_spill=True,
     )
     simulation = asset.optimize(
         verbose=False,
@@ -220,6 +224,7 @@ def test_heat_pump_hypothesis(
         high_temperature_load_mwh=100,
         low_temperature_generation_mwh=100,
         include_valve=include_valve,
+        include_spill=True,
     )
     simulation = asset.optimize(
         verbose=False,

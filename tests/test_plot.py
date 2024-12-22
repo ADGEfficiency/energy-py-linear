@@ -65,6 +65,7 @@ def test_chp_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
         high_temperature_load_mwh=ht_load,
         low_temperature_load_mwh=lt_load,
         freq_mins=60,
+        include_spill=True,
     )
     results = asset.optimize()
 
@@ -93,6 +94,7 @@ def test_heat_pump_plot(tmp_path_factory: pytest.TempPathFactory) -> None:
         low_temperature_load_mwh=lt_load,
         low_temperature_generation_mwh=lt_gen,
         freq_mins=60,
+        include_spill=True,
     )
     results = asset.optimize()
 

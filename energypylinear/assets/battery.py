@@ -1,6 +1,7 @@
 """Battery asset for optimizing battery dispatch for price or carbon arbitrage."""
 
 import pathlib
+import typing
 
 import numpy as np
 import pulp
@@ -171,8 +172,8 @@ def constrain_initial_final_charge(
     optimizer.constrain(final.electric_final_charge_mwh == final.cfg.final_charge_mwh)
 
 
-class Battery(epl.Asset):
-    """Electric battery asset, able to charge and discharge electricity."""
+class Battery(epl.OptimizableAsset):
+    """The battery asset can charge, store and discharge electricity."""
 
     def __init__(
         self,
@@ -180,30 +181,37 @@ class Battery(epl.Asset):
         discharge_power_mw: float | None = None,
         capacity_mwh: float = 4.0,
         efficiency_pct: float = 0.9,
-        name: str = "battery",
+        initial_charge_mwh: float = 0.0,
+        final_charge_mwh: float | None = None,
         electricity_prices: np.ndarray | list[float] | float | None = None,
         export_electricity_prices: np.ndarray | list[float] | float | None = None,
         electricity_carbon_intensities: np.ndarray | list[float] | float | None = None,
-        initial_charge_mwh: float = 0.0,
-        final_charge_mwh: float | None = None,
+        name: str = "battery",
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        include_spill: bool = False,
+        **kwargs: typing.Any,
     ):
-        """Initialize the asset.
+        """
+        Initialize a Battery asset.
 
         Args:
-            power_mw: Maximum charge rate in megawatts. Will define both the charge and discharge rate if `discharge_power_mw` is None.
+            power_mw: Maximum charge rate in megawatts.
+                Will define both the charge and discharge rate if `discharge_power_mw` is None.
             discharge_power_mw: Maximum discharge rate in megawatts.
             capacity_mwh: Battery capacity in megawatt hours.
             efficiency_pct: Round-trip efficiency of the battery.
-            name: The asset name.
-            electricity_prices: The price of import electricity in each interval. Will define both import and export prices if `export_electricity_prices` is None.
-            export_electricity_prices: The price of export electricity in each interval.
-            electricity_carbon_intensities: Carbon intensity of electricity in each interval.
             initial_charge_mwh: Initial charge state of the battery in megawatt hours.
             final_charge_mwh: Final charge state of the battery in megawatt hours.
+            electricity_prices: The price of import electricity in each interval.
+                Will define both import and export prices if `export_electricity_prices` is None.
+            export_electricity_prices: The price of export electricity in each interval.
+            electricity_carbon_intensities: Carbon intensity of electricity in each interval.
+            name: The asset name.
             freq_mins: length of the simulation intervals in minutes.
             constraints: Additional custom constraints to apply to the linear program.
+            include_spill: Whether to include a spill asset in the site.
+            kwargs: Extra keyword arguments attempted to be used as custom interval data.
         """
         initial_charge_mwh, final_charge_mwh = setup_initial_final_charge(
             initial_charge_mwh, final_charge_mwh, capacity_mwh
@@ -225,7 +233,9 @@ class Battery(epl.Asset):
         )
 
         if electricity_prices is not None or electricity_carbon_intensities is not None:
-            assets = [self, epl.Spill()]
+            assets: list[epl.Asset] = [self]
+            if include_spill:
+                assets.append(epl.Spill())
             self.site = epl.Site(
                 assets=assets,
                 electricity_prices=electricity_prices,
@@ -233,12 +243,14 @@ class Battery(epl.Asset):
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
                 constraints=constraints,
+                **kwargs,
             )
 
         # TODO - could warn that if constraints are specified, but not prices, they will be ignored
 
     def __repr__(self) -> str:
-        """Return a string representation of self.
+        """
+        Create a string representation of self.
 
         Returns:
             A string representation of self.
@@ -248,7 +260,8 @@ class Battery(epl.Asset):
     def one_interval(
         self, optimizer: Optimizer, i: int, freq: Freq, flags: Flags = Flags()
     ) -> BatteryOneInterval:
-        """Generate linear program data for one interval.
+        """
+        Generate linear program data for one interval.
 
         Args:
             optimizer: Linear program optimizer.
@@ -299,7 +312,8 @@ class Battery(epl.Asset):
         freq: Freq,
         flags: Flags = Flags(),
     ) -> None:
-        """Constrain asset within an interval.
+        """
+        Constrain asset within an interval.
 
         Args:
             optimizer: Linear program optimizer.
@@ -326,7 +340,8 @@ class Battery(epl.Asset):
         optimizer: Optimizer,
         ivars: "epl.IntervalVars",
     ) -> None:
-        """Constrain asset after all intervals.
+        """
+        Constrain asset after all intervals.
 
         Args:
             optimizer: Linear program optimizer.

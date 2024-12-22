@@ -563,35 +563,11 @@ def constrain_initial_final_charge(
     #  intentionally don't constrain the spill charger
 
 
-class EVs:
-    """Electric vehicle asset, used to represent multiple chargers.
+class EVs(epl.OptimizableAsset):
+    """
+    The EVs asset can charge, store and discharge electricity in mutliple charge events.
 
-    Can handle vehicle-to-grid charging.
-
-    Handles optimization and plotting of results over many intervals.
-
-    Args:
-        chargers_power_mw: size of EV chargers in mega-watts.
-        charge_events_capacity_mwh:
-            1D array of final SOC for each charge event.
-            Length is the number of charge events.
-        charge_event_efficiency:
-            Roundtrip efficiency of the charge event charge & discharge.
-        charger_turndown:
-            minimum charger output as a percent of the
-            charger size in mega-watts.
-        name: asset name
-        electricity_prices - the price of electricity in each interval.
-        electricity_carbon_intensities - carbon intensity of electricity in each interval.
-        charge_events: 2D matrix representing when a charge event is active.
-            Shape is (n_charge_events, n_timesteps).
-            A charge events matrix for 4 charge events over 5 intervals:
-            charge_events = [
-                [1, 0, 0, 0, 0],
-                [0, 1, 1, 1, 0],
-                [0, 0, 0, 1, 1],
-                [0, 1, 0, 0, 0],
-            ]
+    Can handle both grid-to-vehicle and vehicle-to-grid charging.
     """
 
     def __init__(
@@ -601,17 +577,50 @@ class EVs:
         charge_events_capacity_mwh: np.ndarray | list[float],
         charge_event_efficiency: float = 0.9,
         charger_turndown: float = 0.1,
-        name: str = "evs",
         electricity_prices: np.ndarray | list[float] | np.ndarray | None = None,
         export_electricity_prices: np.ndarray | list[float] | np.ndarray | None = None,
         electricity_carbon_intensities: np.ndarray
         | list[float]
         | np.ndarray
         | None = None,
+        name: str = "evs",
         freq_mins: int = defaults.freq_mins,
         constraints: "list[epl.Constraint] | list[dict] | None" = None,
+        include_spill: bool = False,
+        **kwargs: typing.Any,
     ):
-        """Initialize an electric vehicle asset model."""
+        """
+        Initialize an Electric Vehicle asset.
+
+        Args:
+            chargers_power_mw: size of EV chargers in mega-watts.
+            charge_events_capacity_mwh:
+                1D array of final SOC for each charge event.
+                Length is the number of charge events.
+            charge_event_efficiency:
+                Roundtrip efficiency of the charge event charge & discharge.
+            charger_turndown:
+                minimum charger output as a percent of the
+                charger size in mega-watts.
+            electricity_prices: The price of import electricity in each interval.
+                Will define both import and export prices if `export_electricity_prices` is None.
+            export_electricity_prices: The price of export electricity in each interval.
+            electricity_carbon_intensities: Carbon intensity of electricity in each interval.
+            charge_events: 2D matrix representing when a charge event is active.
+                Shape is (n_charge_events, n_timesteps).
+                A charge events matrix for 4 charge events over 5 intervals:
+                charge_events = [
+                    [1, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 0],
+                    [0, 0, 0, 1, 1],
+                    [0, 1, 0, 0, 0],
+                ]
+            name: The asset name
+            freq_mins: length of the simulation intervals in minutes.
+            constraints: Additional custom constraints to apply to the linear program.
+            include_spill: Whether to include a spill asset in the site.
+            kwargs: Keyword arguments attempted to be used as extra interval data.
+        """
 
         charger_cfgs = np.array(
             [
@@ -654,7 +663,9 @@ class EVs:
         )
 
         if electricity_prices is not None or electricity_carbon_intensities is not None:
-            assets = [self, epl.Spill()]
+            assets: list[epl.Asset] = [self]
+            if include_spill:
+                assets.append(epl.Spill())
             self.site = epl.Site(
                 assets=assets,
                 electricity_prices=electricity_prices,
@@ -662,10 +673,12 @@ class EVs:
                 electricity_carbon_intensities=electricity_carbon_intensities,
                 freq_mins=self.cfg.freq_mins,
                 constraints=constraints,
+                **kwargs,
             )
             assert isinstance(self.site.cfg.interval_data.idx, np.ndarray)
             validate_ev_interval_data(
-                self.site.cfg.interval_data.idx, self.cfg.charge_events
+                self.site.cfg.interval_data.idx,
+                self.cfg.charge_events,
             )
 
     def __repr__(self) -> str:

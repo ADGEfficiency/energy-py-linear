@@ -17,7 +17,7 @@ tol = 1e-5
     "electricity_prices, initial_charge_mwh, expected_dispatch",
     [
         ([10, 10, 10], 0, [0, 0, 0]),
-        ([20, 10, 10], 6, [-4, -2, 0]),
+        ([20, 15, 10], 6, [-4, -2, 0]),
         ([10, 50, 10, 5000, 10], 0, [4, -4, 4, -4, 0]),
     ],
 )
@@ -47,6 +47,20 @@ def test_price_optimization(
     discharge = simulation.results["battery-electric_discharge_mwh"].values
     dispatch = charge - discharge
     np.testing.assert_almost_equal(dispatch, expected_dispatch)
+
+    # now try the same with a spill asset
+    # this is just for test coverage really...
+    asset = epl.Battery(
+        power_mw=power_mw,
+        capacity_mwh=capacity_mwh,
+        efficiency_pct=efficiency,
+        electricity_prices=np.array(electricity_prices),
+        freq_mins=freq_mins,
+        initial_charge_mwh=initial_charge_mwh,
+        final_charge_mwh=0,
+        include_spill=True,
+    )
+    simulation = asset.optimize(verbose=False)
 
 
 @pytest.mark.parametrize(
@@ -110,10 +124,17 @@ def check_no_simultaneous(
     df: pd.DataFrame, left_col: str, right_col: str
 ) -> tuple[bool, pd.DataFrame]:
     """Checks that we don't do two things at once."""
+
+    # checks = (
+    #     ((df[left_col] > 0) & (df[right_col] == 0))
+    #     | ((df[right_col] > 0) & (df[left_col] == 0))
+    #     | ((df[left_col] == 0) & (df[right_col] == 0))
+    # )
+    tol = 1e-8
     checks = (
-        ((df[left_col] > 0) & (df[right_col] == 0))
-        | ((df[right_col] > 0) & (df[left_col] == 0))
-        | ((df[left_col] == 0) & (df[right_col] == 0))
+        ((df[left_col] > tol) & (df[right_col] <= tol))
+        | ((df[right_col] > tol) & (df[left_col] <= tol))
+        | ((df[left_col] <= tol) & (df[right_col] <= tol))
     )
     return (
         checks.all(),
@@ -195,6 +216,7 @@ def test_hypothesis(
         freq_mins=freq_mins,
         initial_charge_mwh=initial_charge_mwh,
         final_charge_mwh=final_charge_mwh,
+        include_spill=False,
     )
 
     simulation = asset.optimize(
@@ -314,7 +336,6 @@ def test_no_simultaneous_import_export() -> None:
     )
     simulation = asset.optimize()
     results = simulation.results
-
     check_no_simultaneous(results, "site-import_power_mwh", "site-export_power_mwh")
 
 

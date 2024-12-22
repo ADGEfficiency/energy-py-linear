@@ -123,6 +123,7 @@ def test_interval_data() -> None:
     electric_generation_lower_bound_pct=hypothesis.strategies.floats(
         min_value=0, max_value=1.0
     ),
+    include_spill=hypothesis.strategies.booleans(),
 )
 def test_hypothesis(
     idx_length: int,
@@ -130,6 +131,7 @@ def test_hypothesis(
     prices_std: float,
     prices_offset: float,
     electric_generation_lower_bound_pct: float,
+    include_spill: bool,
 ) -> None:
     """Test optimization with hypothesis."""
     electricity_prices = (
@@ -144,5 +146,6 @@ def test_hypothesis(
         electricity_prices=electricity_prices,
         electric_generation_mwh=electric_generation_mwh,
         electric_generation_lower_bound_pct=electric_generation_lower_bound_pct,
+        include_spill=include_spill,
     )
     asset.optimize(verbose=False)
