@@ -78,3 +78,37 @@ print(f"{-variance.cost / variance.emissions:.2f} $/tC")
 variance=<Account profit=903.33 emissions=0.6156>
 1467.51 $/tC
 ```
+
+## Full Example
+
+```python
+import energypylinear as epl
+
+electricity_prices = [100, 50, 200, -100, 0, 200, 100, -100]
+electricity_carbon_intensities = [0.1, 0.2, 0.1, 0.15, 0.01, 0.7, 0.5, 0.01]
+asset = epl.Battery(
+    power_mw=2,
+    capacity_mwh=4,
+    efficiency_pct=0.9,
+    electricity_prices=electricity_prices,
+    electricity_carbon_intensities=electricity_carbon_intensities,
+)
+
+# optimize for carbon
+carbon = asset.optimize(objective="carbon", verbose=3)
+carbon_account = epl.get_accounts(carbon.results, verbose=3)
+print(f"{carbon_account=}")
+
+# optimize for money
+price = asset.optimize(
+    objective="price",
+    verbose=3
+)
+price_account = epl.get_accounts(price.results, verbose=3)
+print(f"{price_account=}")
+
+# calculate variance (difference) between accounts
+variance = price_account - carbon_account
+print(f"{variance=}")
+print(f"{-variance.cost / variance.emissions:.2f} $/tC")
+```

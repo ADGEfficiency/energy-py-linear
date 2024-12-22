@@ -1,10 +1,12 @@
-The `epl.EVs` asset is suitable for modelling electric vehicle charging, with multiple chargers and charge events.
+The `epl.EVs` asset is suitable for modelling electric vehicle charging. One asset can operate many electric vehicle chargers that supply electricity to many electric vehicle charge events.
+
+The electric vehicle asset will optimize the dispatch of the chargers to supply electricity to the charge events. The asset can do both grid to vehicle and vehicle to grid electricity flow with a `allows_evs_discharge` flag.
 
 ## Assumptions
 
-Chargers are configured by their size given in `charger_mws`.
+Electric vehicle chargers are configured by the charger power output, given as `charger_mws`.
 
-A `charge_event` is a time interval where an EV can be charged.  This is given as a boolean 2D array, with one binary digit for each charge event, interval pairs.
+A `charge_event` is a time interval where an electric vehicle can be charged.  This is given as a boolean 2D array, with one binary digit for each charge event, interval pairs.
 
 Each charge event has a required amount of electricity `charge_event_mwh`, that can be delivered when the `charge_event` is 1.  The model is constrained so that each charge event receives all of it's `charge_event_mwh`.
 
