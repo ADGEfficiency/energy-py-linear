@@ -11,10 +11,11 @@ clean:
 
 .PHONY: setup-pip-poetry setup-test setup-static setup-check setup-docs
 QUIET := -q
+PIP_CMD=pip
 
 setup-pip-poetry:
-	pip install --upgrade pip $(QUIET)
-	pip install poetry==1.7.0 $(QUIET)
+	$(PIP_CMD) install --upgrade pip $(QUIET)
+	$(PIP_CMD) install poetry==1.7.0 $(QUIET)
 
 setup: setup-pip-poetry
 	poetry install --with main $(QUIET)
@@ -34,7 +35,7 @@ setup-check: setup-pip-poetry
 #  TODO could change this now we use mike
 #  as we don't run a build on netlify anymore
 setup-docs:
-	pip install -r ./docs/requirements.txt $(QUIET)
+	$(PIP_CMD) install -r ./docs/requirements.txt $(QUIET)
 
 
 #  ----- TEST -----
