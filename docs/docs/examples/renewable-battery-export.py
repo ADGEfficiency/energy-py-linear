@@ -1,4 +1,5 @@
 """Example of a site with a renewable generator and a battery exporting to the grid."""
+
 import energypylinear as epl
 
 assets = [
