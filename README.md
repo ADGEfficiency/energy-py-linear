@@ -44,7 +44,10 @@ asset = epl.Battery(
     power_mw=2,
     capacity_mwh=4,
     efficiency_pct=0.9,
+    # different electricity prices for each interval
+    # length of electricity_prices is the length of the simulation
     electricity_prices=[100.0, 50, 200, -100, 0, 200, 100, -100],
+    # a constant value for each interval
     export_electricity_prices=40,
 )
 
