@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://energypylinear.adgefficiency.com/1.4.0/how-to/price-carbon/">
+        <link rel="canonical" href="https://energypylinear.adgefficiency.com/1.4.0/how-to/renewables-and-battery/">
       
       
-        <link rel="prev" href="../dispatch-site/">
+        <link rel="prev" href="../network-charges/">
       
       
-        <link rel="next" href="../dispatch-forecast/">
+        <link rel="next" href="../custom-constraints/">
       
       
       <link rel="icon" href="../../static/favicon.ico">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Carbon - energy-py-linear</title>
+        <title>Renewables, Battery and Site Limits - energy-py-linear</title>
       
     
     
@@ -110,11 +110,11 @@
       
         <meta  property="og:type"  content="website" >
       
-        <meta  property="og:title"  content="Carbon - energy-py-linear" >
+        <meta  property="og:title"  content="Renewables, Battery and Site Limits - energy-py-linear" >
       
         <meta  property="og:description"  content="None" >
       
-        <meta  property="og:image"  content="https://energypylinear.adgefficiency.com/1.4.0/assets/images/social/how-to/price-carbon.png" >
+        <meta  property="og:image"  content="https://energypylinear.adgefficiency.com/1.4.0/assets/images/social/how-to/renewables-and-battery.png" >
       
         <meta  property="og:image:type"  content="image/png" >
       
@@ -122,15 +122,15 @@
       
         <meta  property="og:image:height"  content="630" >
       
-        <meta  property="og:url"  content="https://energypylinear.adgefficiency.com/1.4.0/how-to/price-carbon/" >
+        <meta  property="og:url"  content="https://energypylinear.adgefficiency.com/1.4.0/how-to/renewables-and-battery/" >
       
         <meta  name="twitter:card"  content="summary_large_image" >
       
-        <meta  name="twitter:title"  content="Carbon - energy-py-linear" >
+        <meta  name="twitter:title"  content="Renewables, Battery and Site Limits - energy-py-linear" >
       
         <meta  name="twitter:description"  content="None" >
       
-        <meta  name="twitter:image"  content="https://energypylinear.adgefficiency.com/1.4.0/assets/images/social/how-to/price-carbon.png" >
+        <meta  name="twitter:image"  content="https://energypylinear.adgefficiency.com/1.4.0/assets/images/social/how-to/renewables-and-battery.png" >
       
     
     
@@ -153,7 +153,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#setup-interval-data" class="md-skip">
+        <a href="#renewable-generator-battery-and-site-limits" class="md-skip">
           Skip to content
         </a>
       
@@ -192,7 +192,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Carbon
+              Renewables, Battery and Site Limits
             
           </span>
         </div>
@@ -570,28 +570,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Carbon
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../price-carbon/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -600,69 +582,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#setup-interval-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      Setup Interval Data
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optimize-for-carbon" class="md-nav__link">
-    <span class="md-ellipsis">
-      Optimize for Carbon
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optimize-for-money" class="md-nav__link">
-    <span class="md-ellipsis">
-      Optimize for Money
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calculate-variance-between-accounts" class="md-nav__link">
-    <span class="md-ellipsis">
-      Calculate Variance Between Accounts
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#full-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      Full Example
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -735,10 +654,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../renewables-and-battery/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -747,6 +675,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -908,59 +837,8 @@
   
   
   
+    
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#setup-interval-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      Setup Interval Data
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optimize-for-carbon" class="md-nav__link">
-    <span class="md-ellipsis">
-      Optimize for Carbon
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optimize-for-money" class="md-nav__link">
-    <span class="md-ellipsis">
-      Optimize for Money
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calculate-variance-between-accounts" class="md-nav__link">
-    <span class="md-ellipsis">
-      Calculate Variance Between Accounts
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#full-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      Full Example
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
   
 </nav>
                   </div>
@@ -978,95 +856,38 @@
   
 
 
-  <h1>Carbon</h1>
-
-<p><code>energypylinear</code> can optimize for both price and carbon as optimization objectives.</p>
-<p>This ability comes from two things - an objective function, which can be either for price or carbon, along with accounting of both price and carbon emissions.</p>
-<p>We can dispatch a battery to minimize carbon emissions by passing in <code>objective='carbon'</code>:</p>
-<h2 id="setup-interval-data">Setup Interval Data</h2>
+<h1 id="renewable-generator-battery-and-site-limits">Renewable Generator, Battery and Site Limits</h1>
+<p><code>energypylinear</code> has the ability to optimize a battery located with renewable electricity generation.</p>
+<p>This example shows how to model a site with a renewable generator and battery that can export electricity to the grid.</p>
+<p>First, let's set up a site with two assets - a solar generator and battery, with a site export limit of 25 MW:</p>
 <!--phmdoctest-share-names-->
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">electricity_prices</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="o">-</span><span class="mi">100</span><span class="p">]</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">electricity_carbon_intensities</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">]</span>
-</code></pre></div>
-<h2 id="optimize-for-carbon">Optimize for Carbon</h2>
-<!--phmdoctest-share-names-->
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">asset</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Battery</span><span class="p">(</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">power_mw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">capacity_mwh</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">efficiency_pct</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">electricity_prices</span><span class="o">=</span><span class="n">electricity_prices</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">electricity_carbon_intensities</span><span class="o">=</span><span class="n">electricity_carbon_intensities</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">carbon</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="s2">&quot;carbon&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">carbon_account</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">(</span><span class="n">carbon</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">carbon_account</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>carbon_account=&lt;Accounts profit=134.44 emissions=-2.2733&gt;
-</code></pre></div>
-<h2 id="optimize-for-money">Optimize for Money</h2>
-<p>We can compare these results above with a simulation that optimizes for price, using a <code>energypylinear.accounting.Account</code> to compare both simulations.</p>
-<p>Our optimization for price has a high negative cost.</p>
-<p>The optimization for carbon has lower emissions, but at a higher cost:</p>
-<!--phmdoctest-share-names-->
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">asset</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Battery</span><span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">power_mw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">capacity_mwh</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">efficiency_pct</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">electricity_prices</span><span class="o">=</span><span class="n">electricity_prices</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">electricity_carbon_intensities</span><span class="o">=</span><span class="n">electricity_carbon_intensities</span><span class="p">,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">price</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">objective</span><span class="o">=</span><span class="s2">&quot;price&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="p">)</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="n">price_account</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">(</span><span class="n">price</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">price_account</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>price_account=&lt;Accounts profit=1037.78 emissions=-1.6578&gt;
-</code></pre></div>
-<h2 id="calculate-variance-between-accounts">Calculate Variance Between Accounts</h2>
-<!--phmdoctest-share-names-->
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">variance</span> <span class="o">=</span> <span class="n">price_account</span> <span class="o">-</span> <span class="n">carbon_account</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variance</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="o">-</span><span class="n">variance</span><span class="o">.</span><span class="n">cost</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">variance</span><span class="o">.</span><span class="n">emissions</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> $/tC&quot;</span><span class="p">)</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>variance=&lt;Account profit=903.33 emissions=0.6156&gt;
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>1467.51 $/tC
-</code></pre></div>
-<h2 id="full-example">Full Example</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">electricity_prices</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="o">-</span><span class="mi">100</span><span class="p">]</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">electricity_carbon_intensities</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">]</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">asset</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Battery</span><span class="p">(</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">power_mw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">capacity_mwh</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="n">efficiency_pct</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">electricity_prices</span><span class="o">=</span><span class="n">electricity_prices</span><span class="p">,</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">electricity_carbon_intensities</span><span class="o">=</span><span class="n">electricity_carbon_intensities</span><span class="p">,</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="p">)</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1"># optimize for carbon</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="n">carbon</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="s2">&quot;carbon&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="n">carbon_account</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">(</span><span class="n">carbon</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">carbon_account</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="c1"># optimize for money</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="n">price</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span>
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    <span class="n">objective</span><span class="o">=</span><span class="s2">&quot;price&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span>
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="p">)</span>
-<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="n">price_account</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">get_accounts</span><span class="p">(</span><span class="n">price</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">price_account</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>
-<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="c1"># calculate variance (difference) between accounts</span>
-<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="n">variance</span> <span class="o">=</span> <span class="n">price_account</span> <span class="o">-</span> <span class="n">carbon_account</span>
-<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variance</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="o">-</span><span class="n">variance</span><span class="o">.</span><span class="n">cost</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">variance</span><span class="o">.</span><span class="n">emissions</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> $/tC&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Create assets:</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># - 10 MW / 20 MWh battery with 90% round-trip efficiency</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># - Solar generator with a predefined generation profile (10-30 MW across 5 intervals)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># - Generator can be curtailed down to 50% of available generation</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># - Custom name &quot;solar&quot; for the generator</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">assets</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">epl</span><span class="o">.</span><span class="n">Battery</span><span class="p">(</span><span class="n">power_mw</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">capacity_mwh</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">efficiency_pct</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">epl</span><span class="o">.</span><span class="n">RenewableGenerator</span><span class="p">(</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="n">electric_generation_mwh</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        <span class="n">electric_generation_lower_bound_pct</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;solar&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="p">),</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">]</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1"># Configure site:</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="c1"># - Carbon intensity values for each interval (negative values represent low carbon periods)</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># - Maximum export limit of 25 MW to the grid</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">site</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Site</span><span class="p">(</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">assets</span><span class="o">=</span><span class="n">assets</span><span class="p">,</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">electricity_carbon_intensities</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">],</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">export_limit_mw</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="p">)</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="c1"># Optimize for carbon minimization rather than profit maximization</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="n">simulation</span> <span class="o">=</span> <span class="n">site</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="s2">&quot;carbon&quot;</span><span class="p">)</span>
 </code></pre></div>
 
 

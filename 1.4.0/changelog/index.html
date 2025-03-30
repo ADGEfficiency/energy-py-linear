@@ -11,12 +11,12 @@
         <link rel="canonical" href="https://energypylinear.adgefficiency.com/1.4.0/changelog/">
       
       
-        <link rel="prev" href="../how-to/custom-objectives/">
+        <link rel="prev" href="../how-to/custom-interval-data/">
       
       
       
       <link rel="icon" href="../static/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.25">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.25">
     
     
       
@@ -56,6 +56,7 @@
   defer
   data-domain="energypylinear.adgefficiency.com"
   src="https://plausible.io/js/plausible.js"
+  
 ></script>
 
 <script>
@@ -612,11 +613,53 @@
   
   
     <li class="md-nav__item">
-      <a href="../how-to/battery-cycles.md" class="md-nav__link">
+      <a href="../how-to/battery-degradation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Battery Cycles
+    Battery Degradation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/network-charges/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Network Charges
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/renewables-and-battery/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Renewables, Battery and Site Limits
   </span>
   
 
@@ -708,6 +751,27 @@
   
   <span class="md-ellipsis">
     Objective Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/custom-interval-data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Interval Data
   </span>
   
 
@@ -1559,8 +1623,8 @@
 <h3 id="custom-constraints">Custom Constraints</h3>
 <p>It's now possible to add custom constraints to the linear program.</p>
 <p>The example below shows how to add a constraint on battery cycles:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">cycle_limit_mwh</span> <span class="o">=</span> <span class="mi">30</span>
@@ -1616,7 +1680,7 @@
 <p>See <a href="https://energypylinear.adgefficiency.com/latest/how-to/complex-terms">Complex Objective Function Terms</a> in the documentation for more examples.</p>
 <h3 id="custom-accounts">Custom Accounts</h3>
 <p>To accommodate complex custom objective functions, we have added the ability to include these custom costs and revenues as a custom account:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">chp_size</span> <span class="o">=</span> <span class="mi">50</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">electric_efficiency</span> <span class="o">=</span> <span class="mf">0.5</span>
@@ -1681,7 +1745,7 @@
 </code></pre></div>
 <h3 id="optimization-status">Optimization Status</h3>
 <p>The objective function value has been added to the <code>epl.optimizer.OptimizationStatus</code> object:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">site</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Site</span><span class="p">(</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">assets</span><span class="o">=</span><span class="p">[</span><span class="n">epl</span><span class="o">.</span><span class="n">Battery</span><span class="p">()],</span>
@@ -1697,8 +1761,8 @@
 <p>A custom objective function allows users to create their own objective functions in the linear program.  </p>
 <p>This allows users to optimize for a custom set of revenues and costs. The objective function can target assets by type or name, and can include multiplication by interval data and/or a coefficient.</p>
 <p>The example below shows how to include a cost for battery use (a cycle cost) applied to the battery discharge:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">assets</span> <span class="o">=</span> <span class="p">[</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">epl</span><span class="o">.</span><span class="n">Battery</span><span class="p">(</span><span class="n">power_mw</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">capacity_mwh</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
@@ -1766,7 +1830,7 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">asset</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Battery</span><span class="p">(</span><span class="n">electricity_prices</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">50</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="o">-</span><span class="mi">50</span><span class="p">,</span> <span class="mi">200</span><span class="p">])</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">simulation</span> <span class="o">=</span> <span class="n">asset</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </code></pre></div>
@@ -1820,7 +1884,7 @@
 <h2 id="100"><a href="https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.0.0">1.0.0</a></h2>
 <h3 id="add-renewable-generator-asset">Add Renewable Generator Asset</h3>
 <p>The <code>epl.RenewableGenerator</code> asset models controllable renewable generation like solar or wind.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">asset</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">RenewableGenerator</span><span class="p">(</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="n">electricity_prices</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">],</span>
@@ -1834,7 +1898,7 @@
 <h3 id="breaking-changes">Breaking Changes</h3>
 <h4 id="interval-data-rework">Interval Data Rework</h4>
 <p>v1.0.0 moves the interval data arguments to asset from <code>asset.optimize</code> to <code>asset.__init__</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1">#  the old way</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">asset</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Battery</span><span class="p">()</span>

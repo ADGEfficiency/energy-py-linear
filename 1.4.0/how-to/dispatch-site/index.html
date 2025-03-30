@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../static/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.25">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.25">
     
     
       
@@ -58,6 +58,7 @@
   defer
   data-domain="energypylinear.adgefficiency.com"
   src="https://plausible.io/js/plausible.js"
+  
 ></script>
 
 <script>
@@ -681,11 +682,53 @@
   
   
     <li class="md-nav__item">
-      <a href="../battery-cycles.md" class="md-nav__link">
+      <a href="../battery-degradation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Battery Cycles
+    Battery Degradation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../network-charges/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Network Charges
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../renewables-and-battery/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Renewables, Battery and Site Limits
   </span>
   
 
@@ -777,6 +820,27 @@
   
   <span class="md-ellipsis">
     Objective Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom-interval-data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Interval Data
   </span>
   
 
@@ -885,11 +949,12 @@
 
 
 <h1 id="multiple-assets-with-the-site-api">Multiple Assets with the Site API</h1>
-<p>The <code>epl.Site</code> allows optimizing many assets at the same time. The site is a list of <code>energypylinear</code> asset models, like <code>epl.Battery</code> or <code>epl.RenewableGenerator</code>.</p>
-<p>Below we give some examples of typical configurations of energy assets using an <code>epl.Site</code>.</p>
+<p><code>energypylinear</code> can optimize many assets in a single linear program.</p>
+<p>The <code>epl.Site</code> accepts a list of <code>energypylinear</code> asset models, like <code>epl.Battery</code> or <code>epl.RenewableGenerator</code>.</p>
+<p>Below are examples of typical configurations of multiple energy assets using a <code>epl.Site</code>.</p>
 <h2 id="fast-slow-battery">Fast &amp; Slow Battery</h2>
 <p>Optimize a fast and slow battery alongside each other:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">site</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Site</span><span class="p">(</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">assets</span><span class="o">=</span><span class="p">[</span>
@@ -915,7 +980,7 @@
 </code></pre></div>
 <h2 id="battery-ev-chargers">Battery &amp; EV Chargers</h2>
 <p>Optimize a battery next to an EV charging station:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">site</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Site</span><span class="p">(</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">assets</span><span class="o">=</span><span class="p">[</span>
@@ -945,7 +1010,7 @@
 </code></pre></div>
 <h2 id="battery-chp">Battery &amp; CHP</h2>
 <p>Optimize an electric battery alongside a gas fired CHP:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span> <span class="nn">energypylinear</span> <span class="k">as</span> <span class="nn">epl</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">energypylinear</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">epl</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">site</span> <span class="o">=</span> <span class="n">epl</span><span class="o">.</span><span class="n">Site</span><span class="p">(</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">assets</span><span class="o">=</span><span class="p">[</span>
