@@ -19,7 +19,7 @@ class RenewableGeneratorIntervalData(pydantic.BaseModel):
     """Renewable Generator interval data."""
 
     electric_generation_mwh: np.ndarray | list[float] | float
-    idx: list[int] | np.ndarray = pydantic.Field(default_factory=list)
+    idx: list[int] | np.ndarray = pydantic.Field(default_factory=lambda: [])
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     @pydantic.field_validator("electric_generation_mwh", mode="after")
