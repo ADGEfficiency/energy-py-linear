@@ -1,8 +1,10 @@
-Battery degradation is where battery performance reduces with time or battery use.
+Battery performance reducing is known as battery degradation. Battery degradation can occur over time or with battery use.
 
-The performance of the battery is defined by the parameters of power (MW), capacity (MWh) and efficiency (%).
+The performance of a battery is defined by the parameters of power (MW), capacity (MWh) and efficiency (%).
 
-`energypylinear` does not model battery degradation within a single simulation - degradation can be handled by splitting up the battery lifetime into multiple simulations.
+`energypylinear` does not model battery degradation within a single simulation.  Parameters like capacity or efficiency are held constant across a simulation.
+
+Degradation can be handled by splitting up the battery lifetime into multiple simulations, with different parameters used in different simulations.
 
 ## Modelling a Single Year in Monthly Chunks
 
