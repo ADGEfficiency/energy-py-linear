@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.4.1](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.4.1)
+
+### Custom Interval Data
+
+Assets now support custom interval data, allowing you to pass additional time series data that can be used in custom objective functions.
+
+```python
+import energypylinear as epl
+
+asset = epl.Battery(
+    electricity_prices=[100, 200, 300],
+    export_electricity_prices=[90, 180, 270],
+    custom_interval_data={"network_charge": [10, 20, 30]}
+)
+```
+
+[Read more about custom interval data in the documentation](https://energypylinear.adgefficiency.com/latest/how-to/custom-interval-data/).
+
+### Network Charges
+
+New documentation showing how to model network charges in your optimization, using custom interval data and objective functions.
+
+[Read more about network charges in the documentation](https://energypylinear.adgefficiency.com/latest/how-to/network-charges/).
+
+### Battery Degradation How-To
+
+New documentation showing how to model battery degradation costs using custom constraints and objective functions.
+
+[Read more about battery degradation in the documentation](https://energypylinear.adgefficiency.com/latest/how-to/battery-degradation/).
+
+### Python Version
+
+Python 3.10 is no longer supported. Only Python 3.11 and 3.12 are supported.
+
+### Other Changes
+
+- Renewables with battery example documentation.
+- Updated pandera from `^0.14.5` to `^0.23`.
+- Documentation improvements.
+
 ## [1.4.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.4.0)
 
 ### Custom Constraints
