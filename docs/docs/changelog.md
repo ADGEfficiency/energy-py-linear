@@ -37,7 +37,7 @@ Python 3.10 is no longer supported. Only Python 3.11 and 3.12 are supported.
 ### Other Changes
 
 - Renewables with battery example documentation.
-- Updated pandera dependency.
+- Updated pandera from `^0.14.5` to `^0.23`.
 - Documentation improvements.
 
 ## [1.4.0](https://github.com/ADGEfficiency/energy-py-linear/releases/tag/v1.4.0)
